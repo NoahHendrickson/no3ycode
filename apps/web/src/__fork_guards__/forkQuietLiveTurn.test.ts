@@ -78,9 +78,15 @@ describe("fork guard: fork-quiet-live-turn", () => {
     expect(visible(false)).toEqual(["earlier", "steer-answer", "final", "revealed"]);
   });
 
-  it("asks from the transcript, except while Find is open", () => {
+  it("asks from the transcript, except while Find is open or a guest watches", () => {
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
-      "forkHoldLiveReplies: !findActive,",
+      "forkHoldLiveReplies: !findActive && !forkStreamLiveReplies,",
+    );
+    expect(readSibling("../components/chat/ReadOnlyThreadTimeline.tsx")).toContain(
+      "forkStreamLiveReplies={props.forkStreamLiveReplies === true}",
+    );
+    expect(readSibling("../components/guest/GuestPage.tsx")).toMatch(
+      /threadKey=\{`guest-\$\{shareId\}`\}[^>]*forkStreamLiveReplies/u,
     );
   });
 

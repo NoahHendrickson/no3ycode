@@ -6623,7 +6623,9 @@
     reply) until the turn ends, so its steps join one stretch that folds into
     the status line (fork-working-row-last), and the line reads Zen's
     preview of them. MessagesTimeline opts in with forkHoldLiveReplies,
-    except while Find is open, which searches reply text. Upstream's logic
+    except while Find is open, which searches reply text, and the guest share
+    page opts out (forkStreamLiveReplies), so a guest still watches replies
+    stream as upstream shows them. Upstream's logic
     tests derive without the flag and keep upstream's shapes. The guard runs
     one fixture through Zen and through the hold and requires the same
     replies, so a sync that adds a Zen exemption fails it. The no3y iOS app
@@ -6636,9 +6638,13 @@
     # Fenced: the forkHoldLiveReplies input, forkHeldLiveReplyIds and the
     # filter in timelineRowEntries after the visibility filters.
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
-    # Fenced: passes forkHoldLiveReplies, and reads liveAnswerPreview in
-    # every mode (upstream gates it to Zen).
+    # Fenced: passes forkHoldLiveReplies, the forkStreamLiveReplies prop, and
+    # reads liveAnswerPreview in every mode (upstream gates it to Zen).
     - apps/web/src/components/chat/MessagesTimeline.tsx
+    # Fenced: passes forkStreamLiveReplies through to MessagesTimeline.
+    - apps/web/src/components/chat/ReadOnlyThreadTimeline.tsx
+    # Fenced: the guest page sets forkStreamLiveReplies.
+    - apps/web/src/components/guest/GuestPage.tsx
   verify:
     - apps/web/src/__fork_guards__/forkQuietLiveTurn.test.ts
     - apps/web/src/custom/forkWorkingRowLast.test.ts

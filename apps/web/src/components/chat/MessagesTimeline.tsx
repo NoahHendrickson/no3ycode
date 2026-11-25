@@ -356,6 +356,10 @@ interface MessagesTimelineProps {
   findQuery?: string;
   activeFindMatch?: ThreadFindMatch | null;
   findNavigationId?: number;
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  /** A guest watching a shared thread sees replies stream, as upstream shows them. */
+  forkStreamLiveReplies?: boolean;
+  /* fork:end fork-quiet-live-turn */
 }
 
 export function MessagesTimeline(props: MessagesTimelineProps) {
@@ -452,6 +456,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
   emptyPlaceholderInset,
   topFadeEnabled = false,
   historyControls,
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  forkStreamLiveReplies = false,
+  /* fork:end fork-quiet-live-turn */
 }: MessagesTimelineProps) {
   const gt = useGT();
   const listIdentityKey = displayThreadKey ?? routeThreadKey;
@@ -797,7 +804,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
        Find matches reply text, so it shows the replies, as it swaps Zen for hideAll. */
-    forkHoldLiveReplies: !findActive,
+    forkHoldLiveReplies: !findActive && !forkStreamLiveReplies,
     /* fork:end fork-quiet-live-turn */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
