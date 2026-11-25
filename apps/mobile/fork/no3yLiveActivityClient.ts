@@ -4,10 +4,13 @@
  * Mac has work running) and hands its update token to the Mac push service, which pushes the rest.
  * Only installNo3yPushRegistration reaches this, and only in a no3y iOS build.
  */
+import { AsyncResult } from "effect/reactivity";
 import * as Application from "expo-application";
 import type { LiveActivity } from "expo-widgets";
 
 import { loadPreferences } from "../src/persistence/imperative";
+import { appAtomRegistry } from "../src/state/atom-registry";
+import { mobilePreferencesAtom } from "../src/state/preferences";
 import {
   NO3Y_LIVE_ACTIVITY_STALE_MS,
   startingNo3yLiveActivity,
@@ -62,8 +65,11 @@ function start(props: No3yLiveActivityProps) {
 
 /** Upstream's Settings → Notifications switch turns this card off too. */
 async function allowed(): Promise<boolean> {
-  const preferences = await loadPreferences().catch(() => null);
-  return preferences?.liveActivitiesEnabled !== false;
+  // The atom takes the switch at once; the stored copy only once the save lands.
+  const current = appAtomRegistry.get(mobilePreferencesAtom);
+  if (AsyncResult.isSuccess(current)) return current.value.liveActivitiesEnabled !== false;
+  const stored = await loadPreferences().catch(() => null);
+  return stored?.liveActivitiesEnabled !== false;
 }
 
 /** On every send. No route to the Mac means nothing could ever update or end the card. */
@@ -125,10 +131,9 @@ export async function refreshNo3yLiveActivity(origins: ReadonlyArray<string>): P
       return;
     }
     const props = await readMacCard();
-    // A send may have started the card while the Mac answered.
-    if (props === null || props.activeCount === 0 || getNo3yLiveActivities()[0]) return;
-    // The switch may have been turned off while the Mac answered.
-    if (await allowed()) start(props);
+    if (props === null || props.activeCount === 0 || !(await allowed())) return;
+    // Checked after the last await: a send may have started the card while the Mac answered.
+    if (!getNo3yLiveActivities()[0]) start(props);
   } catch {
     // Same as arming: Live Activities may be off for this app.
   }
