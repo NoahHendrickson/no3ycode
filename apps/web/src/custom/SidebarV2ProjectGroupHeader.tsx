@@ -195,7 +195,7 @@ export function SidebarV2ProjectGroupHeader(props: {
               layer. */}
           <span
             className={cn(
-              "pointer-events-none relative z-[1] flex shrink-0 items-center justify-center text-muted-foreground group-hover/collapse:text-sidebar-foreground",
+              "pointer-events-none relative z-1 flex shrink-0 items-center justify-center text-muted-foreground group-hover/collapse:text-sidebar-foreground",
               SIDEBAR_V2_CARD_ALIGNMENT.headerMarkBox,
             )}
           >
@@ -228,7 +228,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             aria-level={3}
             // Label/12 Medium at --muted-foreground (368:21364), lifting to
             // foreground with the mark while the row is hovered.
-            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-meta font-medium text-muted-foreground group-hover/collapse:text-sidebar-foreground"
+            className="pointer-events-none relative z-1 min-w-0 flex-1 truncate text-sidebar-meta font-medium text-muted-foreground group-hover/collapse:text-sidebar-foreground"
           >
             {label}
           </span>

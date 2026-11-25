@@ -28,13 +28,12 @@ export function SidebarV2IconButton({
 }) {
   return (
     <Button
-      variant="ghost-muted"
+      // A foreground tint, not accent: accent is the row's own hover or selected fill in some
+      // themes, and the target's edge would vanish on it.
+      variant="ghost-tint"
       size={BOX[box].size}
       className={cn(
         BOX[box].className,
-        // A foreground tint, not accent: accent is the row's own hover or selected fill in some
-        // themes, and the target's edge would vanish on it.
-        "[:hover,[data-pressed]]:bg-foreground/10",
         // Mounted hidden on every row of an unvirtualized list; a compositor layer each is the
         // cost, and the press scale runs without one.
         "[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto",

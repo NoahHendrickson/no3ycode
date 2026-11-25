@@ -9066,6 +9066,31 @@
   verify:
     - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
 
+- id: fork-design-row-variants
+  intent: >
+    Primitive variants for dense rows, so fork code picks a look instead of
+    restyling the primitive with className (.fork/DESIGN-RULES.md B1). MenuItem
+    takes size "xs" (py-0, 12px medium label: the model picker's 32px rows) and
+    tone "muted". Button takes reveal "row": hidden until its group row is
+    hovered or highlighted, shown on touch, a disabled one hidden at rest and
+    64% on hover; variants "ghost-tint" (ghost-muted with a foreground-tint
+    hover, the sidebar's icon buttons) and "chip" (the composer strip's muted
+    chip trigger). InlineButton takes size "xs" (the tab PR badge). Kbd takes
+    variant "faint", size "xs" and reveal "row" (the model picker's jump
+    hints). PopoverTrigger takes focusRing "inset" and RadioGroup density
+    "compact". Every default is upstream's look, unchanged.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/button.tsx
+    - apps/web/src/components/ui/kbd.tsx
+    - apps/web/src/components/ui/popover.tsx
+    - apps/web/src/components/ui/radio-group.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkModelPicker.test.ts
+    - apps/web/src/__fork_guards__/forkTouchAffordances.test.ts
 - id: fork-design-lint
   intent: >
     Fork UI takes its values from tokens and its controls from components/ui,
@@ -9130,3 +9155,21 @@
     - apps/web/src/components/ui/tooltip.tsx
   verify:
     - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
+
+- id: fork-design-variants
+  intent: >
+    Primitive variants that the sidebar chrome uses instead of restyling the
+    primitive with className (.fork/DESIGN-RULES.md B1). MenuRadioItem and
+    MenuCheckboxItem take size: "sm" (sm:text-xs, compact menus such as design
+    mode's screen sizes) and "chrome" (py-0 text-sm font-medium, the sidebar's
+    sort menus). SidebarGroup takes inset: "chrome" (px-2 pt-0 pb-0, the chrome
+    row groups) and "chrome-stack" (the same with gap-0.5, the action-row
+    stacks). Every default is upstream's look, unchanged.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkDesignVariants.test.ts

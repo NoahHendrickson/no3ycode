@@ -29,7 +29,7 @@ export function ForkLiveStatusLine({
       <span className="min-w-0 truncate">{label}</span>
       {timer ? (
         <>
-          <span aria-hidden className="size-[3px] shrink-0 rounded-full bg-current" />
+          <span aria-hidden className="size-0.75 shrink-0 rounded-full bg-current" />
           <span className="shrink-0">{timer}</span>
         </>
       ) : null}

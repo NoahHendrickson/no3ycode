@@ -230,6 +230,7 @@ export function SidebarV2BotsRow(props: {
                     render={
                       <SidebarMenuButton
                         size="sm"
+                        variant="chrome-icon"
                         type="button"
                         className={PROJECTS_ROW_BUTTON}
                         aria-label="Petal view options"
@@ -256,6 +257,7 @@ export function SidebarV2BotsRow(props: {
               render={
                 <SidebarMenuButton
                   size="sm"
+                  variant="chrome-icon"
                   type="button"
                   className={PROJECTS_ROW_BUTTON}
                   aria-label="New petal"

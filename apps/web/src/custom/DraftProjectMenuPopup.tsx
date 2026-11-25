@@ -23,7 +23,7 @@ function PickerFolderIcon(props: { readonly className?: string | undefined }) {
 }
 
 const ROW_CLASS_NAME =
-  "[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center [&>span:last-child]:gap-2";
+  "[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center";
 
 export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectMenuChoices }) {
   const { choices } = props;
@@ -46,7 +46,7 @@ export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectMen
       >
         {choices.noProjectEnvironmentId !== null ? (
           <MenuRadioItem value={NO_PROJECT_VALUE} closeOnClick className={ROW_CLASS_NAME}>
-            <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
+            <MessageSquareDashedIcon className="me-2 size-4 shrink-0 dark:text-white/40" />
             <span className="min-w-0 truncate">No project</span>
           </MenuRadioItem>
         ) : null}
@@ -59,7 +59,7 @@ export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectMen
           >
             <ProjectFavicon
               project={targetProject}
-              className="size-4 shrink-0"
+              className="me-2 size-4 shrink-0"
               fallbackIcon={PickerFolderIcon}
             />
             <span className="min-w-0 truncate">{group.displayName}</span>

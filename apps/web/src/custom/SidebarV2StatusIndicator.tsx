@@ -51,7 +51,7 @@ const TONE_TEXT_CLASS: Record<SidebarV2DotTone, string> = {
     draws about the design's 9.75px circle, and the 10px dots centre in the
     same width — so a card's mark sits on its content edge and a slim row's
     14px slot centres it. */
-const MARK_SLOT_CLASS = "flex h-[14px] w-[12px] shrink-0 items-center justify-center";
+const MARK_SLOT_CLASS = "flex h-3.5 w-3 shrink-0 items-center justify-center";
 
 // Geometry from PixelSparkleView: a 3x5 grid on a 3.8px pitch with 2.85px cells
 // rounded at 28% of their size. Native units land at 10.45×18.05; the mark
@@ -276,7 +276,7 @@ function SidebarV2WorkingRain({ seed, still }: WorkingMarkProps) {
   return (
     <span
       aria-hidden
-      className="relative block h-[14px] shrink-0 overflow-hidden"
+      className="relative block h-3.5 shrink-0 overflow-hidden"
       style={{ width: DRAW_WIDTH }}
     >
       {RAIN_STRIPS.map((strip) => (
@@ -368,7 +368,7 @@ function SidebarV2WorkingBeadRing({ seed, still }: WorkingMarkProps) {
   return (
     <span
       aria-hidden
-      className="relative -mx-[1.5px] -my-[0.5px] block size-[15px] shrink-0 overflow-hidden"
+      className="relative -mx-[1.5px] -my-[0.5px] block size-3.75 shrink-0 overflow-hidden"
     >
       <FilmStrip
         film={beadRingFilm()}

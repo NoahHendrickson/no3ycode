@@ -115,7 +115,7 @@ export function ForkThemePicker(props: {
             type="button"
           >
             <ThemeWireframe
-              className="h-[7.5rem]"
+              className="h-30"
               panes={[
                 {
                   colors: previewFor(

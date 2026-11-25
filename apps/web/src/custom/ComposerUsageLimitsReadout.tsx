@@ -46,7 +46,8 @@ const ComposerUsageLimitsReadout = memo(function ComposerUsageLimitsReadout(prop
         // Inlet hangs the menu from this button (theme.custom.inlet-menus.css).
         data-fork-tab-trigger=""
         aria-label={`${ring.label} limit: ${remaining}% left. Show usage limits`}
-        className="flex shrink-0 cursor-pointer items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        focusRing="inset"
+        className="flex shrink-0 cursor-pointer items-center justify-center"
       >
         <UsageCircleMeter remaining={remaining} />
       </PopoverTrigger>

@@ -18,20 +18,19 @@ import {
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
 
-/** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
-const DRAFT_PROJECT_CHIP_CLASS_NAME =
-  "min-w-0 max-w-72 font-normal text-muted-foreground/70 text-xs! hover:text-foreground/80 active:scale-100";
+/** Button variant="chip", the branch chip's dress; the row's CSS owns the chip fill. */
+const DRAFT_PROJECT_CHIP_CLASS_NAME = "min-w-0 max-w-72 active:scale-100";
 
 /** Upstream's collapsing chip label: hidden with its siblings when the strip overflows. */
 function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {
   return (
     <span
       data-composer-label
-      className="min-w-0 max-w-[240px] group-data-[compact]/composer-context:max-w-0"
+      className="min-w-0 max-w-60 group-data-[compact]/composer-context:max-w-0"
     >
       <span
         data-composer-label-motion
-        className="block w-full min-w-0 max-w-[240px] truncate transition-opacity duration-180 ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
+        className="block w-full min-w-0 max-w-60 truncate transition-opacity duration-180 ease-drawer group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
       >
         {children}
       </span>
@@ -47,7 +46,7 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
       <Button
         type="button"
         size="xs"
-        variant="ghost"
+        variant="chip"
         className={DRAFT_PROJECT_CHIP_CLASS_NAME}
         onClick={openAddProject}
         data-testid="draft-project-pill"
@@ -90,7 +89,7 @@ function DraftProjectChip(props: {
           <Button
             type="button"
             size="xs"
-            variant="ghost"
+            variant="chip"
             aria-label={selection.kind === "unassigned" ? label : `Change project — ${label}`}
             // No press-scale, like the branch chip: the popup aligns live to
             // this trigger and a momentary shrink drags it sideways.

@@ -128,7 +128,8 @@ export function ComposerWorkspaceFooter(props: {
             onEnvModeChange(value);
           }
         }}
-        className="flex flex-col gap-0.5"
+        density="compact"
+        className="flex flex-col"
       >
         <RadioPrimitive.Root
           value="local"

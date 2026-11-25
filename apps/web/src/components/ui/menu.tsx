@@ -133,16 +133,33 @@ function MenuGroup(props: MenuPrimitive.Group.Props) {
   return <MenuPrimitive.Group data-slot="menu-group" {...props} />;
 }
 
+/* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+// Dense rows (the model picker's 32px rows, 12px medium label) and a muted label.
+const forkMenuRowSizeClassName = {
+  default: "",
+  xs: "py-0 text-xs font-medium sm:text-xs",
+} as const;
+const forkMenuRowToneClassName = { default: "", muted: "text-muted-foreground" } as const;
+/* fork:end fork-design-row-variants */
+
 function MenuItem({
   className,
   inset,
   density = "default",
   variant = "default",
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  size = "default",
+  tone = "default",
+  /* fork:end fork-design-row-variants */
   ...props
 }: MenuPrimitive.Item.Props & {
   inset?: boolean;
   density?: "default" | "touch";
   variant?: "default" | "destructive" | "ghost";
+  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  size?: keyof typeof forkMenuRowSizeClassName;
+  tone?: keyof typeof forkMenuRowToneClassName;
+  /* fork:end fork-design-row-variants */
 }) {
   return (
     <MenuPrimitive.Item
@@ -157,6 +174,10 @@ function MenuItem({
             className: "h-auto min-h-7 w-full sm:text-xs",
           }),
         density === "touch" && "min-h-10 sm:min-h-10",
+        /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+        forkMenuRowSizeClassName[size],
+        forkMenuRowToneClassName[tone],
+        /* fork:end fork-design-row-variants */
         className,
       )}
       data-density={density}
@@ -181,14 +202,28 @@ function MenuItemLabel({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+/* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+const forkMenuItemSizeClassName = {
+  default: "",
+  sm: "sm:text-xs",
+  chrome: "py-0 text-sm font-medium",
+} as const;
+/* fork:end fork-design-variants */
+
 function MenuCheckboxItem({
   className,
   children,
   checked,
   variant = "default",
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size = "default",
+  /* fork:end fork-design-variants */
   ...props
 }: MenuPrimitive.CheckboxItem.Props & {
   variant?: "default" | "icon" | "switch";
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size?: keyof typeof forkMenuItemSizeClassName;
+  /* fork:end fork-design-variants */
 }) {
   return (
     <MenuPrimitive.CheckboxItem
@@ -201,6 +236,9 @@ function MenuCheckboxItem({
           ? "grid-cols-[1fr_auto] gap-4 pe-1.5"
           : "grid-cols-[1rem_minmax(0,1fr)] pe-4",
         variant === "icon" && "grid-cols-[0.625rem_minmax(0,1fr)]",
+        /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+        forkMenuItemSizeClassName[size],
+        /* fork:end fork-design-variants */
         className,
       )}
       data-slot="menu-checkbox-item"
@@ -253,9 +291,15 @@ function MenuRadioItem({
   className,
   children,
   hideIndicator: _hideIndicator = false,
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size = "default",
+  /* fork:end fork-design-variants */
   ...props
 }: MenuPrimitive.RadioItem.Props & {
   hideIndicator?: boolean;
+  /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+  size?: keyof typeof forkMenuItemSizeClassName;
+  /* fork:end fork-design-variants */
 }) {
   return (
     <MenuPrimitive.RadioItem
@@ -263,6 +307,9 @@ function MenuRadioItem({
         /* fork:begin fork-primitive-tokens — see .fork/customizations.yaml#fork-primitive-tokens */
         "[&_svg]:-mx-0.5 flex min-h-8 in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-pointer items-center rounded-(--fork-menu-row-radius,var(--radius-sm)) px-2 py-1 text-base text-foreground outline-none data-checked:bg-foreground/[0.08] data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         /* fork:end fork-primitive-tokens */
+        /* fork:begin fork-design-variants — see .fork/customizations.yaml#fork-design-variants */
+        forkMenuItemSizeClassName[size],
+        /* fork:end fork-design-variants */
         className,
       )}
       data-slot="menu-radio-item"
