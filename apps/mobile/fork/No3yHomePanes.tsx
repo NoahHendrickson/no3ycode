@@ -10,6 +10,7 @@ import { StackActions, useNavigation, useRoute } from "@react-navigation/native"
 import type { ReactNode } from "react";
 import { SafeAreaInsetsContext, type EdgeInsets } from "react-native-safe-area-context";
 
+import { runWhenHomeCovered } from "../src/features/home/home-route-visibility";
 import { WorkspaceTabPanes } from "../src/features/layout/workspace/WorkspaceTabPanes";
 import { startOpeningDetail } from "../src/features/layout/workspace/useSelectWorkspaceDetail";
 import { SettingsScheduledTasksRouteScreen } from "../src/features/settings/SettingsScheduledTasksRouteScreen";
@@ -25,6 +26,7 @@ import {
   no3yHomeDraftFlowKey,
   no3yHomeTabsAtom,
   setNo3yHomeDraft,
+  setNo3yHomeTab,
   type No3yHomeTab,
 } from "./no3yHomeTabs";
 import { NO3Y_NEW_AGENT_TAB_SURFACE } from "./No3yNewAgent";
@@ -35,10 +37,11 @@ function No3yNewAgentTab() {
   const draft = useAtomValue(no3yHomeTabsAtom).newAgentDraft;
   const surface: No3yDraftSurface = {
     ...NO3Y_NEW_AGENT_TAB_SURFACE,
-    // The sent thread is pushed over Home, so back returns here, to a fresh draft.
+    // The sent thread is pushed over Home, and back lands on Threads (switched once it is hidden).
     onSubmitted: (environmentId, threadId) => {
       const detail = { name: "Thread", params: { environmentId, threadId } } as const;
       startOpeningDetail(detail);
+      runWhenHomeCovered(() => setNo3yHomeTab("threads"));
       navigation.dispatch(StackActions.push("Thread", detail.params));
       setNo3yHomeDraft("newAgent", { requestId: uuidv4() });
     },
