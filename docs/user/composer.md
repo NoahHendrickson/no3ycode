@@ -226,8 +226,8 @@ See [Voice input](./voice-input.md).
 <!-- fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation -->
 
 You can also tap the right Command key to start dictating into the composer on
-screen, and tap it again to finish. While you dictate, Send shows a check to
-finish and an X to cancel.
+screen, and tap it again to finish. While you dictate, the microphone becomes a
+check to finish, with an X beside it to cancel.
 
 <!-- fork:end fork-local-dictation -->
 
