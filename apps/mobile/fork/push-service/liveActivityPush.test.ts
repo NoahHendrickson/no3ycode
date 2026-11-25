@@ -42,6 +42,8 @@ function harness(initial: ReadonlyArray<string> = ["a"]) {
   let outcome: Delivery = "sent";
   let stall: Promise<void> | null = null;
   const pushed: string[] = [];
+  /** The first row's phase on each end, to tell one run's finish from another's. */
+  const ended: string[] = [];
   const service = makeLiveActivityService({
     store: {
       read: () => [...tokens],
@@ -51,8 +53,12 @@ function harness(initial: ReadonlyArray<string> = ["a"]) {
     },
     read: () => current,
     deliver: async (to, request) => {
-      const { event } = (request.payload as { aps: { event: string } }).aps;
-      pushed.push(`${event}:${to.token[0]}`);
+      const aps = (
+        request.payload as { aps: { event: string; "content-state"?: { props: string } } }
+      ).aps;
+      pushed.push(`${aps.event}:${to.token[0]}`);
+      const card = aps["content-state"]?.props;
+      if (aps.event === "end" && card) ended.push(JSON.parse(card).rows[0].phase);
       const wait = stall;
       stall = null;
       if (wait) await wait;
@@ -64,6 +70,7 @@ function harness(initial: ReadonlyArray<string> = ["a"]) {
   return {
     service,
     pushed,
+    ended,
     tokens: () => tokens.map((t) => t.token[0]),
     show: (next: No3yLiveActivityProps | null) => {
       current = next;
@@ -168,6 +175,43 @@ describe("live activity pushes", () => {
     await vi.advanceTimersByTimeAsync(1_000);
     expect(h.pushed).toEqual(["update:a"]);
     expect(h.tokens()).toEqual(["a"]);
+  });
+
+  it("checks before each token's end, not once per batch", async () => {
+    using _timers = fakeTimers();
+    const h = harness(["a", "b"]);
+    h.service.resume();
+    await vi.advanceTimersByTimeAsync(500);
+    h.show(props("completed", 0));
+    h.service.changed();
+    const release = h.stallNext();
+    await vi.advanceTimersByTimeAsync(5_500);
+    h.show(props("running"));
+    release();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(h.pushed).toEqual(["update:a", "update:b", "end:a"]);
+    expect(h.tokens()).toEqual(["b"]);
+  });
+
+  it("ends with the latest run's finish when a newer run came and went behind a stalled push", async () => {
+    using _timers = fakeTimers();
+    const h = harness();
+    const release = h.stallNext();
+    h.service.resume();
+    await vi.advanceTimersByTimeAsync(500);
+    h.show(props("failed", 0));
+    h.service.changed();
+    await vi.advanceTimersByTimeAsync(5_500);
+    h.show(props("running"));
+    h.service.changed();
+    await vi.advanceTimersByTimeAsync(500);
+    h.show(props("completed", 0));
+    h.service.changed();
+    await vi.advanceTimersByTimeAsync(5_500);
+    release();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(h.ended).toEqual(["completed"]);
+    expect(h.tokens()).toEqual([]);
   });
 
   it("gives a card registered during a hold the whole hold for its run to show", async () => {

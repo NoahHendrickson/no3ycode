@@ -68,6 +68,8 @@ export function makeLiveActivityService(input: {
   let ending: ReturnType<typeof setTimeout> | undefined;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let queue: Promise<void> = Promise.resolve();
+  /** Bumps whenever work is seen, so an end queued before it stands down. */
+  let epoch = 0;
 
   const send = (
     event: "update" | "end",
@@ -75,17 +77,17 @@ export function makeLiveActivityService(input: {
     tokens: ReadonlyArray<PushToken>,
   ) => {
     if (tokens.length === 0) return;
+    const queuedAt = epoch;
     queue = queue.then(async () => {
-      // An end waits behind slower pushes; by its turn the stream may be down or work back.
-      if (event === "end") {
-        const live = input.read();
-        if (paused) return;
-        if (live !== null && live.activeCount > 0) {
+      for (const token of tokens) {
+        // An end waits behind slower pushes; by each token's turn work may be back or the stream down.
+        if (
+          event === "end" &&
+          (paused || epoch !== queuedAt || (input.read()?.activeCount ?? 0) > 0)
+        ) {
           changed();
           return;
         }
-      }
-      for (const token of tokens) {
         const request: ApnsRequest = {
           pushType: "liveactivity",
           topic: `${token.topic ?? NO3Y_BUNDLE_IDENTIFIER}.push-type.liveactivity`,
@@ -108,6 +110,7 @@ export function makeLiveActivityService(input: {
     const props = input.read();
     const tokens = input.store.read();
     if (props !== null && props.activeCount > 0) {
+      epoch += 1;
       clearTimeout(ending);
       ending = undefined;
       heartbeat ??= setInterval(() => publish(true), HEARTBEAT_MS);

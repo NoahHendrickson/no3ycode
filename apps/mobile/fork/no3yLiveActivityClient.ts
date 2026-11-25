@@ -98,12 +98,21 @@ async function readMacCard(): Promise<No3yLiveActivityProps | null> {
   return null;
 }
 
+/** Takes every fork card down now, ended ones included, so the Mac can't keep one going. */
+export function endNo3yLiveActivities(): void {
+  try {
+    dismissEndedNo3yLiveActivities();
+    for (const card of getNo3yLiveActivities()) void card.end("immediate").catch(() => {});
+  } catch {
+    // Nothing to take down.
+  }
+}
+
 /** On foreground: keep the one card registered, or start it when the Mac has work running. */
 export async function refreshNo3yLiveActivity(origins: ReadonlyArray<string>): Promise<void> {
   routes = origins;
   if (!(await allowed())) {
-    // Switched off since the card started: take it down rather than let the Mac keep it going.
-    for (const card of getNo3yLiveActivities()) void card.end("immediate").catch(() => {});
+    endNo3yLiveActivities();
     return;
   }
   if (origins.length === 0) return;

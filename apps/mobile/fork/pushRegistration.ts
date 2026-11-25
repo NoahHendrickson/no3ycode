@@ -1,13 +1,19 @@
 /** Fork-owned — see `.fork/customizations.yaml#no3y-push` and `#no3y-live-activity`. */
 import * as Option from "effect/Option";
+import { AsyncResult } from "effect/reactivity";
 import * as Application from "expo-application";
 import * as Notifications from "expo-notifications";
 import { AppState, Platform } from "react-native";
 
 import { environmentCatalog } from "../src/connection/catalog";
 import { appAtomRegistry } from "../src/state/atom-registry";
+import { mobilePreferencesAtom } from "../src/state/preferences";
 import { isNo3yBundleIdentifier, NO3Y_PUSH_MOUNT_PATH } from "./no3yConstants";
-import { armNo3yLiveActivity, refreshNo3yLiveActivity } from "./no3yLiveActivityClient";
+import {
+  armNo3yLiveActivity,
+  endNo3yLiveActivities,
+  refreshNo3yLiveActivity,
+} from "./no3yLiveActivityClient";
 import { setNo3yLiveActivityArmOnSend } from "./no3yLiveActivityHook";
 
 type Catalog = ReturnType<typeof readCatalog>;
@@ -99,6 +105,12 @@ export function installNo3yPushRegistration(): () => void {
       checkLiveActivityOnce(catalog);
     },
   );
+  // Settings → Notifications → Live Activities off takes the card down at once.
+  const unsubscribePreferences = appAtomRegistry.subscribe(mobilePreferencesAtom, (result) => {
+    if (AsyncResult.isSuccess(result) && result.value.liveActivitiesEnabled === false) {
+      endNo3yLiveActivities();
+    }
+  });
   // Re-registering on foreground recovers from a Mac that was asleep or a service restart.
   const appStateSubscription = AppState.addEventListener("change", (state) => {
     if (state !== "active") return;
@@ -112,6 +124,7 @@ export function installNo3yPushRegistration(): () => void {
     setNo3yLiveActivityArmOnSend(null);
     tokenSubscription.remove();
     unsubscribeCatalog();
+    unsubscribePreferences();
     appStateSubscription.remove();
   };
 }
