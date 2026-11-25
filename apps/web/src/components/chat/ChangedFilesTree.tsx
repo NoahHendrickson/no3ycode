@@ -98,7 +98,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
       <div
         data-changed-files-header=""
         /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
-        className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-secondary dark:bg-background dark:bg-linear-to-b dark:from-input/20 dark:to-input/20"
+        className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-secondary last:rounded-b-lg dark:bg-background dark:bg-linear-to-b dark:from-input/20 dark:to-input/20"
         /* fork:end fork-changed-files-fold */
       >
         {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
@@ -107,7 +107,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
           type="button"
           data-scroll-anchor-ignore
           aria-expanded={forkOpen}
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-[inherit] px-3 py-2 text-left text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-[inherit] px-3 py-2 text-left text-base text-foreground hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           onClick={() => {
             onToggleAllDirectories();
             syncTimelineLayout();
