@@ -1048,13 +1048,3 @@
   opacity: 1;
 }
 
-/* Page tabs (Usage, Automations' triggers) are rounded rectangles with parallel
-   corners, not upstream's 4px track around a 2px chip. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
-  [data-slot="sidebar-inset"]
-  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
-  /* The chip's corner is calc(var(--radius-sm) - 2px). */
-  --radius-sm: var(--fork-page-tabs-radius);
-  border-radius: var(--fork-page-tabs-radius);
-}

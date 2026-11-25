@@ -143,7 +143,9 @@ describe("fork local dictation", () => {
     expect(hotkeyHost).toContain("installForkDictationHotkey()");
     // A live session keeps the waveform bare (no background fill), in foreground/white ink.
     expect(control).toContain('"data-fork-dictation-live": ""');
-    expect(theme).toMatch(/\.dark \[data-fork-dictation-live\]\s*\{[^}]*color:\s*#ffffff/u);
+    expect(theme).toMatch(
+      /\.dark \[data-fork-dictation-live\]\s*\{[^}]*color:\s*var\(--fork-white\)/u,
+    );
     // Live words are prompt text in the prompt row, not upstream's box above it,
     // and they hold through transcript cleanup.
     expect(composer).toMatch(
@@ -235,7 +237,7 @@ describe("fork local dictation", () => {
     expect(frost?.selector).toContain(".dropdown-glass");
     expect(frost?.selector).not.toContain("data-fork-glass-tooltip");
     expect(theme).toMatch(
-      /\[data-slot="tooltip-popup"\]\[data-fork-glass-tooltip\]\s*\{[^}]*font-size:\s*13px/u,
+      /\[data-slot="tooltip-popup"\]\[data-fork-glass-tooltip\]\s*\{[^}]*--fork-tooltip-font-size:\s*var\(--fork-text-chip\)/u,
     );
     // Toggle is a tap of right Command, not a chord that would steal ⌘C.
     expect(dictationModule).toContain('event.code === "MetaRight"');

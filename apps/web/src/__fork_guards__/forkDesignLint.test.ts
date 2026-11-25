@@ -46,6 +46,7 @@ describe("fork guard: fork-design-lint", () => {
           color: var(--foreground);
           border-color: color-mix(in srgb, var(--basic-ink) 8%, transparent);
           background: rgb(from var(--background) r g b / 50%);
+          outline-color: rgb(var(--fork-tint) / 8%);
           mask-image: linear-gradient(black, transparent);
           box-shadow: var(--tw-ring-shadow, 0 0 #0000);
           animation: red-pulse 2s;
@@ -73,7 +74,8 @@ describe("fork guard: fork-design-lint", () => {
         height: 1px;
         font-size: var(--text-sm);
         line-height: 1;
-      }`;
+      }
+      ${ROOT} .fork-y { line-height: calc(var(--spacing) * 4.5); }`;
       expect(rules(check(css))).toEqual([]);
     });
 

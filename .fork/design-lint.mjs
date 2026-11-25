@@ -482,8 +482,8 @@ export function colorLiterals(property, value) {
       else if (text[end] === ")" && --depth === 0) break;
     }
     const call = text.slice(match.index, end + 1);
-    // Relative colour syntax over a token (rgb(from var(--x) r g b / 12%)) derives from the token.
-    if (!/^\w+\(\s*from\s+var\(/u.test(call)) out.push(call);
+    // Channels from a token (rgb(from var(--x) r g b / 12%), rgb(var(--tint) / 8%)) derive from it.
+    if (!/^\w+\(\s*(?:from\s+)?var\(/u.test(call)) out.push(call);
   }
   if (COLOR_PROPERTY.test(property)) {
     for (const match of text.matchAll(/(?<![\w-])[a-z]+(?![\w(-])/giu)) {
@@ -674,7 +674,10 @@ export function checkStylesheet(sheet, slots = new Set()) {
           property === "line-height" ||
           (custom && TYPE_TOKEN_NAME.test(property)))
       ) {
-        const literals = numericLiterals(value).filter(({ number, unit }) =>
+        // A step on the spacing scale (calc(var(--spacing) * 4)) is the scale, not a ratio.
+        const literals = numericLiterals(
+          value.replace(/var\(\s*--spacing\s*\)\s*\*\s*-?\d*\.?\d+/gu, "var(--spacing)"),
+        ).filter(({ number, unit }) =>
           property === "font-size" || /font-size|text-size/u.test(property)
             ? unit !== "" && !(number === 100 && unit === "%") && !(number === 1 && unit === "em")
             : !(unit === "" && (number === 0 || number === 1)),

@@ -89,7 +89,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(indicator).toContain("data-fork-monitoring-pulse");
     expect(theme).toContain("@keyframes sidebar-v2-monitoring-pulse");
     expect(theme).toMatch(
-      /\.dark \[data-fork-monitoring-pulse\]\s*\{[^}]*opacity:\s*0\.5[^}]*contain:\s*paint[^}]*animation:\s*sidebar-v2-monitoring-pulse/u,
+      /\.dark \[data-fork-monitoring-pulse\],[^{]*\{[^}]*opacity:\s*0\.5[^}]*contain:\s*paint[^}]*animation:\s*sidebar-v2-monitoring-pulse/u,
     );
     // Duty-cycled + stepped (ghost-pulse / status-pulse): holds at each pole
     // with a short steps() ramp, not ease-in-out every vsync.

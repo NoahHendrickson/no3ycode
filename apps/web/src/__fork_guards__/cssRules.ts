@@ -143,13 +143,14 @@ export function ruleBodyFor(
   selectorParts: readonly string[],
 ): string {
   const wanted = selectorParts.join(" ").replace(/\s+/gu, " ").trim();
-  const rule = rules.find(
+  // A selector's token block and its style rule are two rules with one selector; read both.
+  const matching = rules.filter(
     (candidate) => candidate.selector.replace(/\s+/gu, " ").trim() === wanted,
   );
-  if (rule === undefined) {
+  if (matching.length === 0) {
     throw new Error(`no rule found for selector: ${wanted}`);
   }
-  return rule.body;
+  return matching.map((rule) => rule.body).join("\n");
 }
 
 /** First 6-digit hex assigned to `prop` in a rule body. Throws when absent. */

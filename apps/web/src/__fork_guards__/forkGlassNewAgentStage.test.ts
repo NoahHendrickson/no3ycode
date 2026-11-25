@@ -62,8 +62,13 @@ const customizations = readSibling("../../../../.fork/customizations.yaml");
 // The formatter wraps selectors across lines; compare without whitespace.
 const compact = (value: string) => value.replace(/\s+/gu, "");
 const flat = (value: string | undefined) => (value ?? "").replace(/\s+/gu, " ").trim();
-const find = (selector: string) =>
-  rules.find((rule) => compact(rule.selector) === compact(selector));
+// A selector's token block and its style rule are two rules; read them as one.
+const find = (selector: string) => {
+  const matches = rules.filter((rule) => compact(rule.selector) === compact(selector));
+  return matches.length === 0
+    ? undefined
+    : { ...matches[0]!, body: matches.map((rule) => rule.body).join("\n") };
+};
 
 describe("fork guard: fork-glass-new-agent-stage", () => {
   it("stands the whole stage down when another background is picked", () => {
@@ -190,6 +195,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
       `${compact(GLASS)}${ROOT}::after`,
       `${compact(GLASS)}${ROOT}::after`,
       `${VIBRANT_GLASS}${POPUP}`,
+      `${VIBRANT_GLASS}${POPUP}`,
       `${VIBRANT_GLASS}${POPUP}::after`,
     ]);
     // The draft is read off ChatView's stamps (fork-stage-stamps guards the :has() side).
@@ -254,8 +260,8 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
           `${compact(GLASS)}${DRAFT}[data-chat-header]:is(ol:has([data-slot="workspace-breadcrumb-text"])`,
         ) && compact(rule.selector).includes('ol:has([data-slot="workspace-breadcrumb-text"])*)'),
     );
-    expect(crumb?.body).toMatch(/color:\s*#ffffff/u);
-    expect(crumb?.body).toMatch(/text-shadow:\s*0 1px 2px rgb\(0 0 0 \/ 45%\)/u);
+    expect(crumb?.body).toMatch(/color:\s*var\(--fork-white\)/u);
+    expect(crumb?.body).toMatch(/text-shadow:\s*0 1px 2px var\(--fork-black-45\)/u);
   });
 
   it("colours the gutter like the sidebar on both clients through one shared token", () => {
@@ -324,7 +330,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
       "--fork-composer-vessel-bg: rgb(255 255 255 / 5%); --fork-composer-bg: rgb(0 0 0 / 41%); --fork-composer-border: rgb(255 255 255 / 24%); --fork-composer-border-focus: rgb(255 255 255 / 38%); --fork-context-chip-bg: rgb(255 255 255 / 0%); --fork-context-chip-bg-hover: rgb(255 255 255 / 8%); --fork-composer-control-ink: rgb(255 255 255 / 80%);",
     );
     const traits = find(`${GLASS}${HERO}[data-chat-provider-model-picker-traits]`);
-    expect(flat(traits?.body)).toBe("color: rgb(255 255 255 / 65%);");
+    expect(flat(traits?.body)).toBe("color: var(--fork-white-65);");
   });
 
   it("frosts the composer, its pills and the header's controls with one anchored copy each", () => {
@@ -420,7 +426,7 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     // lengths the cutout writes: a popup's positioner is transformed, which
     // would break an anchor. overflow, not clip-path, keeps the shadow.
     expect(flat(find(`${VIBRANT}${POPUP}`)?.body)).toBe(
-      'isolation: isolate; overflow: clip; overflow-clip-margin: border-box; outline: 1px solid rgb(255 255 255 / 12%); outline-offset: -1px; background: var(--fork-glass-frost-floor); --fork-glass-frost-wash: rgb(255 255 255 / 5%); --fork-glass-frost-veil: 50%; --fork-glass-frost-veil-color: rgb(12 12 14); --fork-glass-frost-image: url("./custom/assets/glass-hero-popup-frost.png");',
+      '--fork-glass-frost-wash: rgb(255 255 255 / 5%); --fork-glass-frost-veil: 50%; --fork-glass-frost-veil-color: rgb(12 12 14); --fork-glass-frost-image: url("./custom/assets/glass-hero-popup-frost.png"); isolation: isolate; overflow: clip; overflow-clip-margin: border-box; outline: 1px solid var(--fork-white-12); outline-offset: -1px; background: var(--fork-glass-frost-floor);',
     );
     const popupFrost = find(`${VIBRANT}${POPUP}::after`)?.body;
     expect(popupFrost).toMatch(/position:\s*absolute/u);

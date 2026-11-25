@@ -68,11 +68,14 @@ describe("fork guard: glass surfaces", () => {
       /background-color:\s*rgb\(from var\(--fork-composer-action-light\) r g b \/ 18%\)/u,
     );
     expect(face).toContain("background-image:");
-    expect(face).toMatch(/color:\s*#ffffff/u);
+    expect(face).toMatch(/color:\s*var\(--fork-white\)/u);
 
     const stopFace = ruleBodyFor(rules, [`${MARKER}.dark${PALETTE}`, stop]);
-    expect(stopFace).toMatch(/background:\s*rgb\(234 49 80 \/ 48%\)/u);
-    expect(stopFace).toMatch(/color:\s*#ffffff/u);
+    expect(stopFace).toMatch(/background:\s*var\(--fork-glass-stop-fill\)/u);
+    expect(readSibling("../theme.custom.palettes.css")).toContain(
+      "--fork-glass-stop-fill: rgb(234 49 80 / 48%);",
+    );
+    expect(stopFace).toMatch(/color:\s*var\(--fork-white\)/u);
 
     const root = ruleBodyFor(rules, [`${MARKER}.dark${PALETTE}`]);
     expect(stopFace).not.toContain("--fork-popup-glass-floor");
@@ -134,10 +137,10 @@ describe("fork guard: glass surfaces", () => {
       "[data-fork-composer-context-row]",
       '[data-slot="composer-context-strip"]',
     ]);
-    const padding = /padding-inline:\s*(\d+)px/u.exec(strip)?.[1];
+    const padding = /padding-inline:\s*calc\(var\(--spacing\) \* ([\d.]+)\)/u.exec(strip)?.[1];
     expect(padding).toBeDefined();
-    expect(Number(padding)).toBeGreaterThanOrEqual(3);
-    expect(strip).toMatch(new RegExp(`margin-inline:\\s*-${padding}px`, "u"));
+    expect(Number(padding) * 4).toBeGreaterThanOrEqual(3);
+    expect(strip).toContain(`margin-inline: calc(var(--spacing) * -${padding});`);
     expect(strip).not.toContain("overflow-clip-margin");
   });
 
@@ -152,7 +155,8 @@ describe("fork guard: glass surfaces", () => {
         ':is([data-sidebar-version="v2"], [data-app-modal])',
         "[data-fork-chrome-row]",
       ]),
-    ).toContain("border-radius: 9999px;");
+    ).toContain("border-radius: var(--fork-pill-radius);");
+    expect(readSibling("../theme.custom.css")).toContain("--fork-pill-radius: 9999px;");
     // The 3D sheet rounds thread rows to 12px but leaves the top rows alone.
     expect(
       rules.some((rule) => /12px/u.test(rule.body) && rule.selector.includes("chrome-row")),

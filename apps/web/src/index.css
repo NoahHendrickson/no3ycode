@@ -164,6 +164,7 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
 .wco {
   --native-titlebar-height: env(titlebar-area-height, 0px);
   /* fork:begin fork-workspace-header — see .fork/customizations.yaml#fork-workspace-header */
+  /* design-lint-disable-next-line A3 -- sized to the native title bar (env px), not the Interface font size */
   --workspace-topbar-height: max(40px, env(titlebar-area-height, 52px));
   /* fork:end fork-workspace-header */
   --workspace-controls-top: env(titlebar-area-y, 0px);

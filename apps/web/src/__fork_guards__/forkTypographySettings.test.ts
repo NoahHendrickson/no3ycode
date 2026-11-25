@@ -83,8 +83,9 @@ describe("fork guard: fork-typography-settings", () => {
     for (const token of ["2xs", "3xs"]) {
       const size = new RegExp(`--text-${token}: ([\\d.]+rem);`).exec(index)?.[1];
       expect(size, `index.css --text-${token}`).toBeDefined();
-      expect(rule(`${TIMELINE} .text-${token}`)?.body).toContain(
-        `calc(${size} * var(--fork-chat-text-scale, 1))`,
+      expect(rule(`${TIMELINE} .text-${token}`)?.body).toContain(`var(--text-${token})`);
+      expect(tokens?.body).toContain(
+        `--text-${token}: calc(${size} * var(--fork-chat-text-scale, 1))`,
       );
     }
     for (const [heading, token] of [
@@ -97,7 +98,10 @@ describe("fork guard: fork-typography-settings", () => {
         `font-size: var(--text-${token})`,
       );
     }
-    expect(rule(`${TIMELINE} .chat-markdown table`)?.body).toContain("var(--fork-chat-text-scale");
+    expect(rule(`${TIMELINE} .chat-markdown table`)?.body).toContain("var(--fork-chat-text-sm)");
+    expect(readSibling("../theme.custom.css")).toContain(
+      "--fork-chat-text-sm: calc(0.875rem * var(--fork-chat-text-scale, 1));",
+    );
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
       'data-timeline-root="true"',
     );
