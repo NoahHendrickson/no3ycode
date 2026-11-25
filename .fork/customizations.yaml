@@ -9453,6 +9453,32 @@
   verify:
     - apps/web/src/__fork_guards__/no3yLinkedPullRequestRow.test.ts
 
+- id: fork-cinnabar-live
+  intent: >
+    Dev builds can follow Cinnabar Studio's live font, so a font edit shows up
+    across the real app within a couple of seconds and without a reload. It is
+    off unless the dev server is started with VITE_CINNABAR_LIVE (a Studio URL,
+    or "1" for http://127.0.0.1:8765) and never runs in production builds
+    (import.meta.env.DEV). The Studio announces each recompiled version over
+    server-sent events at /live/events; custom/cinnabarLive fetches
+    /live/CinnabarSans.ttf and /live/CinnabarSans-Italic.ttf and swaps the
+    "Cinnabar Sans" FontFace objects in document.fonts, which outrank the
+    stylesheet's @font-face rules for the same descriptors. The fonts are fetched
+    and built from ArrayBuffers on purpose: the desktop CSP allows http: in
+    connect-src but not in font-src, and a buffer-built FontFace makes no font
+    fetch. Versions only move forward, so a slow load can't replace a newer one.
+  tier: 1
+  files:
+    - apps/web/src/custom/cinnabarLive.ts
+  shadows: []
+  watch:
+    # Fenced import and the call next to the dev house look.
+    - apps/web/src/main.tsx
+    # The CSP the buffer-built FontFace is designed around.
+    - apps/desktop/src/electron/ElectronProtocol.ts
+  verify:
+    - apps/web/src/__fork_guards__/cinnabarLive.test.ts
+
 - id: fork-dev-house-look
   intent: >
     Every dev desktop launch (`vp run dev:desktop`, any Electron profile)
