@@ -18,13 +18,9 @@ const IMAGES = {
   No3yCodex: "fork/assets/widget/No3yCodex.png",
   // beadRingPath's still frame, cropped to the ring.
   No3yBeadRing: "fork/assets/widget/No3yBeadRing.svg",
-  // The Figma lockup (no3y-code file, "Lockup · on light"), split so the words can take the card's ink.
-  No3yWordNoey: "fork/assets/widget/No3yWordNoey.svg",
-  No3yLeafSquares: "fork/assets/widget/No3yLeafSquares.svg",
-  No3yWordCode: "fork/assets/widget/No3yWordCode.svg",
 };
-/** Drawn as masks the card tints: the bead ring with its status colour, the words with its ink. */
-const TEMPLATES = new Set(["No3yBeadRing", "No3yWordNoey", "No3yWordCode"]);
+/** Drawn as a mask the card tints with the status colour. */
+const TEMPLATES = new Set(["No3yBeadRing"]);
 
 module.exports = function withNo3yWidgetAssets(config) {
   return withDangerousMod(config, [
