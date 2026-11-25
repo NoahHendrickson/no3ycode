@@ -28,7 +28,7 @@ describe("fork guard: fork-sidebar-update-label", () => {
   });
 
   it("confirms an install with the fork's restart dialog in the pill and Settings", () => {
-    expect(updatePill).toContain("await confirmRestart(state)");
+    expect(updatePill).toContain("await confirmRestart(");
     expect(settingsPanels).toContain("await confirmRestart(");
     expect(settingsPanels).not.toContain("getDesktopUpdateInstallConfirmationMessage");
   });

@@ -7447,6 +7447,7 @@
   watch:
     - apps/web/src/components/sidebar/SidebarUpdatePill.tsx
     - apps/web/src/components/settings/SettingsPanels.tsx
+    - apps/web/src/components/sidebar/DesktopUpdateStatusIcon.tsx
     - knip.jsonc
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts

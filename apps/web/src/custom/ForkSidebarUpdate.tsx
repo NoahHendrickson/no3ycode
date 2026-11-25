@@ -1,5 +1,4 @@
 /* oxlint-disable t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */
-import type { DesktopUpdateState } from "@t3tools/contracts";
 import { useState } from "react";
 
 import {
@@ -71,9 +70,9 @@ type PendingRestart = {
 export function useForkUpdateRestartConfirm() {
   const [pending, setPending] = useState<PendingRestart | null>(null);
 
-  const confirm = (state: Pick<DesktopUpdateState, "availableVersion" | "downloadedVersion">) =>
+  const confirm = (version: string | null) =>
     new Promise<boolean>((resolve) => {
-      setPending({ version: state.downloadedVersion ?? state.availableVersion, resolve });
+      setPending({ version, resolve });
     });
 
   const settle = (confirmed: boolean) => {

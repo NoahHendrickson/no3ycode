@@ -44,6 +44,7 @@ import {
   canCheckForUpdate,
   getDesktopUpdateButtonTooltip,
   getDesktopUpdateDisabledReason,
+  getDesktopUpdateDownloadedVersion,
   isDesktopUpdateButtonDisabled,
   resolveDesktopUpdateButtonAction,
 } from "../../components/desktopUpdate.logic";
@@ -276,7 +277,7 @@ function AboutVersionSection() {
       try {
         /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
         confirmed = await confirmRestart(
-          updateState ?? { availableVersion: null, downloadedVersion: null },
+          updateState ? getDesktopUpdateDownloadedVersion(updateState) : null,
         );
         /* fork:end fork-sidebar-update-label */
       } catch (error) {

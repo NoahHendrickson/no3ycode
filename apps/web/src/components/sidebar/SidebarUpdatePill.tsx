@@ -322,7 +322,7 @@ function SidebarUpdateControl() {
       let confirmed = false;
       try {
         /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
-        confirmed = await confirmRestart(state);
+        confirmed = await confirmRestart(getDesktopUpdateDownloadedVersion(state));
         /* fork:end fork-sidebar-update-label */
       } catch (error) {
         setIsActionPending(false);
@@ -470,6 +470,9 @@ function SidebarUpdateControl() {
             : {})}
         />
         {confirmDialog}
+        {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
+        {restartDialog}
+        {/* fork:end fork-sidebar-update-label */}
       </SidebarMenuItem>
     );
   }
@@ -483,6 +486,7 @@ function SidebarUpdateControl() {
       iconStatus === "downloading" ||
       iconStatus === "downloaded" ||
       iconStatus === "everything");
+  const showDownloadRing = iconStatus === "downloading";
   /* fork:end fork-sidebar-update-label */
 
   const updateButton = (
@@ -555,14 +559,13 @@ function SidebarUpdateControl() {
       className={cn(
         "ml-auto shrink-0",
         /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
-        "flex items-center",
-        // Only the download ring may give way; the round icon states keep their size.
-        showUpdateLabel && iconStatus === "downloading" && "min-w-0 shrink",
+        // Only the download ring may give way; the other states keep base layout.
+        showDownloadRing && "flex min-w-0 shrink items-center",
         /* fork:end fork-sidebar-update-label */
       )}
     >
       {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
-      {showUpdateLabel && iconStatus === "downloading" ? (
+      {showDownloadRing ? (
         <ForkUpdateDownloadRing percent={state?.downloadPercent ?? null} />
       ) : null}
       {/* fork:end fork-sidebar-update-label */}
