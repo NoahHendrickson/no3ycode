@@ -142,6 +142,11 @@ import { useAtomCommand } from "./use-atom-command";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import { readNo3yHomeTabs } from "../../fork/no3yHomeTabs";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+import { lastOwnerPrompt } from "@t3tools/client-runtime/fork-composer-next-step";
+import { recordNo3yComposerHabit } from "../../fork/no3yComposerHabits";
+import { hasComposerDraftOperations } from "./composerDraftOperations";
+/* fork:end fork-composer-next-step */
 
 const EMPTY_QUEUE_WORKFLOW_ATOM = Atom.make<null>(null).pipe(
   Atom.withLabel("mobile-thread-queue-workflow:empty"),
@@ -627,6 +632,10 @@ export function useThreadComposerState(input: {
       hasAttachmentsOrContext: boolean,
     ) => Promise<boolean | "responded">,
     onWillEnqueue?: () => void,
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    /** The next-step pill's prompt, sent in place of the (empty) draft's text with its settings. */
+    prompt?: string,
+    /* fork:end fork-composer-next-step */
   ) => {
     if (
       selectedThreadShell &&
@@ -651,7 +660,20 @@ export function useThreadComposerState(input: {
     // Until a side chat start settles, its draft may be only partly back in the composer.
     if (startingSideChatRef.current) return null;
     const threadKey = scopedThreadKey(selectedThreadShell.environmentId, selectedThreadShell.id);
-    const draft = getComposerDraftSnapshot(threadKey);
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    const storedDraft = getComposerDraftSnapshot(threadKey);
+    // The pill sends only into an empty composer, so anything written since it rendered, or a
+    // paste still converting into it, stays for the owner's own send.
+    if (
+      prompt !== undefined &&
+      (storedDraft.text.trim().length > 0 ||
+        storedDraft.attachments.length > 0 ||
+        storedDraft.context !== undefined ||
+        hasComposerDraftOperations(threadKey))
+    )
+      return null;
+    const draft = prompt === undefined ? storedDraft : { ...storedDraft, text: prompt };
+    /* fork:end fork-composer-next-step */
     if (appAtomRegistry.get(composerContextImportsAtom)[threadKey]) return null;
     const thread = selectedThreadShell;
     const text = draft.text.trim();
@@ -906,6 +928,13 @@ export function useThreadComposerState(input: {
       resumeCompactionTokens(modelSelection, text, metadata.createdAt) !== null;
     const messageId = MessageId.make(metadata.messageId);
     onWillEnqueue?.();
+    /* fork:begin fork-composer-next-step — see .fork/customizations.yaml#fork-composer-next-step */
+    // A new owner turn, typed or the pill's, is committed here. An approval's redirect answers it,
+    // and side chats keep their own habits out of the thread's.
+    if (beforeDispatch === undefined && thread.lineage.sideChat !== true) {
+      recordNo3yComposerHabit(lastOwnerPrompt(selectedThreadMessages ?? []), text);
+    }
+    /* fork:end fork-composer-next-step */
     clearThreadComposerError(threadKey);
     const enqueuePromise = enqueueThreadOutboxMessage({
       environmentId: selectedThreadShell.environmentId,

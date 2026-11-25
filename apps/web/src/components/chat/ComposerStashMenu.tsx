@@ -8,6 +8,9 @@ import { RelativeTime } from "../RelativeTime";
 import { m, type MessageResolver } from "~/i18n/messages";
 import { cn } from "~/lib/utils";
 import { type PromptStashEntry } from "../../promptStashStore";
+/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+import { ComposerCardRemoveButton, ComposerCardTitle } from "~/custom/ComposerCardParts";
+/* fork:end fork-composer-shell */
 import { ComposerBanner } from "./ComposerBanner";
 
 const SNIPPET_MAX_CHARS = 90;
@@ -157,6 +160,10 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
       ref={drawerRef}
       className="flex min-h-0 flex-col after:shrink-0"
       data-composer-stash-drawer="true"
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+         A card in the composer's dock, like the queue card: focus in it stays in the composer. */
+      data-chat-composer-collapsed-controls="true"
+      /* fork:end fork-composer-shell */
     >
       <ComposerBanner.Row
         render={<button type="button" />}
@@ -168,13 +175,15 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
         <ComposerBanner.Icon>
           <BookmarkIcon />
         </ComposerBanner.Icon>
-        <ComposerBanner.Content className="text-muted-foreground">
+        {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+            The queue card's header: the count rides the label. */}
+        <ComposerCardTitle count={entries.length}>
           {gt("Stash", { $context: "noun, saved prompts set aside for later" })}
-        </ComposerBanner.Content>
+        </ComposerCardTitle>
         <ComposerBanner.Actions>
-          <ComposerBanner.Count>{entries.length}</ComposerBanner.Count>
           <ComposerBanner.ToggleIcon expanded />
         </ComposerBanner.Actions>
+        {/* fork:end fork-composer-shell */}
       </ComposerBanner.Row>
       <ComposerBanner.Scroll className="flex flex-col">
         <ComposerBanner.Children render={<ul role="list" />} aria-label={gt("Stashed prompts")}>
@@ -216,7 +225,9 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
                 <ComposerBanner.Content>
                   <button
                     type="button"
-                    className="min-w-0 flex-1 cursor-pointer truncate text-left text-foreground/80 outline-none before:absolute before:inset-0 before:rounded-sm focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-ring"
+                    /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+                    className="min-w-0 flex-1 cursor-pointer truncate text-left text-sm text-foreground outline-none before:absolute before:inset-0 before:rounded-sm focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-ring"
+                    /* fork:end fork-composer-shell */
                     data-stash-restore={entry.id}
                     aria-label={gt("Restore stashed prompt: {snippet}", {
                       snippet: stashEntrySnippet(entry, m),
@@ -268,12 +279,15 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
                   >
                     <RelativeTime timestamp={entry.createdAt} />
                   </time>
-                  <ComposerBanner.Dismiss
+                  {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+                      The queue card's remove: a muted trash icon. */}
+                  <ComposerCardRemoveButton
                     className="z-10"
                     aria-label={gt("Delete stashed prompt")}
                     onPointerDown={(event) => event.preventDefault()}
                     onClick={() => onDelete(entry)}
                   />
+                  {/* fork:end fork-composer-shell */}
                 </ComposerBanner.Actions>
               </ComposerBanner.Row>
             ))

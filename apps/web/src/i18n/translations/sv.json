@@ -1,4 +1,6 @@
 {
+  "7342bfc328008926": "Pågår",
+  "353b08f4363dbb2c": "Väntar",
   "4bcfa3b976a421cf": "Sidochatt",
   "23be753133ae6950": "Tråd",
   "0001ae5846061bb6": "Tråd på {machine}",
@@ -2466,6 +2468,7 @@
   "d07ed4990bbb5323": "Trådåtgärden är inte tillgänglig",
   "82e555245a78f961": "Den här anslutningen kan inte ändra en eller flera av de valda trådarna.",
   "e54720cac68f2adb": "Alla projekt",
+  "3d452b69b89d669e": "{count, plural, one {{count} subagent körs} other {{count} subagenter körs}}",
   "ac47f86df1c31a4a": "Det gick inte att kopiera grenen",
   "4e6305459e784fea": "Det gick inte att kopiera tråd-ID",
   "5a79b7c910831c76": "Trådens titel får inte vara tom",
@@ -9168,6 +9171,8 @@
   "6afaa3e3739dc570": "Välj en projektikon",
   "51651ce45d481a20": "Välj en fil för projektikonen",
   "a10ff8b39e16d7f8": "Fäst",
+  "876e7a8c229f3d07": "Lossa",
+  "7253764d0ff8ff8e": "Inga fästa modeller än. Fäst en modell för att ha den här.",
   "c65b6d4b82c9eb43": "Fästa projekt visas först i projektväljare.",
   "2a546119bf3879ee": "Arkiv",
   "63e237776ff48bea": "Dold i projektväljare. Trådar och filer behålls.",
@@ -12467,5 +12472,6 @@
   "27d76249d09eb69f": "Granskningsguiden är klar",
   "faa3bb26abb39c93": "Granskningsguiden misslyckades",
   "b7df38b7d8792d78": "Öppna guiden",
-  "9e91e9a77b664e4e": "Kunde inte starta en granskningsguide"
+  "9e91e9a77b664e4e": "Kunde inte starta en granskningsguide",
+  "93804cc08b314998": "sammanfogas i"
 }

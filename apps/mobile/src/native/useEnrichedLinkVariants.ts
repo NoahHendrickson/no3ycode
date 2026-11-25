@@ -5,6 +5,9 @@ import {
   parseAssistantCitationHref,
 } from "@t3tools/shared/assistantCitations";
 import { Image } from "react-native";
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { StyleSheet } from "react-native";
+/* fork:end no3y-subagent-link-chip */
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
 import { contextChipAccent, contextChipPresentation } from "../lib/composerChipPresentation";
@@ -27,6 +30,9 @@ import {
   enrichedThreadLinkPresentation,
 } from "../lib/enrichedLinkPresentation";
 import { formatProviderSkillDisplayName } from "@t3tools/shared/inlineSkills";
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+import type { No3yChipSizes } from "../../fork/no3yChipHeight";
+/* fork:end no3y-mobile-redesign */
 
 function chipCustomization(
   chip: ReturnType<typeof enrichedContextLinkPresentation>,
@@ -121,6 +127,9 @@ export function useEnrichedLinkVariants(
   urls: ReadonlyArray<string>,
   props: SelectableMarkdownTextProps,
   fileHrefs: ReadonlySet<string>,
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  chipSizes?: No3yChipSizes,
+  /* fork:end no3y-mobile-redesign */
 ) {
   const { linkCustomization, skills, models, textStyle, fileEmbedLabel } = props;
   const theme = useUniwindTheme();
@@ -164,12 +173,14 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
+                // Where the reply draws code as a chip, the capsule takes its height (no3yChipSizes).
                 pill: {
                   borderColor: link.capsule.border,
-                  borderWidth: 1,
+                  borderWidth: StyleSheet.hairlineWidth,
                   borderRadius: 999,
-                  paddingHorizontal: 7,
-                  paddingVertical: 2,
+                  paddingHorizontal: 6,
+                  paddingVertical: 0,
+                  ...chipSizes?.capsule,
                 },
                 fontFamily: FONT_FAMILIES.medium,
                 color: textStyle.color,
@@ -180,37 +191,52 @@ export function useEnrichedLinkVariants(
           }
           /* fork:end no3y-subagent-link-chip */
           /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-          // A file reference wears inline code's chip and ink when the reply styles one.
+          // A file reference wears inline code's chip, ink and size when the reply styles one.
           const codeChip =
             link.fileReference && textStyle.inlineCodeBackgroundColor !== undefined
               ? textStyle.inlineCodeChip
               : undefined;
-          const chipForeground = codeChip ? undefined : chipForegrounds.get(url);
+          if (codeChip) {
+            return [
+              enrichedLinkVariantPattern(url),
+              {
+                pill: {
+                  borderColor: "transparent",
+                  borderWidth: 0,
+                  borderRadius: codeChip.radius,
+                  paddingHorizontal: codeChip.paddingHorizontal,
+                  paddingVertical: 0,
+                  fontScale: codeChip.fontScale,
+                  ...chipSizes?.file,
+                },
+                fontFamily: textStyle.fontFamily,
+                color: textStyle.fileTextColor,
+                underline: false,
+                backgroundColor: textStyle.inlineCodeBackgroundColor,
+              },
+            ];
+          }
           /* fork:end no3y-mobile-redesign */
+          const chipForeground = chipForegrounds.get(url);
           return [
             enrichedLinkVariantPattern(url),
             {
               pill: {
                 borderColor: "transparent",
                 borderWidth: 0,
-                /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-                borderRadius: codeChip?.radius ?? 6,
-                paddingHorizontal: codeChip?.paddingHorizontal ?? 5,
-                /* fork:end no3y-mobile-redesign */
+                borderRadius: 6,
+                paddingHorizontal: 5,
                 paddingVertical: 2,
               },
               fontFamily: chipForeground ? FONT_FAMILIES.medium : textStyle.fontFamily,
-              /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
-              color:
-                chipForeground ?? (codeChip ? undefined : link.color) ?? textStyle.fileTextColor,
+              color: chipForeground ?? link.color ?? textStyle.fileTextColor,
               underline: false,
-              backgroundColor: codeChip ? textStyle.inlineCodeBackgroundColor : "transparent",
-              /* fork:end no3y-mobile-redesign */
+              backgroundColor: "transparent",
             },
           ];
         }),
       ),
-    [chipForegrounds, links, textStyle],
+    [chipForegrounds, links, textStyle, chipSizes],
   );
   const linkPillContent = useMemo<Record<string, LinkPillContent>>(
     () =>

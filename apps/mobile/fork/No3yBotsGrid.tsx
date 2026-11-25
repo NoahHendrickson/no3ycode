@@ -1,12 +1,12 @@
 /**
- * Petals (the fork's bots) at the top of the no3y iOS Threads screen, as the Mac's Petal tiles,
- * four to a row: the bare mascot, the name under it, and a corner mark that takes the petal's
- * launched work's need of you — see `.fork/customizations.yaml#no3y-mobile-redesign`.
+ * Petals (the fork's bots) at the top of the no3y iOS Threads screen, as the Mac's Petal tiles, up
+ * to five to a row (fewer span it), wrapping: the bare mascot, the name under it, and a corner
+ * mark that takes the petal's launched work's need of you — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import ChevronDownIcon from "@hugeicons/core-free-icons/ChevronDownIcon";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import { useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 
@@ -25,7 +25,8 @@ import {
 } from "./forkBots";
 import { resolveNo3yThreadCardStatusKind } from "./mobileStatusGrouping";
 import { HugeIcon } from "./HugeIcon";
-import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
+import { No3yGlassLayer } from "./No3yGlass";
+import { NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yStatusMark } from "./No3yStatusMark";
 
 const GRID_INSET = 16;
@@ -69,6 +70,29 @@ function PetalCard(props: {
   const ownKind = resolveNo3yThreadCardStatusKind(bot, { now: props.now });
   const mark = no3yPetalMark(ownKind, resolveThreadListV2Status(bot), props.work);
   const shape = no3yBotMascotShape({ id: bot.id, tags: bot.source?.tags });
+  const content = (
+    <>
+      <View style={{ position: "absolute", top: 6, right: 6 }}>
+        <No3yStatusMark kind={mark.kind} palette={palette} idleMode="dot" />
+      </View>
+      <View style={{ height: MASCOT_SIZE, justifyContent: "center" }}>
+        <BotMascot shape={shape} mood={no3yBotMascotMood(mark.kind)} fit={MASCOT_SIZE} />
+      </View>
+      <Text
+        numberOfLines={1}
+        style={{
+          ...NO3Y_FONT.regular,
+          fontSize: 12,
+          lineHeight: 16,
+          color: palette.titleInk,
+          textAlign: "center",
+          alignSelf: "stretch",
+        }}
+      >
+        {bot.title}
+      </Text>
+    </>
+  );
   return (
     <Menu
       shouldOpenOnLongPress
@@ -88,35 +112,30 @@ function PetalCard(props: {
         accessibilityRole="button"
         accessibilityLabel={`${bot.title}, petal`}
         onPress={() => props.onOpen(bot)}
-        style={({ pressed }) => ({
+        style={{
           alignItems: "center",
           gap: 6,
           paddingTop: 10,
           paddingBottom: 10,
           paddingHorizontal: 4,
           borderRadius: TILE_RADIUS,
-          backgroundColor: pressed ? palette.rowSelected : palette.cardWash,
-        })}
+        }}
       >
-        <View style={{ position: "absolute", top: 6, right: 6 }}>
-          <No3yStatusMark kind={mark.kind} palette={palette} idleMode="dot" />
-        </View>
-        <View style={{ height: MASCOT_SIZE, justifyContent: "center" }}>
-          <BotMascot shape={shape} mood={no3yBotMascotMood(mark.kind)} fit={MASCOT_SIZE} />
-        </View>
-        <Text
-          numberOfLines={1}
-          style={{
-            ...NO3Y_FONT.regular,
-            fontSize: 12,
-            lineHeight: 16,
-            color: palette.titleInk,
-            textAlign: "center",
-            alignSelf: "stretch",
-          }}
-        >
-          {bot.title}
-        </Text>
+        {({ pressed }) => (
+          <>
+            <No3yGlassLayer radius={TILE_RADIUS} />
+            {pressed ? (
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  { borderRadius: TILE_RADIUS, backgroundColor: palette.rowSelected },
+                ]}
+              />
+            ) : null}
+            {content}
+          </>
+        )}
       </Pressable>
     </Menu>
   );
@@ -147,9 +166,10 @@ export function No3yBotsGrid(props: {
     [props.threads],
   );
   if (props.bots.length === 0) return null;
+  const perRow = Math.min(props.bots.length, PER_ROW);
   const rows: Array<ReadonlyArray<EnvironmentThreadShell>> = [];
-  for (let index = 0; index < props.bots.length; index += PER_ROW) {
-    rows.push(props.bots.slice(index, index + PER_ROW));
+  for (let index = 0; index < props.bots.length; index += perRow) {
+    rows.push(props.bots.slice(index, index + perRow));
   }
   return (
     <View style={{ paddingHorizontal: GRID_INSET, paddingTop: 10, gap: GRID_GAP }}>
@@ -190,8 +210,7 @@ export function No3yBotsGrid(props: {
             <Animated.View
               key={`${row[0]!.environmentId}:${row[0]!.id}`}
               layout={NO3Y_LAYOUT}
-              entering={NO3Y_FADE_IN}
-              exiting={NO3Y_FADE_OUT}
+              entering={NO3Y_GLASS_RISE_IN}
               style={{ flexDirection: "row", gap: GRID_GAP }}
             >
               {row.map((bot) => (
@@ -207,7 +226,7 @@ export function No3yBotsGrid(props: {
                 />
               ))}
               {/* A short last row keeps the tiles their full-row width. */}
-              {Array.from({ length: PER_ROW - row.length }, (_, index) => (
+              {Array.from({ length: perRow - row.length }, (_, index) => (
                 <View key={index} style={{ flex: 1 }} />
               ))}
             </Animated.View>

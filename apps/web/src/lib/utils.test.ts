@@ -8,4 +8,10 @@ describe("cn", () => {
       "dark:before:bg-transparent dark:before:bg-composer-seam-below",
     );
   });
+
+  it("keeps the sidebar label size next to a text color", () => {
+    expect(cn("text-sidebar-label text-muted-foreground")).toBe(
+      "text-sidebar-label text-muted-foreground",
+    );
+  });
 });

@@ -88,7 +88,7 @@ function subscribe(listener: () => void): () => void {
 }
 
 /** null clears the pick, so the palette's default applies again. */
-function setForkWorkingMark(mark: ForkWorkingMark | null): void {
+export function setForkWorkingMark(mark: ForkWorkingMark | null): void {
   try {
     removeLocalStorageItem(LEGACY_STORAGE_KEY);
     if (mark === null) removeLocalStorageItem(STORAGE_KEY);

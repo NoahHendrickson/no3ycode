@@ -55,8 +55,9 @@ export function useThreadTurnSubagents(target: AgentsTarget | null): ThreadTurnS
 export function ThreadAgentsSheet({ route }: StaticScreenProps<AgentsTarget>) {
   const target = route.params;
   const navigation = useNavigation();
-  const openInspector = useOpenThreadInspector();
-  const openLinkedRead = useOpenLinkedThreadRead();
+  /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+  const openChildThread = useOpenSubagentThread(target);
+  /* fork:end no3y-mobile-redesign */
   const insets = useSafeAreaInsets();
   const gt = useGT();
   const messages = useMessages();
@@ -73,29 +74,6 @@ export function ThreadAgentsSheet({ route }: StaticScreenProps<AgentsTarget>) {
       ),
     [messages, subagents],
   );
-
-  const openChildThread = (child: SubagentThreadTarget, title: string | null = null) => {
-    void Haptics.selectionAsync();
-    if (child.linked !== undefined) {
-      openLinkedRead(child, child.linked, title, { source: target, replace: true });
-      return;
-    }
-    if (
-      openInspector(target, {
-        type: "thread",
-        environmentId: child.environmentId,
-        threadId: child.threadId,
-      })
-    )
-      return;
-    // Replace this leaf sheet so the child enters the workspace stack expected by Home's Back button.
-    navigation.dispatch(
-      StackActions.replace("Thread", {
-        environmentId: child.environmentId,
-        threadId: child.threadId,
-      }),
-    );
-  };
 
   const content = (
     <ScrollView
@@ -154,6 +132,37 @@ export function ThreadAgentsSheet({ route }: StaticScreenProps<AgentsTarget>) {
     </View>
   );
 }
+
+/* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
+/** Opens a subagent's thread from a leaf sheet; the no3y Activity sheet shares it. */
+export function useOpenSubagentThread(target: AgentsTarget) {
+  const navigation = useNavigation();
+  const openInspector = useOpenThreadInspector();
+  const openLinkedRead = useOpenLinkedThreadRead();
+  return (child: SubagentThreadTarget, title: string | null = null) => {
+    void Haptics.selectionAsync();
+    if (child.linked !== undefined) {
+      openLinkedRead(child, child.linked, title, { source: target, replace: true });
+      return;
+    }
+    if (
+      openInspector(target, {
+        type: "thread",
+        environmentId: child.environmentId,
+        threadId: child.threadId,
+      })
+    )
+      return;
+    // Replace this leaf sheet so the child enters the workspace stack expected by Home's Back button.
+    navigation.dispatch(
+      StackActions.replace("Thread", {
+        environmentId: child.environmentId,
+        threadId: child.threadId,
+      }),
+    );
+  };
+}
+/* fork:end no3y-mobile-redesign */
 
 function AgentRow(props: {
   readonly environmentId: EnvironmentId;

@@ -5,7 +5,6 @@ import type { EnvironmentId, ThreadPullRequestLink } from "@t3tools/contracts";
 import { memo } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
-import { resolveDisplayedThreadPr } from "~/components/ThreadStatusIndicators";
 import {
   type ComposerThreadTarget,
   composerDraftHasUserContent,
@@ -15,12 +14,10 @@ import { useEnvironmentQuery } from "~/state/query";
 import { vcsEnvironment } from "~/state/vcs";
 
 import {
-  type ComposerNextStepKind,
-  nextStepPullRequestFromBranch,
-  nextStepPullRequestFromLinks,
   lastOwnerPrompt,
-  resolveComposerNextStep,
-} from "./composerNextStep.logic";
+  pickComposerNextStep,
+  type PickedComposerNextStep,
+} from "@t3tools/client-runtime/fork-composer-next-step";
 import { forgetComposerHabit, useComposerHabitSuggestion } from "./composerHabits";
 import {
   GitMergeIcon,
@@ -31,11 +28,12 @@ import {
   XIcon,
 } from "./icons/lucide-hugeicons";
 
-const KIND_ICON: Record<ComposerNextStepKind, typeof EyeIcon> = {
+const KIND_ICON: Record<PickedComposerNextStep["kind"], typeof EyeIcon> = {
   "open-pr": GitPullRequestArrowIcon,
   babysit: EyeIcon,
   merge: GitMergeIcon,
   release: RocketIcon,
+  learned: SparklesIcon,
 };
 
 export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
@@ -63,64 +61,54 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   const previous = props.messages === null ? null : lastOwnerPrompt(props.messages);
   const habit = useComposerHabitSuggestion(previous);
   if (!props.settled || draftHasContent || props.messages === null) return null;
-  const step = resolveComposerNextStep({
+  const step = pickComposerNextStep({
     lastOwnerPrompt: previous,
-    pullRequest:
-      nextStepPullRequestFromLinks(props.pullRequests) ??
-      nextStepPullRequestFromBranch(
-        resolveDisplayedThreadPr({ threadBranch: props.branch, gitStatus: status ?? null }),
-      ),
-    git:
-      status == null || !status.isRepo
-        ? null
-        : {
-            isDefaultRef: status.isDefaultRef,
-            hasPrimaryRemote: status.hasPrimaryRemote,
-            hasWork: status.hasWorkingTreeChanges || (status.aheadOfDefaultCount ?? 0) > 0,
-          },
+    links: props.pullRequests,
+    branch: props.branch,
+    branchPullRequest: null,
+    gitStatus: status ?? null,
+    habit,
   });
-  if (step === "hold") return null;
-  if (step === null) {
-    if (habit === null) return null;
+  if (step === null) return null;
+  const Icon = KIND_ICON[step.kind];
+  const { habit: learned } = step;
+  if (learned === null) {
     return (
-      <span
-        data-fork-composer-status-chip="learned-step"
-        className="inline-flex min-w-0 items-center"
+      <ComposerControl
+        size="xs"
+        data-fork-composer-status-chip="next-step"
+        data-fork-next-step={step.kind}
+        title={`Send "${step.prompt}"`}
+        onClick={() => props.onSend(step.prompt)}
       >
-        <ComposerControl
-          size="xs"
-          data-fork-status-chip-main=""
-          title={`You usually send this next. Send "${habit.text}"`}
-          onClick={() => props.onSend(habit.text)}
-        >
-          <SparklesIcon aria-hidden />
-          <span className="max-w-64 truncate">{sentenceCase(habit.text)}</span>
-        </ComposerControl>
-        <ComposerControl
-          size="xs"
-          data-fork-status-chip-stop=""
-          aria-label="Stop suggesting this"
-          title="Stop suggesting this"
-          onClick={() => forgetComposerHabit(habit)}
-        >
-          <XIcon aria-hidden />
-        </ComposerControl>
-      </span>
+        <Icon aria-hidden />
+        {step.label}
+      </ComposerControl>
     );
   }
-  const Icon = KIND_ICON[step.kind];
   return (
-    <ComposerControl
-      size="xs"
-      data-fork-composer-status-chip="next-step"
-      data-fork-next-step={step.kind}
-      title={`Send "${step.prompt}"`}
-      onClick={() => props.onSend(step.prompt)}
+    <span
+      data-fork-composer-status-chip="learned-step"
+      className="inline-flex min-w-0 items-center"
     >
-      <Icon aria-hidden />
-      {step.label}
-    </ComposerControl>
+      <ComposerControl
+        size="xs"
+        data-fork-status-chip-main=""
+        title={`You usually send this next. Send "${step.prompt}"`}
+        onClick={() => props.onSend(step.prompt)}
+      >
+        <Icon aria-hidden />
+        <span className="max-w-64 truncate">{step.label}</span>
+      </ComposerControl>
+      <ComposerControl
+        size="xs"
+        data-fork-status-chip-stop=""
+        aria-label="Stop suggesting this"
+        title="Stop suggesting this"
+        onClick={() => forgetComposerHabit(learned)}
+      >
+        <XIcon aria-hidden />
+      </ComposerControl>
+    </span>
   );
 });
-
-const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);

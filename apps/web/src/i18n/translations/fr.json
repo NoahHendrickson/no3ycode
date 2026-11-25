@@ -1,4 +1,6 @@
 {
+  "7342bfc328008926": "En cours",
+  "353b08f4363dbb2c": "En attente",
   "4bcfa3b976a421cf": "Discussion annexe",
   "23be753133ae6950": "Fil",
   "0001ae5846061bb6": "Fil sur {machine}",
@@ -2466,6 +2468,7 @@
   "d07ed4990bbb5323": "Action sur le fil indisponible",
   "82e555245a78f961": "Cette connexion ne peut pas modifier un ou plusieurs des fils sélectionnés.",
   "e54720cac68f2adb": "Tous les projets",
+  "3d452b69b89d669e": "{count, plural, one {{count} sous-agent en cours} other {{count} sous-agents en cours}}",
   "ac47f86df1c31a4a": "Échec de la copie de la branche",
   "4e6305459e784fea": "Échec de la copie de l’ID du fil",
   "5a79b7c910831c76": "Le titre du fil ne peut pas être vide",
@@ -9162,6 +9165,8 @@
   "6afaa3e3739dc570": "Choisir une icône de projet",
   "51651ce45d481a20": "Choisir un fichier d’icône de projet",
   "a10ff8b39e16d7f8": "Épingler",
+  "876e7a8c229f3d07": "Désépingler",
+  "7253764d0ff8ff8e": "Aucun modèle épinglé pour l’instant. Épinglez un modèle pour le garder ici.",
   "c65b6d4b82c9eb43": "Les projets épinglés apparaissent en premier dans les sélecteurs de projet.",
   "2a546119bf3879ee": "Archives",
   "63e237776ff48bea": "Masqué dans les sélecteurs de projet. Les fils et les fichiers sont conservés.",
@@ -12460,5 +12465,6 @@
   "27d76249d09eb69f": "Guide de revue prêt",
   "faa3bb26abb39c93": "Échec du guide de revue",
   "b7df38b7d8792d78": "Ouvrir le guide",
-  "9e91e9a77b664e4e": "Impossible de démarrer un guide de revue"
+  "9e91e9a77b664e4e": "Impossible de démarrer un guide de revue",
+  "93804cc08b314998": "fusionne dans"
 }

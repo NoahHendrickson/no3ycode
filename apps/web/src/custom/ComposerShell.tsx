@@ -25,6 +25,11 @@ export function resolveComposerShellVisibility({
   };
 }
 
+/** Focus in the aside (a Petal's digest) is not composer focus: it never expands the phone composer. */
+export function isInsideComposerAside(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest("[data-fork-composer-aside]") !== null;
+}
+
 type ComposerShellProps = ComposerShellVisibilityInput & {
   children?: ReactNode;
   context?: ReactNode;
@@ -34,6 +39,10 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   usageControls?: ReactNode;
   /** Chips above the composer (the thread's PR, background work); the row hides when empty. */
   statusChips?: ReactNode;
+  /** Chips that stay over the collapsed phone pill (the stash, whose tap expands and opens it). */
+  persistentChips?: ReactNode;
+  /** A Petal's digest, under the chips and above the notice cards. */
+  digest?: ReactNode;
   /** Notice cards (questions, approvals, compaction, settle) between the chips and the composer. */
   banners?: ReactNode;
 };
@@ -50,6 +59,8 @@ export const ComposerShell = memo(function ComposerShell({
   readoutControls,
   usageControls,
   statusChips,
+  persistentChips,
+  digest,
   banners,
 }: ComposerShellProps) {
   const { showInteractiveControls } = resolveComposerShellVisibility({
@@ -90,49 +101,56 @@ export const ComposerShell = memo(function ComposerShell({
 
   return (
     <div className="flex min-w-0 flex-col">
-      {/* In flow, so the transcript's bottom inset makes room for it. Empty over the collapsed
-          phone pill, like the context row: a tap there would focus the composer and expand it. */}
+      {/* In flow, so the transcript's bottom inset makes room for it. Only the persistent chips over
+          the collapsed phone pill, like the context row: a tap there would focus the composer and expand it. */}
       <div
         data-fork-composer-status-chips="true"
         className="flex min-w-0 flex-wrap items-center gap-1.5 pb-2 empty:hidden"
       >
         {collapsedMobile ? null : statusChips}
+        {persistentChips}
       </div>
-      <div data-fork-composer-banners="true" className="flex min-w-0 flex-col">
-        {banners}
+      {/* In the form, but not the composer: the body's theme and focus rules stop here. */}
+      <div data-fork-composer-aside="true" className="contents">
+        {digest}
       </div>
-      <div className="relative flex min-w-0 flex-col">
-        {/* No vessel paint while collapsed: the mobile pill rounds to 12px and
+      <div data-fork-composer-body="true" className="flex min-w-0 flex-col">
+        <div data-fork-composer-banners="true" className="flex min-w-0 flex-col">
+          {banners}
+        </div>
+        <div className="relative flex min-w-0 flex-col">
+          {/* No vessel paint while collapsed: the mobile pill rounds to 12px and
           the vessel's 8px corners would peek out as background wedges (and a
           live readout row would slab onto the pill). */}
-        <div
-          {...(collapsedMobile ? {} : { "data-fork-composer-vessel": "true" })}
-          className="flex min-w-0 flex-col"
-        >
-          {children}
-          {left || right ? (
-            <div
-              data-fork-composer-control-row="true"
-              className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 py-1.5"
-            >
-              {left ? (
-                <div
-                  data-fork-composer-control-row-slot="left"
-                  className="-m-1 flex min-w-[min(100%,11rem)] flex-1 items-center gap-px overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                >
-                  {left}
-                </div>
-              ) : null}
-              {right ? (
-                <div
-                  data-fork-composer-control-row-slot="right"
-                  className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-px"
-                >
-                  {right}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <div
+            {...(collapsedMobile ? {} : { "data-fork-composer-vessel": "true" })}
+            className="flex min-w-0 flex-col"
+          >
+            {children}
+            {left || right ? (
+              <div
+                data-fork-composer-control-row="true"
+                className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 px-2 py-1.5"
+              >
+                {left ? (
+                  <div
+                    data-fork-composer-control-row-slot="left"
+                    className="-m-1 flex min-w-[min(100%,11rem)] flex-1 items-center gap-px overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  >
+                    {left}
+                  </div>
+                ) : null}
+                {right ? (
+                  <div
+                    data-fork-composer-control-row-slot="right"
+                    className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-px"
+                  >
+                    {right}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

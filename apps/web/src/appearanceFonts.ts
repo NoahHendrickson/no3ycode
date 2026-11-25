@@ -98,7 +98,13 @@ export function applyAppearanceFontVariables(
     root.style.setProperty("--list-marker-sans", `${(markerWidth / PROBE_FONT_SIZE).toFixed(3)}em`);
   }
 
-  root.style.fontSize = `${clampInterfaceFontSize(preferences.sizeInterface)}px`;
+  /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+     rem stays 16px so geometry holds; the size scales the text tokens instead. */
+  root.style.setProperty(
+    "--fork-interface-text-scale",
+    String(clampInterfaceFontSize(preferences.sizeInterface) / 16),
+  );
+  /* fork:end fork-interface-size-text-only */
   root.style.setProperty(
     "--font-size-prompt",
     preferences.separate

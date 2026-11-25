@@ -60,10 +60,8 @@ describe("fork-tabs", () => {
       /\{\s*gap: calc\(var\(--spacing\) \* 0\.5\);\s*padding: calc\(var\(--spacing\) \* 0\.5\);\s*border-radius: var\(--radius-lg\);\s*background-color: var\(--fork-segmented-track\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*var\(--fork-segmented-tab-font-size\);/u,
     );
     expect(basic).toContain("--fork-segmented-track: var(--basic-wash-2);");
-    expect(read("../theme.custom.css")).toContain("--fork-segmented-tab-font-size: 0.75rem;");
-    // The model menu's option strips are Tabs, so this rule draws them too.
-    expect(read("../custom/ComposerModelPicker.tsx")).toMatch(
-      /<Tabs\s+data-fork-segmented-trait=""/u,
+    expect(read("../theme.custom.css")).toContain(
+      "--fork-segmented-tab-font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));",
     );
     // No strip keeps an older Basic look of its own.
     expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);

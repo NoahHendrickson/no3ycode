@@ -64,9 +64,19 @@ function WorkLogLine({ icon, label, trailing, wrapLabel, ...lineProps }: RowCont
         "flex min-h-6 min-w-0 gap-1.5 text-sm leading-relaxed select-none [&_*]:select-none",
         wrapLabel ? "items-start" : "items-center",
         lineProps.role === "button" && focusRingClassName,
+        /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+           The label sizes to its text so a row's chevron hugs it; the hover timestamp still
+           sits at the far end. */
+        "[&>[data-row-timestamp]]:order-last [&>[data-row-timestamp]]:ms-auto",
+        /* fork:end fork-trail-summary */
       )}
     >
-      <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
+      <div
+        /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+           Upstream: flex-1, which parks trailing controls at the row's far end. */
+        className="flex min-w-0 flex-initial items-baseline gap-1.5"
+        /* fork:end fork-trail-summary */
+      >
         {icon ? (
           <span className="relative w-6 shrink-0 leading-0">
             <span className="inline-block size-6 overflow-hidden align-[calc(0.5cap_-_0.75rem)]">
@@ -76,7 +86,10 @@ function WorkLogLine({ icon, label, trailing, wrapLabel, ...lineProps }: RowCont
         ) : null}
         <div
           className={cn(
-            "min-w-0 flex-1 text-secondary-label",
+            /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+               Upstream: flex-1 (see the wrapper above). */
+            "min-w-0 text-secondary-label",
+            /* fork:end fork-trail-summary */
             !wrapLabel && "truncate [&_*]:whitespace-nowrap",
           )}
         >

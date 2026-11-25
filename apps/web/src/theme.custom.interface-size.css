@@ -1,0 +1,44 @@
+/* ---------------------------------------------------------------------------
+   Interface font size scales text only — see
+   `.fork/customizations.yaml#fork-interface-size-text-only`.
+
+   The setting writes --fork-interface-text-scale (size / 16) instead of the root font size, so
+   rem stays 16px and every rem geometry token and class holds. Text follows through the
+   `--text-*` scale and the body size; anything sized in em follows its text. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --text-xs: calc(0.75rem * var(--fork-interface-text-scale, 1));
+  --text-sm: calc(0.875rem * var(--fork-interface-text-scale, 1));
+  --text-base: calc(1rem * var(--fork-interface-text-scale, 1));
+  --text-lg: calc(1.125rem * var(--fork-interface-text-scale, 1));
+  --text-xl: calc(1.25rem * var(--fork-interface-text-scale, 1));
+  --text-2xl: calc(1.5rem * var(--fork-interface-text-scale, 1));
+  --text-3xl: calc(1.875rem * var(--fork-interface-text-scale, 1));
+  --text-4xl: calc(2.25rem * var(--fork-interface-text-scale, 1));
+  --text-5xl: calc(3rem * var(--fork-interface-text-scale, 1));
+  --text-6xl: calc(3.75rem * var(--fork-interface-text-scale, 1));
+  --text-7xl: calc(4.5rem * var(--fork-interface-text-scale, 1));
+  --text-8xl: calc(6rem * var(--fork-interface-text-scale, 1));
+  --text-9xl: calc(8rem * var(--fork-interface-text-scale, 1));
+}
+
+:root[data-fork="noahhendrickson-t3code"] body {
+  font-size: calc(1rem * var(--fork-interface-text-scale, 1));
+}
+
+/* index.css registers the dense steps under @theme inline, so their utilities compile to the
+   literal rem and cannot read a token; none is used with a variant. */
+:root[data-fork="noahhendrickson-t3code"] .text-2xs {
+  font-size: calc(0.6875rem * var(--fork-interface-text-scale, 1));
+}
+
+:root[data-fork="noahhendrickson-t3code"] .text-3xs {
+  font-size: calc(0.625rem * var(--fork-interface-text-scale, 1));
+}
+
+:root[data-fork="noahhendrickson-t3code"] .text-4xs {
+  font-size: calc(0.5rem * var(--fork-interface-text-scale, 1));
+}
+
+:root[data-fork="noahhendrickson-t3code"] .text-5xs {
+  font-size: calc(0.4375rem * var(--fork-interface-text-scale, 1));
+}

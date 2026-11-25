@@ -6,8 +6,10 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import { extractAgentNotificationDeepLink } from "../../src/features/agent-awareness/notificationPayload";
 import {
   apnsPayload,
+  applyShellItem,
   isAutomationRunWithoutThread,
   makeTracker,
+  no3yLiveActivityCard,
   observeThread,
   pairingTokenFromUrl,
   parseRegistration,
@@ -16,9 +18,14 @@ import {
 
 function tracker() {
   const sent: ApnsNotification[] = [];
-  const t = makeTracker("env-1" as EnvironmentId, (notification) => sent.push(notification));
+  const changes = { count: 0 };
+  const t = makeTracker(
+    "env-1" as EnvironmentId,
+    (notification) => sent.push(notification),
+    () => changes.count++,
+  );
   t.projectTitles.set("project-1", "no3ycode");
-  return Object.assign(t, { sent });
+  return Object.assign(t, { sent, changes });
 }
 
 type ObservedThread = Parameters<typeof observeThread>[1];
@@ -151,6 +158,91 @@ describe("no3y push transitions", () => {
     observeThread(t, thread({ status: "completed", settledOverride: "settled" }), false);
     vi.advanceTimersByTime(5_000);
     expect(t.sent.map((n) => n.body)).toEqual(["Agent finished: no3ycode"]);
+  });
+});
+
+describe("live activity card", () => {
+  const card = (t: ReturnType<typeof tracker>) =>
+    no3yLiveActivityCard(t, Date.parse("2026-11-22T12:00:00.000Z"))?.rows.map((row) => [
+      row.threadId,
+      row.phase,
+      row.provider,
+    ]) ?? [];
+  const item = (value: object) => value as unknown as Parameters<typeof applyShellItem>[1];
+  const snapshot = (threads: ReadonlyArray<ObservedThread>) =>
+    item({ kind: "snapshot", snapshot: { projects: [], threads } });
+
+  it("follows a thread from running to finished to settled, even in the startup snapshot", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+    const finishedAt = DateTime.makeUnsafe(t.startedAt + 1_000);
+    observeThread(t, thread({ status: "completed", latestRunCompletedAt: finishedAt }), false);
+    expect(card(t)).toEqual([["thread-1", "completed", "codex"]]);
+    observeThread(
+      t,
+      thread({ status: "completed", latestRunCompletedAt: finishedAt, settledOverride: "settled" }),
+      false,
+    );
+    expect(card(t)).toEqual([]);
+  });
+
+  it("keeps showing a finish that predates the service once the card has shown the thread", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+    // Background work held the thread running; its run had finished before the service started.
+    const before = DateTime.makeUnsafe(t.startedAt - 1_000);
+    observeThread(t, thread({ status: "completed", latestRunCompletedAt: before }), false);
+    expect(card(t)).toEqual([["thread-1", "completed", "codex"]]);
+  });
+
+  it("leaves off hidden automation runs and work that finished before the service started", () => {
+    const t = tracker();
+    const run = { scheduledTaskId: ScheduledTaskId.make("scheduled-task:review") };
+    observeThread(t, { ...thread({}), ...run }, false);
+    const before = DateTime.makeUnsafe(t.startedAt - 1_000);
+    const done = thread({ status: "completed", latestRunCompletedAt: before });
+    observeThread(t, { ...done, id: "thread-2" as ThreadId }, true);
+    expect(card(t)).toEqual([]);
+  });
+
+  it("drops threads a reconnect snapshot no longer has, and wakes the publisher on every item", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    const other = { ...thread({ status: "completed" }), id: "thread-2" as ThreadId };
+    applyShellItem(t, snapshot([other]));
+    expect(card(t)).toEqual([]);
+    expect(t.changes.count).toBe(1);
+
+    // An empty full snapshot is authoritative too; a projects-only refresh is not.
+    observeThread(t, thread({}), false);
+    applyShellItem(
+      t,
+      item({
+        kind: "snapshot",
+        snapshot: { projects: [], threads: [] },
+        resolvedRepositoryIdentityRoots: [],
+      }),
+    );
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+    applyShellItem(t, snapshot([]));
+    expect(card(t)).toEqual([]);
+    expect(t.changes.count).toBe(3);
+  });
+
+  it("lets a parent stop waiting when its waiting subagent is gone", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    observeThread(t, subagent(approval("child-a")), true);
+    expect(card(t)).toEqual([["thread-1", "waiting_for_approval", "codex"]]);
+    applyShellItem(t, item({ kind: "thread.removed", threadId: "child-1" }));
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+
+    observeThread(t, subagent(approval("child-b")), false);
+    expect(card(t)).toEqual([["thread-1", "waiting_for_approval", "codex"]]);
+    applyShellItem(t, snapshot([thread({})]));
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
   });
 });
 

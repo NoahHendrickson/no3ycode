@@ -176,9 +176,31 @@ export const No3yPendingDraftRow = memo(function No3yPendingDraftRow(props: {
   );
 });
 
+function OneLineTitle(props: {
+  readonly title: string;
+  readonly fontSize: number;
+  readonly color: string;
+}) {
+  return (
+    <Text
+      numberOfLines={1}
+      style={{
+        flex: 1,
+        ...NO3Y_FONT.regular,
+        fontSize: props.fontSize,
+        lineHeight: 18,
+        color: props.color,
+      }}
+    >
+      {props.title}
+    </Text>
+  );
+}
+
 export const No3yThreadRow = memo(function No3yThreadRow(props: {
   readonly thread: EnvironmentThreadShell;
-  readonly variant: "card" | "slim";
+  /** `chat`: the Chat tab's one-line card, the provider mark before the title. */
+  readonly variant: "card" | "slim" | "chat";
   readonly statusKind: SidebarV2CardStatusKind | null;
   readonly statusSection: SidebarV2StatusBucket | undefined;
   readonly selected: boolean;
@@ -295,7 +317,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
   const snoozeGateNowMs = useNowAfter(snoozeGateExpiryMs === null ? null : snoozeGateExpiryMs + 1);
   const snoozeGateNow = new Date(snoozeGateNowMs).toISOString();
   const swipeActions = resolveThreadListV2SwipeActions({
-    variant,
+    variant: variant === "chat" ? "card" : variant,
     settlementSupported: props.settlementSupported,
     snoozeSupported: props.snoozeSupported,
     snoozable: canSnooze(thread, { now: snoozeGateNow }),
@@ -589,45 +611,49 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
   const prBadgeLabel = pr ? resolveThreadPrBadgeAction(pr).accessibilityLabel : null;
   const isSlim = variant === "slim";
 
-  const renderPressable = (close: () => void) => (
-    <View style={{ paddingHorizontal: 10 }}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={thread.title}
-        accessibilityState={{ selected }}
-        onPress={() => {
-          close();
-          onSelectThread(thread);
-        }}
-        style={({ pressed }) => ({
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 8,
-          borderRadius: 14,
-          paddingLeft: 8,
-          paddingRight: 10,
-          paddingVertical: 12,
-          backgroundColor: selected
-            ? palette.rowSelected
-            : pressed
-              ? palette.rowPressed
-              : "transparent",
-        })}
-      >
-        {isSlim ? (
+  const providerMark = props.providerInstance ? (
+    hasNo3yProviderMark(props.providerInstance.driverKind) && !props.providerInstance.showBadge ? (
+      <No3yProviderMark provider={props.providerInstance.driverKind} size={14} />
+    ) : (
+      <ProviderInstanceIcon
+        iconUrl={providerIconUrl}
+        provider={props.providerInstance.driverKind}
+        size={14}
+        displayName={props.providerInstance.displayName}
+        accentColor={props.providerInstance.accentColor}
+        showBadge={props.providerInstance.showBadge}
+        surfaceColor={palette.stageBackground}
+      />
+    )
+  ) : null;
+
+  const trailingMarks = (
+    <>
+      {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
+      {pinned ? (
+        <SymbolView name="pin" size={10} tintColor={palette.faintInk} type="monochrome" />
+      ) : null}
+      {statusKind === "woke" && props.wokeAt !== null ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss Woke notification"
+          hitSlop={8}
+          onPress={handleAcknowledgeWoke}
+        >
+          <No3yStatusMark kind="woke" palette={palette} idleMode="dot" />
+        </Pressable>
+      ) : (
+        <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
+      )}
+    </>
+  );
+
+  const rowBody = () => {
+    switch (variant) {
+      case "slim":
+        return (
           <>
-            <Text
-              numberOfLines={1}
-              style={{
-                flex: 1,
-                ...NO3Y_FONT.regular,
-                fontSize: 14,
-                lineHeight: 18,
-                color: palette.titleInk,
-              }}
-            >
-              {thread.title}
-            </Text>
+            <OneLineTitle title={thread.title} fontSize={14} color={palette.titleInk} />
             {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
             <Text
               style={{
@@ -643,7 +669,18 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                 : props.timeLabel}
             </Text>
           </>
-        ) : (
+        );
+      case "chat":
+        return (
+          <>
+            {/* The empty slot keeps titles aligned while the provider list loads. */}
+            {providerMark ?? <View style={{ width: 14, height: 14 }} />}
+            <OneLineTitle title={thread.title} fontSize={16} color={palette.titleInk} />
+            {trailingMarks}
+          </>
+        );
+      case "card":
+        return (
           <>
             <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
               <Text
@@ -740,25 +777,9 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                         />
                       </Pressable>
                     ) : null}
-                    {props.providerInstance ? (
+                    {providerMark ? (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        {hasNo3yProviderMark(props.providerInstance.driverKind) &&
-                        !props.providerInstance.showBadge ? (
-                          <No3yProviderMark
-                            provider={props.providerInstance.driverKind}
-                            size={14}
-                          />
-                        ) : (
-                          <ProviderInstanceIcon
-                            iconUrl={providerIconUrl}
-                            provider={props.providerInstance.driverKind}
-                            size={14}
-                            displayName={props.providerInstance.displayName}
-                            accentColor={props.providerInstance.accentColor}
-                            showBadge={props.providerInstance.showBadge}
-                            surfaceColor={palette.stageBackground}
-                          />
-                        )}
+                        {providerMark}
                         <Text
                           numberOfLines={1}
                           style={{
@@ -777,24 +798,38 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                 )}
               </View>
             </View>
-            {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
-            {pinned ? (
-              <SymbolView name="pin" size={10} tintColor={palette.faintInk} type="monochrome" />
-            ) : null}
-            {statusKind === "woke" && props.wokeAt !== null ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Dismiss Woke notification"
-                hitSlop={8}
-                onPress={handleAcknowledgeWoke}
-              >
-                <No3yStatusMark kind="woke" palette={palette} idleMode="dot" />
-              </Pressable>
-            ) : (
-              <No3yStatusMark kind={statusKind} palette={palette} idleMode="dot" />
-            )}
+            {trailingMarks}
           </>
-        )}
+        );
+    }
+  };
+
+  const renderPressable = (close: () => void) => (
+    <View style={{ paddingHorizontal: 10 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={thread.title}
+        accessibilityState={{ selected }}
+        onPress={() => {
+          close();
+          onSelectThread(thread);
+        }}
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          borderRadius: 14,
+          paddingLeft: 8,
+          paddingRight: 10,
+          paddingVertical: 12,
+          backgroundColor: selected
+            ? palette.rowSelected
+            : pressed
+              ? palette.rowPressed
+              : "transparent",
+        })}
+      >
+        {rowBody()}
       </Pressable>
     </View>
   );

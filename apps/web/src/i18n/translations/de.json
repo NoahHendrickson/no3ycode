@@ -1,4 +1,6 @@
 {
+  "7342bfc328008926": "Läuft",
+  "353b08f4363dbb2c": "Ausstehend",
   "4bcfa3b976a421cf": "Nebenchat",
   "23be753133ae6950": "Thread",
   "0001ae5846061bb6": "Thread auf {machine}",
@@ -2466,6 +2468,7 @@
   "d07ed4990bbb5323": "Thread-Aktion nicht verfügbar",
   "82e555245a78f961": "Diese Verbindung kann einen oder mehrere der ausgewählten Threads nicht ändern.",
   "e54720cac68f2adb": "Alle Projekte",
+  "3d452b69b89d669e": "{count, plural, one {{count} Subagent läuft} other {{count} Subagents laufen}}",
   "ac47f86df1c31a4a": "Branch konnte nicht kopiert werden",
   "4e6305459e784fea": "Thread-ID konnte nicht kopiert werden",
   "5a79b7c910831c76": "Der Thread-Titel darf nicht leer sein",
@@ -9162,6 +9165,8 @@
   "6afaa3e3739dc570": "Projektsymbol auswählen",
   "51651ce45d481a20": "Datei für Projektsymbol auswählen",
   "a10ff8b39e16d7f8": "Anheften",
+  "876e7a8c229f3d07": "Lösen",
+  "7253764d0ff8ff8e": "Noch keine angehefteten Modelle. Hefte ein Modell an, um es hier zu behalten.",
   "c65b6d4b82c9eb43": "Angeheftete Projekte stehen in der Projektauswahl oben.",
   "2a546119bf3879ee": "Archivieren",
   "63e237776ff48bea": "In der Projektauswahl ausgeblendet. Threads und Dateien bleiben erhalten.",
@@ -12460,5 +12465,6 @@
   "27d76249d09eb69f": "Review-Leitfaden bereit",
   "faa3bb26abb39c93": "Review-Leitfaden fehlgeschlagen",
   "b7df38b7d8792d78": "Leitfaden öffnen",
-  "9e91e9a77b664e4e": "Review-Leitfaden konnte nicht gestartet werden"
+  "9e91e9a77b664e4e": "Review-Leitfaden konnte nicht gestartet werden",
+  "93804cc08b314998": "wird zusammengeführt in"
 }

@@ -72,16 +72,9 @@ const buttonVariants = cva(
         "ghost-tint":
           "[--control-icon-color:currentColor] border-transparent text-muted-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent [:hover,[data-pressed]]:text-foreground [:hover,[data-pressed]]:bg-foreground/10",
         // The composer context strip's chip trigger: a muted regular 12px label.
-        chip: "[--control-icon-color:var(--contrast-muted-foreground)] border-transparent text-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent font-normal text-muted-foreground/70 text-xs! hover:text-foreground/80",
+        chip: "[--control-icon-color:var(--contrast-muted-foreground)] border-transparent text-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent font-normal text-muted-foreground/70 hover:text-foreground/80",
         /* fork:end fork-design-row-variants */
       },
-      /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-      // Hidden until its `group` row is hovered or highlighted; shown on touch, where nothing hovers.
-      // A disabled one stays hidden at rest everywhere and fades in at the disabled 64%.
-      reveal: {
-        row: "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100 pointer-coarse:opacity-100 disabled:opacity-0 disabled:group-hover:opacity-64 disabled:group-data-highlighted:opacity-64",
-      },
-      /* fork:end fork-design-row-variants */
     },
   },
 );
@@ -92,29 +85,15 @@ type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>["size"]>;
 interface ButtonProps extends useRender.ComponentProps<"button"> {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-  reveal?: VariantProps<typeof buttonVariants>["reveal"];
-  /* fork:end fork-design-row-variants */
 }
 
-function Button({
-  className,
-  variant,
-  size,
-  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-  reveal,
-  /* fork:end fork-design-row-variants */
-  render,
-  ...props
-}: ButtonProps) {
+function Button({ className, variant, size, render, ...props }: ButtonProps) {
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render
     ? undefined
     : "button";
 
   const defaultProps = {
-    /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-    className: cn(buttonVariants({ className, size, variant, reveal })),
-    /* fork:end fork-design-row-variants */
+    className: cn(buttonVariants({ className, size, variant })),
     "data-slot": "button",
     type: typeValue,
   };
@@ -145,7 +124,9 @@ const inlineButtonVariants = cva(
       },
       /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
       // A chip-sized label (the thread tab's PR badge): 12px on a 16px line.
-      size: { xs: "gap-1 [&>span]:text-[0.75rem] [&>span]:leading-4" },
+      size: {
+        xs: "gap-1 [&>span]:text-[length:calc(0.75rem*var(--fork-interface-text-scale,1))] [&>span]:leading-4",
+      },
       /* fork:end fork-design-row-variants */
     },
   },

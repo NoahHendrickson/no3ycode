@@ -32,7 +32,11 @@ vi.mock(import("~/hooks/useSettings"), async (original) => ({
     const setFavorites = useAtomSet(favoritesAtom);
     return async (provider: ProviderInstanceId, model: string) => {
       setFavorites((favorites) =>
-        favorites.filter((favorite) => favorite.provider !== provider || favorite.model !== model),
+        favorites.some((favorite) => favorite.provider === provider && favorite.model === model)
+          ? favorites.filter(
+              (favorite) => favorite.provider !== provider || favorite.model !== model,
+            )
+          : [...favorites, { provider, model }],
       );
     };
   },
@@ -122,40 +126,56 @@ async function openProviderPage(activeModel: string) {
 }
 
 describe("ProviderModelPicker legacy favorites (fork menu)", () => {
-  it("hoists legacy favorites in provider order and returns an unfavorited model to legacy", async () => {
+  it("lists pinned models in provider order and never moves a row on pin", async () => {
     await openProviderPage("current");
     const legacyFavorite = menuItem(/Legacy favorite/);
     const currentFavorite = menuItem(/Current favorite/);
     const current = menuItem(/Current model/);
     const legacyModels = menuItem(/Legacy models/);
+    const top = (row: typeof current) => row.element().getBoundingClientRect().top;
 
+    // A pinned legacy model joins the current ones, all in the provider's order.
     await expect.element(legacyFavorite).toBeVisible();
     await expect.element(currentFavorite).toBeVisible();
     await expect.element(current).toBeVisible();
     await expect.element(menuItem(/Other legacy/)).not.toBeInTheDocument();
-    expect(legacyFavorite.element().getBoundingClientRect().top).toBeLessThan(
-      currentFavorite.element().getBoundingClientRect().top,
-    );
-    expect(currentFavorite.element().getBoundingClientRect().top).toBeLessThan(
-      current.element().getBoundingClientRect().top,
-    );
+    expect(top(current)).toBeLessThan(top(legacyFavorite));
+    expect(top(legacyFavorite)).toBeLessThan(top(currentFavorite));
 
-    await click(legacyFavorite.getByRole("button", { name: "Remove from favorites" }));
-    await expect.element(legacyFavorite).not.toBeInTheDocument();
-    await expect.element(currentFavorite).toBeVisible();
-
-    await click(legacyModels);
-    // Legacy models expand inline under their toggle; the current list stays.
-    await expect.element(legacyModels).toBeVisible();
-    await expect.element(legacyFavorite).toBeVisible();
-    await expect.element(menuItem(/Other legacy/)).toBeVisible();
-    await expect.element(current).toBeVisible();
-    expect(legacyFavorite.element().getBoundingClientRect().top).toBeGreaterThan(
-      legacyModels.element().getBoundingClientRect().top,
-    );
+    // Unpinning or pinning flips the pin but leaves every row where it was.
+    const before = [current, legacyFavorite, currentFavorite].map(top);
+    await click(legacyFavorite.getByRole("button", { name: "Unpin" }));
     await expect
-      .element(legacyFavorite.getByRole("button", { name: "Add to favorites" }))
+      .element(legacyFavorite.getByRole("button", { name: "Pin", exact: true }))
       .toBeInTheDocument();
+    await click(current.getByRole("button", { name: "Pin", exact: true }));
+    await expect.element(current.getByRole("button", { name: "Unpin" })).toBeInTheDocument();
+    expect([current, legacyFavorite, currentFavorite].map(top)).toEqual(before);
+
+    // The next open places the unpinned legacy model back under its toggle.
+    await userEvent.keyboard("{Escape}");
+    await click(document.querySelector("button")!);
+    await click(providerTab(/^Codex/));
+    await expect.element(current).toBeVisible();
+    await expect.element(legacyFavorite).not.toBeInTheDocument();
+    await click(legacyModels);
+    await expect.element(legacyFavorite).toBeVisible();
+    expect(top(legacyFavorite)).toBeGreaterThan(top(legacyModels));
+  });
+
+  it("adds a pin to the Pinned tab at once and drops an unpinned model from it", async () => {
+    await openProviderPage("current");
+    const current = menuItem(/Current model/);
+    await click(current.getByRole("button", { name: "Pin", exact: true }));
+    await expect.element(current.getByRole("button", { name: "Unpin" })).toBeInTheDocument();
+
+    await click(providerTab(/^Pinned/));
+    await expect.element(current).toBeVisible();
+    await expect.element(menuItem(/Current favorite/)).toBeVisible();
+
+    await click(current.getByRole("button", { name: "Unpin" }));
+    await expect.element(current).not.toBeInTheDocument();
+    await expect.element(menuItem(/Current favorite/)).toBeVisible();
   });
 
   it("keeps unrelated legacy models collapsed when the active model is a favorite", async () => {

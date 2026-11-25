@@ -2,4 +2,6 @@ import type { ActiveTurnComposerAction } from "@t3tools/client-runtime/state/com
 
 export type FollowUpBehavior = Extract<ActiveTurnComposerAction, "queue" | "steer">;
 
-export const DEFAULT_FOLLOW_UP_BEHAVIOR: FollowUpBehavior = "steer";
+/* fork:begin no3y-mobile-queue-default — see .fork/customizations.yaml#no3y-mobile-queue-default */
+export const DEFAULT_FOLLOW_UP_BEHAVIOR: FollowUpBehavior = "queue";
+/* fork:end no3y-mobile-queue-default */

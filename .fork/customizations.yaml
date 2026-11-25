@@ -438,8 +438,8 @@
     whole pixels at 16 or 32px, these land on exactly 1 and 2. The 32px
     raster is centred; the 16px one sits 1px off centre, as 15 in 16 must. The n3-web-favicon* rasters (with
     apps/web/public copies) are rendered from it; export-icons.ts leaves
-    them alone. The iOS launch screen keeps the sparkle
-    (no3y-launch-sparkle). Filenames
+    them alone. The iOS launch screen shows the same leaf
+    (no3y-launch-leaf). Filenames
     still say n3-* for path stability. t3.json's
     iconPath points at n3-project-icon.svg, never upstream's
     assets/dev/blueprint-*. The apple-touch icons keep the tile because iOS
@@ -583,43 +583,89 @@
 
 - id: fork-brand-name
   intent: >
-    Every web and desktop string a user reads names the app "no3y Code", the
-    same name fork-app-identity gives the installed app, and the fork still
-    says where it comes from. Upstream writes "T3 Code" inline in hundreds of
-    strings and adds more each sync, so the name is rewritten at build time
-    instead of in each file: one plugin (scripts/lib/fork-brand-name.ts) runs
-    in the web Vite build and dev server and in both desktop pack entries
-    (main, workers), and replaces "T3 Code" in script modules and index.html.
-    The web config leaves it out under Vitest so upstream tests keep
-    asserting upstream copy; desktop pack never runs under Vitest.
-    The whole keep-as-written policy is two lists in that file:
+    Every web, desktop and mobile string a user reads names the app "no3y
+    Code", the same name fork-app-identity gives the installed app, and the
+    fork still says where it comes from. Upstream writes "T3 Code" and bare
+    "T3 <word>" inline in hundreds of strings and adds more each sync, so the
+    name is rewritten at build time instead of in each file. The rewrite is
+    a rename-by-default rule in scripts/lib/fork-brand-name-core.ts: every
+    "T3 " that starts a word and precedes a letter becomes "no3y " ("T3 Code"
+    → "no3y Code", "Started a T3 thread" → "Started a no3y thread"). The
+    t3_thread_* tool-row lookups key on the same rewritten labels, so they
+    keep matching. The core is import-free because two bundlers load it:
+    the Vite plugin (scripts/lib/fork-brand-name.ts) in the web build and dev
+    server and in both desktop pack entries (main, workers), and a Metro
+    Babel-transformer wrapper (apps/mobile/fork/forkBrandNameTransformer.cjs)
+    for mobile. The web config leaves it out under Vitest so upstream tests
+    keep asserting upstream copy; desktop pack and Metro never run under
+    Vitest.
+    The whole keep-as-written policy is two lists in the core:
     PRESERVED_PHRASES (the fork's credit, prose about upstream, the Linux
     capture extension's own name, upstream's registered "T3 Code for GitHub"
-    app, and the server-issued "T3 Code · <label>" peer session a revoke
-    prompt quotes) and EXCLUDED_MODULES (DesktopUserData's legacy profile
-    names and the dictation vocabulary). A string that must match something
-    outside this bundle (server text, an OS or third-party name) is added
-    there, never as a one-off elsewhere.
+    app, the server-issued peer session a revoke prompt quotes as "T3 Code ·
+    …", Ping's services and accounts — T3 Connect, T3 Chat, T3 Account —
+    and the T3 server and T3 home, whose names the client also matches in
+    server text such as "Unable to connect to the T3 server WebSocket") and
+    EXCLUDED_MODULES (DesktopUserData's legacy profile names). A string that
+    must match something outside this bundle (server text, an OS or
+    third-party name) is added there, never as a one-off elsewhere.
     Decided, not incidental: the rewrite also renames the labels this client
     sends when it pairs or links ("no3y Code Desktop", "no3y Code Web",
     "no3y Code link"), so a host's Connections list names the fork's
     clients; nothing compares those labels. Connection copy about software on
     another host is renamed too, though a linked VPS may run upstream.
-    T3 Connect, the T3 server, and the t3 CLI keep their names.
+    Decided trade-off: GT looks translations up by a hash of the source
+    text, so a rewritten string misses its catalog entry and shows in
+    English in every other locale. The fork's copy is English-first; this
+    keeps the name right everywhere instead of translated.
+    Upstream's "T3" letter glyph (T3Wordmark), which marks the app's own tool
+    rows in the transcript and heads the standalone auth pages, is shadowed
+    with the no3y flower as currentColor line art: the outline cells of
+    assets/fork/n3-favicon.svg merged into row runs, the same path in the
+    web shadow, the mobile T3Wordmark and the widget T3Mark.svg (the guard
+    derives it from the favicon). The auth header spells "no3y Code" beside
+    it. Mobile also shows "no3y Code" in its header title, the no3y tile on
+    its loading screen (preview builds share the production tile), and
+    "no3y" as the widget's app name ("Open no3y"). Native copy that Expo
+    reads from the app config before Metro runs (permission prompts, widget
+    gallery descriptions) takes the same rename in fork/identity.ts's
+    no3yNativeConfig, limited by key to display fields so build inputs such
+    as file paths stay untouched, and the Android agent-notification status-bar icon is
+    the same flower path. The iOS widgets bundle
+    through expo-widgets' own Metro config, outside the rewrite, so their
+    fallback copy and their T3Mark.svg logo (the flower, centred in the 1.5:1
+    frame they draw it in) are edited in place.
     Not bundled, so edited in place: public/manifest.webmanifest and the
     macOS permission prompts (local network, screen capture, camera) in
     build-desktop-artifact.ts, beside fork-local-dictation's microphone
     prompt. Settings, About carries a row crediting T3 Code with a link to
     the upstream repository, and the macOS About panel credits it.
-    Server-sent text and the mobile app are out of scope and still say
-    T3 Code.
+    Server-sent text (including agent-facing prompts and the relay's Live
+    Activity title, which the activity layout does not draw) is out of scope
+    and still says T3 Code.
   tier: 4
   files:
+    - scripts/lib/fork-brand-name-core.ts
     - scripts/lib/fork-brand-name.ts
     - apps/web/src/custom/ForkUpstreamCreditRow.tsx
-  shadows: []
+    - apps/mobile/fork/forkBrandNameTransformer.cjs
+  shadows:
+    - apps/web/src/components/T3Wordmark.tsx
   watch:
     - apps/web/vite.config.ts
+    - apps/web/src/components/ui/standalone-page.tsx
+    - apps/mobile/metro.config.js
+    - apps/mobile/src/components/T3Wordmark.tsx
+    - apps/mobile/src/components/CompactBrandTitle.tsx
+    - apps/mobile/src/components/brandAssets.ts
+    - apps/mobile/src/widgets/subscriptionUsageSnapshot.ts
+    # Widget layouts bundle through expo-widgets' own Metro config, outside the rename.
+    - apps/mobile/src/widgets/SubscriptionUsage.tsx
+    - apps/mobile/src/widgets/SubscriptionUsage.android.tsx
+    - apps/mobile/src/widgets/AgentActivityWidget.tsx
+    - apps/mobile/assets/widget/T3Mark.svg
+    - apps/mobile/modules/t3-agent-notifications/android/src/main/res/drawable/agent_activity_mark.xml
+    - apps/mobile/fork/identity.ts
     - apps/desktop/vite.config.ts
     - apps/web/public/manifest.webmanifest
     - apps/web/src/components/settings/SettingsPanels.tsx
@@ -723,8 +769,8 @@
   intent: >
     Sidebar V2 thread rows are two-line cards at 16px radius, drawn at a fixed
     54px (Figma 364:17299, "thread card v3"): a title line (prompt, then a
-    trailing group carrying the hover actions / elapsed time, the pinned
-    glyph and the status mark) and a repo line reading runtime glyph,
+    trailing group carrying the hover actions / running-subagent count, the
+    pinned glyph and the status mark) and a repo line reading runtime glyph,
     hairline, branch, terminal glyph, PR badge on the left and the model
     label on the right. Fixed corners are the point: the two things you
     compare across rows, which checkout a thread is on and what is running
@@ -911,8 +957,10 @@
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
+    - apps/web/src/custom/SidebarV2SubagentCount.tsx
     - apps/web/src/custom/SidebarV2ThreadCardMeta.tsx
     - apps/web/src/custom/icons/WorktreeIcon.tsx
+    - apps/web/src/custom/runningSubagentCounts.ts
     - apps/web/src/custom/sidebarV2CardAlignment.ts
     - apps/web/src/custom/sidebarV2RowPolicy.ts
     - apps/web/src/theme.custom.css
@@ -931,6 +979,8 @@
     - apps/web/src/components/Sidebar.shortcuts.browser.test.tsx
     # The fork customizes upstream's canonical Sidebar V2 implementation in place.
     - apps/web/src/components/Sidebar.tsx
+    # The row name carries the running-subagent count (subagentLabel).
+    - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/index.css
     # The PR badge's text-secondary-label number span, which the card's
     # number-ink rule inherits through.
@@ -1092,10 +1142,10 @@
     project and skips the picker.
 
     The header is the design's 32px row (Figma 364:11442, 368:21364): a ghost
-    label button — 16px folder mark, Label/12 Medium name at muted foreground,
+    label button — 16px folder mark, Regular name 1px under the Sidebar font size, muted foreground,
     lifting to foreground on hover, 12px inline padding that lands the mark on
-    the cards' 20px prompt edge — then a 32px three-dot that opens the
-    project's menu and a 32px plus, both on the list edge. The menu offers
+    the cards' 20px prompt edge — then a 28px three-dot that opens the
+    project's menu and a 28px plus, both on the trailing axis. The menu offers
     "Settle all threads", which settles every active thread in the section
     through the multi-select batch path (post-settle navigation skips the
     batch; drafts, already-settled rows and environments without settlement
@@ -1263,7 +1313,7 @@
     Under a status header the section decides a card's title brightness
     (threadCardTitleRecedes's statusSection input): only Needs input and
     Completed titles are full strength, Working and Idle recede, and the open
-    or selected card never does. Section headers are a muted 12px medium label
+    or selected card never does. Section headers are a muted regular label 1px under the Sidebar font size
     (no count) with an always-visible filled chevron on the cards' inset and no
     hairline; clicking collapses (down when expanded, rotated right when
     collapsed). Hovering the header or any row in its section reveals the shared
@@ -1531,8 +1581,8 @@
     the trailing end again (Figma 364:17299) but in a cell of its own after
     the actions, never inside them, so the opacity-crossfade hit-path bug
     that used to eat settle clicks (an opacity-0 status span stacking above
-    the actions) cannot return; elapsed time is the only decoration that
-    still fades here, and it is pointer-events-none.
+    the actions) cannot return; the running-subagent count is the only
+    decoration that still fades here, and it is pointer-events-none.
 
     Placement: every trailing mark down the sidebar shares one vertical axis,
     24px in from the panel's content edge — the chrome rows' pe-3 plus half
@@ -1586,6 +1636,9 @@
     # is title-recede and row surface.
     - apps/web/src/custom/sidebarV2TrailingColumn.ts
     - apps/web/src/custom/SidebarV2IconButton.tsx
+    # The icon buttons' foreground hover tint, shared with the composer cards' row actions
+    # (custom/ComposerCardParts.tsx).
+    - apps/web/src/custom/ghostIconTint.ts
     # Owned by sidebar-v2-project-grouping; this entry owns only its plus
     # button's box and the 2px that puts it on the trailing column's axis.
     - apps/web/src/custom/SidebarV2ProjectGroupHeader.tsx
@@ -1998,7 +2051,9 @@
     26+ main windows where apps/desktop/src/fork/ForkLiquidGlass.ts loads our
     native macOS addon (native/sidebar-glass/sidebar_glass.m) to mount AppKit's
     NSSplitViewItem.sidebarWithViewController: on macOS 27+ (or a sidebar-variant
-    NSGlassEffectView on macOS 26) strictly behind the docked sidebar while
+    NSGlassEffectView on macOS 26) strictly behind the docked sidebar (on Flat
+    Glass with the sidebar collapsed into the tab row, a band behind that row
+    alone, so it never covers the new agent screen's draft glass) while
     keeping the chat stage opaque (and clearing Electron's NSVisualEffectView so
     the two never conflict). Side Chat, macOS < 26, and
     Windows 11 keep whole-window vibrancy. The CSS in theme.custom.palettes.css
@@ -2167,6 +2222,15 @@
     restate --accent (and the header pills' --fork-pill-hover) as
     rgb(255 255 255 / 8%), which lands on the stage where the opaque token
     used to, so upstream's bg-accent/N variants keep their relative weight.
+
+    Under Liquid Glass, a Flat Glass new-agent draft on a still picture (Mountain
+    Dither, Jolly Petal) sits on native NSGlassEffectView cards drawn by
+    custom/forkDraftLiquidGlass.ts. The window holds one such layer, so the hook
+    stamps data-fork-draft-liquid-glass on the picture it drew natively. A
+    picture without that stamp (a split pane, or an apply that was refused or is
+    still pending) keeps the CSS blur fallback, with a darker vessel wash than
+    Figma's 16% black so it reads like the native cards rather than a white wash.
+    Native and fallback share one prompt well.
 
     Must not alter Westworld, Neutral Dark, Neutral Darker, or default Dark,
     and must not make the window transparent for any other palette.
@@ -2731,8 +2795,8 @@
     line, card titles), -row (14/16, slim titles and the rename field),
     -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
     and status headers, the repo line, the card's PR badge) and -caption
-    (11/15, model label and elapsed time), -status (12/14, a Petal card's
-    status line), -tile (10/12, a Petals grid name), plus h-sidebar-12 / -14 /
+    (11/15, model label and subagent count), -status (12/14, a Petal card's
+    status line), plus h-sidebar-14 /
     -16 / -18 for the fixed line boxes. The
     cards' offscreen contain-intrinsic-size hints sum the same tokens. Line heights are unitless ratios, so
     rows built from padding plus a line box grow with the text instead of
@@ -2769,6 +2833,42 @@
   verify:
     - apps/web/src/__fork_guards__/forkSidebarTypeSize.test.ts
     - apps/web/src/__fork_guards__/forkTypographySettings.test.ts
+
+- id: fork-interface-size-text-only
+  intent: >
+    Interface font size scales text only (Noey, 2026-11-24). Upstream applies it
+    as the root font size, so every rem in the app moved with it and inputs,
+    buttons, switches and padding shrank at 15px. The fork writes it as
+    --fork-interface-text-scale (size / 16) instead, so rem stays 16px and every
+    rem geometry token and class holds by default. Text is the closed set that
+    follows: the root --text-* tokens, the body size, the @theme-inline dense
+    steps (text-2xs..5xs), the Chat stream sizes (composed with Chat stream
+    size), index.css's rem font sizes and the few arbitrary rem text classes all
+    multiply the scale. A new rem font size must multiply it too; the guard
+    finds any that don't.
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.interface-size.css
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.basic.css
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/custom/CollapsedThreadTabs.tsx
+  shadows: []
+  watch:
+    # Fenced: writes the text scale instead of the root font size.
+    - apps/web/src/appearanceFonts.ts
+    # Fenced: the composer-size case loads the sheet and the fork root marker.
+    - apps/web/src/appearanceFonts.browser.test.ts
+    # Fenced: rem font sizes multiply the scale.
+    - apps/web/src/index.css
+    # Fenced: the arbitrary rem text classes multiply the scale.
+    - apps/web/src/components/ui/badge.tsx
+    - apps/web/src/components/ui/empty.tsx
+    # Fenced: imports the interface-size sheet.
+    - apps/web/src/main.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInterfaceSizeTextOnly.test.ts
 
 - id: fork-sidebar-chrome
   intent: >
@@ -3517,16 +3617,18 @@
 
 - id: geist-typography
   intent: >
-    The app's DEFAULT typefaces are Geist (UI) and Geist Mono (code), bundled
-    as Fontsource variable faces and imported from the fork's own theme layer —
-    web and Electron renderer only; mobile and marketing keep upstream's fonts.
+    Geist and Geist Mono are bundled as Fontsource variable faces, imported
+    from the fork's own theme layer — web and Electron renderer only; mobile
+    and marketing keep upstream's fonts. Geist Mono is the default code and
+    terminal face; Geist backs the Geist interface preset and is the fallback
+    in the sans stack, whose value and lead family cinnabar-sans-typeface owns.
     Since upstream's v0.0.32 configurable-fonts work (Settings → Appearance:
     family, size, smoothing — applied as inline styles on the root by
     appearanceFonts.ts), the fork supplies the DEFAULT only: a user's explicit
     font preference outranks the fork stacks by design, and clearing the
-    preference falls back to Geist, not to upstream's system stacks.
-    The stacks live in theme.custom.css as --fork-font-sans / --fork-font-mono
-    and index.css's non-inline @theme block reads them through
+    preference falls back to the fork stacks, not to upstream's system stacks.
+    This entry owns the --fork-font-sans / --fork-font-mono indirection: the
+    stacks live in theme.custom.css and index.css's non-inline @theme block reads them through
     var(--fork-font-sans, <upstream stack>); that indirection is load-bearing,
     not ceremony — it keeps the values scoped under the fork marker while the
     fallbacks leave an unmarked build on upstream's system stacks. Upstream
@@ -3547,12 +3649,12 @@
     Geist Mono is listed AHEAD of SF Mono: upstream puts SF Mono first, which
     on macOS means a bundled mono webfont never renders at all.
     Upstream dropped its DM Sans / JetBrains Mono webfonts in the same cycle
-    (system stacks now); the fork followed, so the two Geist faces are the
-    app's only bundled fonts. "JetBrains Mono" stays NAMED in the fork's mono
-    stacks for a Linux user who has it installed, but no bundled face backs it
-    any more. Known cosmetic divergence: the Appearance font picker's
-    "Default" label names the face upstream's DEFAULT_*_FONT_STACK resolves to
-    (a system face), not Geist — appearanceFonts.ts is deliberately unfenced.
+    (system stacks now); the fork followed. "JetBrains Mono" stays NAMED in the
+    fork's mono stacks for a Linux user who has it installed, but no bundled
+    face backs it any more. Known cosmetic divergence: the Appearance font
+    picker's "Default" label names the face upstream's DEFAULT_*_FONT_STACK
+    resolves to (a system face), not the fork's — appearanceFonts.ts is
+    deliberately unfenced.
   tier: 4
   files:
     - apps/web/src/theme.custom.css
@@ -3578,6 +3680,34 @@
     - apps/web/package.json
   verify:
     - apps/web/src/__fork_guards__/geistTypography.test.ts
+
+- id: cinnabar-sans-typeface
+  intent: >
+    The app's default interface face is Cinnabar Sans, a fork-owned typeface:
+    Geist reshaped with Anthropic Sans as a visual reference, nothing traced (rounder bowls, a
+    shorter-reading lowercase, lighter horizontals, a tailless u, a straight-tailed
+    y, flat-cut S/s/a terminals, Inter's R and a), licensed OFL as a Modified
+    Version of Geist and Inter (custom/fonts/cinnabar-sans/OFL.txt). It ships as
+    two variable woff2 files — upright and italic, each weight 100..900 — declared
+    with @font-face in theme.custom.css, so every weight and the italic are real
+    faces, never synthesized. This entry owns the --fork-font-sans value: it
+    leads with FORK_DEFAULT_SANS_FAMILY ("Cinnabar Sans"), with Geist Variable
+    (bundled by geist-typography) right behind it as the fallback. Settings →
+    Appearance labels the empty preference with that same constant and offers
+    Geist as a preset (fork-typography-settings). The font's sources and build
+    pipeline live outside this repo; the woff2 files here are build outputs and
+    are replaced wholesale, never hand-edited.
+  tier: 1
+  files:
+    - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2
+    - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Italic-Variable.woff2
+    - apps/web/src/custom/fonts/cinnabar-sans/OFL.txt
+    - apps/web/src/theme.custom.css
+    - apps/web/src/custom/forkTypographyScale.ts
+  shadows: []
+  watch: []
+  verify:
+    - apps/web/src/__fork_guards__/cinnabarSansTypeface.test.ts
 
 - id: fork-lint-cleanliness
   intent: >
@@ -3685,8 +3815,8 @@
     refs load and focusing the workspace radiogroup on Mod+Shift+X). Attach (+)
     leads the prompt row opposite Send, and the dictation mic sits beside Send.
     [data-fork-composer-control-row] in theme.custom.css is the single owner of
-    the 26px / 8px / 6px ghost control geometry and hover/ink tokens across both
-    control-row slots. Attach, send and stop are 32px squares at 8px radius
+    the ghost control geometry (text + 12px tall, 8px padding, 6px radius) and
+    hover/ink tokens across both control-row slots. Attach, send and stop are 32px squares at 8px radius
     (the kit's icon button) with 16px glyphs, inside a 16px-cornered vessel and
     prompt (--fork-composer-radius; Inlet adds its 4px inset); send uses
     Hugeicons' CornerDownLeftIcon and flat white/black dark styling outside
@@ -3696,7 +3826,10 @@
     hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label.
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
-    appearanceFonts.ts), and the control and context rows are 14px regular.
+    appearanceFonts.ts). The control row, context row and status chips read
+    --fork-composer-chip-text, a pixel under the interface size
+    (calc(var(--text-base) - 1px); rem no longer moves), so they follow
+    Settings → Typography too; their heights add fixed room around it.
     On Flat Glass and every Basic tone the thread composer (not a new agent's
     draft) is one recipe: it paints no vessel, the prompt is its one surface
     (lift-3, an 8% ring, 12px corners) and the control row sits on the stage;
@@ -3711,6 +3844,18 @@
     stage, --fork-popup-filter none; theme.custom.palettes.css), no blur. While
     a new agent's draft shows (root stamp data-fork-draft-hero-shown) they
     keep the glass.
+    The open stash is the queue card's twin: ChatComposer renders it as the
+    card nearest the prompt in the banners dock (not upstream's portaled
+    drawer layer), and it shares the queue
+    card's rules and parts (custom/ComposerCardParts.tsx: the counted title
+    and the trash remove). Both titles read at text-sm/5 on the banner scale.
+    Collapsed, it is a "Stash N" pill in the status-chip row like the queue's
+    (custom/ComposerStashChip.tsx), rendered by ChatComposer so the new agent
+    screen shows it too, through ComposerShell's persistentChips slot, which
+    stays over the collapsed phone pill. Upstream's ComposerStashBadge shoulder
+    tab (components/chat/ComposerStashBadge.tsx) is deleted on purpose: resolve
+    a sync modify/delete on it as delete. Its stash-pulse-row keyframes in index.css stay unused, as
+    upstream's, to keep sync diffs small.
     Upstream's stitched glass-shell paint and banner-frame glass are
     disabled under the fork marker, and the banner dock sits inside the vessel
     above the prompt surface.
@@ -3721,6 +3866,7 @@
     - apps/web/src/custom/ComposerBackgroundWork.tsx
     - apps/web/src/custom/BackgroundWorkLayersMark.tsx
     - apps/web/src/custom/ComposerPullRequestChip.tsx
+    - apps/web/src/custom/ComposerStashChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
     - apps/web/src/custom/composerPullRequestChip.logic.ts
@@ -3781,8 +3927,11 @@
     # pseudo-elements this customization switches off. An upstream rework of
     # that paint would leave the fork disabling rules that no longer match.
     - apps/web/src/components/chat/ComposerSurface.tsx
-    # The dock the drawers, banners and stash badge now ride inside the vessel.
+    # The dock the drawers, banners and stash card ride inside the vessel.
     - apps/web/src/components/chat/ComposerBanner.tsx
+    # The stash card's title, trash remove and composer-controls stamp, fenced.
+    - apps/web/src/components/chat/ComposerStashMenu.tsx
+    - apps/web/src/custom/ComposerCardParts.tsx
     # Carries .fork-timeline-cutoff on the scroller, unconditionally, so the
     # transcript mask survives the banner states that drop upstream's top fade.
     # Upstream reworking that className is what would silently un-mask it.
@@ -4857,9 +5006,7 @@
     only drawn edge in the vessel; the Questions card, which fuses with the
     prompt into one bordered box on the composer fill, is the deliberate
     exception and keeps that construction — including its own top edge under
-    a notice, since the notice above it paints no outline to share. Shoulder tabs (stash, tasks) are
-    banner Roots and take the same floor treatment; only the dock stacking and
-    the tabs' shared drawer density name them. The remaining Figma
+    a notice, since the notice above it paints no outline to share. The remaining Figma
     467:33308 card (branch changed) is stamped data-fork-composer-notice so
     drawer density stays on Reconnect / Update / tasks. It drops font-medium /
     leading-7 at the source, stacks title over description, and stamps its
@@ -4892,6 +5039,35 @@
     - apps/web/src/components/chat/UsageLimitRecoveryBanner.tsx
   verify:
     - apps/web/src/__fork_guards__/forkComposerBannerSurface.test.ts
+
+- id: fork-composer-command-card
+  intent: >
+    The / and @ menu reads like the banner cards above the composer (the
+    queue, the stash): a card at the composer's full width, 8px above the
+    prompt, on the banner cards' fill (--fork-thread-composer-card, a step
+    back from the prompt, on 12px corners under Flat Glass and Basic; the
+    composer fill elsewhere) under the composer hairline, with
+    40px rows that run edge to edge between full-width hairlines, text at the
+    chat stream size, and the skill source as a quiet trailing label instead
+    of a filled pill. Upstream draws it as a frosted card inset 1.375rem and
+    tucked 1rem + 1px under the prompt. The menu is portaled, so the banners
+    slot's rules can't reach it: the form's drawer inset goes to 0 so the
+    layer spans the prompt, and the drawer adds its own 8px lift over the
+    tuck. Inlet keeps its Questions-card construction
+    (theme.custom.inlet-composer.css).
+  tier: 1
+  files:
+    - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.thread-composer.css
+  shadows: []
+  watch:
+    # Owns data-composer-command-drawer, data-composer-item-id and the
+    # ComposerBanner.Surface the card paints over.
+    - apps/web/src/components/chat/ComposerCommandMenu.tsx
+    # Owns data-composer-drawer-layer, the drawer-inset read and the tuck.
+    - apps/web/src/components/chat/ComposerCommandMenuLayer.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkComposerCommandCard.test.ts
 
 - id: fork-resume-compaction-banner
   intent: >
@@ -5001,9 +5177,7 @@
     leaves the card transparent) and a top/left/right composer hairline on
     8px top corners (recoloured with the prompt's focus ring so the stack
     keeps one ring), and square the prompt surface's top corners so the two read as
-    one box. Because the card takes the whole dock row, the stash tab cannot
-    sit beside it as it does beside upstream's inset drawer: the dock stacks
-    and the tab sits as a floor row above the card, right-aligned.
+    one box.
     On the no3y iPhone layout (fork/No3yPendingUserInputCard.tsx, swapped in
     by a fenced wrapper in ThreadDetailScreen) the same design is a glass card
     in the composer card's place at its width: a Questions header with the
@@ -5015,6 +5189,10 @@
     multi-select toggles in place. Free-text answers, the collapsed bar with
     Stop, and upstream's feed-inset mechanics carry over unchanged. iPad and
     Android keep upstream's card.
+    The composer's placeholder under a question with options reads "Or type
+    your own answer" (a fenced hunk in ChatComposer), not upstream's "Type
+    your own answer, or leave this blank to use the selected option", which
+    wrapped to two lines beside the composer's controls.
   tier: 2
   files:
     - apps/web/src/custom/useComposerPendingUserInputCard.ts
@@ -5051,7 +5229,7 @@
 - id: fork-model-picker
   intent: >
     The model picker is a menu in the style of Figma t3-fork 342:8038
-    (8px inset, 32px rows with a 12px medium label and a check on the
+    (8px inset, 32px rows with a regular-weight label at the interface size and a check on the
     selected model), squared off a step from upstream's menus: 8px corners on
     the popup, 4px on the rows and search field. ProviderModelPicker's shadow
     swaps upstream's Popover for a non-modal Base UI Menu and keeps the rest
@@ -5077,8 +5255,8 @@
     popup. The rail runs edge to edge
     of the popup (top to the traits panel's rule, or to the popup's bottom),
     divided from the list by a full-height rule; its 32px tabs line up with
-    the search field and the rows. The tabs are Favorites (heart, always
-    shown; empty, it says how to add one), then one per enabled provider instance, icon only with
+    the search field and the rows. The tabs are Pinned (a pin, always
+    shown; empty, it says how to pin one; pins are the stored favorites), then one per enabled provider instance, icon only with
     a tooltip naming it (or why it is disabled), a tint on the chosen one and,
     when another scope is chosen, a dot on the current model's provider (its
     accessible name says "current model").
@@ -5107,8 +5285,17 @@
     provider-agnostic list of every matching model — glyph and instance name
     inline, ranked like upstream's search, locked provider still respected;
     Enter picks the first result and Escape clears the query before it
-    closes the menu. Rows reveal the favorites star and ⌘1–9 badge on hover;
-    the star toggles without choosing the row. ⌘1–9 map to the search
+    closes the menu. Rows reveal a pin at their far right on hover (Pin /
+    Unpin); it toggles without choosing the row, and never moves a row:
+    provider lists keep the provider's order, except that Claude reads by
+    family, Fable, Opus, Sonnet, Haiku, release order within each
+    (custom/claudeFamilyOrder; the manifest lists by release), pinned models gather on the
+    Pinned tab, not atop them), and placement in a provider list or search (a
+    pinned legacy model among the current ones, search ties) reads the pins as
+    they stood at the first toggle of an open, so a change shows on the next
+    open. The Pinned tab is the live list of pins: a pin joins it at once and an
+    unpin leaves it. Rows show no shortcut badge,
+    but ⌘1–9 still map to the search
     results, else the listed models in order, and the provider-cycling
     shortcuts step the provider tabs. Providers locked out of the thread or not
     ready stay in the rail but disabled, with the reason as a
@@ -5121,29 +5308,47 @@
     wraps ProviderModelPicker and fills its `traits` slot from the same input
     the composer used to hand upstream's TraitsPicker: the trigger reads
     "Opus 5.5 High Fast" (fast mode rides in the label text since upstream
-    #16069), and under the list a panel
-    shows the selected model's traits. The traits label truncates inside the
+    #16069). The selected model's row shows its effort beside the check
+    (Figma kUDQTOR0ndxERlBCqgy3nk 377:1125); its other traits live in the
+    effort menu that value opens. The traits label truncates inside the
     trigger's max width, and in the resting strip it collapses with the model
     name below 640px, where upstream moved the traits picker
     into the ⋯ menu. Effort (any reasoning select recognized by
     isReasoningSelect — including `effort`, `reasoningEffort`, `reasoning`,
     `variant`, `thinking_level`, and `role: "reasoning"` — when it has two or
-    more levels) is a slider over
-    the model's own levels, Ultrathink included as the top stop for Claude;
-    dragging previews and writes once on release. It is a 24px bar with a block
-    thumb, dot stops and a short bar at the default level, drawn under the fill
-    so the stops the thumb has passed are covered as it moves. The fill is an 8x8
-    Bayer dither (custom/EffortDither) through the provider's colours (Claude,
-    Codex, Antigravity, Grok, Cursor; any other runs from the done blue to the
-    working green), solid at the middle of the thumb and its last colour under
-    the rest, so Glass's see-through thumb shows one fill. Inlet keeps a flat
-    fill and hides the dither (theme.custom.inlet.css). On/off traits are
-    checkboxes and other selects are segments. Rows keep one order for every
+    more levels) is a "⇕ High" value on that row; clicking it (or ArrowRight)
+    opens a submenu above it (hover never does; another click closes it; a
+    click on another row's previewed effort picks that model and opens its
+    menu). The value is a plain button in the row's one control slot
+    (renderRowControl); the menu is a trigger-less submenu of the model menu,
+    rendered outside every row as the picker's layer and anchored to the
+    button, so the shared row needs no event suppression. The menu sits centred
+    above the value and lists the model's own levels, Ultrathink last for
+    Claude. There is no effort slider. The row stays lit while its menu is open
+    (one rule on the button's data-open). A level pick closes the menu.
+    Hovering any other row (outside search, and not a disabled one) previews,
+    in muted ink, the effort picking it would set, by the pick's own rule
+    (custom/pickOptions, also used by useComposerSelection): the options last
+    used with that model, else the thread's own when it is the thread's model,
+    else the model default. Every text in the menu (rows,
+    search, panel labels, the levels submenu) is text-base, so it follows the
+    interface font size, at regular weight; the search field is 36px tall.
+    The model menu has no traits panel (only an unlisted model's saved options
+    show there, read-only): the effort menu holds the levels under an "Effort"
+    header, any other select as its own ruled-off section, and the toggles as
+    checkbox rows with an icon each (the checkbox on the right) (Fast ⚡, Ultracode code, Cyber shield,
+    Thinking brain), so the model menu's height never depends on the model.
+    The row's value is led by the icon of each toggle that is on. On/off traits are
+    checkboxes, and so is a two-value select with a standard value ("default"
+    or "standard"): Codex's Service Tier reads "Fast mode" and Cyber Access
+    "Cyber mode", checked meaning the non-standard value. Nothing is a tab strip.
+    While the prompt body says "ultrathink" the levels are disabled and the
+    effort menu says why. Rows keep one order for every
     provider: the rest in the provider's order, then Fast Mode, then Context
     Window last. Writes match upstream's traits
     menu exactly: same draft-store options with persistSticky, same implicit
     fast-mode default, and Ultrathink as a prompt prefix that is stripped when
-    leaving it (the slider locks while the prompt body says "ultrathink").
+    leaving it.
     The panel keeps every key but Escape and Tab out of the menu's
     navigation. A pick keeps the menu open so effort can follow, and keeps
     focus there: ChatComposer's focusAtEnd stands down while its picker is
@@ -5172,10 +5377,9 @@
     verbatim and both shadows keep upstream's relative imports. Reaches every
     entry point through ProviderModelPicker (composer and Settings). Provider
     scopes sit in a horizontal top segmented Tabs strip above the search field,
-    model list, and reasoning/traits panel. Under Glass
-    (theme.custom.glass-surfaces.css), at Full 3D the effort thumb wears the
-    send button's glass and the selected provider and trait tabs wear the
-    segmented tabs' glass chips. An editable select whose one value is
+    model list, and traits panel. Under Glass
+    (theme.custom.glass-surfaces.css), at Full 3D the selected provider tab
+    wears the segmented tabs' glass chip. An editable select whose one value is
     already in force (Cyber Access for a login without Daybreak) offers no
     choice (composerModelTraits' offersChoice): it gets no row and stays out of
     the trigger label, the stored selection is untouched, and a model with
@@ -5185,12 +5389,16 @@
     - apps/web/src/overrides/components/chat/ProviderModelPicker.tsx
     - apps/web/src/overrides/components/chat/ModelPickerContent.tsx
     - apps/web/src/custom/ComposerModelPicker.tsx
-    - apps/web/src/custom/EffortDither.tsx
-    - apps/web/src/custom/EffortDither.test.ts
+    - apps/web/src/custom/ComposerModelPicker.browser.test.tsx
     - apps/web/src/custom/composerModelTraits.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - apps/web/src/custom/modelPickerFocus.ts
     - apps/web/src/custom/modelPickerDisplayName.ts
+    - apps/web/src/custom/claudeFamilyOrder.ts
+    - apps/web/src/custom/pickOptions.ts
+    - apps/web/src/custom/modelRowControl.tsx
+    - apps/web/src/custom/traitPresentation.ts
+    - apps/web/src/custom/claudeFamilyOrder.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
     - apps/web/src/custom/icons/ModelPickerProviderGlyph.tsx
     - apps/web/src/custom/assets/codex-mark.png
@@ -5219,6 +5427,9 @@
     # helpers (trigger label, unavailable descriptors, fast-mode default).
     - apps/web/src/components/chat/TraitsPicker.tsx
     - apps/web/src/components/chat/composerProviderState.tsx
+    # Fenced: the pick's option rule goes through custom/pickOptions, shared with the menu's
+    # effort preview so the preview shows what the pick restores.
+    - apps/web/src/components/chat/useComposerSelection.ts
     # Unfenced: the controlled-update effect must keep reading focus before it
     # rewrites and never focus the view itself (guard-pinned).
     - apps/web/src/components/ComposerPromptEditorTiptap.tsx
@@ -5229,7 +5440,6 @@
   verify:
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/custom/modelPickerDisplayName.test.ts
-    - apps/web/src/custom/EffortDither.test.ts
     - apps/web/src/custom/composerModelTraits.test.ts
     - packages/provider-core/src/modelShortName.test.ts
 
@@ -5240,26 +5450,23 @@
     dark palette --input is the border grey (Westworld's is #33343a), so
     that wash smears a border tint over the stage instead of landing on the
     opaque card fill; under the fork marker the card and sticky header
-    paint var(--card), --fork-card-radius corners, and a 1px var(--fork-composer-border)
-    border so Cool / Neutral palettes keep their own hairline weight. The
+    paint var(--card) in a subagent card's shape: --fork-card-radius set to
+    12px and a 1px var(--border) line. The
     header and the file tree and "N more files" footer under it (the header's
     following sibling divs) share the card's fill, parted by a hairline on the
-    tree's top only (the card border is the line elsewhere). The card sets
-    --fork-card-radius to the composer's radius (16px), and its corner rules read
-    it; the tree rounds its top corners too, so its hairline curves into the
-    card's sides. On Flat Glass the tree and footer take a 4% white wash.
+    tree's top only (the card border is the line elsewhere). The corner rules
+    read --fork-card-radius; the tree rounds its top corners too, so its hairline curves into the
+    card's sides. On Flat Glass the card is one solid fill: the hairline rule
+    skips it. Folded, the header is the card's last child and rounds all
+    four corners.
     Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
-    The header actions (fold toggle, Open diff) are ghost-muted Buttons
-    upstream and stay borderless: selected as header > div button
-    (TooltipTrigger overwrites data-slot="button") they take --foreground
-    ink only, never the --fork-outline-border recipe pending Previous
-    wears. Every button in the card hovers as the same 4% white
+    Nothing in the header takes the --fork-outline-border recipe. Every button in the card hovers as the same 4% white
     lift (--fork-outline-hover-bg) instead of upstream's accent/60 fill,
     which lands darker than the card. The user's sent chat bubble
-    (bg-message → --message-surface, upstream's --accent) is painted
-    background-color var(--card) on the element under the dark marker so it
-    shares the card's fill — on the element, not via the token, because
+    (bg-message → --message-surface, upstream's --accent) is painted from
+    var(--card) on the element under the dark marker, lifted by
+    fork-message-bubble-shape's --fork-message-bubble-lift — on the element, not via the token, because
     --color-message is declared on :root and would compute --card there
     rather than under the v2 shell's rescoped value. Keys off
     data-changed-files-state / -header and the bg-message class.
@@ -5451,8 +5658,8 @@
   intent: >
     The mobile app builds as no3y Code, signed by the fork owner's Apple team
     (4WDT6B6JDX) under com.noahhendrickson.no3ycode (.dev / .preview for the
-    other variants), with the fork's app icons and, on iOS, the sparkle
-    launch screen (no3y-launch-sparkle). Ping's team, bundle IDs, linked
+    other variants), with the fork's app icons and, on iOS, the leaf
+    launch screen (no3y-launch-leaf). Ping's team, bundle IDs, linked
     domains (clerk.t3.codes, app.t3.codes) and Expo project cannot sign or
     serve a different bundle, so they are swapped out or dropped, and OTA
     updates stay off until the fork has its own Expo project.
@@ -5525,6 +5732,7 @@
   tier: 4
   files:
     - apps/mobile/fork/pushRegistration.ts
+    - apps/mobile/fork/push-service/apns.mts
     - apps/mobile/fork/push-service/no3yPush.mts
     - apps/mobile/fork/push-service/no3yPush.test.ts
   shadows: []
@@ -5535,6 +5743,68 @@
   verify:
     - apps/web/src/__fork_guards__/no3yPush.test.ts
     - apps/mobile/fork/push-service/no3yPush.test.ts
+
+- id: no3y-live-activity
+  intent: >
+    The no3y iOS app shows one lock-screen and Dynamic Island Live Activity
+    for the agents running on the Mac, without Ping's relay. The card is
+    built from the push service's thread map when it is read, from the same
+    per-thread awareness alerts use (fork/no3yLiveActivity.ts decides rows
+    and tiles: waiting first, then failures, running work and what finished
+    in the last 15 minutes; up to three threads as rows, past three the two
+    most urgent above a full-width strip of count tiles, so it fits the lock
+    screen's 160pt). Status reads from the marks alone: no status words, and
+    the header count is white. push-service/liveActivityPush.mts pushes it
+    as ActivityKit liveactivity pushes to every registered activity token:
+    each token gets the card when what it last accepted differs, every token
+    again every 4 minutes while work runs (the card goes stale after 10), and
+    an end once nothing has been active for the alerts' 5-second hold,
+    dismissed 5 minutes later. A token whose end failed stays and is ended on
+    the next change. Nothing is pushed while the shell stream is down or
+    before its first snapshot, and the card is re-sent as soon as it is back.
+    The phone only starts the card in the foreground, as upstream does: on a
+    send (upstream's armAgentAwarenessLiveActivityForLocalWork, fenced to take
+    the no3y path first through the dependency-free no3yLiveActivityHook) or
+    on opening the app while the Mac reports work (GET
+    /no3y-push/live-activity), and only while upstream's Settings →
+    Notifications Live Activities switch is on. It then POSTs the card's
+    update token to /no3y-push/live-activity on each Tailscale route. The
+    layout is fork/No3yAgentActivity.tsx (ActivityKit name
+    No3yAgentActivity): Flat Glass status colours, SF Symbol marks matching
+    the sidebar's, the pixel leaf, and the Claude and Codex marks, which a
+    fork config plugin adds to the widget catalog after upstream's logo
+    plugin. Upstream's AgentActivity card and relay path stay for an
+    upstream-identity build (NO3Y_MOBILE_IDENTITY=0).
+  tier: 4
+  files:
+    - apps/mobile/fork/no3yLiveActivity.ts
+    - apps/mobile/fork/no3yLiveActivity.test.ts
+    - apps/mobile/fork/no3yLiveActivityClient.ts
+    - apps/mobile/fork/no3yLiveActivityHook.ts
+    - apps/mobile/fork/no3yLiveActivityNative.ts
+    - apps/mobile/fork/no3yLiveActivityNative.ios.ts
+    - apps/mobile/fork/No3yAgentActivity.tsx
+    - apps/mobile/fork/plugins/withNo3yWidgetAssets.cjs
+    - apps/mobile/fork/assets/widget/No3yClaude.svg
+    - apps/mobile/fork/assets/widget/No3yCodex.png
+    - apps/mobile/fork/pushRegistration.ts
+    - apps/mobile/fork/push-service/liveActivityPush.mts
+    - apps/mobile/fork/push-service/liveActivityPush.test.ts
+    - apps/mobile/fork/push-service/no3yPush.mts
+    - apps/mobile/fork/identity.ts
+  shadows: []
+  watch:
+    - knip.jsonc
+    - apps/mobile/src/features/agent-awareness/remoteRegistration.ts
+    - apps/mobile/src/widgets/AgentActivity.tsx
+    - apps/mobile/plugins/withWidgetLogoAsset.cjs
+    - infra/relay/src/agentActivity/ApnsClient.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yLiveActivity.test.ts
+    - apps/mobile/fork/no3yLiveActivity.test.ts
+    - apps/mobile/fork/push-service/liveActivityPush.test.ts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+    - apps/mobile/fork/identity.test.ts
 
 - id: fork-glass-preview-parking
   intent: >
@@ -5660,7 +5930,7 @@
     shows as the first chip in the composer's context row
     (custom/DraftProjectPill, which renders nothing while unassigned), ahead
     of the workspace and branch chips and dressed like them: the row's CSS
-    paints it as the same filled 24px chip and its label collapses with
+    paints it as the same filled chip, at the same type, and its label collapses with
     theirs when the strip overflows. Its menu, like the launchpad, offers a
     "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
@@ -6243,7 +6513,9 @@
     the data after the synced thread primed, past the last row already there,
     so virtualized remounts, thread switches, "Load earlier", the cached or
     remembered snapshot ChatView shows while a thread syncs, and large
-    catch-up batches all stay still. The slide runs on LegendList's
+    catch-up batches all stay still. A live row the status line carries
+    (fork-working-row-last) counts as live, so it stays still when a reply
+    lands after it and it returns to the transcript. The slide runs on LegendList's
     positioned container (it paints with contain: paint, which would clip a
     transform on the row frame) and keys off its style.top mutations, which
     relies on the conversation list leaving recycleItems off so that
@@ -6269,45 +6541,37 @@
 
 - id: fork-working-row-last
   intent: >
-    A live turn shows one status line at the bottom, the way Claude Code
-    does: the working mark, what the agent is doing now ("Thinking", a
-    startup label), and the turn's timer. Upstream derives the working row
-    at the head of the active turn (the slot the turn's fold divider takes
-    when it ends) with a bottom border, and draws at most one live activity
-    row (a thinking line, live reasoning, or the running tool) at the
-    turn's tail. The fork reorders and folds useStableRows' output, so
-    upstream's row derivation, row equality and their tests stay untouched:
-    the working row moves to the end and branches on that live row. A plain
-    thinking row or live reasoning is removed from wherever it sits and
-    carried on a copy of the working row as `forkLive`, which renders
-    ForkLiveStatusLine. A running tool keeps its own upstream row in the
-    transcript (its toggle opens the group in place) and the copy carries
-    `forkLive: null`, a plain "Thinking" line with the timer, matching the
-    no3y iPhone transcript. Upstream keeps the latest tool as the active
-    live row after it succeeds; out of the line it would still read
-    "Running", so a tool with an end status is handed over settled
-    (`active: false`, `forkSettled`, which row motion still counts as the
-    live slot). A tool with no status stays running, as upstream counts it.
-    The in-place row's label drops upstream's endlessly repainting
-    live-tool-shine; the line carries the motion. While the turn waits on
-    an approval or an answer (TimelineRowActivityCtx's awaitingUser) the
-    line gives way to upstream's "Working for …", since nothing is
-    thinking; pending approvals reach the transcript as plain `work` rows,
-    so the fold cannot tell. Upstream's failed-tool shape, a `thinking` row
-    with a groupId, keeps its own row above a plain "Working for …" line,
-    even beside an earlier tool still running. Folded reasoning's open group
-    stays in place above the line, and the line stays mounted while its
-    group is open, so the toggle keeps keyboard focus. While compaction or
-    worktree setup owns the line, folded reasoning renders its upstream row
-    above it. Labels are one rule in forkStatusLineLabel; upstream's thought
-    and reasoning previews stay in the open group. Where upstream says
-    "Thinking", the line shows a word from @t3tools/shared/forkThinkingWords
-    ("Yapping", "Cooking", ...) seeded by what last landed: the row above the
-    line (a group's newest entry), or the live reasoning step itself. The word
-    holds until a new row or step lands. The no3y iOS line takes its word from
-    the same module (no3yLiveWordSeed, no3y-mobile-redesign). The working row
-    has no divider, and neither does the turn's fold row ("Worked for …") once the
-    turn ends (theme.custom.css).
+    A live turn ends in one status line, the way Claude Code does: the
+    working mark, what the agent is doing now (the thinking word, a startup
+    label, or the running tool's label such as "Running vp"), and the turn's
+    timer, with no separator. Upstream's ActivityShimmerOverlay sweeps the
+    text; the line keeps its 2.2s cycle but sweeps in the first 35% and rests
+    (theme.custom.css, `[data-fork-status-line]`), so it flashes, not drifts.
+    Upstream puts the working row at the head of the active turn with a
+    bottom border and at most one live row (a thinking line, live reasoning,
+    or the running tool group) at the turn's tail. The fork folds
+    useStableRows' output instead of touching upstream's derivation: the
+    working row moves to the end, and the live row folds into a copy of it
+    (`forkLive`, rendered by ForkLiveStatusLine) iff it is the tail, with
+    nothing after it but its own open details and thumbnails. So the stretch
+    still running draws no row of its own, its chevron opens the group in
+    place above the line, and finished stretches stay in the trail as
+    upstream's summary rows. A live row with a reply after it stays in place
+    above a plain thinking line (`forkLive: null`). A finished tool upstream
+    still holds as live is handed over settled (`active: false`,
+    `forkSettled`, which row motion counts as the live slot), so it never
+    reads "Running"; a tool with no status stays running, as upstream counts
+    it. In-place tool rows drop upstream's endlessly repainting
+    live-tool-shine. When an approval, an answer, compaction or worktree
+    setup owns the tail, MessagesTimeline passes `lineYields` and nothing
+    folds: upstream's rows keep their order above "Working for …". Upstream's
+    failed-tool shape (a `thinking` row with a groupId) never folds. Labels
+    are one rule in forkStatusLineLabel. The thinking word comes from
+    @t3tools/shared/forkThinkingWords, seeded by what last landed (the row
+    above the line or the live step), so it holds until something new lands;
+    the no3y iOS line uses the same module (no3y-mobile-redesign). Neither
+    the working row nor the finished turn's "Worked for …" row has a divider
+    (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts
@@ -6329,6 +6593,10 @@
     # border-b. forkStatusLineLabel condenses ThinkingTimelineRow's and
     # LiveWorkEntryTimelineRow's labels here.
     - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # The line reuses ActivityShimmerOverlay; theme.custom.css retimes its
+    # live-activity-focus classes under [data-fork-status-line].
+    - apps/web/src/components/chat/TimelineRowParts.tsx
+    - apps/web/src/index.css
     # Unfenced (strict JSON): the `./forkThinkingWords` subpath export.
     - packages/shared/package.json
   verify:
@@ -6336,15 +6604,91 @@
     - apps/web/src/custom/forkWorkingRowLast.test.ts
     - packages/shared/src/forkThinkingWords.test.ts
 
+- id: fork-trail-summary
+  intent: >
+    A finished stretch of steps between two messages reads as one summary
+    row named for what it did ("Read 1 file"), the way Claude Code shows its
+    trail; its thoughts and task updates show only when the row opens.
+    Upstream breaks a group at every task-list update and draws a lone
+    thought as its own trace row, so a stretch read as three rows. In
+    deriveMessagesTimelineRows a task update now joins the group it follows
+    (one that starts a stretch keeps its own row, and the live stretch walker
+    still stops at it, so an unfinished task update never reads as running);
+    a lone thought takes the summary branch; and the summary comes from
+    forkTrailSummary, which counts tools only: a group of thoughts reads
+    "Thought", and a group of only task updates keeps its latest task line.
+    Rows read like Claude Code: a summary row carries a chevron that turns
+    when it opens, every work-log row sizes its label to its text so its
+    chevron hugs it (WorkLogLine; the hover timestamp, tagged
+    data-row-timestamp in TimelineRowParts, still sits at the far end), and an opened group hangs under its summary on a quiet left rail
+    without the scrollbar or its gutter (theme.custom.css,
+    `[data-tool-group-scroll]`), still height-capped and virtualized.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkTrailSummary.ts
+    - apps/web/src/custom/forkTrailSummary.test.ts
+  shadows: []
+  watch:
+    # Fenced: the todo_list group break, the lone-thought branch, the summary
+    # call, and the unused singleEntry upstream kept for it.
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    # Fenced: the stranded-thought case now expects a "Thought" summary row.
+    - apps/web/src/components/chat/MessagesTimeline.logic.test.ts
+    # Fenced: WorkLogLine label sizing and the timestamp order.
+    - apps/web/src/components/chat/WorkLog.tsx
+    # Fenced: the summary row chevron in WorkGroupHeader.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # Fenced: data-row-timestamp on TimelineRowTimestamp.
+    - apps/web/src/components/chat/TimelineRowParts.tsx
+    # Fenced: the opened group rail on [data-tool-group-scroll].
+    - apps/web/src/theme.custom.css
+    - packages/client-runtime/src/work-log/presentation.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkTrailAndTasks.test.ts
+    - apps/web/src/custom/forkTrailSummary.test.ts
+
+- id: fork-live-task-list
+  intent: >
+    While a turn runs, its latest task list draws as a checklist card just
+    above the live status line, the way the Claude app shows it: a check for
+    done steps, a dotted ring for the running one, and a plain ring for the
+    rest (never a dashed circle), updating in place as the agent ticks steps off. It reads
+    the todo_list turn item's steps (forkLiveTaskSteps: the newest list since
+    the user's last prompt; a steer stays in the turn) and reaches the line
+    through ForkLiveTasksCtx, which MessagesTimeline provides only while the
+    thread is working and not in Zen (which hides task lists); the response
+    boundary is upstream's timelineEntryStartsResponse. Each step carries
+    screen-reader text for its state. The icons do not animate: the line below carries the
+    turn's motion. When the turn ends the line and the card go away; the
+    trail keeps upstream's task rows. Client-only; the steps already arrive
+    on the item.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkLiveTasks.ts
+    - apps/web/src/custom/forkLiveTasks.test.ts
+    - apps/web/src/custom/ForkLiveTaskList.tsx
+  shadows: []
+  watch:
+    # Fenced: the import, the steps computed beside activityState, and the
+    # provider inside TimelineRowActivityCtx.
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    # The card renders inside the fork status line (fork-working-row-last).
+    - apps/web/src/custom/ForkLiveStatusLine.tsx
+    # Fenced: the card above upstream fallback line in WorkingTimelineRow.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkTrailAndTasks.test.ts
+    - apps/web/src/custom/forkLiveTasks.test.ts
+
 - id: fork-transcript-spacing
   intent: >
-    Reply text, tool rows and the live status line sit 16px apart, the way
-    the no3y iPhone transcript spaces them; upstream's gaps there run from
+    Reply text, tool rows and the live status line sit 24px apart, a touch
+    roomier than the no3y iPhone transcript; upstream's gaps there run from
     4px to 18px depending on which rows meet. A pass after
     fork-working-row-last's fold reads one box per row (boxOf: the space it
     draws above and below its content, from TimelineRowContent's padding,
     WorkLogBlock's, a reply's or ungrouped tool row's py-0.5, a reasoning
-    trace's py-1 and the status line's pt-1) and tops the gap up to 16px as
+    trace's py-1 and the status line's pt-1) and tops the gap up to 24px as
     padding on the row's root. Only reply-to-tool, tool-to-reply and
     anything-to-live-line gaps are spaced (a send_to_user sent message counts
     as a reply); user bubbles and every other row keep upstream's spacing.
@@ -6371,6 +6715,10 @@
   intent: >
     Inline code in a reply is a link-blue chip: --info-foreground ink on
     --info at 12% (16% in dark), 5px corners, 6px either side, at 0.95em.
+    No block padding or border (upstream code has both). Inline code stays inline,
+    so its wash spans the code font's ascent + descent: 1.3em for Geist Mono. File
+    links set line-height 1.3, so with the default code font both pills are one
+    height under any interface font; a user-picked code font can differ.
     File links wear the same chip, as file references do on the no3y iPhone
     transcript. Thread links are ContextChips without the file-link class and
     keep fork-file-link-ink's plain blue. Scoped through TimelineRowContent's
@@ -6435,6 +6783,27 @@
     - apps/web/src/components/settings/SettingsGroup.tsx
   verify:
     - apps/web/src/__fork_guards__/forkSettingsGlass.test.ts
+
+- id: fork-settings-nav
+  intent: >
+    The Settings nav reads calmer (Noey, 2026-11-24): section labels are the
+    foreground at regular weight, active or not, with their icons resting at
+    65% (via --sidebar-icon-color, so hover, press and selected still brighten
+    them); the group headings are the foreground at 65%; the search is the
+    app's outlined search field (InputGroup), used as-is; and a full-width hairline
+    divides each group from the next. Every theme, since the inks derive from
+    --contrast-sidebar-foreground (so Appearance → Contrast still applies).
+  tier: 2
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Fenced search field, heading and group classes.
+    - apps/web/src/components/settings/SettingsSidebarNav.tsx
+    # The label rule outranks the menu button's muted/80 ink and active font-medium.
+    - apps/web/src/components/ui/sidebar.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkSettingsNav.test.ts
 
 - id: fork-split-threads
   intent: >
@@ -6502,8 +6871,8 @@
     While a thread is docked, card drops in the sidebar and the tab strip do not
     pair (the pair would stay hidden), and a landing draft in the left pane is
     never swept as untouched.
-    Its sidebar card wears a docked glyph last on the title line, after the
-    status mark and the working timer (custom/splitThreads/SidebarDockedMark).
+    Its sidebar card wears a docked glyph on the title line, styled like the
+    pin glyph and beside it, before the status mark (custom/splitThreads/SidebarDockedMark).
 
     The route's thread is the focused pane. Pressing into the other pane
     navigates to its thread (replace), so the right panel, the sidebar
@@ -6629,49 +6998,76 @@
   intent: >
     A settled thread offers its owner's next message as one pill in the
     composer's chip row (custom/ComposerNextStepPill), and a click sends it at
-    once. Rules come first (custom/composerNextStep.logic), from the thread's
-    PR as the PR chip beside it resolves it (resolveThreadCurrentPullRequestLink,
-    else resolveDisplayedThreadPr on the same git status), its watch, the checkout's git status and the owner's latest typed message
-    (scheduled tasks, watch wakes and agent-sent turns don't count): after a
-    sol loop with unmerged work off the default branch → Open PR; an open PR
-    nothing has watched → Babysit; one whose watch ended mergeable with checks
-    passing → Merge; a PR merged right after the owner asked to merge it ("merge
-    it", "lets merge", not negated), in this fork's repository only → Cut
-    release. A watched PR, or a watch that ended
-    short of mergeable, is the owner's call: nothing shows. There is no "Run
-    sol loop" rule: in the owner's history no state predicted it (4–8% at
+    once. One pure function picks it for web and iOS (client-runtime
+    pickComposerNextStep), from the thread's PR (its linked one, as the PR chip
+    resolves it with resolveThreadCurrentPullRequestLink, else an open one on
+    the thread's branch, as resolveDisplayedThreadPr finds it), that PR's
+    watch, the checkout's git status (only when it is on the thread's branch)
+    and the owner's latest typed message (scheduled tasks, watch wakes and
+    agent-sent turns don't count): after a sol loop with unmerged work off the
+    default branch → Open PR; an open PR nothing has watched → Babysit; one
+    whose watch ended mergeable with checks passing → Merge; a PR merged right
+    after the owner asked to merge it ("merge it", "lets merge", not negated),
+    in this fork's repository only → Cut release. A watched PR, or a watch that
+    ended short of mergeable, is the owner's call: nothing shows. There is no
+    "Run sol loop" rule: in the owner's history no state predicted it (4–8% at
     every threshold tried).
 
-    Where no rule speaks, a learned habit may (custom/composerHabits*): every
-    owner turn the send path commits (useComposerSend's onOwnerTurnDispatched,
-    fenced beside the optimistic message, so refused sends, answers and queued
-    edits never count; not in side chats), pill clicks included, counts as the
-    follow-up to the thread's previous owner message, keyed by its words
-    (lowercased, numbers collapsed, filler dropped, sorted). A follow-up sent
-    at least five times and making up at least three in ten of that message's
-    follow-ups shows with a sparkle, sending its latest wording; its × forgets
-    it. Long prose, slash commands, acknowledgements and follow-ups naming a
-    number are never learned. The table is device-local (localStorage, capped
-    at 300 messages × 8 follow-ups, the newest follow-up always kept), cached
-    between changes so the pill never re-parses it while a turn streams, and
-    re-read before each write and on another window's storage event so windows
-    don't overwrite each other. No server, contract or AI call.
-    Replayed over the owner's history it is right about half the time, almost
-    all of it on what the rules now cover, so it stays quiet until a new habit
-    forms.
+    Where no rule speaks, a learned habit may (client-runtime
+    forkComposerHabits): every owner turn the send path commits, pill clicks
+    included, counts as the follow-up to the thread's previous owner message,
+    keyed by its words (lowercased, numbers collapsed, filler dropped, sorted).
+    On web that is useComposerSend's onOwnerTurnDispatched, fenced beside the
+    optimistic message, so refused sends, answers and queued edits never count,
+    and not in side chats. A follow-up sent at least five times and making up
+    at least three in ten of that message's follow-ups shows with a sparkle,
+    sending its latest wording; its × forgets it. Long prose, slash commands,
+    acknowledgements and follow-ups naming a number are never learned. The
+    table is device-local, capped at 300 messages × 8 follow-ups (the newest
+    follow-up always kept), and kept by one store (createHabitStore) over a
+    per-client storage: localStorage on web (custom/composerHabits, refreshed
+    on another window's storage event), expo-sqlite's key-value store on iOS
+    (fork/no3yComposerHabits, imported on first use), so each device learns
+    apart. The store loads on first subscribe and caches the table so the pill
+    never re-parses it while a turn streams; each change re-reads storage
+    first, so windows don't overwrite each other, and changes save in order.
+    No server, contract or AI call. Replayed over the owner's history it is
+    right about half the time, almost all of it on what the rules now cover,
+    so it stays quiet until a new habit forms.
 
     The pill shows only once the latest run completed, nothing waits on an
     approval or question, the viewer can operate the thread and the composer
-    is empty, so a click never races what is written. Not in side chats. Web
-    and desktop; mobile is separate.
+    is empty, so a click never races what is written. Not in side chats.
+
+    iOS, on the no3y layout: the step is the last glass pill in the row above
+    the composer (No3yStatusPill's NextStepPill, a Pill with the × as its
+    trailing button) and counts toward the row's feed clearance. The screen
+    makes one call: useNo3yNextStep, gated by no3yNextStepSettled, which adds a
+    ready, created thread with no runless work or compaction, no link request
+    awaiting the owner (the shell's hasPendingUserInput), nothing queued on
+    the server or in the phone's outbox, and no sent message the thread has
+    not caught up to. A tap goes through the screen's own send
+    (handleSendMessage, then onSendMessage with the prompt in place of the
+    empty draft's text), so it takes the composer's model, runtime mode and
+    armed fresh session, follows a typed send's scrolling, and is learned at
+    the one point onSendMessage enqueues to the outbox (skipping approval
+    redirects and side chats). A tap first flushes typing still in transit,
+    and sends nothing while the draft has content or a paste, picker or import
+    still writing into it (hasComposerDraftOperations), so it never clears what
+    the owner put there. The pill stays hidden until that send settles. A
+    watched PR whose link has no snapshot yet is still the owner's call.
+    The shared logic avoids array methods Hermes lacks. The iOS New agent
+    screen has no suggestion list, so the launchpad's review row is web-only.
   tier: 4
   files:
     - apps/web/src/custom/ComposerNextStepPill.tsx
-    - apps/web/src/custom/composerNextStep.logic.ts
-    - apps/web/src/custom/composerNextStep.logic.test.ts
     - apps/web/src/custom/composerHabits.ts
-    - apps/web/src/custom/composerHabits.logic.ts
-    - apps/web/src/custom/composerHabits.logic.test.ts
+    - packages/client-runtime/src/forkComposerNextStep.ts
+    - packages/client-runtime/src/forkComposerNextStep.test.ts
+    - packages/client-runtime/src/forkComposerHabits.ts
+    - packages/client-runtime/src/forkComposerHabits.test.ts
+    - apps/mobile/fork/useNo3yNextStep.ts
+    - apps/mobile/fork/no3yComposerHabits.ts
   shadows: []
   watch:
     # Fenced pill in the composer's status chips (the chip row is built after
@@ -6679,10 +7075,21 @@
     - apps/web/src/components/ChatView.tsx
     # Fenced onOwnerTurnDispatched option, called where a new owner turn commits.
     - apps/web/src/components/chat/useComposerSend.ts
+    # The two modules' subpath exports.
+    - packages/client-runtime/package.json
+    # iOS: the one useNo3yNextStep call, the prompt threaded through handleSendMessage, and the
+    # row's feed clearance.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+    # iOS: the NextStepPill in the no3y pill row.
+    - apps/mobile/fork/No3yStatusPill.tsx
+    # iOS: the pill's prompt in place of the draft's text, and sends learned at the enqueue.
+    - apps/mobile/src/state/use-thread-composer-state.ts
+    # iOS: hasComposerDraftOperations, so a tap waits out a paste still converting.
+    - apps/mobile/src/state/composerDraftOperations.ts
   verify:
     - apps/web/src/__fork_guards__/forkComposerNextStep.test.ts
-    - apps/web/src/custom/composerNextStep.logic.test.ts
-    - apps/web/src/custom/composerHabits.logic.test.ts
+    - packages/client-runtime/src/forkComposerNextStep.test.ts
+    - packages/client-runtime/src/forkComposerHabits.test.ts
 
 - id: fork-draft-project-quick-picks
   intent: >
@@ -7521,10 +7928,10 @@
     (card, compact or grid; the Petals section derives its own from the two
     settings, so Compact cards never reaches the grid), and the kind alone sets
     the row's offscreen size hint and, for a tile, its shape. In Grid a bot
-    draws SidebarV2BotGridBody: a 58px tile (8 + 28 + 12 + 10) washed 4% in the
+    draws SidebarV2BotGridBody: a 62px tile (8 + 28 + 16 + 10) washed 4% in the
     sidebar's ink, the columns sharing the width at least 56px each and 8px
     apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 24px in a 28px box over its name in
-    medium 10px, the
+    regular text-sidebar-label (the Sidebar font size less 1px, as group labels), the
     status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover
     actions (its context menu keeps them), and its hover card opens beyond the
@@ -7978,9 +8385,13 @@
     its thread's link from the thread tools and its pull request's URL, and end every approval or
     yes-or-no ask, and any other ask a word or two answers, with up to four answers after an arrow,
     links before the arrow, the yes naming the action: `OK to push and open a PR? <PR URL> → Open PR | Hold`). On the bot's own
-    conversation the digest sits just above its composer, in the chat column (BotDigestAsks, one
-    fenced line in ChatView beside upstream's ChildThreadApprovals, inside the composer stack so
-    the transcript's bottom inset counts it); the bot's Threads panel lists its threads only. It
+    conversation the digest sits just above its composer, in the chat column, under the composer's
+    status chips and above its banner cards (BotDigestAsks in ComposerShell's aside slot, fenced
+    in ChatComposer with the composer's own thread, so the transcript's bottom inset counts it).
+    The aside is in the composer's form but not the composer: theme.custom.thread-composer.css
+    themes only ComposerShell's body (banners and vessel), so the digest keeps its own look, and
+    focus in the aside (isInsideComposerAside) neither expands the collapsed phone composer nor
+    holds it open. The bot's Threads panel lists its threads only. It
     shows the status line (parseBotDigestStatus; "Nothing yet." shows none) and one card per
     Needs you ask, nothing for any other thread or while there is neither. New and In progress
     stay in the file for the bot's own memory and draw nothing: its chat messages already say
@@ -8059,8 +8470,8 @@
     - apps/mobile/fork/no3yBotDigestAnswers.ts
   shadows: []
   watch:
-    # Mounts the asks beside ChildThreadApprovals above the composer (fenced).
-    - apps/web/src/components/ChatView.tsx
+    # Draws the asks in ComposerShell's aside slot, under the status chips (fenced).
+    - apps/web/src/components/chat/ChatComposer.tsx
     # The same asks above the iPhone composer, beside ChildThreadApprovals (fenced).
     - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
     # Exports the two subpaths both clients import.
@@ -8157,7 +8568,7 @@
     upstream appears without a story edit. Fork/ stories draw fork components
     through view exports that take plain props (ForkSubagentCardView,
     BotThreadsRowView,
-    PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, EffortSlider, the
+    PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, the
     working-mark forms, BotDigestView, BotDigestAskCardView,
     BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
     stories, so a story never copies the app markup it shows. The package
@@ -8257,32 +8668,39 @@
   verify:
     - apps/web/src/__fork_guards__/forkTabs.test.ts
 
-- id: no3y-launch-sparkle
+- id: no3y-launch-leaf
   intent: >
-    A cold launch of the no3y iPhone app opens on the new sparkle logo. The
-    iOS launch screen is the green (#00C26B) sparkle at 220pt on the dark page
-    (#191817) (fork/identity.ts sets expo-splash-screen's iOS options;
-    fork/assets/no3y-splash-sparkle.png is rendered from the logo SVG). The
-    JS overlay (fork/No3yLaunchSparkle.tsx, mounted in App.tsx) draws the same
-    frame, hides the native splash under it, and twinkles on the UI thread: a
-    squeeze and spring back with a slight turn and a white glint across the
-    mark. When the first screen is ready (where SplashScreenCoordinator hides
-    the splash) it scales up and fades, after a 320ms floor so a fast launch
-    does not flicker (fork/no3yLaunch.ts); it never waits for the twinkle, so
-    it never delays the app. Once per process, so returning from the
-    background does not replay it; Reduce Motion only fades; iPad, Android and
-    upstream's identity build skip it. The app icons are not touched here.
+    A cold launch of the no3y iPhone app opens on the pixel leaf mark from the
+    app icon. The iOS launch screen is the leaf at 147pt (7pt a cell) on the
+    dark page (#191817) (fork/identity.ts sets expo-splash-screen's iOS
+    options). fork/no3yLeafMark.ts is the one source for the mark: the top
+    leaf on its 21-cell grid, turned a quarter at a time for the others, in
+    the one paint order that rests as the logo (bottom, right, top, left).
+    fork/assets/no3y-splash-leaf.png is rendered from it at 21px a cell by
+    `node .fork/export-launch-leaf.ts` (`--check` fails on a stale PNG). The
+    JS overlay (fork/No3yLaunchLeaf.tsx, mounted in App.tsx) draws the same
+    frame, hides the native splash under it, and if the app is still loading
+    after 180ms spins on the UI thread: each leaf laps once clockwise, up
+    into one stack at the top and on round to its place, resting between
+    spins. When the first screen is ready (where SplashScreenCoordinator
+    hides the splash) it scales up and fades at once, a spin under way
+    playing on beneath it, so it never delays the app (fork/no3yLaunch.ts).
+    Once per process, so returning from the background does not replay it;
+    Reduce Motion only fades; iPad, Android and upstream's identity build
+    skip it. The app icons are not touched here.
   tier: 3
   files:
-    - apps/mobile/fork/No3yLaunchSparkle.tsx
+    - apps/mobile/fork/No3yLaunchLeaf.tsx
+    - apps/mobile/fork/no3yLeafMark.ts
     - apps/mobile/fork/no3yLaunch.ts
     - apps/mobile/fork/no3yLaunch.test.ts
-    - apps/mobile/fork/assets/no3y-splash-sparkle.png
+    - apps/mobile/fork/assets/no3y-splash-leaf.png
+    - .fork/export-launch-leaf.ts
   shadows: []
   watch:
     - apps/mobile/src/App.tsx
   verify:
-    - apps/web/src/__fork_guards__/no3yLaunchSparkle.test.ts
+    - apps/web/src/__fork_guards__/no3yLaunchLeaf.test.ts
     - apps/mobile/fork/no3yLaunch.test.ts
     - apps/mobile/fork/identity.test.ts
 - id: no3y-prompt-stash
@@ -8397,7 +8815,9 @@
     ThreadListFilters.tsx stays untouched). Live, unarchived bots (the Mac's
     listing rule, fork/forkBots.ts) sit above the status sections under
     "Petals" (a collapse chevron, as the Mac's header), as the Mac's Petal
-    tiles, five to a row and wrapping: 12pt-radius tiles on the 4% wash, the
+    tiles, five to a row and wrapping (fewer still span the row): 12pt-radius
+    liquid-glass tiles (fork/No3yGlass.tsx, a wash over it while pressed; rows rise in and
+    never fade, so the glass renders), the
     bare pixel mascot centred (art copied in fork/botMascotArt.ts, 26pt), the
     12pt name centred under it, no status line, and a 20pt mark in the top-right
     corner that, over an idle petal, takes its launched work's need of you or
@@ -8483,12 +8903,17 @@
     and counts it toward the feed's clearance. An amber dot marks what needs
     the user; queued messages are in the queued-runs banner above the card;
     scroll-to-end sits at the row's right. The status and background pills,
-    and a subagents pill with a child waiting, open a half-height sheet
-    (fork/No3yStatusSheet.tsx) listing every item by kind with every action the
-    upstream control had (stop background work, force stop, wake, un-settle,
-    dismiss, reconnect, open subagents, open a child that needs the user, Pi
-    status, previews); the others open their own target (the pull request or
-    the list of them, the agents sheet, Pi status, the preview). iPad and
+    and a subagents pill with a child waiting, open the Activity sheet
+    (fork/No3yStatusSheet.tsx), which opens at half height and pulls up to
+    full, listing every item by kind in one glass card per kind
+    (fork/No3yGlassCard.tsx) with every action the upstream control had (stop
+    background work, force stop, wake, un-settle, dismiss, reconnect, open a
+    subagent, open a child that needs the user, Pi status, previews). Its
+    subagents are the Agents sheet's rows, opened through the Agents sheet's
+    own useOpenSubagentThread (fenced in ThreadAgentsSheet.tsx); a workflow
+    opens the Agents sheet's grouped view, and background rows open the
+    background-work sheet. The others open their own target (the pull request
+    or the list of them, the agents sheet, Pi status, the preview). iPad and
     Android keep the upstream control.
     Upstream moved working, compacting, background work and snooze/settle
     out of its floating status into the feed's closing status lines, and
@@ -8522,25 +8947,38 @@
     (fork/no3yTranscriptSpacing.ts): tool rows keep their fixed list sizes,
     so the gap is a spacer on the measured neighbour, a reply above or below
     or the live line above, and the row sizing reads the body line height.
+    The "Worked for …" fold label is set at that size too, and a settled fold
+    sits midway between the footer above it and its reply (27pt each way at
+    the default size): the footer's mb-5 drops to 6 before a fold, live or
+    settled so the turn doesn't jump when it settles, and the reply under it
+    takes 3pt more.
     Inline code in a reply is link-blue ink on a blue-tinted chip
     (flatGlassTheme's inlineCodeInk/inlineCodeWash, through the fenced
     inlineCodeBackgroundColor style) at 0.95 of the body size
-    (inlineCodeFontScale, upstream 0.9), with 5pt corners and 4pt of room
-    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip). File
+    (NO3Y_INLINE_CODE_CHIP.fontScale, upstream 0.9), with 5pt corners and 4pt of room
+    either side (NO3Y_INLINE_CODE_CHIP, through inlineCodeChip), hugging
+    the code's font so chips on consecutive lines keep a gap. File
     references in a reply (both the embed-label and the resolved file link,
     marked fileReference) wear the same ink, wash and chip shape instead of
-    the teal mention chip, keeping their file icon. A table's header row
+    the teal mention chip, keeping their file icon, with the label at the code
+    chip's scale (pill.fontScale). In body text every reply chip stands one
+    height: fork/no3yChipHeight.ts pads code
+    (Menlo's ascender + descender), file chips and the subagent capsule (the
+    system font's, rounded up to a whole point) to the tallest of them, from
+    the sizes RCTFont actually draws (it rounds Dynamic Type sizes to a whole
+    point). Chips in a heading take the heading's size. A table's header row
     takes the palette's 4% cardWash (tableHeaderBackgroundColor) instead of
     the dark code block fill. The native
     library draws that chip, so apps/mobile/deps carries a fork build of
     enriched-markdown: Julius's fork/t3-mobile plus its open #15, the shipped
     blockquote lift, code.borderRadius/code.paddingHorizontal (iOS kerns the
     padding outside the span so copied text stays the code; a chip at a line
-    start stops at the view's edge), and a numeric
+    start stops at the view's edge), code.paddingVertical (the chip hugs the
+    code's font instead of filling the line), pill.fontScale, and a numeric
     strong.fontWeight, which lets replies set bold text and headings at
     medium (emphasisFontWeight "500"). Its source is branch
     no3y/inline-code-chip of NoahHendrickson/enriched-markdown (commit
-    9584829b). When upstream bumps the tarball, rebuild this change on top of
+    be8dc327). When upstream bumps the tarball, rebuild this change on top of
     theirs (deps/README.md) rather than taking theirs, or the chip loses its
     shape.
     While a turn runs, the status line carries the timer: no3yLivePresentation
@@ -8585,7 +9023,8 @@
     same row, tile and elapsed time, each in its own 20pt-radius card, plus a
     running agent's progress or a failure, and a running agent shows a small
     neutral round stop button in place of the chevron instead of upstream's
-    red tile; workflow groups keep upstream's rows. On
+    red tile, both on the title line in one 28pt slot so elapsed times align;
+    workflow groups keep upstream's rows. On
     iPhone the model chip opens a half-height sheet (fork/No3yModelPicker.tsx)
     with a close button, a Favorites/provider select, an Access menu (the
     session's runtime mode: the thread's composer draft settings, or the New
@@ -8605,8 +9044,9 @@
     filled weight (a copy of hugeiconsFill.ts). Chat (fork/No3yChatTab.tsx)
     has Threads' header (Chat; Search, Settings and Usage, Search turning the
     row into a search pill with a close button), its chats newest first as
-    thread cards (fork/No3yThreadRow.tsx, swiping to archive and delete, the
-    card long-press menu, no settle or snooze), and New agent's own draft
+    one-line rows (fork/No3yThreadRow.tsx's chat variant: provider mark, title,
+    then the queued, pin and status marks, no meta line; swiping to archive and
+    delete, the card long-press menu, no settle or snooze), and New agent's own draft
     composer for a No-project chat: the Chat tab keeps a draft for the
     environment's No-project workspace (opened on the server if it is not yet
     listed; fork/no3yChat.ts), as New agent's tab keeps its own. With no draft
@@ -8621,8 +9061,10 @@
     last had (fork/No3yHomeDraftGate.tsx) so it never renders the other tab's
     draft. The model chip, model sheet, effort, access, +, the prompt stash and
     dictation are New agent's and what is picked starts the chat. A sent chat
-    or New agent thread is pushed over Home (back returns to the tab) while the
-    tab takes a fresh draft; chats opened from the list are pushed too.
+    or New agent thread is pushed over Home while the tab takes a fresh draft;
+    back returns to Chat, but a New agent send switches Home to Threads once
+    the thread covers it, so back lands there. Chats opened from the list are
+    pushed too.
     A chat is what the Mac calls one (fork/no3yChatRule.ts, parity-guarded
     against chatMode.ts isChatThread): tagged `chat`, or sent from this phone
     and still waiting for its tag; a No-project thread without the tag is code
@@ -8756,12 +9198,15 @@
     - apps/mobile/fork/no3yPillStatus.test.ts
     - apps/mobile/fork/No3ySubagentCards.tsx
     - apps/mobile/fork/No3yAgentsSheetRow.tsx
+    - apps/mobile/fork/No3yGlassCard.tsx
     - apps/mobile/fork/no3ySubagentCard.ts
     - apps/mobile/fork/no3ySubagentCard.test.ts
     - apps/mobile/fork/no3yLiveStatus.ts
     - apps/mobile/fork/no3yLiveStatus.test.ts
     - apps/mobile/fork/no3yTranscriptSpacing.ts
     - apps/mobile/fork/no3yTranscriptSpacing.test.ts
+    - apps/mobile/fork/no3yChipHeight.ts
+    - apps/mobile/fork/no3yChipHeight.test.ts
     - apps/mobile/fork/No3ySentBubbleRise.tsx
     - apps/mobile/fork/no3yWorkIcons.tsx
     - apps/mobile/fork/No3yLiveStatusLine.tsx
@@ -8877,9 +9322,10 @@
 - id: fork-typography-settings
   intent: >
     Settings → Appearance → Typography offers the interface font as presets:
-    Geist (the fork default, an empty preference that geist-typography's stack
-    fills, labelled Geist Variable, the bundled face), Inter (bundled by
-    upstream's main.tsx import) and System. Custom… opens upstream's
+    Cinnabar Sans (the fork default, an empty preference that the fork stack
+    fills, labelled with the bundled face — see cinnabar-sans-typeface), Geist
+    (Geist Variable, the bundled face), Inter (bundled by upstream's main.tsx
+    import) and System. Custom… opens upstream's
     any-installed-font field, and any value that matches no preset shows as
     Custom. Directly under the interface font (in the simple and the separate
     fonts layouts alike) sits Sidebar font size, 11–20px, and lower down Chat
@@ -8917,7 +9363,9 @@
   intent: >
     On mobile and desktop/web, a link in an assistant message to a subagent thread (a
     delegated task or subagent child) reads as a neutral capsule instead of the thread
-    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder), body ink,
+    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder; its label at
+    0.05 under the code chip's scale, pill.fontScale, where replies draw one, padded by
+    fork/no3yChipHeight.ts to stand as tall as an inline code chip), body ink,
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
     sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
@@ -8998,6 +9446,44 @@
   verify:
     - oxlint-plugin-t3code/rules/no-worklet-default-params.test.ts
 
+- id: mobile-feed-stable-end
+  intent: >
+    The iOS thread feed stays put while you send and a turn streams, and what
+    changes at its end glides. While the feed follows its end, end following
+    alone owns the scroll position: LegendList's visible-content anchoring
+    (maintainVisibleContentPosition) is on only once the reader scrolls away,
+    or while landing a jump to a message. With both on, a row appended at the
+    end with a guessed height made the anchoring move the offset by hundreds of
+    points (once to the top of the thread) and end following drag it back. New
+    rows start at their item type's average height, so the no3y live status
+    line gets its own type (it shared one with fixed-height rows and started at
+    180pt) and a streaming reply gets a per-message type with no average (the
+    shared one averaged finished replies, ~500pt). A landed feed follows its
+    end animated (not under Reduce Motion); landing on open stays instant,
+    since the feed is hidden until it reaches the end. As a turn ends, its
+    reply's copy/fork row grows in instead of appearing at full height, which
+    jumped the pinned feed. Sending a follow-up keeps the keyboard up (as in
+    Messages) instead of closing it, which dropped the feed with the keyboard
+    just as the sent row lifted it again. While the feed follows its end the
+    keyboard always lifts it: the lift only counts as "at the end" within
+    20pt, and an end glide is often further, so the composer covered the
+    reply until end following caught up. The policy is one pure function in
+    threadFeedStableEnd.ts. Android keeps upstream's anchoring, instant end
+    following, item types and keyboard dismissal on send.
+  tier: 4
+  files:
+    - apps/mobile/fork/threadFeedStableEnd.ts
+    - apps/mobile/fork/ReplyActionsReveal.tsx
+  shadows: []
+  watch:
+    # End following, anchoring, the item types the estimates hang on, and the reply actions.
+    - apps/mobile/src/features/threads/ThreadFeed.tsx
+    # Keyboard dismissal on send.
+    - apps/mobile/src/features/threads/ThreadDetailScreen.tsx
+  verify:
+    - apps/mobile/fork/threadFeedStableEnd.test.ts
+    - apps/web/src/__fork_guards__/mobileFeedStableEnd.test.ts
+
 - id: no3y-pr-project-multiselect
   intent: >
     The mobile Pull requests project filter is a set: the Project menu ticks
@@ -9070,22 +9556,18 @@
   intent: >
     Primitive variants for dense rows, so fork code picks a look instead of
     restyling the primitive with className (.fork/DESIGN-RULES.md B1). MenuItem
-    takes size "xs" (py-0, 12px medium label: the model picker's 32px rows) and
-    tone "muted". Button takes reveal "row": hidden until its group row is
-    hovered or highlighted, shown on touch, a disabled one hidden at rest and
-    64% on hover; variants "ghost-tint" (ghost-muted with a foreground-tint
-    hover, the sidebar's icon buttons) and "chip" (the composer strip's muted
-    chip trigger). InlineButton takes size "xs" (the tab PR badge). Kbd takes
-    variant "faint", size "xs" and reveal "row" (the model picker's jump
-    hints). PopoverTrigger takes focusRing "inset" and RadioGroup density
-    "compact". Every default is upstream's look, unchanged.
+    takes size "xs" (py-0, a regular label at the interface size: the model
+    picker's 32px rows) and tone "muted". Button takes variants "ghost-tint"
+    (ghost-muted with a foreground-tint hover, the sidebar's icon buttons) and
+    "chip" (the composer strip's muted chip trigger). InlineButton takes size
+    "xs" (the tab PR badge). PopoverTrigger takes focusRing "inset" and
+    RadioGroup density "compact". Every default is upstream's look, unchanged.
   tier: 4
   files: []
   shadows: []
   watch:
     - apps/web/src/components/ui/menu.tsx
     - apps/web/src/components/ui/button.tsx
-    - apps/web/src/components/ui/kbd.tsx
     - apps/web/src/components/ui/popover.tsx
     - apps/web/src/components/ui/radio-group.tsx
   verify:
@@ -9190,3 +9672,194 @@
     - apps/web/src/components/ui/alert.tsx
   verify:
     - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts
+
+- id: no3y-mobile-queue-default
+  intent: >
+    In the mobile app (iOS and Android), a message sent while a turn is running
+    queues behind it by default instead of steering the turn (upstream switched its default to steer
+    in #24718). A phone that picked Steer in Settings > Chat keeps it, and
+    long-pressing send still offers the other option for one message. Web and
+    desktop keep upstream's server-side default.
+  tier: 4
+  files:
+    - apps/web/src/__fork_guards__/no3yMobileQueueDefault.test.ts
+  shadows: []
+  watch:
+    - apps/mobile/src/lib/followUpBehavior.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yMobileQueueDefault.test.ts
+
+- id: no3y-notification-in-fold
+  intent: >
+    On mobile, a notification in a turn (a delegated task or subagent
+    finishing, a background task or PR watch waking the thread) folds into
+    that settled turn's "Worked for …" row instead of staying in view, unless
+    it failed. Expanding the fold shows it again; zen never folds, so it
+    keeps the notification. The same predicate places the live fold, so
+    while such a turn runs its "Working for …" row sits above the
+    notification, where "Worked for" lands once it settles.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    # staysOutOfFold keeps only failed notifications in view.
+    - apps/mobile/src/lib/threadActivity.ts
+  verify:
+    - apps/mobile/src/lib/threadActivity.test.ts
+    - apps/web/src/__fork_guards__/no3yNotificationInFold.test.ts
+
+- id: no3y-linked-pr-row
+  intent: >
+    Linked pull requests read at a glance on mobile. On no3y iPhone (the
+    redesign's useNo3yBottomNavEnabled gate) the thread's Linked pull requests
+    sheet draws them as the Agents sheet's glass cards, one card per stack with
+    a "Stack of N" label and full-width dividers between layers. Each layer
+    leads with its number on the status pill's tinted pull request pill
+    (palette.prPill, its state glyph) and the pill's checks marks, diff stats
+    and a chevron on the right, then the title, then the repository's short
+    name, conflicts, review, watching and the updated time. Elsewhere (the Git
+    overview sheet, iPad, Android) the upstream row leads with the title and
+    wraps its meta line instead of clipping it at a fixed height, which cut the
+    repository and diff stats off at larger text sizes. The full owner/repo
+    stays in accessibility labels and the long-press menu title. The cards
+    render only: state, the spoken label, opening and the long-press menu come
+    from the upstream row's useLinkedPullRequestModel and LinkedPullRequestMenu,
+    fenced in LinkedPullRequestList.tsx so both surfaces behave the same. The
+    checks marks live in fork/No3yChecksMarks.tsx, shared with the status pill.
+  tier: 4
+  files:
+    - apps/mobile/fork/No3yLinkedPullRequestCards.tsx
+    - apps/mobile/fork/No3yChecksMarks.tsx
+  shadows: []
+  watch:
+    # Fenced shared model and menu; the row reads them and leads with its title.
+    - apps/mobile/src/features/threads/LinkedPullRequestList.tsx
+    # Swaps the sheet's list for the cards.
+    - apps/mobile/src/features/threads/ThreadPullRequestsSheet.tsx
+  verify:
+    - apps/web/src/__fork_guards__/no3yLinkedPullRequestRow.test.ts
+
+- id: fork-cinnabar-live
+  intent: >
+    Dev builds can follow Cinnabar Studio's live font, so a font edit shows up
+    across the real app within a couple of seconds and without a reload. It is
+    off unless the dev server is started with VITE_CINNABAR_LIVE (a Studio URL,
+    or "1" for http://127.0.0.1:8765) and never runs in production builds
+    (import.meta.env.DEV). The Studio announces each recompiled version over
+    server-sent events at /live/events; custom/cinnabarLive fetches
+    /live/CinnabarSans.ttf and /live/CinnabarSans-Italic.ttf and swaps the
+    "Cinnabar Sans" FontFace objects in document.fonts, which outrank the
+    stylesheet's @font-face rules for the same descriptors. The fonts are fetched
+    and built from ArrayBuffers on purpose: the desktop CSP allows http: in
+    connect-src but not in font-src, and a buffer-built FontFace makes no font
+    fetch. Versions only move forward, so a slow load can't replace a newer one.
+  tier: 1
+  files:
+    - apps/web/src/custom/cinnabarLive.ts
+  shadows: []
+  watch:
+    # Fenced import and the call next to the dev house look.
+    - apps/web/src/main.tsx
+    # The CSP the buffer-built FontFace is designed around.
+    - apps/desktop/src/electron/ElectronProtocol.ts
+  verify:
+    - apps/web/src/__fork_guards__/cinnabarLive.test.ts
+
+- id: fork-dev-house-look
+  intent: >
+    Every dev desktop launch (`vp run dev:desktop`, any Electron profile)
+    opens on the maintainer's working look, so agents' screenshots and checks
+    start where the maintainer works: Flat Glass, Jolly Petal behind a new
+    agent, the bead ring as the working mark, the default interface font
+    (Cinnabar Sans, an empty preference) at a 15px interface size and a 14px
+    sidebar. It applies once per window session before the theme
+    initializers paint, so a reload keeps changes made since launch; a window
+    reopened from the dock is a new session and gets it again. The side chat
+    window skips it, so opening one keeps the main window's changes. Dev
+    builds in Electron only; the browser dev server and packaged apps keep
+    the product defaults.
+  tier: 4
+  files:
+    - apps/web/src/custom/devHouseLook.ts
+    # Non-hook setters the house look calls.
+    - apps/web/src/custom/forkRootSetting.ts
+    - apps/web/src/custom/forkGlass3d.ts
+    - apps/web/src/custom/forkGlassNewAgentPicture.ts
+    - apps/web/src/custom/forkTypographyScale.ts
+    - apps/web/src/custom/forkWorkingMark.ts
+  shadows: []
+  watch:
+    # Fenced import and the call ahead of initializeForkTheme.
+    - apps/web/src/main.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkDevHouseLook.test.ts
+
+- id: pr-header-hierarchy
+  intent: >
+    The pull request header reads top down by importance. Under the title, one
+    meta line says who, when and how big (author, updated time, file count and
+    diff stats); the author and updated time truncate before the stats do.
+    Below it the branch flow reads left to right, head into base, with the head
+    brighter than the base, and the copyable checkout command sits at the end
+    of that row, gives up width first and hides below a 28rem header. An out-of-date base colours only its
+    warning icon, not the branch name. One PullRequestBranchFlow (layout
+    override) draws the flow for both the full header and the condensed
+    header (fenced in PullRequestDetailPanel), and the thread details PR row
+    reads head into base too, so no surface disagrees. The layout override
+    re-exports upstream and replaces only the header body.
+  tier: 4
+  files: []
+  shadows:
+    - apps/web/src/components/pullRequest/PullRequestDetailLayout.tsx
+    - apps/web/src/components/pullRequest/PullRequestBaseBranch.tsx
+  watch:
+    # Fenced: the condensed header renders PullRequestBranchFlow; ArrowLeftIcon import removed.
+    - apps/web/src/components/pullRequest/PullRequestDetailPanel.tsx
+    # Fenced: the hover card branch line reads head into base.
+    - apps/web/src/components/chat/ThreadDetailsPrRow.tsx
+  verify:
+    - apps/web/src/__fork_guards__/prHeaderHierarchy.test.ts
+
+- id: fork-message-bubble-shape
+  intent: >
+    Sent bubbles are rounded-xl (12px) instead of upstream's rounded-2xl,
+    grouped corners keep rounded-md, and an unfolded text bubble pads px-4 py-2
+    instead of p-3: fenced class edits in TimelineUserMessageRow (the sent
+    bubble and the automation bubble). On Flat Glass and dark Basic the fill
+    is a 3% white lift over the card: --fork-message-bubble-lift, read by
+    fork-changed-files-card's single bg-message rule, so the glass vibrancy
+    wash still outranks it. Basic light keeps its shade.
+  tier: 4
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/TimelineUserMessageRow.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts
+    - apps/web/src/__fork_guards__/forkChangedFilesCard.test.ts
+
+- id: fork-changed-files-fold
+  intent: >
+    The chat-column changed-files card folds to one strip: "N changed files"
+    and the diff stats at the interface text size (text-base), with the
+    expand chevron at the far right, and the whole strip is the fold button.
+    Its open state is upstream's persisted per-run all-folders flag
+    (threadChangedFilesExpandedById via allDirectoriesExpanded and
+    onToggleAllDirectories), so a card starts folded and stays as left across
+    scrolling and reloads. Folders inside always start collapsed
+    (allDirectoriesExpanded={false} to the trees) and open one at a time. Upstream's
+    header actions (collapse all folders, Open diff) are removed with their
+    Tooltip, T and icon imports and the hasDirectories helper. The header's
+    padding moves onto the button. The tree and the "N more files" footer
+    unmount while folded; file rows still open the diff at a file and the
+    footer opens the full diff.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/ChangedFilesTree.tsx
+    # Fenced: the all-folders case is gone; a separate test folds and reopens the card.
+    - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts

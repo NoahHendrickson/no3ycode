@@ -118,16 +118,17 @@ describe("fork guard: sidebar-v2-project-grouping", () => {
     expect(header).toContain("FolderOpenIcon");
     expect(header).toContain("FolderClosedIcon");
     expect(header).toContain("ChevronDownIcon");
-    // Hover group is on the flex-1 label wrapper; collapse is a behind-layer
-    // inside it so the ghost hover fill stops strictly to the left of the
-    // trailing actions regardless of how many controls are shown.
+    // Hover group is on the flex-1 label wrapper, with collapse a behind-layer
+    // inside it; the hover fill is the whole row's, trailing actions included.
     expect(header).toContain(
       "group/collapse relative -ms-3 flex min-h-8 min-w-0 flex-1 items-center",
     );
     expect(header).toContain("absolute inset-0 z-0");
-    expect(header).toContain('"-me-3 relative z-10 flex shrink-0 items-center"');
-    // The design's 32px buttons are SidebarV2IconButton's header box, and -me-3 pulls the group
-    // out of the row's padding onto the list edge the trailing derivation measures from.
+    expect(header).toContain(
+      '"relative z-10 flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px] [&_button:hover]:bg-foreground/10"',
+    );
+    // The header slot sizes its buttons to 28px squares, and headerPlus pulls the group out of
+    // the row's padding to 2px inside the list edge the trailing derivation measures from.
     expect(header.split(/<SidebarV2IconButton\s+box="header"/u).length - 1).toBe(2);
     expect(header).toContain("group-hover/collapse:invisible");
     expect(header).toContain("group-hover/collapse:visible");

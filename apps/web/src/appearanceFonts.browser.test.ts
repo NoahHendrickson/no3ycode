@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import "~/index.css";
+// fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+import "~/theme.custom.interface-size.css";
+// fork:end fork-interface-size-text-only
 import { applyAppearanceFontVariables } from "./appearanceFonts";
 
 function renderedFontSize(style: (probe: HTMLElement) => void): string {
@@ -29,6 +32,11 @@ describe("applyAppearanceFontVariables", () => {
   it("sizes the composer from the interface size until fonts are set separately", () => {
     const root = document.documentElement;
     const style = root.getAttribute("style");
+    // fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+    // The text scale applies under the fork root marker.
+    const fork = root.getAttribute("data-fork");
+    root.setAttribute("data-fork", "noahhendrickson-t3code");
+    // fork:end fork-interface-size-text-only
     const preferences = {
       sans: "",
       code: "",
@@ -52,6 +60,10 @@ describe("applyAppearanceFontVariables", () => {
     } finally {
       if (style === null) root.removeAttribute("style");
       else root.setAttribute("style", style);
+      // fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only
+      if (fork === null) root.removeAttribute("data-fork");
+      else root.setAttribute("data-fork", fork);
+      // fork:end fork-interface-size-text-only
     }
   });
 

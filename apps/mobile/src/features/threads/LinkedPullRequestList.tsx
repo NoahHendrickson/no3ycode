@@ -8,8 +8,8 @@ import {
   type PullRequestListLine,
 } from "@t3tools/client-runtime/thread-pull-requests";
 import { useGT, useMessages } from "gt-react-native";
-import { memo, useMemo } from "react";
-import { Pressable, useWindowDimensions, View } from "react-native";
+import { memo, useMemo, type ReactElement } from "react";
+import { Pressable, View } from "react-native";
 
 import { SymbolView } from "../../components/ui/AppSymbol";
 import { AppText as Text } from "../../components/ui/AppText";
@@ -18,7 +18,6 @@ import { Menu } from "../../components/ui/Menu";
 import { cn } from "../../lib/cn";
 import { RelativeTime } from "../../components/RelativeTime";
 import type { EnvironmentRuntimeState } from "../../state/remote-runtime-types";
-import { useScaledTextRole } from "../settings/appearance/useScaledTextRole";
 import { PullRequestGlyph } from "../pull-requests/pullRequestGlyphs";
 import type { LinkedPullRequestActions } from "./useLinkedPullRequestActions";
 import { pullRequestListReviewStatus } from "../pull-requests/pullRequestList";
@@ -55,16 +54,16 @@ export function linkedPullRequestKey(line: PullRequestListLine) {
   return threadPullRequestKeyOf(line.link);
 }
 
-export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
-  readonly line: PullRequestListLine;
-  readonly separator: boolean;
-  readonly surfaceClassName: string;
-  readonly openPullRequest: (url: string) => Promise<boolean>;
-  readonly actions: LinkedPullRequestActions | null;
-}) {
+/* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */
+/** The row's state, spoken label and open action, shared with the no3y glass cards. */
+export function useLinkedPullRequestModel(
+  line: PullRequestListLine,
+  openPullRequest: (url: string) => Promise<boolean>,
+  hasActions: boolean,
+) {
   const gt = useGT();
   const messages = useMessages();
-  const { link, depth, stack } = props.line;
+  const { link, stack } = line;
   const snapshot = link.snapshot;
   const status = snapshot === null ? null : pullRequestStatus(snapshot, messages);
   const conflict = snapshot === null ? null : pullRequestConflict(snapshot, messages);
@@ -88,59 +87,110 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
     (sourceControlClients.findByChangeRequestUrl(link.url) ?? sourceControlClients.get(undefined))
       .changeRequest,
   );
-  const metaLineHeight = useScaledTextRole("label").lineHeight * useWindowDimensions().fontScale;
+  const accessibilityLabel = [
+    gt(
+      "{term, select, mr {Merge request {number}, {title}} cr {Change request {number}, {title}} other {Pull request {number}, {title}}}",
+      {
+        term,
+        number: link.number,
+        title: snapshot?.title ?? gt("waiting for host state"),
+      },
+    ),
+    status?.label,
+    conflict === null || snapshot === null
+      ? undefined
+      : snapshot.baseBranch
+        ? gt("conflicts with {branch}", { branch: snapshot.baseBranch })
+        : gt("has conflicts"),
+    link.repository,
+    stack
+      ? gt("{size, plural, one {stack of {size}} other {stack of {size}}}", {
+          size: stack.size,
+        })
+      : undefined,
+    watching ? gt("watching") : undefined,
+    checks === null
+      ? undefined
+      : snapshot?.checksState === "passing"
+        ? gt("checks passing")
+        : snapshot?.checksState === "failing"
+          ? gt("checks failing")
+          : gt("checks pending"),
+    review?.accessibleLabel,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const accessibilityHint = hasActions ? gt("Touch and hold for actions.") : undefined;
+  const onPress = () => {
+    void openPullRequest(link.url).then((opened) => {
+      if (!opened)
+        Dialog.alert(
+          gt(
+            "{term, select, mr {Unable to open MR} cr {Unable to open change request} other {Unable to open PR}}",
+            { term },
+          ),
+          gt(
+            "{term, select, mr {The merge request could not be opened.} cr {The change request could not be opened.} other {The pull request could not be opened.}}",
+            { term },
+          ),
+        );
+    });
+  };
+  return {
+    snapshot,
+    status,
+    conflict,
+    checks,
+    review,
+    watching,
+    additions,
+    deletions,
+    accessibilityLabel,
+    accessibilityHint,
+    onPress,
+  };
+}
+
+/** Long-press actions for a linked pull request, or the bare child when there are none. */
+export function LinkedPullRequestMenu(props: {
+  readonly link: PullRequestListLine["link"];
+  readonly actions: LinkedPullRequestActions | null;
+  readonly children: ReactElement;
+}) {
+  const { link, actions } = props;
+  if (actions === null) return props.children;
+  return (
+    <Menu
+      shouldOpenOnLongPress
+      title={`#${link.number} · ${link.repository}`}
+      actions={actions.menuActions(link)}
+      onPressAction={({ nativeEvent }) => actions.onMenuAction(link, nativeEvent.event)}
+    >
+      {props.children}
+    </Menu>
+  );
+}
+/* fork:end no3y-linked-pr-row */
+
+export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
+  readonly line: PullRequestListLine;
+  readonly separator: boolean;
+  readonly surfaceClassName: string;
+  readonly openPullRequest: (url: string) => Promise<boolean>;
+  readonly actions: LinkedPullRequestActions | null;
+}) {
+  /* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */
+  const gt = useGT();
+  const { link, depth, stack } = props.line;
+  const { snapshot, status, conflict, checks, review, watching, additions, deletions, ...a11y } =
+    useLinkedPullRequestModel(props.line, props.openPullRequest, props.actions !== null);
+  /* fork:end no3y-linked-pr-row */
   const row = (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[
-        gt(
-          "{term, select, mr {Merge request {number}, {title}} cr {Change request {number}, {title}} other {Pull request {number}, {title}}}",
-          {
-            term,
-            number: link.number,
-            title: snapshot?.title ?? gt("waiting for host state"),
-          },
-        ),
-        status?.label,
-        conflict === null || snapshot === null
-          ? undefined
-          : snapshot.baseBranch
-            ? gt("conflicts with {branch}", { branch: snapshot.baseBranch })
-            : gt("has conflicts"),
-        link.repository,
-        stack
-          ? gt("{size, plural, one {stack of {size}} other {stack of {size}}}", {
-              size: stack.size,
-            })
-          : undefined,
-        watching ? gt("watching") : undefined,
-        checks === null
-          ? undefined
-          : snapshot?.checksState === "passing"
-            ? gt("checks passing")
-            : snapshot?.checksState === "failing"
-              ? gt("checks failing")
-              : gt("checks pending"),
-        review?.accessibleLabel,
-      ]
-        .filter(Boolean)
-        .join(", ")}
-      accessibilityHint={props.actions ? gt("Touch and hold for actions.") : undefined}
-      onPress={() => {
-        void props.openPullRequest(link.url).then((opened) => {
-          if (!opened)
-            Dialog.alert(
-              gt(
-                "{term, select, mr {Unable to open MR} cr {Unable to open change request} other {Unable to open PR}}",
-                { term },
-              ),
-              gt(
-                "{term, select, mr {The merge request could not be opened.} cr {The change request could not be opened.} other {The pull request could not be opened.}}",
-                { term },
-              ),
-            );
-        });
-      }}
+      accessibilityLabel={a11y.accessibilityLabel}
+      accessibilityHint={a11y.accessibilityHint}
+      onPress={a11y.onPress}
       style={{ paddingLeft: 16 + Math.min(depth, 3) * 16 }}
       className="flex-row gap-3 rounded-xl pr-4 active:bg-row-hover"
     >
@@ -159,13 +209,22 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
           props.separator && "border-b border-border-subtle",
         )}
       >
-        <View className="flex-row items-center gap-1.5">
-          {snapshot?.author ? <PullRequestAvatar actor={snapshot.author} size={16} /> : null}
-          <Text className="min-w-0 shrink text-xs text-foreground-muted" numberOfLines={1}>
-            {link.repository}
-          </Text>
-          <Text className="shrink-0 text-xs text-foreground-tertiary">#{link.number}</Text>
-          <View className="flex-1" />
+        {/* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */}
+        <Text
+          className="text-base leading-5 font-t3-medium text-foreground"
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {snapshot?.title ?? gt("Waiting for host state")}
+        </Text>
+        <View className="flex-row flex-wrap items-center gap-x-2.5 gap-y-0.5">
+          <View className="min-w-0 max-w-full shrink flex-row items-center gap-1.5">
+            {snapshot?.author ? <PullRequestAvatar actor={snapshot.author} size={16} /> : null}
+            <Text className="min-w-0 shrink text-xs text-foreground-muted" numberOfLines={1}>
+              {link.repository}
+            </Text>
+            <Text className="shrink-0 text-xs text-foreground-tertiary">#{link.number}</Text>
+          </View>
           {stack ? (
             <View className="flex-row items-center gap-1">
               <SymbolView
@@ -185,43 +244,24 @@ export const LinkedPullRequestRow = memo(function LinkedPullRequestRow(props: {
           {review ? (
             <SymbolView name={review.icon} size={13} tintColorClassName={review.tint} />
           ) : null}
-          {additions + deletions > 0 || snapshot?.updatedAt ? (
-            <View
-              className="-ml-1.5 flex-row flex-wrap items-center gap-x-1.5 overflow-hidden"
-              style={{ height: metaLineHeight, flexShrink: 100 }}
-            >
-              <View className="w-0" />
-              {additions + deletions > 0 ? (
-                <PullRequestDiffStats additions={additions} deletions={deletions} compact />
-              ) : null}
-              {snapshot?.updatedAt ? (
-                <Text className="text-2xs tabular-nums text-foreground-tertiary">
-                  <RelativeTime timestamp={snapshot.updatedAt} />
-                </Text>
-              ) : null}
-            </View>
+          {additions + deletions > 0 ? (
+            <PullRequestDiffStats additions={additions} deletions={deletions} compact />
+          ) : null}
+          {snapshot?.updatedAt ? (
+            <Text className="text-2xs tabular-nums text-foreground-tertiary">
+              <RelativeTime timestamp={snapshot.updatedAt} />
+            </Text>
           ) : null}
         </View>
-        <Text
-          className="text-base leading-5 font-t3-medium text-foreground"
-          numberOfLines={2}
-          ellipsizeMode="tail"
-        >
-          {snapshot?.title ?? gt("Waiting for host state")}
-        </Text>
+        {/* fork:end no3y-linked-pr-row */}
       </View>
     </Pressable>
   );
-  const actions = props.actions;
-  if (actions === null) return row;
+  /* fork:begin no3y-linked-pr-row — see .fork/customizations.yaml#no3y-linked-pr-row */
   return (
-    <Menu
-      shouldOpenOnLongPress
-      title={`#${link.number} · ${link.repository}`}
-      actions={actions.menuActions(link)}
-      onPressAction={({ nativeEvent }) => actions.onMenuAction(link, nativeEvent.event)}
-    >
+    <LinkedPullRequestMenu link={link} actions={props.actions}>
       {row}
-    </Menu>
+    </LinkedPullRequestMenu>
   );
+  /* fork:end no3y-linked-pr-row */
 });

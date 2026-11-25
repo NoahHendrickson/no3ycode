@@ -18,14 +18,17 @@ const ForkSidebarFontSizeSchema = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_FORK_SIDEBAR_FONT_SIZE, maximum: MAX_FORK_SIDEBAR_FONT_SIZE }),
 );
 
-export const { initialize: initializeForkSidebarFontSize, useValue: useForkSidebarFontSize } =
-  createForkRootSetting({
-    storageKey: "t3code:fork:sidebar-font-size:v1",
-    schema: ForkSidebarFontSizeSchema,
-    defaultValue: DEFAULT_FORK_SIDEBAR_FONT_SIZE,
-    cssVariable: "--fork-sidebar-font-size",
-    cssValue: (size) => (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE ? null : `${size}px`),
-  });
+export const {
+  initialize: initializeForkSidebarFontSize,
+  useValue: useForkSidebarFontSize,
+  set: setForkSidebarFontSize,
+} = createForkRootSetting({
+  storageKey: "t3code:fork:sidebar-font-size:v1",
+  schema: ForkSidebarFontSizeSchema,
+  defaultValue: DEFAULT_FORK_SIDEBAR_FONT_SIZE,
+  cssVariable: "--fork-sidebar-font-size",
+  cssValue: (size) => (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE ? null : `${size}px`),
+});
 
 export const FORK_TYPOGRAPHY_SCALE_OPTIONS = [
   80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 140, 150,
@@ -43,11 +46,12 @@ export const { initialize: initializeForkChatTextScale, useValue: useForkChatTex
   });
 
 /** The family theme.custom.css puts first in --fork-font-sans, which an empty preference renders. */
-export const FORK_DEFAULT_SANS_FAMILY = "Geist Variable";
+export const FORK_DEFAULT_SANS_FAMILY = "Cinnabar Sans";
 
-/** Interface font presets. Empty is the fork default, Geist. */
+/** Interface font presets. Empty is the fork default, Cinnabar Sans; Geist stays one click away. */
 export const FORK_INTERFACE_FONT_PRESETS = [
-  { label: "Geist", value: "" },
+  { label: FORK_DEFAULT_SANS_FAMILY, value: "" },
+  { label: "Geist", value: "Geist Variable" },
   { label: "Inter", value: "Inter Variable" },
   { label: "System", value: "BlinkMacSystemFont, Segoe UI, system-ui" },
 ] as const;

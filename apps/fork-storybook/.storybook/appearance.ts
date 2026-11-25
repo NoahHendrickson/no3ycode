@@ -27,7 +27,7 @@ for (const [key, value] of Object.entries(PREFERENCES)) {
 // the sidebar goes clear. No draft-glass setter, so the New agent stage keeps its CSS backdrop.
 (window as { forkDesktopBridge?: unknown }).forkDesktopBridge = {
   setSidebarVibrancy: async (enabled: boolean) => (enabled ? "liquid-glass" : "off"),
-  sidebarLiquidGlass: { setWidth: async () => true },
+  sidebarLiquidGlass: { setFrame: async () => true },
 };
 
 // The app mounts into #root, and Glass's popup cutout (forkGlassPopupCutout.ts) masks that element

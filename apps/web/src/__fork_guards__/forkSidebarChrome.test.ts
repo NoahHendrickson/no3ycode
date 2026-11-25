@@ -340,7 +340,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(merged).not.toContain("font-medium");
     // The action rows read it (Search, and the labeled rows held or not); the
     // Threads label spells its own, matching the status-section labels under
-    // it (12px medium) so the list's headings read as one family.
+    // it (1px under the Sidebar font size, regular) so the list's headings read as one family.
     expect(rows).toContain('variant="chrome"');
     expect(rows).toContain('variant={active ? "chrome-held" : "chrome"}');
     // Held: the row keeps its hover fill while its target is open.
@@ -350,7 +350,7 @@ describe("fork guard: fork-sidebar-chrome", () => {
     // The label is the shared section label (sidebar-v2-threads-fold), which carries that type.
     expect(rows).toMatch(/<SidebarV2SectionLabel[^>]*>\s*Threads/u);
     expect(readSibling("../custom/SidebarV2SectionLabel.tsx")).toContain(
-      '"text-sidebar-meta font-medium text-muted-foreground"',
+      '"text-sidebar-label font-normal text-muted-foreground"',
     );
   });
 

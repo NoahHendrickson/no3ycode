@@ -93,11 +93,23 @@ export const THREAD_JUMP_HINT_SHOW_DELAY_MS = 200;
 export function resolveSidebarRowAccessibility(input: {
   readonly title: string;
   readonly statusLabel: string | null;
+  /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+  readonly subagentLabel?: string | null;
+  /* fork:end sidebar-v2-card-rows */
   readonly projectDisplayName: string | null;
   readonly isActive: boolean;
 }): { readonly label: string; readonly current: "page" | undefined } {
   return {
-    label: [input.title, input.statusLabel, input.projectDisplayName].filter(Boolean).join(", "),
+    label: [
+      input.title,
+      input.statusLabel,
+      /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+      input.subagentLabel,
+      /* fork:end sidebar-v2-card-rows */
+      input.projectDisplayName,
+    ]
+      .filter(Boolean)
+      .join(", "),
     current: input.isActive ? "page" : undefined,
   };
 }

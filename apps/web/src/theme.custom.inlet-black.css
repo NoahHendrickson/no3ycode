@@ -220,65 +220,6 @@
     }
   }
 
-  /* The model menu's controls on the shell: the reasoning slider a recessed
-     well with a light thumb, and a segmented trait (Service Tier) in the mode
-     segments' language. Their utilities (bg-background, bg-input) resolve to
-     the page's cream and charcoal, not the menu's. */
-
-  & [data-slot="menu-popup"]:has([data-fork-model-picker]) {
-    /* An inset geometry: a 30px well, the fill and a 22px pill thumb set 3px
-       into it. */
-    & [data-fork-effort-control] {
-      height: calc(var(--spacing) * 7.5);
-    }
-
-    & [data-fork-effort-track] {
-      --fork-effort-thumb-width: calc(var(--spacing) * 7);
-      height: calc(var(--spacing) * 7.5);
-      border-radius: var(--fork-inlet-well-radius);
-      background: var(--fork-inlet-black-well);
-    }
-
-    & [data-fork-effort-fill] {
-      inset-block: var(--fork-inlet-well-inset);
-      left: var(--fork-inlet-well-inset);
-      border-radius: calc(var(--fork-inlet-well-radius) - var(--fork-inlet-well-inset));
-      background: var(--fork-inlet-black-well-fill);
-      clip-path: inset(0 9px 0 0);
-    }
-
-    & [data-fork-effort-thumb] {
-      height: calc(var(--spacing) * 7.5);
-      padding: var(--fork-inlet-well-inset);
-      border-radius: var(--fork-inlet-well-radius);
-      background: var(--fork-inlet-black-ink);
-      background-clip: content-box;
-      box-shadow: none;
-
-      &:focus-visible {
-        box-shadow: inset 0 0 0 2px var(--fork-inlet-black-focus);
-      }
-    }
-
-    & [data-fork-segmented-trait] {
-      background: var(--fork-inlet-black-surface);
-    }
-
-    & [data-fork-segmented-trait] > button {
-      color: var(--fork-inlet-black-ink-muted);
-    }
-
-    & [data-fork-segmented-trait] > button:hover {
-      color: var(--fork-inlet-black-ink);
-    }
-
-    & [data-fork-segmented-trait] > button[aria-pressed="true"] {
-      background: var(--fork-inlet-black-pressed);
-      color: var(--color-white);
-      box-shadow: none;
-    }
-  }
-
   /* The mode segments: a recessed well, a lift on hover, the chosen mode
      lifted further. */
 

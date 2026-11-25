@@ -134,10 +134,10 @@ function MenuGroup(props: MenuPrimitive.Group.Props) {
 }
 
 /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-// Dense rows (the model picker's 32px rows, 12px medium label) and a muted label.
+// Dense rows (the model picker's 32px rows, a regular label at the interface size) and a muted label.
 const forkMenuRowSizeClassName = {
   default: "",
-  xs: "py-0 text-xs font-medium sm:text-xs",
+  xs: "py-0 text-base font-normal sm:text-base",
 } as const;
 const forkMenuRowToneClassName = { default: "", muted: "text-muted-foreground" } as const;
 /* fork:end fork-design-row-variants */

@@ -1,10 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /** Fork-owned — see `.fork/customizations.yaml#no3y-push`. Pushes no3y iOS notifications from this Mac. */
 import * as NodeChildProcess from "node:child_process";
-import * as NodeCrypto from "node:crypto";
 import * as NodeFS from "node:fs";
 import * as NodeHttp from "node:http";
-import * as NodeHttp2 from "node:http2";
 import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
@@ -26,10 +24,16 @@ import * as Schema from "effect/Schema";
 
 import {
   isNo3yBundleIdentifier,
-  NO3Y_APPLE_TEAM_ID,
   NO3Y_BUNDLE_IDENTIFIER,
   NO3Y_PUSH_MOUNT_PATH,
 } from "../no3yConstants.ts";
+import {
+  aggregateNo3yLiveActivity,
+  type No3yLiveActivityInput,
+  type No3yLiveActivityProps,
+} from "../no3yLiveActivity.ts";
+import { apnsKey, makeApnsClient, tokenStore, type ApnsRequest, type PushToken } from "./apns.mts";
+import { makeLiveActivityService, type LiveActivityService } from "./liveActivityPush.mts";
 
 const SERVICE_PORT = 3781;
 const LAUNCH_AGENT_LABEL = "com.noahhendrickson.no3y-push";
@@ -41,21 +45,12 @@ const home = process.env.NO3Y_PUSH_HOME ?? NodePath.join(NodeOS.homedir(), ".no3
 const configPath = NodePath.join(home, "config.json");
 const serverRuntimePath = NodePath.join(NodeOS.homedir(), ".t3-fork/userdata/server-runtime.json");
 const devicesPath = NodePath.join(home, "devices.json");
-
-type ApnsEnvironment = "production" | "development";
+const liveActivitiesPath = NodePath.join(home, "live-activities.json");
 
 interface Config {
   readonly serverOrigin: string;
   readonly accessToken: string;
   readonly expiresAt: string | null;
-}
-
-interface Device {
-  readonly token: string;
-  readonly environment: ApnsEnvironment;
-  /** The app's bundle ID; devices registered before topics were sent are production. */
-  readonly topic?: string;
-  readonly registeredAt: string;
 }
 
 export interface ApnsNotification {
@@ -140,88 +135,20 @@ export function alertKey(state: AgentAwarenessState | null, pendingRequestId: st
   return `${state.phase}:${pendingRequestId ?? ""}`;
 }
 
-function apnsKey(): { readonly keyId: string; readonly pem: string } {
-  const file = NodeFS.readdirSync(home).find((name) => /^AuthKey_[A-Z0-9]+\.p8$/u.test(name));
-  if (!file) throw new Error(`No AuthKey_<id>.p8 in ${home}`);
+const alertTokens = tokenStore(devicesPath);
+const liveActivityTokens = tokenStore(liveActivitiesPath);
+const apns = makeApnsClient({ home, log });
+
+function alertRequest(token: PushToken, payload: unknown): ApnsRequest {
   return {
-    keyId: file.slice("AuthKey_".length, -".p8".length),
-    pem: NodeFS.readFileSync(NodePath.join(home, file), "utf8"),
+    pushType: "alert",
+    topic: token.topic ?? NO3Y_BUNDLE_IDENTIFIER,
+    priority: "10",
+    payload,
   };
 }
 
-let cachedJwt: { readonly token: string; readonly issuedAt: number } | null = null;
-
-function apnsJwt(): string {
-  const now = Math.floor(Date.now() / 1000);
-  // APNs rejects tokens older than an hour and throttles ones refreshed too often.
-  if (cachedJwt && now - cachedJwt.issuedAt < 50 * 60) return cachedJwt.token;
-  const { keyId, pem } = apnsKey();
-  const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
-  const unsigned = `${encode({ alg: "ES256", kid: keyId })}.${encode({ iss: NO3Y_APPLE_TEAM_ID, iat: now })}`;
-  const signature = NodeCrypto.sign("sha256", Buffer.from(unsigned), {
-    key: pem,
-    dsaEncoding: "ieee-p1363",
-  }).toString("base64url");
-  cachedJwt = { token: `${unsigned}.${signature}`, issuedAt: now };
-  return cachedJwt.token;
-}
-
-function sendToApns(
-  device: Device,
-  payload: unknown,
-): Promise<{ readonly status: number; readonly reason: string | null }> {
-  const host =
-    device.environment === "production"
-      ? "https://api.push.apple.com"
-      : "https://api.sandbox.push.apple.com";
-  return new Promise((resolve, reject) => {
-    const session = NodeHttp2.connect(host);
-    session.on("error", reject);
-    const request = session.request({
-      ":method": "POST",
-      ":path": `/3/device/${device.token}`,
-      authorization: `bearer ${apnsJwt()}`,
-      "apns-topic": device.topic ?? NO3Y_BUNDLE_IDENTIFIER,
-      "apns-push-type": "alert",
-      "apns-priority": "10",
-      "content-type": "application/json",
-    });
-    let status = 0;
-    let body = "";
-    request.on("response", (headers) => {
-      status = Number(headers[":status"]);
-    });
-    request.setEncoding("utf8");
-    request.on("data", (chunk: string) => {
-      body += chunk;
-    });
-    request.on("end", () => {
-      session.close();
-      let reason: string | null = null;
-      try {
-        reason = body ? ((JSON.parse(body) as { reason?: string }).reason ?? null) : null;
-      } catch {
-        reason = body;
-      }
-      resolve({ status, reason });
-    });
-    request.on("error", (error) => {
-      session.close();
-      reject(error);
-    });
-    request.end(JSON.stringify(payload));
-  });
-}
-
-function readDevices(): Device[] {
-  return readJson<{ devices: Device[] }>(devicesPath, { devices: [] }).devices;
-}
-
-function saveDevices(devices: ReadonlyArray<Device>) {
-  writePrivateJson(devicesPath, { devices });
-}
-
-// One send at a time: each one may rewrite devices.json, and overlapping writes lose updates.
+// One alert at a time, so they arrive in the order they happened.
 let sends: Promise<void> = Promise.resolve();
 
 function notifyAll(notification: ApnsNotification): Promise<void> {
@@ -231,41 +158,25 @@ function notifyAll(notification: ApnsNotification): Promise<void> {
 
 async function sendToAllDevices(notification: ApnsNotification) {
   const payload = apnsPayload(notification);
-  for (const device of readDevices()) {
-    try {
-      let result = await sendToApns(device, payload);
-      // TestFlight tokens are production, Xcode-signed builds are sandbox; learn which on first send.
-      if (result.status === 400 && result.reason === "BadDeviceToken") {
-        const other: ApnsEnvironment =
-          device.environment === "production" ? "development" : "production";
-        const retried = await sendToApns({ ...device, environment: other }, payload);
-        if (retried.status === 200) {
-          saveDevices(
-            readDevices().map((d) => (d.token === device.token ? { ...d, environment: other } : d)),
-          );
-        }
-        result = retried;
-      }
-      if (result.status === 410) {
-        saveDevices(readDevices().filter((d) => d.token !== device.token));
-        log(`dropped unregistered device ${device.token.slice(0, 8)}…`);
-      } else if (result.status !== 200) {
-        log(`APNs ${result.status} ${result.reason ?? ""} for ${device.token.slice(0, 8)}…`);
-      }
-    } catch (error) {
-      log(`APNs send failed: ${String(error)}`);
-    }
+  for (const token of alertTokens.read()) {
+    await apns.deliver(alertTokens, token, alertRequest(token, payload));
   }
 }
 
-function startRegistrationServer() {
+function startRegistrationServer(liveActivity: LiveActivityService) {
   const server = NodeHttp.createServer((request, response) => {
     const path = (request.url ?? "").replace(NO3Y_PUSH_MOUNT_PATH, "") || "/";
     if (request.method === "GET" && path === "/health") {
       response.writeHead(200).end("ok");
       return;
     }
-    if (request.method !== "POST" || path !== "/register") {
+    if (request.method === "GET" && path === "/live-activity") {
+      response
+        .writeHead(200, { "content-type": "application/json" })
+        .end(JSON.stringify({ props: liveActivity.current() }));
+      return;
+    }
+    if (request.method !== "POST" || (path !== "/register" && path !== "/live-activity")) {
       response.writeHead(404).end();
       return;
     }
@@ -282,22 +193,26 @@ function startRegistrationServer() {
         return;
       }
       const { token, topic } = registration;
-      // Queued behind sends so a registration never races their devices.json writes.
-      sends = sends.then(() => {
-        const devices = readDevices();
-        const existing = devices.find((device) => device.token === token);
-        if (existing?.topic === topic) return;
-        saveDevices([
-          ...devices.filter((device) => device.token !== token),
-          {
-            token,
-            environment: existing?.environment ?? "production",
-            topic,
-            registeredAt: new Date().toISOString(),
-          },
+      const registeredAt = new Date().toISOString();
+      if (path === "/live-activity") {
+        // The app's alert token shares this token's APNs environment.
+        const environment =
+          liveActivityTokens.read().find((t) => t.token === token)?.environment ??
+          alertTokens.read().find((t) => (t.topic ?? NO3Y_BUNDLE_IDENTIFIER) === topic)
+            ?.environment ??
+          "production";
+        liveActivity.register({ token, environment, topic, registeredAt });
+        response.writeHead(204).end();
+        return;
+      }
+      const existing = alertTokens.read().find((t) => t.token === token);
+      if (existing?.topic !== topic) {
+        alertTokens.update((tokens) => [
+          ...tokens.filter((t) => t.token !== token),
+          { token, environment: existing?.environment ?? "production", topic, registeredAt },
         ]);
         log(`registered device ${token.slice(0, 8)}… for ${topic}`);
-      });
+      }
       response.writeHead(204).end();
     });
   });
@@ -309,7 +224,7 @@ export function parseRegistration(
 ): { readonly token: string; readonly topic: string } | null {
   try {
     const { token, topic } = JSON.parse(raw) as { token?: unknown; topic?: unknown };
-    if (typeof token !== "string" || !/^[0-9a-f]{64,200}$/iu.test(token)) return null;
+    if (typeof token !== "string" || !/^[0-9a-f]{64,400}$/iu.test(token)) return null;
     // Apps from before topics were sent are production builds.
     if (topic === undefined) return { token, topic: NO3Y_BUNDLE_IDENTIFIER };
     return typeof topic === "string" && isNo3yBundleIdentifier(topic) ? { token, topic } : null;
@@ -326,6 +241,10 @@ export interface Tracker {
   /** A thread first seen already finished alerts only for work that ended after this. */
   readonly startedAt: number;
   readonly notify: (notification: ApnsNotification, run: AlertRun) => void;
+  /** Called after every applied shell item; the Live Activity card is derived from the threads. */
+  readonly onChange: () => void;
+  /** Threads the card has shown, which keep their finish even if it predates this service. */
+  readonly shownOnCard: Set<string>;
   readonly projectTitles: Map<string, string>;
   /** The latest shell of every thread, so a subagent's wait can re-evaluate its top-level thread. */
   readonly threads: Map<string, ObservedThread>;
@@ -337,11 +256,17 @@ export interface Tracker {
   hasBaseline: boolean;
 }
 
-export function makeTracker(environmentId: EnvironmentId, notify: Tracker["notify"]): Tracker {
+export function makeTracker(
+  environmentId: EnvironmentId,
+  notify: Tracker["notify"],
+  onChange: Tracker["onChange"],
+): Tracker {
   return {
     environmentId,
     startedAt: Date.now(),
     notify,
+    onChange,
+    shownOnCard: new Set(),
     projectTitles: new Map(),
     threads: new Map(),
     waitingSubagents: new Set(),
@@ -516,15 +441,55 @@ function observeListedThread(
   );
 }
 
+function forgetThread(tracker: Tracker, threadId: string) {
+  tracker.threads.delete(threadId);
+  tracker.waitingSubagents.delete(threadId);
+  tracker.lastKeys.delete(threadId);
+  tracker.shownOnCard.delete(threadId);
+}
+
+/** The Live Activity card, built from the threads as they stand: each listed thread's awareness. */
+export function no3yLiveActivityCard(
+  tracker: Tracker,
+  nowMs: number,
+): No3yLiveActivityProps | null {
+  const inputs: No3yLiveActivityInput[] = [];
+  for (const thread of tracker.threads.values()) {
+    if (!isListedThreadLineage(thread.lineage) || isHiddenAutomationRun(thread)) continue;
+    const state = awareness(tracker, thread, pendingSubagentRequest(tracker, thread.id));
+    if (state === null) continue;
+    // Work that ended before this service started is not news, unless the card already showed it.
+    const finished = state.phase === "completed" || state.phase === "failed";
+    const news = !finished || finishedSince(thread, tracker.startedAt);
+    if (!news && !tracker.shownOnCard.has(thread.id)) continue;
+    tracker.shownOnCard.add(thread.id);
+    inputs.push({ state, provider: thread.modelSelection.instanceId });
+  }
+  return aggregateNo3yLiveActivity(inputs, nowMs);
+}
+
 export function applyShellItem(tracker: Tracker, item: OrchestrationV2ShellStreamItem) {
+  applyItem(tracker, item);
+  tracker.onChange();
+}
+
+function applyItem(tracker: Tracker, item: OrchestrationV2ShellStreamItem) {
   switch (item.kind) {
     case "snapshot": {
       for (const project of item.snapshot.projects)
         tracker.projectTitles.set(project.id, project.title);
+      // Projects-only and enrichment refreshes carry resolvedRepositoryIdentityRoots; the full
+      // snapshot (ShellStream's shellStreamItemsFromInitialSnapshot) never does, even when empty.
+      const authoritative = item.resolvedRepositoryIdentityRoots === undefined;
+      if (authoritative) {
+        // Forget threads archived or removed while away before re-deriving rows, so a vanished
+        // subagent's wait no longer holds its parent.
+        const present = new Set<string>(item.snapshot.threads.map((thread) => thread.id));
+        for (const id of tracker.threads.keys()) if (!present.has(id)) forgetThread(tracker, id);
+      }
       const silent = !tracker.hasBaseline;
       for (const thread of item.snapshot.threads) observeThread(tracker, thread, silent);
-      // A projects-only refresh arrives with no threads, so it can't be the baseline.
-      if (item.snapshot.threads.length > 0) tracker.hasBaseline = true;
+      if (authoritative) tracker.hasBaseline = true;
       return;
     }
     case "project.updated":
@@ -534,9 +499,7 @@ export function applyShellItem(tracker: Tracker, item: OrchestrationV2ShellStrea
       if (item.location === "active") observeThread(tracker, item.thread, false);
       return;
     case "thread.removed":
-      tracker.threads.delete(item.threadId);
-      tracker.waitingSubagents.delete(item.threadId);
-      tracker.lastKeys.delete(item.threadId);
+      forgetThread(tracker, item.threadId);
       return;
     default:
       return;
@@ -602,11 +565,15 @@ function alertWithCurrentConfig(notification: ApnsNotification, run: AlertRun) {
     .catch((error: unknown) => log(`alert failed: ${String(error)}`));
 }
 
-async function watchOnce(config: Config, previous: Tracker | null): Promise<Tracker> {
+// Kept across reconnects, so a run that finishes while the socket is down still alerts.
+async function trackerFor(config: Config, previous: Tracker | null, onChange: () => void) {
   const id = await environmentId(config);
-  // Kept across reconnects, so a run that finishes while the socket is down still alerts.
-  const tracker =
-    previous?.environmentId === id ? previous : makeTracker(id, alertWithCurrentConfig);
+  return previous?.environmentId === id
+    ? previous
+    : makeTracker(id, alertWithCurrentConfig, onChange);
+}
+
+async function watch(config: Config, tracker: Tracker, liveActivity: LiveActivityService) {
   const url = new URL("/ws", config.serverOrigin.replace(/^http/u, "ws"));
   url.searchParams.set("orchestrationProtocol", "2");
   url.searchParams.set("wsTicket", await websocketTicket(config));
@@ -614,6 +581,7 @@ async function watchOnce(config: Config, previous: Tracker | null): Promise<Trac
   await new Promise<void>((resolve) => {
     const socket = new WebSocket(url);
     let ping: ReturnType<typeof setInterval> | undefined;
+    let caughtUp = false;
     socket.addEventListener("open", () => {
       log("watching thread activity");
       socket.send(
@@ -645,6 +613,11 @@ async function watchOnce(config: Config, previous: Tracker | null): Promise<Trac
               log(`skipped an item the schema did not accept: ${String(error).slice(0, 200)}`);
             }
           }
+          // The first chunk carries the full snapshot; the card is current from here.
+          if (!caughtUp) {
+            caughtUp = true;
+            liveActivity.resume();
+          }
           // The server pauses the stream after a few unacknowledged chunks.
           socket.send(JSON.stringify({ _tag: "Ack", requestId: "1" }));
         } else if (tag === "Exit" || tag === "Defect") {
@@ -654,11 +627,11 @@ async function watchOnce(config: Config, previous: Tracker | null): Promise<Trac
     });
     socket.addEventListener("close", () => {
       clearInterval(ping);
+      liveActivity.pause();
       resolve();
     });
     socket.addEventListener("error", () => socket.close());
   });
-  return tracker;
 }
 
 // Server sessions do not slide, so the paired token simply ends; say so before alerts stop.
@@ -675,15 +648,25 @@ function warnIfPairingExpires() {
 }
 
 async function run() {
-  startRegistrationServer();
+  let tracker: Tracker | null = null;
+  // Tokens left from a previous run get an end through the same hold once the first snapshot is in.
+  const liveActivity = makeLiveActivityService({
+    store: liveActivityTokens,
+    read: () => (tracker === null ? null : no3yLiveActivityCard(tracker, Date.now())),
+    deliver: (token, request) => apns.deliver(liveActivityTokens, token, request),
+    holdMs: COMPLETION_SETTLE_MS,
+    log,
+  });
+  startRegistrationServer(liveActivity);
   warnIfPairingExpires();
   setInterval(warnIfPairingExpires, 24 * 60 * 60 * 1000);
   let delayMs = 1_000;
-  let tracker: Tracker | null = null;
   for (;;) {
     const startedAt = Date.now();
     try {
-      tracker = await watchOnce(readConfig(), tracker);
+      const config = readConfig();
+      tracker = await trackerFor(config, tracker, liveActivity.changed);
+      await watch(config, tracker, liveActivity);
     } catch (error) {
       log(String(error));
     }
@@ -730,7 +713,7 @@ function launchAgentPath() {
 
 function install() {
   readConfig();
-  apnsKey();
+  apnsKey(home);
   const logPath = NodePath.join(home, "service.log");
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

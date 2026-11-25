@@ -2292,35 +2292,63 @@ function ChangedFilesTimeline() {
 }
 
 describe("ChangedFilesCard", () => {
-  it.each(["folder", "all folders"])(
-    "measures %s collapse and expansion in the same commit",
-    async (toggle) => {
-      await using screen = await render(<ChangedFilesTimeline />);
-      const after = () =>
-        screen.container.querySelector('[data-testid="after"]')!.getBoundingClientRect().top;
-      const cardBottom = () =>
-        screen.container.querySelector("[data-changed-files-state]")!.getBoundingClientRect()
-          .bottom;
-      await vi.waitFor(() => expect(after()).toBe(cardBottom()));
-      const topBefore = after();
-      const button = () =>
-        screen.container.querySelector<HTMLButtonElement>(
-          toggle === "folder"
-            ? '[data-changed-file-row="src"] button'
-            : 'button[aria-label$="all folders"]',
-        )!;
-      await act(() => {
-        flushSync(() => button().click());
-        expect(screen.container.textContent).not.toContain("a.ts");
-        expect(after()).toBe(topBefore - 3 * 28);
-      });
-      await act(() => {
-        flushSync(() => button().click());
-        expect(screen.container.textContent).toContain("a.ts");
-        expect(after()).toBe(topBefore);
-      });
-    },
-  );
+  /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
+  // The header strip is the card fold (upstream's all-folders button is gone); folders start
+  // collapsed and open one at a time.
+  const mount = async () => {
+    await using stack = new AsyncDisposableStack();
+    const screen = stack.use(await render(<ChangedFilesTimeline />));
+    const after = () =>
+      screen.container.querySelector('[data-testid="after"]')!.getBoundingClientRect().top;
+    const cardBottom = () =>
+      screen.container.querySelector("[data-changed-files-state]")!.getBoundingClientRect().bottom;
+    await vi.waitFor(() => expect(after()).toBe(cardBottom()));
+    const environment = stack.move();
+    return Object.assign(screen, {
+      [Symbol.asyncDispose]: () => environment.disposeAsync(),
+      after,
+      cardBottom,
+      topBefore: after(),
+    });
+  };
+
+  it("measures folder expansion and collapse in the same commit", async () => {
+    await using screen = await mount();
+    const { after, topBefore } = screen;
+    expect(screen.container.textContent).not.toContain("a.ts");
+    const folder = () =>
+      screen.container.querySelector<HTMLButtonElement>('[data-changed-file-row="src"] button')!;
+    await act(() => {
+      flushSync(() => folder().click());
+      expect(screen.container.textContent).toContain("a.ts");
+      expect(after()).toBe(topBefore + 3 * 28);
+    });
+    await act(() => {
+      flushSync(() => folder().click());
+      expect(screen.container.textContent).not.toContain("a.ts");
+      expect(after()).toBe(topBefore);
+    });
+  });
+
+  it("measures the card fold and reopen in the same commit", async () => {
+    await using screen = await mount();
+    const { after, cardBottom, topBefore } = screen;
+    const header = () =>
+      screen.container.querySelector<HTMLButtonElement>("[data-changed-files-header] > button")!;
+    const folderRow = () => screen.container.querySelector('[data-changed-file-row="src"]');
+    await act(() => {
+      flushSync(() => header().click());
+      expect(folderRow()).toBeNull();
+      expect(after()).toBe(cardBottom());
+      expect(after()).toBeLessThan(topBefore);
+    });
+    await act(() => {
+      flushSync(() => header().click());
+      expect(folderRow()).not.toBeNull();
+      expect(after()).toBe(topBefore);
+    });
+  });
+  /* fork:end fork-changed-files-fold */
 });
 
 it("keeps concurrent approvals actionable outside collapsed work and restores settled rows", async () => {

@@ -211,6 +211,11 @@
         "index.ts!",
         "fingerprint.config.js",
         "plugins/*.cjs",
+        // fork:begin no3y-live-activity — see .fork/customizations.yaml#no3y-live-activity
+        // fork/identity.ts adds this plugin by string; Metro picks the .ios.ts twin by platform.
+        "fork/plugins/*.cjs",
+        "fork/*.ios.ts",
+        // fork:end no3y-live-activity
         "scripts/generate-device-stream.mts",
         "src/features/devices/device-stream.browser.ts!",
         "src/features/browser/preview-stream.browser.ts!",

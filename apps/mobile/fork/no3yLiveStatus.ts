@@ -12,6 +12,13 @@ import type {
 /** The id upstream's feed derivation gives its single live row (threadActivity's LIVE_ACTIVITY_ROW_ID). */
 export const NO3Y_LIVE_ROW_ID = "live-activity-row";
 
+/** The live line is measured, not fixed-height, and estimates from its own average (~40pt, not 180). */
+export const NO3Y_LIVE_ROW_TYPE = "no3y-live";
+
+export function isNo3yLiveRow(no3y: boolean, row: { readonly id: string }): boolean {
+  return no3y && row.id === NO3Y_LIVE_ROW_ID;
+}
+
 // Keyed by the derived rows, which the feed cache returns unchanged until they change.
 const reordered = new WeakMap<object, unknown>();
 

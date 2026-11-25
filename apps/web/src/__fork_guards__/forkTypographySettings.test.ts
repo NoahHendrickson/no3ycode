@@ -34,7 +34,7 @@ describe("fork guard: fork-typography-settings", () => {
       'cssVariable: "--fork-sidebar-font-size",',
     );
     const index = readSibling("../index.css");
-    for (const token of ["title", "row", "chrome", "meta", "caption", "status", "tile"]) {
+    for (const token of ["title", "row", "chrome", "meta", "caption", "status"]) {
       expect(index).toMatch(
         new RegExp(`--text-sidebar-${token}: calc\\(var\\(--fork-sidebar-px, 1px\\) \\* \\d+\\);`),
       );
@@ -72,10 +72,14 @@ describe("fork guard: fork-typography-settings", () => {
 
   it("scales every chat stream size from one always-on block", () => {
     const tokens = rule(TIMELINE);
-    expect(tokens?.body).toContain("--text-sm: calc(1rem * var(--fork-chat-text-scale, 1))");
+    expect(tokens?.body).toContain(
+      "--text-sm: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1))",
+    );
     for (const token of ["xs", "base", "lg", "xl", "2xl"]) {
       expect(tokens?.body).toMatch(
-        new RegExp(`--text-${token}: calc\\([\\d.]+rem \\* var\\(--fork-chat-text-scale, 1\\)\\)`),
+        new RegExp(
+          `--text-${token}: calc\\([\\d.]+rem \\* var\\(--fork-chat-text-scale, 1\\) \\* var\\(--fork-interface-text-scale, 1\\)\\)`,
+        ),
       );
     }
     // 2xs and 3xs are @theme inline, so their utilities need rules that copy index.css's sizes.
@@ -84,8 +88,12 @@ describe("fork guard: fork-typography-settings", () => {
       const size = new RegExp(`--text-${token}: ([\\d.]+rem);`).exec(index)?.[1];
       expect(size, `index.css --text-${token}`).toBeDefined();
       expect(rule(`${TIMELINE} .text-${token}`)?.body).toContain(`var(--text-${token})`);
-      expect(tokens?.body).toContain(
-        `--text-${token}: calc(${size} * var(--fork-chat-text-scale, 1))`,
+      // The formatter may wrap the calc's operands onto their own lines.
+      expect(tokens?.body).toMatch(
+        new RegExp(
+          `--text-${token}: calc\\(\\s*${size?.replace(".", "\\.")} \\* var\\(--fork-chat-text-scale, 1\\) \\* var\\(--fork-interface-text-scale, 1\\)\\s*\\)`,
+          "u",
+        ),
       );
     }
     for (const [heading, token] of [
@@ -99,8 +107,8 @@ describe("fork guard: fork-typography-settings", () => {
       );
     }
     expect(rule(`${TIMELINE} .chat-markdown table`)?.body).toContain("var(--fork-chat-text-sm)");
-    expect(readSibling("../theme.custom.css")).toContain(
-      "--fork-chat-text-sm: calc(0.875rem * var(--fork-chat-text-scale, 1));",
+    expect(readSibling("../theme.custom.css")).toMatch(
+      /--fork-chat-text-sm: calc\(\s*0\.875rem \* var\(--fork-chat-text-scale, 1\) \* var\(--fork-interface-text-scale, 1\)\s*\);/u,
     );
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
       'data-timeline-root="true"',
@@ -120,8 +128,9 @@ describe("fork guard: fork-typography-settings", () => {
     expect(shadow).toContain("const sans = FORK_DEFAULT_SANS_FAMILY;");
   });
 
-  it("maps the fork default to Geist and keeps Inter loaded", () => {
-    expect(forkInterfaceFontPreset("")?.label).toBe("Geist");
+  it("maps the fork default to Cinnabar Sans, offers Geist, and keeps Inter loaded", () => {
+    expect(forkInterfaceFontPreset("")?.label).toBe("Cinnabar Sans");
+    expect(forkInterfaceFontPreset("Geist Variable")?.label).toBe("Geist");
     expect(forkInterfaceFontPreset(" Inter Variable ")?.label).toBe("Inter");
     expect(forkInterfaceFontPreset("Comic Sans MS")).toBeNull();
     expect(readSibling("../main.tsx")).toContain('import "@fontsource-variable/inter";');
