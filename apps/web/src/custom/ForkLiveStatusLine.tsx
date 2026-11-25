@@ -10,6 +10,8 @@ import { ActivityShimmerOverlay } from "~/components/chat/TimelineRowParts";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { observeVisibleAnimation } from "~/lib/visibleAnimation";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
+import { ForkLiveTaskList } from "./ForkLiveTaskList";
+import { ForkLiveTasksCtx } from "./forkLiveTasks";
 import { forkStatusLineLabel, type ForkStatusLineRow } from "./forkWorkingRowLast";
 
 export function ForkLiveStatusLine({
@@ -55,7 +57,8 @@ export function ForkLiveStatusLine({
   );
   const lineClassName =
     "flex h-6 min-w-0 items-center gap-2 px-1 text-left text-sm leading-relaxed text-muted-foreground tabular-nums";
-  return (
+  const tasks = use(ForkLiveTasksCtx);
+  const line = (
     <div className="flex min-w-0 items-center gap-2 pb-2 pt-1">
       {groupId === undefined ? (
         <div className={lineClassName}>{content}</div>
@@ -70,6 +73,14 @@ export function ForkLiveStatusLine({
         </button>
       )}
       {trailing}
+    </div>
+  );
+  return tasks === null ? (
+    line
+  ) : (
+    <div className="min-w-0">
+      <ForkLiveTaskList steps={tasks} />
+      {line}
     </div>
   );
 }

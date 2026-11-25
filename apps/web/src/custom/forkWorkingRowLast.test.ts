@@ -152,7 +152,7 @@ describe("forkLiveStatusRows", () => {
 
   it("leaves reasoning a reply followed in the trail and folds the thinking row", () => {
     const result = forkLiveStatusRows(derive([reasoning(5), commentary(6)]));
-    expect(kinds(result)).toEqual(["work", "message", "working"]);
+    expect(kinds(result)).toEqual(["work-toggle", "message", "working"]);
     expect(statusLine(result)?.kind).toBe("thinking");
   });
 

@@ -19,6 +19,9 @@ import { workEntryDisplayIndicatesToolFailure } from "../../session-logic";
 import ChatMarkdown from "../ChatMarkdown";
 import { assetMediaActionsSource } from "./ChatMarkdownMedia";
 import { Minimize2Icon, XIcon } from "lucide-react";
+/* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary */
+import { ChevronRightIcon } from "lucide-react";
+/* fork:end fork-trail-summary */
 import { Button } from "../ui/button";
 import { getVirtualizedScrollFadeClassName } from "../ui/scroll-area";
 import {
@@ -67,6 +70,12 @@ import { SidebarV2WorkingMark } from "~/custom/SidebarV2StatusIndicator";
 /* fork:end fork-chat-working-rain */
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { ForkLiveStatusLine } from "~/custom/ForkLiveStatusLine";
+/* fork:end fork-working-row-last */
+/* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list */
+import { ForkLiveTaskList } from "~/custom/ForkLiveTaskList";
+import { ForkLiveTasksCtx } from "~/custom/forkLiveTasks";
+/* fork:end fork-live-task-list */
+/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { isForkStatusLine } from "~/custom/forkWorkingRowLast";
 /* fork:end fork-working-row-last */
 
@@ -101,7 +110,14 @@ export const WorkGroupSection = memo(function WorkGroupSection({
 
   if (nonEmptyEntries.length === 0) return null;
   if (isExpandedToolGroup && nonEmptyEntries.every((entry) => entry.itemType === "reasoning")) {
-    return <ReasoningTraceContent entries={nonEmptyEntries} />;
+    return (
+      /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+         Marks a thought-only group's trace so it takes the opened-group rail. */
+      <div data-fork-trace-group>
+        <ReasoningTraceContent entries={nonEmptyEntries} />
+      </div>
+      /* fork:end fork-trail-summary */
+    );
   }
   if (isExpandedToolGroup) {
     return (
@@ -360,6 +376,9 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
     use(TimelineRowActivityCtx);
   const compacting = row.compacting === true || isCompacting;
   const shimmer = isPreparingWorktree || compacting;
+  /* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list */
+  const forkTasks = use(ForkLiveTasksCtx);
+  /* fork:end fork-live-task-list */
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
   if (isForkStatusLine(row)) {
     return (
@@ -393,6 +412,10 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       className="pb-2 pt-1"
       /* fork:end fork-working-row-last */
     >
+      {/* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list
+          The checklist stays while a failed tool, an approval or compaction holds the line. */}
+      {forkTasks === null ? null : <ForkLiveTaskList steps={forkTasks} />}
+      {/* fork:end fork-live-task-list */}
       <div
         /* fork:begin fork-chat-working-rain — see .fork/customizations.yaml#fork-chat-working-rain
            Upstream's row has no leading mark and baseline-aligns its text; the
@@ -771,7 +794,23 @@ function WorkGroupHeader(props: {
       }
       label={<span className="block truncate">{props.label}</span>}
       trailing={
-        <TimelineRowTimestamp createdAt={props.createdAt} timestampFormat={props.timestampFormat} />
+        /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+           Upstream shows only the hover timestamp; the chevron says the row opens. */
+        <>
+          <span className="flex size-4 shrink-0 items-center justify-center" aria-hidden>
+            <ChevronRightIcon
+              className={cn(
+                "size-3 shrink-0 text-icon-muted opacity-70 transition-transform duration-200",
+                props.expanded && "rotate-90",
+              )}
+            />
+          </span>
+          <TimelineRowTimestamp
+            createdAt={props.createdAt}
+            timestampFormat={props.timestampFormat}
+          />
+        </>
+        /* fork:end fork-trail-summary */
       }
     />
   );

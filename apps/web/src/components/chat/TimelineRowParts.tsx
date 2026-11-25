@@ -28,6 +28,10 @@ export function TimelineRowTimestamp({
       <TooltipTrigger
         render={
           <span
+            /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+               WorkLogLine orders this timestamp last; other numeric children stay put. */
+            data-row-timestamp
+            /* fork:end fork-trail-summary */
             className={cn(
               "pointer-events-none absolute me-1 shrink-0 whitespace-nowrap rounded-md text-muted-foreground text-xs tabular-nums opacity-0 group-hover/timeline-row:pointer-events-auto group-hover/timeline-row:static group-hover/timeline-row:opacity-100 group-focus-within/timeline-row:pointer-events-auto group-focus-within/timeline-row:static group-focus-within/timeline-row:opacity-100",
               alwaysVisible && "pointer-events-auto static opacity-100",

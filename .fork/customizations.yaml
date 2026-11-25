@@ -6485,6 +6485,82 @@
     - apps/web/src/custom/forkWorkingRowLast.test.ts
     - packages/shared/src/forkThinkingWords.test.ts
 
+- id: fork-trail-summary
+  intent: >
+    A finished stretch of steps between two messages reads as one summary
+    row named for what it did ("Read 1 file"), the way Claude Code shows its
+    trail; its thoughts and task updates show only when the row opens.
+    Upstream breaks a group at every task-list update and draws a lone
+    thought as its own trace row, so a stretch read as three rows. In
+    deriveMessagesTimelineRows a task update now joins the group it follows
+    (one that starts a stretch keeps its own row, and the live stretch walker
+    still stops at it, so an unfinished task update never reads as running);
+    a lone thought takes the summary branch; and the summary comes from
+    forkTrailSummary, which counts tools only: a group of thoughts reads
+    "Thought", and a group of only task updates keeps its latest task line.
+    Rows read like Claude Code: a summary row carries a chevron that turns
+    when it opens, every work-log row sizes its label to its text so its
+    chevron hugs it (WorkLogLine; the hover timestamp, tagged
+    data-row-timestamp in TimelineRowParts, still sits at the far end), and an opened group hangs under its summary on a quiet left rail
+    without the scrollbar or its gutter (theme.custom.css,
+    `[data-tool-group-scroll]`), still height-capped and virtualized.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkTrailSummary.ts
+    - apps/web/src/custom/forkTrailSummary.test.ts
+  shadows: []
+  watch:
+    # Fenced: the todo_list group break, the lone-thought branch, the summary
+    # call, and the unused singleEntry upstream kept for it.
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    # Fenced: the stranded-thought case now expects a "Thought" summary row.
+    - apps/web/src/components/chat/MessagesTimeline.logic.test.ts
+    # Fenced: WorkLogLine label sizing and the timestamp order.
+    - apps/web/src/components/chat/WorkLog.tsx
+    # Fenced: the summary row chevron in WorkGroupHeader.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # Fenced: data-row-timestamp on TimelineRowTimestamp.
+    - apps/web/src/components/chat/TimelineRowParts.tsx
+    # Fenced: the opened group rail on [data-tool-group-scroll].
+    - apps/web/src/theme.custom.css
+    - packages/client-runtime/src/work-log/presentation.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkTrailAndTasks.test.ts
+    - apps/web/src/custom/forkTrailSummary.test.ts
+
+- id: fork-live-task-list
+  intent: >
+    While a turn runs, its latest task list draws as a checklist card just
+    above the live status line, the way the Claude app shows it: a check for
+    done steps, a dotted ring for the running one, and a plain ring for the
+    rest (never a dashed circle), updating in place as the agent ticks steps off. It reads
+    the todo_list turn item's steps (forkLiveTaskSteps: the newest list since
+    the user's last prompt; a steer stays in the turn) and reaches the line
+    through ForkLiveTasksCtx, which MessagesTimeline provides only while the
+    thread is working and not in Zen (which hides task lists); the response
+    boundary is upstream's timelineEntryStartsResponse. Each step carries
+    screen-reader text for its state. The icons do not animate: the line below carries the
+    turn's motion. When the turn ends the line and the card go away; the
+    trail keeps upstream's task rows. Client-only; the steps already arrive
+    on the item.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkLiveTasks.ts
+    - apps/web/src/custom/forkLiveTasks.test.ts
+    - apps/web/src/custom/ForkLiveTaskList.tsx
+  shadows: []
+  watch:
+    # Fenced: the import, the steps computed beside activityState, and the
+    # provider inside TimelineRowActivityCtx.
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    # The card renders inside the fork status line (fork-working-row-last).
+    - apps/web/src/custom/ForkLiveStatusLine.tsx
+    # Fenced: the card above upstream fallback line in WorkingTimelineRow.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkTrailAndTasks.test.ts
+    - apps/web/src/custom/forkLiveTasks.test.ts
+
 - id: fork-transcript-spacing
   intent: >
     Reply text, tool rows and the live status line sit 24px apart, a touch

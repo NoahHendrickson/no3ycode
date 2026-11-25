@@ -3640,6 +3640,25 @@
 }
 /* fork:end fork-working-row-last */
 
+/* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+   An opened group hangs under its summary on a quiet rail instead of in a boxed scroller;
+   the list still caps its height and virtualizes, and its fades still mark overflow. */
+:root[data-fork="noahhendrickson-t3code"] [data-tool-group-scroll] {
+  margin-inline-start: 0.75rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border);
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+}
+/* A thought-only group opens as upstream's trace view; it takes the same rail. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-trace-group] > * {
+  margin-inline-start: 0.75rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border);
+  scrollbar-width: none;
+}
+/* fork:end fork-trail-summary */
+
 /* The permissions menu (fork-composer-shell): rounder than a stock menu, its rows concentric
    inside an even 8px inset (the popup's 4px plus the section's 4px). */
 :root[data-fork="noahhendrickson-t3code"]
