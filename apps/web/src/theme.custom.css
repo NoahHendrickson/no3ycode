@@ -2270,20 +2270,6 @@
   padding: 0;
 }
 
-/* The changed-files header actions (fold toggle, Open diff) are ghost-muted
-   Buttons upstream and draw no border; they used to ride a shared outline
-   rule, which recoloured their transparent border into a visible one. What
-   they keep is the foreground ink; their hover is the card-wide lift
-   (fork-changed-files-card). Selected as `button`, not `[data-slot="button"]`
-   — see fork-workspace-header note: TooltipTrigger stamps
-   data-slot="tooltip-trigger" over Button. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-changed-files-header]
-  > div
-  button {
-  color: var(--foreground);
-}
-
 /* ── Questions card stacked on the prompt surface ────────────────────────────
    Figma t3-fork 322:6316. Upstream's top drawer (#7150) is a 1.375rem-inset
    glass card: 16px corners, its own backdrop-filter, overlapping the surface
@@ -3133,10 +3119,10 @@
    other three sides. Basic paints its own raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
-  /* The composer's corners: the card is the composer turned over (fork-changed-files-card). */
-  --fork-card-radius: var(--fork-composer-radius);
+  /* A subagent card's shape and fill: 12px corners on the stage border (fork-changed-files-fold). */
+  --fork-card-radius: 12px;
   background: var(--card);
-  border: 1px solid var(--fork-composer-border);
+  border: 1px solid var(--border);
   border-radius: var(--fork-card-radius);
 }
 
@@ -3144,6 +3130,14 @@
   [data-changed-files-header] {
   background: var(--card);
   border-radius: calc(var(--fork-card-radius) - 1px) calc(var(--fork-card-radius) - 1px) 0 0;
+}
+
+/* Folded, the header is the whole card: round its foot too, or its square corners poke past
+   the card's. Its fold button fills the strip so hover and focus paint the full row
+   (fork-changed-files-fold). */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-header]:has(> button[aria-expanded="false"]) {
+  border-radius: calc(var(--fork-card-radius) - 1px);
 }
 
 /* Rounded at the top too, so the hairline curves down into the card's sides. */
@@ -3162,11 +3156,12 @@
   border-bottom-right-radius: calc(var(--fork-card-radius) - 1px);
 }
 
-/* On Flat Glass the tree and its footer lift 4% off the card, like the composer's prompt well. */
+/* On Flat Glass the card is one solid fill: no lifted well under the header and no hairline
+   between them (fork-changed-files-fold). */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-changed-files-state]
-  > :not([data-changed-files-header]) {
-  background: rgb(255 255 255 / 4%);
+  [data-changed-files-header]
+  + div {
+  box-shadow: none;
 }
 
 /* The user's sent bubble takes the same fill as the card above it. Upstream
@@ -3185,6 +3180,35 @@
    one consumer; the send button's message-action tokens are untouched. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]) .bg-message {
   background-color: var(--card);
+}
+
+/* Sent bubbles: 12px corners instead of rounded-2xl's 16px (grouped corners keep
+   their small radius) and 8px by 16px padding instead of p-3's 12px. On Flat Glass and dark Basic
+   the fill sits a 3% white wash above the card, so it reads lighter. */
+:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble] {
+  border-radius: var(--radius-xl);
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble].rounded-tr-md {
+  border-top-right-radius: var(--radius-md);
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble].rounded-br-md {
+  border-bottom-right-radius: var(--radius-md);
+}
+
+:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble].p-3 {
+  padding: 8px 16px;
+}
+
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"][data-fork-theme="cool-darker"]:not(
+        [data-fork-sidebar-vibrancy="true"]
+      ),
+    [data-fork-theme="basic"]
+  ).dark
+  [data-user-message-bubble].bg-message {
+  background-color: color-mix(in srgb, #ffffff 3%, var(--card));
 }
 
 /* Hover fills inside the card. Upstream's `hover:bg-accent/60` is 60% of an

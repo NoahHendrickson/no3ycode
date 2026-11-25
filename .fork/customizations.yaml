@@ -5391,21 +5391,18 @@
     dark palette --input is the border grey (Westworld's is #33343a), so
     that wash smears a border tint over the stage instead of landing on the
     opaque card fill; under the fork marker the card and sticky header
-    paint var(--card), --fork-card-radius corners, and a 1px var(--fork-composer-border)
-    border so Cool / Neutral palettes keep their own hairline weight. The
+    paint var(--card) with --fork-card-radius corners and a 1px border
+    (fork-changed-files-fold sets the subagent card's 12px corners and
+    var(--border) line). The
     header and the file tree and "N more files" footer under it (the header's
     following sibling divs) share the card's fill, parted by a hairline on the
-    tree's top only (the card border is the line elsewhere). The card sets
-    --fork-card-radius to the composer's radius (16px), and its corner rules read
-    it; the tree rounds its top corners too, so its hairline curves into the
-    card's sides. On Flat Glass the tree and footer take a 4% white wash.
+    tree's top only (the card border is the line elsewhere). The corner rules
+    read --fork-card-radius; the tree rounds its top corners too, so its hairline curves into the
+    card's sides. On Flat Glass the card is one solid fill: no wash under the
+    header and no hairline (fork-changed-files-fold).
     Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
-    The header actions (fold toggle, Open diff) are ghost-muted Buttons
-    upstream and stay borderless: selected as header > div button
-    (TooltipTrigger overwrites data-slot="button") they take --foreground
-    ink only, never the --fork-outline-border recipe pending Previous
-    wears. Every button in the card hovers as the same 4% white
+    Nothing in the header takes the --fork-outline-border recipe. Every button in the card hovers as the same 4% white
     lift (--fork-outline-hover-bg) instead of upstream's accent/60 fill,
     which lands darker than the card. The user's sent chat bubble
     (bg-message → --message-surface, upstream's --accent) is painted
@@ -9475,3 +9472,49 @@
     - apps/web/src/components/chat/ThreadDetailsPrRow.tsx
   verify:
     - apps/web/src/__fork_guards__/prHeaderHierarchy.test.ts
+
+- id: fork-message-bubble-shape
+  intent: >
+    Sent bubbles take 12px corners (--radius-xl) instead of upstream's
+    rounded-2xl, grouped corners keep rounded-md, and an unfolded text bubble
+    pads 8px top and bottom and 16px either side instead of p-3's 12px. On Flat Glass
+    (without the whole-window vibrancy wash) and dark Basic the fill is a 3%
+    white wash over the card, a step lighter
+    than the changed-files card; Basic light keeps its shade. Keyed on
+    upstream's data-user-message-bubble and its rounded-tr-md, rounded-br-md,
+    p-3 and bg-message classes.
+  tier: 3
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/TimelineUserMessageRow.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts
+    # Its bubble lookup skips this rule, which names the vibrancy attribute only in :not().
+    - apps/web/src/__fork_guards__/forkCoolDarkerSidebarVibrancy.test.ts
+
+- id: fork-changed-files-fold
+  intent: >
+    The chat-column changed-files card is drawn like a subagent card and
+    starts folded to one strip: "N changed files" and the diff stats at the
+    interface text size (text-base), with the expand chevron at the far
+    right. The whole strip is the fold button. Upstream's header actions
+    (collapse-all-folders and Open diff) are removed, along with their
+    Tooltip, T and icon imports and the hasDirectories helper; a file row
+    still opens the diff at that file, and the "N more files" footer opens
+    the full diff while the card is open. The card takes the subagent
+    card's 12px corners and var(--border) line on the --card fill. The fold
+    is local state, so a card scrolled out and back in starts folded again.
+    On Flat Glass the card is one solid fill (no hairline under the header);
+    Basic keeps its raised well.
+  tier: 4
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/ChangedFilesTree.tsx
+    # Fenced: the card tests open the folded card first and test the card fold, not all-folders.
+    - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts

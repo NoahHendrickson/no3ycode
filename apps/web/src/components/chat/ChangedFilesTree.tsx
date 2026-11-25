@@ -1,14 +1,12 @@
 import { useSyncLayout } from "@legendapp/list/react";
 import { type OrchestrationV2CheckpointFileTotals, type RunId } from "@t3tools/contracts";
-import { T, useGT } from "gt-react";
+import { useGT } from "gt-react";
 import { type MouseEvent, type ReactNode, memo, useLayoutEffect, useRef, useState } from "react";
 import { type TurnDiffFileChange } from "../../types";
 import { buildTurnDiffTree, type TurnDiffTreeNode } from "../../lib/turnDiffTree";
 import {
+  ChevronDownIcon,
   ChevronRightIcon,
-  FileDiffIcon,
-  ChevronsDownUpIcon,
-  ChevronsUpDownIcon,
   FolderClosedIcon,
   FolderGit2Icon,
   FolderIcon,
@@ -17,7 +15,6 @@ import { cn } from "~/lib/utils";
 import { DiffStatLabel, hasNonZeroStat } from "./DiffStatLabel";
 import { PierreEntryIcon } from "./PierreEntryIcon";
 import { Button } from "../ui/button";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { MiddleTruncate } from "../ui/middle-truncate";
 import { observeResize } from "~/lib/observeResize";
 import { repositoryFilePath } from "@t3tools/client-runtime/state/thread-repositories";
@@ -76,15 +73,16 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
     groups,
     allDirectoriesExpanded,
     resolvedTheme,
-    onToggleAllDirectories,
     onOpenTurnDiff,
     onFileContextMenu,
   } = props;
   const gt = useGT();
   const syncTimelineLayout = useSyncLayout();
+  /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
+  const [forkOpen, setForkOpen] = useState(false);
+  /* fork:end fork-changed-files-fold */
   const listedFiles = groups ? groups.flatMap((group) => group.files) : files;
   const hiddenFileCount = totals.count - listedFiles.length;
-  const hasDirectories = listedFiles.some((file) => /[/\\]/.test(file.path));
   const firstGroup = groups?.find((group) => group.files.length > 0);
   const firstFilePath = groups
     ? firstGroup && groupDiffPath(firstGroup, firstGroup.files[0]?.path)
@@ -99,8 +97,19 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
         data-changed-files-header=""
         className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-secondary px-3 py-2 dark:bg-background dark:bg-linear-to-b dark:from-input/20 dark:to-input/20"
       >
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-foreground">
-          <span>
+        {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
+        {/* The whole strip folds the card, edge to edge; files open the diff. */}
+        <button
+          type="button"
+          data-scroll-anchor-ignore
+          aria-expanded={forkOpen}
+          className="-mx-3 -my-2 flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-[inherit] px-3 py-2 text-left text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+          onClick={() => {
+            setForkOpen(!forkOpen);
+            syncTimelineLayout();
+          }}
+        >
+          <span className="truncate">
             {gt(
               "{count, plural, one {{formattedCount} changed file} other {{formattedCount} changed files}}",
               { count: totals.count, formattedCount: totals.count.toLocaleString() },
@@ -111,65 +120,20 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
               additions={totals.additions}
               deletions={totals.deletions}
               layout="inline"
-              className="text-xs leading-4"
+              className="text-base"
             />
           )}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {hasDirectories && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type="button"
-                    size="icon-xs"
-                    variant="ghost-muted"
-                    aria-label={
-                      allDirectoriesExpanded ? gt("Collapse all folders") : gt("Expand all folders")
-                    }
-                    data-scroll-anchor-ignore
-                    onClick={() => {
-                      onToggleAllDirectories();
-                      syncTimelineLayout();
-                    }}
-                  />
-                }
-              >
-                {allDirectoriesExpanded ? (
-                  <ChevronsDownUpIcon className="size-3" />
-                ) : (
-                  <ChevronsUpDownIcon className="size-3" />
-                )}
-              </TooltipTrigger>
-              <TooltipPopup side="top">
-                {allDirectoriesExpanded ? gt("Collapse all folders") : gt("Expand all folders")}
-              </TooltipPopup>
-            </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  size="xs"
-                  variant="ghost-muted"
-                  aria-label={gt("Open diff")}
-                  onClick={() => onOpenTurnDiff(runId, firstFilePath)}
-                />
-              }
-            >
-              <FileDiffIcon className="size-3" />
-              <span className="hidden @[24rem]/changed-files:inline">
-                <T>Open diff</T>
-              </span>
-            </TooltipTrigger>
-            <TooltipPopup side="top">
-              <T>Open the full diff</T>
-            </TooltipPopup>
-          </Tooltip>
-        </div>
+          <span aria-hidden className="ml-auto flex size-6 shrink-0 items-center justify-center">
+            <ChevronDownIcon
+              className={cn("size-3 transition-transform", forkOpen && "rotate-180")}
+            />
+          </span>
+        </button>
+        {/* fork:end fork-changed-files-fold */}
       </div>
-      <div className="p-2">
+      {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
+      <div className="p-2" hidden={!forkOpen}>
+        {/* fork:end fork-changed-files-fold */}
         {groups ? (
           groups.map((group) => (
             <ChangedFilesGroupSection
@@ -194,7 +158,9 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
           />
         )}
       </div>
-      {hiddenFileCount > 0 && (
+      {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
+      {hiddenFileCount > 0 && forkOpen && (
+        /* fork:end fork-changed-files-fold */
         <div className="px-3 pb-2">
           <Button
             type="button"

@@ -2292,7 +2292,9 @@ function ChangedFilesTimeline() {
 }
 
 describe("ChangedFilesCard", () => {
-  it.each(["folder", "all folders"])(
+  /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
+  it.each(["folder", "card"])(
+    /* fork:end fork-changed-files-fold */
     "measures %s collapse and expansion in the same commit",
     async (toggle) => {
       await using screen = await render(<ChangedFilesTimeline />);
@@ -2302,13 +2304,30 @@ describe("ChangedFilesCard", () => {
         screen.container.querySelector("[data-changed-files-state]")!.getBoundingClientRect()
           .bottom;
       await vi.waitFor(() => expect(after()).toBe(cardBottom()));
+      /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
+      // The card starts folded to its header strip; open it before measuring the tree.
+      const header = () =>
+        screen.container.querySelector<HTMLButtonElement>("[data-changed-files-header] > button")!;
+      await act(() => {
+        flushSync(() => header().click());
+      });
+      await vi.waitFor(() => expect(after()).toBe(cardBottom()));
       const topBefore = after();
+      if (toggle === "card") {
+        await act(() => {
+          flushSync(() => header().click());
+          expect(after()).toBe(cardBottom());
+          expect(after()).toBeLessThan(topBefore);
+        });
+        await act(() => {
+          flushSync(() => header().click());
+          expect(after()).toBe(topBefore);
+        });
+        return;
+      }
       const button = () =>
-        screen.container.querySelector<HTMLButtonElement>(
-          toggle === "folder"
-            ? '[data-changed-file-row="src"] button'
-            : 'button[aria-label$="all folders"]',
-        )!;
+        screen.container.querySelector<HTMLButtonElement>('[data-changed-file-row="src"] button')!;
+      /* fork:end fork-changed-files-fold */
       await act(() => {
         flushSync(() => button().click());
         expect(screen.container.textContent).not.toContain("a.ts");
