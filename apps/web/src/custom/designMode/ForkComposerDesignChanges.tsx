@@ -110,9 +110,9 @@ export function DesignChangeChip({
       {/* oxlint-disable-next-line shadcn/no-restyle -- monospace for the request it previews; theme.custom.css keeps .font-mono tooltips at the compact metrics */}
       <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-2xs">
         {unresolved > 0
-            ? `${unresolved === entry.elements.length ? (unresolved === 1 ? "This element has" : "These elements have") : `${unresolved} of ${entry.elements.length} elements ${unresolved === 1 ? "has" : "have"}`} no source location — the request carries selector and text context instead.\n\n`
-            : ""}
-          {entry.markdown.slice(0, 600)}
+          ? `${unresolved === entry.elements.length ? (unresolved === 1 ? "This element has" : "These elements have") : `${unresolved} of ${entry.elements.length} elements ${unresolved === 1 ? "has" : "have"}`} no source location — the request carries selector and text context instead.\n\n`
+          : ""}
+        {entry.markdown.slice(0, 600)}
         {entry.markdown.length > 600 ? "…" : ""}
       </TooltipPopup>
     </Tooltip>
