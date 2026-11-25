@@ -5246,7 +5246,11 @@
     shared packages or mobile. The strip is a per-provider
     list of family words, not the provider's display name: Grok's "Grok Build"
     keeps its name because "Build" alone is nothing. Picker rows drop the name
-    too, since the selected provider tab or the row's provider label names it.
+    too, since the selected provider tab or the row's provider icon names it
+    (screen readers still get the provider name from a visually hidden label).
+    Flat rows (search, Pinned) from a reseller like OpenCode add the
+    sub-provider's logo (OpenRouter, Anthropic, OpenAI, Ollama) after the
+    name, or its muted name when there is no logo.
     The menu is a vertical rail of provider icon tabs on the left, beside a
     search field over the chosen scope's models. The rail comes after the
     list in the DOM (the row is reversed to show it on the left), so ArrowDown
@@ -5282,8 +5286,8 @@
     the search field (capture-phase redirect, ahead of the menu's type-ahead,
     also on the popup itself, where the menu parks focus after a swap),
     and any query swaps the list for one flat,
-    provider-agnostic list of every matching model — glyph and instance name
-    inline, ranked like upstream's search, locked provider still respected;
+    provider-agnostic list of every matching model — glyph and sub-provider
+    inline, instance name visually hidden, ranked like upstream's search, locked provider still respected;
     Enter picks the first result and Escape clears the query before it
     closes the menu. Rows reveal a pin at their far right on hover (Pin /
     Unpin); it toggles without choosing the row, and never moves a row:
