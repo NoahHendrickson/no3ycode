@@ -44,7 +44,6 @@ import {
   canCheckForUpdate,
   getDesktopUpdateButtonTooltip,
   getDesktopUpdateDisabledReason,
-  getDesktopUpdateInstallConfirmationMessage,
   isDesktopUpdateButtonDisabled,
   resolveDesktopUpdateButtonAction,
 } from "../../components/desktopUpdate.logic";
@@ -58,6 +57,9 @@ import {
   readThemePreference,
   useTheme,
 } from "../../hooks/useTheme";
+/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+import { useForkUpdateRestartConfirm } from "../../custom/ForkSidebarUpdate";
+/* fork:end fork-sidebar-update-label */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 import {
   BASIC_THEME,
@@ -212,6 +214,9 @@ function AboutVersionSection() {
   const updateState = useDesktopUpdateState();
   const [switchChannel, setSwitchChannel] = useState<DesktopUpdateChannel | null>(null);
   const [isUpdateActionPending, setIsUpdateActionPending] = useState(false);
+  /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+  const [confirmRestart, restartDialog] = useForkUpdateRestartConfirm();
+  /* fork:end fork-sidebar-update-label */
   const { environments } = useEnvironments();
   const sessionStates = useAtomValue(
     environmentSessionStatesAtom(
@@ -269,12 +274,11 @@ function AboutVersionSection() {
       setIsUpdateActionPending(true);
       let confirmed = false;
       try {
-        confirmed = await ensureLocalApi().dialogs.confirm(
-          getDesktopUpdateInstallConfirmationMessage(
-            updateState ?? { availableVersion: null, downloadedVersion: null },
-          ),
-          { initialFocus: "confirm" },
+        /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+        confirmed = await confirmRestart(
+          updateState ?? { availableVersion: null, downloadedVersion: null },
         );
+        /* fork:end fork-sidebar-update-label */
       } catch (error) {
         setIsUpdateActionPending(false);
         toastManager.add(
@@ -390,6 +394,9 @@ function AboutVersionSection() {
           </Tooltip>
         }
       />
+      {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
+      {restartDialog}
+      {/* fork:end fork-sidebar-update-label */}
       {hasDesktopBridge ? (
         <SettingsRow
           {...setting("update-track")}

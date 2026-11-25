@@ -10,8 +10,13 @@ import { isElectron } from "../../env";
 import { m } from "../../i18n/messages";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { cn } from "../../lib/utils";
-import { ensureLocalApi } from "../../localApi";
 import { useDesktopUpdateState } from "../../state/desktopUpdate";
+/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+import {
+  ForkUpdateDownloadRing,
+  useForkUpdateRestartConfirm,
+} from "../../custom/ForkSidebarUpdate";
+/* fork:end fork-sidebar-update-label */
 import { usePrimaryManagedPolicy } from "../../state/managedPolicy";
 import { stackedThreadToast, toastManager } from "../ui/toast";
 import {
@@ -21,7 +26,6 @@ import {
   getDesktopUpdateButtonTooltip,
   getDesktopUpdateDownloadedVersion,
   getDesktopUpdateIdleTooltip,
-  getDesktopUpdateInstallConfirmationMessage,
   isDesktopUpdateButtonDisabled,
   resolveDesktopUpdateButtonAction,
   shouldShowArm64IntelBuildWarning,
@@ -216,6 +220,9 @@ function SidebarUpdateControl() {
   const releaseNotesPopupRef = useRef<HTMLDivElement>(null);
   const releaseNotesTriggerId = useId();
   const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+  const [confirmRestart, restartDialog] = useForkUpdateRestartConfirm();
+  /* fork:end fork-sidebar-update-label */
 
   const updateStatus = state?.status;
   const [isCheckAnimationLatched, setIsCheckAnimationLatched] = useState(
@@ -314,10 +321,9 @@ function SidebarUpdateControl() {
     if (action === "install") {
       let confirmed = false;
       try {
-        confirmed = await ensureLocalApi().dialogs.confirm(
-          getDesktopUpdateInstallConfirmationMessage(state),
-          { initialFocus: "confirm" },
-        );
+        /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+        confirmed = await confirmRestart(state);
+        /* fork:end fork-sidebar-update-label */
       } catch (error) {
         setIsActionPending(false);
         toastManager.add(
@@ -470,9 +476,13 @@ function SidebarUpdateControl() {
 
   /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
   // Error states keep the icon: their aria-label ("Download failed…") would not contain "Update".
+  // Downloading keeps the pill too, with a progress ring beside it.
   const showUpdateLabel =
     state?.status !== "error" &&
-    (iconStatus === "available" || iconStatus === "downloaded" || iconStatus === "everything");
+    (iconStatus === "available" ||
+      iconStatus === "downloading" ||
+      iconStatus === "downloaded" ||
+      iconStatus === "everything");
   /* fork:end fork-sidebar-update-label */
 
   const updateButton = (
@@ -504,7 +514,7 @@ function SidebarUpdateControl() {
         /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
         showUpdateLabel &&
           cn(
-            "size-auto bg-foreground px-3 py-2 font-medium text-background text-xs dark:bg-white dark:text-black",
+            "size-auto shrink-0 bg-foreground px-3 py-2 font-medium text-background text-xs dark:bg-white dark:text-black",
             !isInteractionDisabled && "hover:bg-foreground/85 dark:hover:bg-white/85",
           ),
         /* fork:end fork-sidebar-update-label */
@@ -541,7 +551,21 @@ function SidebarUpdateControl() {
   );
 
   return (
-    <SidebarMenuItem className="ml-auto shrink-0">
+    <SidebarMenuItem
+      className={cn(
+        "ml-auto shrink-0",
+        /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
+        "flex items-center",
+        // Only the download ring may give way; the round icon states keep their size.
+        showUpdateLabel && iconStatus === "downloading" && "min-w-0 shrink",
+        /* fork:end fork-sidebar-update-label */
+      )}
+    >
+      {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
+      {showUpdateLabel && iconStatus === "downloading" ? (
+        <ForkUpdateDownloadRing percent={state?.downloadPercent ?? null} />
+      ) : null}
+      {/* fork:end fork-sidebar-update-label */}
       <Popover
         handle={releaseNotesPopoverHandle}
         open={releaseNotesOpen && showReleaseNotesPopover}
@@ -618,6 +642,9 @@ function SidebarUpdateControl() {
         ) : null}
       </Popover>
       {confirmDialog}
+      {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
+      {restartDialog}
+      {/* fork:end fork-sidebar-update-label */}
     </SidebarMenuItem>
   );
 }
