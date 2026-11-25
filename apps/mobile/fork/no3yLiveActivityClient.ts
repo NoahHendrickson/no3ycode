@@ -75,7 +75,7 @@ async function allowed(): Promise<boolean> {
 /** On every send. No route to the Mac means nothing could ever update or end the card. */
 export function armNo3yLiveActivity(
   origins: ReadonlyArray<string>,
-  input: { readonly threadTitle: string; readonly projectTitle: string },
+  input: { readonly threadTitle: string },
 ): void {
   routes = origins;
   if (origins.length === 0) return;

@@ -1,7 +1,7 @@
 "use strict";
 
 // Fork-owned — see .fork/customizations.yaml#no3y-live-activity. Adds the no3y Live Activity's
-// full-colour marks to the widget catalog upstream's withWidgetLogoAsset creates and wires; listed
+// marks to the widget catalog upstream's withWidgetLogoAsset creates and wires; listed
 // before it so this mod runs after it (mods run in reverse order).
 
 const path = require("path");
@@ -16,7 +16,11 @@ const IMAGES = {
   No3yClaude: "fork/assets/widget/No3yClaude.svg",
   // codex-mark.png baked as No3yProviderMark draws it (#8680ff cloud, white prompt): no tint here.
   No3yCodex: "fork/assets/widget/No3yCodex.png",
+  // beadRingPath's still frame, cropped to the ring.
+  No3yBeadRing: "fork/assets/widget/No3yBeadRing.svg",
 };
+/** Drawn as a mask the card tints with the status colour. */
+const TEMPLATES = new Set(["No3yBeadRing"]);
 
 module.exports = function withNo3yWidgetAssets(config) {
   return withDangerousMod(config, [
@@ -29,6 +33,7 @@ module.exports = function withNo3yWidgetAssets(config) {
         fs.mkdirSync(dir, { recursive: true });
         fs.copyFileSync(source, path.join(dir, filename));
         const vector = filename.endsWith(".svg");
+        const intent = TEMPLATES.has(name) ? "template" : "original";
         const contents = {
           // The 128px Codex PNG stands in for 3x at the card's 15pt.
           images: [
@@ -38,8 +43,8 @@ module.exports = function withNo3yWidgetAssets(config) {
           ],
           info: { author: "expo", version: 1 },
           properties: vector
-            ? { "preserves-vector-representation": true, "template-rendering-intent": "original" }
-            : { "template-rendering-intent": "original" },
+            ? { "preserves-vector-representation": true, "template-rendering-intent": intent }
+            : { "template-rendering-intent": intent },
         };
         fs.writeFileSync(path.join(dir, "Contents.json"), `${JSON.stringify(contents, null, 2)}\n`);
       }

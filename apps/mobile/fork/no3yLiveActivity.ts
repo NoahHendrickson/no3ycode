@@ -143,7 +143,7 @@ export function aggregateNo3yLiveActivity(
 
 /** The card a send starts before the Mac has seen the run: one starting row, no thread yet. */
 export function startingNo3yLiveActivity(
-  input: { readonly threadTitle: string; readonly projectTitle: string },
+  input: { readonly threadTitle: string },
   nowIso: string,
 ): No3yLiveActivityProps {
   return {
@@ -157,8 +157,8 @@ export function startingNo3yLiveActivity(
         environmentId: "",
         threadId: "",
         threadTitle: clip(input.threadTitle),
-        projectTitle: clip(input.projectTitle),
-        // No thread yet, so no provider mark.
+        // No thread yet: the send hook only knows the Mac's name, and no provider.
+        projectTitle: "",
         provider: "",
         phase: "starting",
         updatedAt: nowIso,

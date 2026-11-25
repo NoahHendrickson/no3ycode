@@ -2,7 +2,7 @@
  * Fork-owned — see `.fork/customizations.yaml#no3y-live-activity`. Upstream's send hook calls this;
  * installNo3yPushRegistration fills it. Dependency-free so remoteRegistration's mocked tests load.
  */
-type ArmOnSend = (input: { readonly threadTitle: string; readonly projectTitle: string }) => void;
+type ArmOnSend = (input: { readonly threadTitle: string }) => void;
 
 let armOnSend: ArmOnSend | null = null;
 
