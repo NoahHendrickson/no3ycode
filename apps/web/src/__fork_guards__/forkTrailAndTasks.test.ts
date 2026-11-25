@@ -43,10 +43,11 @@ describe("fork guard: fork-trail-summary", () => {
     expect(rows).toContain("<div data-fork-trace-group>");
   });
 
-  it("hangs an opened group on a rail without a scrollbar", () => {
+  it("hangs an opened group on a 2px rounded rail, without a scrollbar", () => {
     const css = readSibling("../theme.custom.css");
+    // The rail is the list's own background: a 2px bar between two 2px round caps.
     expect(css).toMatch(
-      /\[data-tool-group-scroll\] \{[^}]*border-inline-start: 1px solid var\(--border\);[^}]*scrollbar-width: none;/u,
+      /\[data-tool-group-scroll\] \{[^}]*--fork-rail-cap: radial-gradient\([^}]*background:[^}]*\/ 2px 2px no-repeat,[^}]*\/ 2px[^}]*scrollbar-width: none;/u,
     );
     expect(css).toMatch(
       /\[data-fork-trace-group\] > \* \{[^}]*border-inline-start[^}]*scrollbar-width: none;/u,

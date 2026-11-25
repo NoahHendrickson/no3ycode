@@ -356,6 +356,10 @@ interface MessagesTimelineProps {
   findQuery?: string;
   activeFindMatch?: ThreadFindMatch | null;
   findNavigationId?: number;
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  /** A guest watching a shared thread sees replies stream, as upstream shows them. */
+  forkStreamLiveReplies?: boolean;
+  /* fork:end fork-quiet-live-turn */
 }
 
 export function MessagesTimeline(props: MessagesTimelineProps) {
@@ -452,6 +456,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
   emptyPlaceholderInset,
   topFadeEnabled = false,
   historyControls,
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  forkStreamLiveReplies = false,
+  /* fork:end fork-quiet-live-turn */
 }: MessagesTimelineProps) {
   const gt = useGT();
   const listIdentityKey = displayThreadKey ?? routeThreadKey;
@@ -795,6 +802,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
        Find searches every run, so quiet wakes show while it is open. */
     hideQuietBotWakes: forkIsBotThread && !findActive,
     /* fork:end fork-bots */
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+       Find matches reply text, so it shows the replies, as it swaps Zen for hideAll. */
+    forkHoldLiveReplies: !findActive && !forkStreamLiveReplies,
+    forkShowLatestHeldReply: awaitingUser !== null,
+    /* fork:end fork-quiet-live-turn */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
   const stableRows = useStableRows(rawRows, listIdentityKey);
@@ -1247,8 +1259,14 @@ const ConversationTimeline = memo(function ConversationTimeline({
     isPreparingWorktree,
     providerStartingLabel,
     latestRunId: latestRun?.runId ?? null,
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+       Upstream reads the preview in Zen only; the fork also reads it wherever replies are held,
+       so not while Find or a guest's live stream shows them. */
     liveAnswerPreview:
-      isWorking && toolCallVisibility === "zen" ? liveAnswerPreview(timelineEntries) : null,
+      isWorking && (toolCallVisibility === "zen" || (!findActive && !forkStreamLiveReplies))
+        ? liveAnswerPreview(timelineEntries)
+        : null,
+    /* fork:end fork-quiet-live-turn */
   };
   // Mounted in both the empty and filled timeline so a thread's first turn
   // starts from a baseline instead of a fresh, silent region.
