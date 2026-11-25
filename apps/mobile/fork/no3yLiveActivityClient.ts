@@ -43,7 +43,7 @@ function register(card: Card) {
   void card
     .getPushToken()
     .then((token) => {
-      if (token) postToken(token);
+      if (token) void allowed().then((ok) => ok && postToken(token));
     })
     .catch(() => {});
   const id = card.getId();
@@ -127,7 +127,8 @@ export async function refreshNo3yLiveActivity(origins: ReadonlyArray<string>): P
     const props = await readMacCard();
     // A send may have started the card while the Mac answered.
     if (props === null || props.activeCount === 0 || getNo3yLiveActivities()[0]) return;
-    start(props);
+    // The switch may have been turned off while the Mac answered.
+    if (await allowed()) start(props);
   } catch {
     // Same as arming: Live Activities may be off for this app.
   }

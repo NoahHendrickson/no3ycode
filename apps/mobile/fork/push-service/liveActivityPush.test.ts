@@ -202,14 +202,33 @@ describe("live activity pushes", () => {
     h.show(props("failed", 0));
     h.service.changed();
     await vi.advanceTimersByTimeAsync(5_500);
+    // The newer run starts and finishes inside one coalescing window.
     h.show(props("running"));
     h.service.changed();
-    await vi.advanceTimersByTimeAsync(500);
     h.show(props("completed", 0));
-    h.service.changed();
     await vi.advanceTimersByTimeAsync(5_500);
     release();
     await vi.advanceTimersByTimeAsync(1_000);
+    expect(h.ended).toEqual(["completed"]);
+    expect(h.tokens()).toEqual([]);
+  });
+
+  it("lets the snapshot after a reconnect decide the end, not one queued before it", async () => {
+    using _timers = fakeTimers();
+    const h = harness();
+    const release = h.stallNext();
+    h.service.resume();
+    await vi.advanceTimersByTimeAsync(500);
+    h.show(props("failed", 0));
+    h.service.changed();
+    await vi.advanceTimersByTimeAsync(5_500);
+    h.service.pause();
+    h.show(props("completed", 0));
+    h.service.resume();
+    // The stalled push clears while the fresh snapshot's own hold is still running.
+    await vi.advanceTimersByTimeAsync(1_000);
+    release();
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(h.ended).toEqual(["completed"]);
     expect(h.tokens()).toEqual([]);
   });

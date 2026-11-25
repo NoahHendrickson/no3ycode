@@ -68,7 +68,7 @@ export function makeLiveActivityService(input: {
   let ending: ReturnType<typeof setTimeout> | undefined;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let queue: Promise<void> = Promise.resolve();
-  /** Bumps whenever work is seen, so an end queued before it stands down. */
+  /** Bumps when work is seen, a newer end is queued, or the stream drops: older queued ends stand down. */
   let epoch = 0;
 
   const send = (
@@ -77,6 +77,7 @@ export function makeLiveActivityService(input: {
     tokens: ReadonlyArray<PushToken>,
   ) => {
     if (tokens.length === 0) return;
+    if (event === "end") epoch += 1;
     const queuedAt = epoch;
     queue = queue.then(async () => {
       for (const token of tokens) {
@@ -152,6 +153,7 @@ export function makeLiveActivityService(input: {
     changed,
     pause: () => {
       paused = true;
+      epoch += 1;
       clearTimeout(coalesce);
       coalesce = undefined;
       clearTimeout(ending);
