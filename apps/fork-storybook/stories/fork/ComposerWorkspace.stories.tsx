@@ -10,7 +10,7 @@ import { ComposerWorkspaceFooter } from "~/custom/ComposerWorkspaceFooter";
 import { ShieldOffFilledIcon } from "~/custom/icons/ShieldOffFilledIcon";
 import { ThreadContextReadout } from "~/custom/ThreadContextReadout";
 
-import { Row, Stack } from "../Specimen.tsx";
+import { Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
 
 type ReadoutProps = ComponentProps<typeof ThreadContextReadout>;
@@ -110,24 +110,21 @@ export const PermissionsTrigger: Story = {
   render: () => (
     <Stack gap={3}>
       {(Object.keys(MODE_LABELS) as RuntimeMode[]).map((mode) => (
-        <Row key={mode} label={mode}>
-          <div className="w-[736px] max-w-full">
-            <StoryComposer
-              prompt="Ask anything"
-              modeControls={
-                <ComposerRuntimeModeTrigger runtimeMode={mode} size="xs">
-                  <ComposerControlIcon
-                    icon={
-                      mode === "full-access" ? ShieldOffFilledIcon : runtimeModeConfig[mode].icon
-                    }
-                    size="xs"
-                  />
-                  {MODE_LABELS[mode]}
-                </ComposerRuntimeModeTrigger>
-              }
-            />
-          </div>
-        </Row>
+        <div key={mode} className="w-[736px] max-w-full">
+          <span className="font-mono text-[11px] text-muted-foreground">{mode}</span>
+          <StoryComposer
+            prompt="Ask anything"
+            modeControls={
+              <ComposerRuntimeModeTrigger runtimeMode={mode} size="xs">
+                <ComposerControlIcon
+                  icon={mode === "full-access" ? ShieldOffFilledIcon : runtimeModeConfig[mode].icon}
+                  size="xs"
+                />
+                <span data-composer-control-label>{MODE_LABELS[mode]}</span>
+              </ComposerRuntimeModeTrigger>
+            }
+          />
+        </div>
       ))}
     </Stack>
   ),

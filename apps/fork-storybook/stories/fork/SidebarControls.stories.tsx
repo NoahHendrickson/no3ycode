@@ -102,7 +102,8 @@ type Story = StoryObj<typeof meta>;
 export const Playground: Story = {};
 
 /** The three boxes (a row's 24px action, a header's 32px, a collapsed tab's round 20px), and a
-    slim row's one hover action, bare and with its tooltip. */
+    slim row's one hover action, bare and with its tooltip. Hover a slim slot to reveal it, as its
+    row does. */
 export const IconButtons: Story = {
   name: "Icon buttons",
   parameters: { controls: { disable: true } },
@@ -127,7 +128,7 @@ export const IconButtons: Story = {
         </SidebarV2IconButton>
       </Row>
       <Row label="Slim action">
-        <span className="relative flex h-6 w-16 items-center justify-end">
+        <span className="group/v2-row relative flex h-6 w-16 items-center justify-end">
           <SidebarV2SlimRowAction
             label="Settle"
             icon={<AlarmClockCheckIcon />}
@@ -135,7 +136,7 @@ export const IconButtons: Story = {
             onPointerDown={noop}
           />
         </span>
-        <span className="relative flex h-6 w-16 items-center justify-end">
+        <span className="group/v2-row relative flex h-6 w-16 items-center justify-end">
           <SidebarV2SlimRowAction
             label="Un-settle"
             icon={<Undo2Icon />}
