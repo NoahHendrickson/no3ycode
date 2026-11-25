@@ -8,7 +8,6 @@ import ArrowDown01Icon from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import ArrowUp01Icon from "@hugeicons/core-free-icons/ArrowUp01Icon";
 import ArrowUp02Icon from "@hugeicons/core-free-icons/ArrowUp02Icon";
 import Delete02Icon from "@hugeicons/core-free-icons/Delete02Icon";
-import GripVerticalIcon from "@hugeicons/core-free-icons/GripVerticalIcon";
 import LeftToRightListNumberIcon from "@hugeicons/core-free-icons/LeftToRightListNumberIcon";
 import PencilEdit02Icon from "@hugeicons/core-free-icons/PencilEdit02Icon";
 import { useAtomValue } from "@effect/atom-react";
@@ -23,22 +22,9 @@ import {
 import type { EnvironmentId, RunId, ThreadId } from "@t3tools/contracts";
 import { Atom } from "effect/reactivity";
 import * as Haptics from "expo-haptics";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  ReduceMotion,
-  scrollTo,
-  type SharedValue,
-  useAnimatedRef,
-  useAnimatedStyle,
-  useDerivedValue,
-  useFrameCallback,
-  useScrollOffset,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
-import { scheduleOnRN } from "react-native-worklets";
+import Animated from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
 import * as Dialog from "../src/components/ui/Dialog";
@@ -57,59 +43,16 @@ import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { NO3Y_PANEL_MARGIN, No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { no3yPromptStash, stashPromptText } from "./No3yPromptStashSheet";
-import {
-  no3yQueueAutoScroll,
-  no3yQueueDrop,
-  no3yQueueDropIndex,
-  no3yQueuedSender,
-  no3yQueueMove,
-  no3yQueueRowShift,
-  no3yQueueShownOrder,
-} from "./no3yQueuedRuns";
+import { QueueGrip, type QueueDrag, useNo3yQueueDrag, useNo3yQueueRow } from "./No3yQueueDrag";
+import { no3yQueueDrop, no3yQueuedSender, no3yQueueShownRuns } from "./no3yQueuedRuns";
 
 const RADIUS = 22;
 
 type RowAction = "steer" | "edit" | "remove" | "up" | "down" | "stash";
+type QueueAction = Exclude<RowAction, "up" | "down">;
 
 // Four and a half 44pt rows, so a cut-off row shows there is more.
 const QUEUE_ROWS_MAX_HEIGHT = 44 * 4.5;
-const SHIFT_TIMING = { duration: 160, reduceMotion: ReduceMotion.System } as const;
-const SETTLE_TIMING = { duration: 140, reduceMotion: ReduceMotion.System } as const;
-
-/** The row being dragged, shared by every row so the others can step aside on the UI thread. */
-type QueueDrag = {
-  readonly from: SharedValue<number>;
-  readonly to: SharedValue<number>;
-  readonly y: SharedValue<number>;
-  readonly rowHeight: SharedValue<number>;
-  readonly count: SharedValue<number>;
-  /** The finger's travel since the lift, before the list's own scrolling is added. */
-  readonly translation: SharedValue<number>;
-  readonly scroll: SharedValue<number>;
-  readonly scrollAtLift: SharedValue<number>;
-  /**
-   * The handler tag of the gesture holding a row, or -1. Set on the UI thread so auto-scroll stops
-   * before the settle starts, and untouched by queue changes so the holder always releases it.
-   */
-  readonly owner: SharedValue<number>;
-};
-
-/** Puts the lifted row under the finger, counting how far the list scrolled since the lift. */
-function followFinger(drag: QueueDrag) {
-  "worklet";
-  const from = drag.from.get();
-  const height = drag.rowHeight.get();
-  const count = drag.count.get();
-  const travel = drag.translation.get() + drag.scroll.get() - drag.scrollAtLift.get();
-  // Held inside the list, which clips anything dragged past its ends.
-  drag.y.set(Math.min((count - 1 - from) * height, Math.max(-from * height, travel)));
-  const to = no3yQueueDropIndex(from, travel, height, count);
-  if (to !== drag.to.get()) {
-    drag.to.set(to);
-    scheduleOnRN(hapticTick);
-  }
-}
-
 export function No3yQueuedRunsBanner(props: {
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
@@ -140,83 +83,18 @@ export function No3yQueuedRunsBanner(props: {
     readonly order: ReadonlyArray<RunId>;
     readonly base: ReadonlyArray<RunId>;
   } | null>(null);
-  const dragFrom = useSharedValue(-1);
-  const dragTo = useSharedValue(-1);
-  const dragY = useSharedValue(0);
-  const rowHeight = useSharedValue(44);
-  const dragCount = useSharedValue(0);
-  const translation = useSharedValue(0);
-  const scrollAtLift = useSharedValue(0);
-  const owner = useSharedValue(-1);
-  const viewport = useSharedValue(0);
-  const listRef = useAnimatedRef<Animated.ScrollView>();
-  const scroll = useScrollOffset(listRef);
-  const drag = useMemo<QueueDrag>(
-    () => ({
-      from: dragFrom,
-      to: dragTo,
-      y: dragY,
-      rowHeight,
-      count: dragCount,
-      translation,
-      scroll,
-      scrollAtLift,
-      owner,
-    }),
-    [dragFrom, dragTo, dragY, rowHeight, dragCount, translation, scroll, scrollAtLift, owner],
-  );
-  // Runs only while a row is held: scrolls a long queue when the row presses into an edge.
-  const autoScroll = useFrameCallback(() => {
-    const from = dragFrom.get();
-    if (from < 0 || owner.get() < 0) return;
-    const height = rowHeight.get();
-    const current = scroll.get();
-    const next = no3yQueueAutoScroll(
-      from * height + dragY.get() - current,
-      height,
-      viewport.get(),
-      current,
-      dragCount.get() * height,
-    );
-    if (next === current) return;
-    scrollTo(listRef, 0, next, false);
-    scroll.set(next);
-    followFinger(drag);
-  }, false);
-  const setAutoScroll = (active: boolean) => autoScroll.setActive(active);
-  const resetDrag = () => {
-    dragFrom.set(-1);
-    dragTo.set(-1);
-    dragY.set(0);
-  };
   const serverRuns = workflow?.queuedRuns ?? [];
   const serverIds = serverRuns.map(({ run }) => run.id);
-  const shownOrder = no3yQueueShownOrder(serverIds, dropped);
-  if (dropped !== null && shownOrder === null) setDropped(null);
-  const queuedRuns =
-    shownOrder === null
-      ? serverRuns
-      : shownOrder.flatMap((id) => serverRuns.filter(({ run }) => run.id === id));
+  const shownRuns = no3yQueueShownRuns(serverRuns, ({ run }) => run.id, dropped);
+  if (dropped !== null && shownRuns === null) setDropped(null);
+  const queuedRuns = shownRuns ?? serverRuns;
   const runIds = queuedRuns.map(({ run }) => run.id);
-  const orderKey = runIds.join(" ");
-  // The order on screen, for a drop that reaches the JS thread after the queue changed under it.
-  const shownOrderKey = useRef(orderKey);
-  // Clears the UI-thread drag offsets in the commit that moves the dropped row, so it never flashes back.
-  useLayoutEffect(() => {
-    shownOrderKey.current = orderKey;
-    dragCount.set(orderKey === "" ? 0 : orderKey.split(" ").length);
-    dragFrom.set(-1);
-    dragTo.set(-1);
-    dragY.set(0);
-    // A grip unmounted mid-drag may never see its gesture end, so the change releases the drag.
-    owner.set(-1);
-    autoScroll.setActive(false);
-  }, [orderKey, shownOrderKey, dragCount, dragFrom, dragTo, dragY, owner, autoScroll]);
+  const { drag, listRef, onListLayout, release } = useNo3yQueueDrag(runIds);
   if (queuedRuns.length === 0) return null;
   const canSend = workflow?.canPromoteToSteer === true || workflow?.canSendNow === true;
   const sendLabel = workflow?.canSendNow ? "Send now" : "Steer";
 
-  const act = async (runId: RunId, action: RowAction) => {
+  const act = async (runId: RunId, action: QueueAction) => {
     if (busyRef.current) return;
     const entry = queuedRuns.find(({ run }) => run.id === runId);
     if (entry === undefined) return;
@@ -253,9 +131,6 @@ export function No3yQueuedRunsBanner(props: {
       const id = stashPromptText(entry.text, null);
       const result = await cancel(buildCancelQueuedRunCommand({ ...target, runId }));
       if (result._tag === "Failure") no3yPromptStash.remove(id);
-    } else if (action === "up" || action === "down") {
-      const move = no3yQueueMove(runIds, runId, action);
-      if (move !== null) await reorder({ ...target, input: { threadId: props.threadId, ...move } });
     } else if (workflow?.canSendNow) {
       // Starts a held queue with this message when the thread is idle.
       await resume({ ...target, input: { threadId: props.threadId, runId } });
@@ -273,12 +148,13 @@ export function No3yQueuedRunsBanner(props: {
     setBusyRunId(null);
   };
 
-  const drop = async (from: number, to: number) => {
-    // A queue change already cleared this drag; its slots belong to the old order.
-    if (shownOrderKey.current !== orderKey) return;
+  // Every reorder (a drag, Move up / Move down, VoiceOver) lands here, at `version` of the order.
+  const drop = async (from: number, to: number, version: number) => {
+    // The queue changed since; these slots belong to the old order.
+    if (version !== drag.version.get()) return;
     const result = busyRef.current ? null : no3yQueueDrop(runIds, from, to);
     if (result === null) {
-      resetDrag();
+      release();
       return;
     }
     busyRef.current = true;
@@ -318,7 +194,11 @@ export function No3yQueuedRunsBanner(props: {
           accessibilityRole="button"
           accessibilityLabel={`${queuedRuns.length} queued message${queuedRuns.length === 1 ? "" : "s"}`}
           accessibilityState={{ expanded }}
-          onPress={() => setExpanded((value) => !value)}
+          onPress={() => {
+            // Collapsing unmounts the grips, which may never see a held drag end.
+            if (expanded) release();
+            setExpanded(!expanded);
+          }}
           style={({ pressed }) => ({
             flex: 1,
             minHeight: 44,
@@ -369,11 +249,7 @@ export function No3yQueuedRunsBanner(props: {
             style={{ maxHeight: QUEUE_ROWS_MAX_HEIGHT }}
             bounces={false}
             keyboardShouldPersistTaps="handled"
-            onLayout={(event) => {
-              viewport.set(event.nativeEvent.layout.height);
-              // Fires on mount and when the rows fit, both at the top; the offset only updates on scroll.
-              scroll.set(0);
-            }}
+            onLayout={onListLayout}
           >
             {queuedRuns.map(({ run, text, attachments, context, message }, index) => {
               const controls = resolveThreadQueueRowControls({
@@ -417,9 +293,14 @@ export function No3yQueuedRunsBanner(props: {
                   }
                   canReorder={busyRunId === null}
                   drag={drag}
-                  onAutoScroll={setAutoScroll}
-                  onDrop={(from, to) => void drop(from, to)}
-                  onAction={(action) => void act(run.id, action)}
+                  onDrop={(from, to, version) => void drop(from, to, version)}
+                  onAction={(action) => {
+                    if (action === "up" || action === "down") {
+                      void Haptics.selectionAsync();
+                      const to = action === "up" ? index - 1 : index + 1;
+                      void drop(index, to, drag.version.get());
+                    } else void act(run.id, action);
+                  }}
                 />
               );
             })}
@@ -447,34 +328,15 @@ function QueuedRow(props: {
   readonly canStash: boolean;
   readonly canReorder: boolean;
   readonly drag: QueueDrag;
-  readonly onAutoScroll: (active: boolean) => void;
-  readonly onDrop: (from: number, to: number) => void;
+  readonly onDrop: (from: number, to: number, version: number) => void;
   readonly onAction: (action: RowAction) => void;
 }) {
   const { palette, drag, index } = props;
   const position = `queued message ${index + 1}`;
-  const shift = useDerivedValue(() =>
-    drag.from.get() < 0
-      ? 0
-      : withTiming(
-          no3yQueueRowShift(index, drag.from.get(), drag.to.get(), drag.rowHeight.get()),
-          SHIFT_TIMING,
-        ),
-  );
-  const liftedFill = palette.panelFallback;
-  const rowStyle = useAnimatedStyle(() => {
-    const lifted = drag.from.get() === index;
-    return {
-      zIndex: lifted ? 1 : 0,
-      backgroundColor: lifted ? liftedFill : "transparent",
-      transform: [{ translateY: lifted ? drag.y.get() : shift.get() }],
-    };
-  });
+  const row = useNo3yQueueRow(drag, index, palette.panelFallback);
   return (
     <Animated.View
-      onLayout={(event) => {
-        drag.rowHeight.set(event.nativeEvent.layout.height);
-      }}
+      onLayout={row.onLayout}
       style={[
         {
           flexDirection: "row",
@@ -484,7 +346,7 @@ function QueuedRow(props: {
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: palette.hairline,
         },
-        rowStyle,
+        row.style,
       ]}
     >
       <QueueGrip
@@ -494,7 +356,6 @@ function QueuedRow(props: {
         count={props.count}
         enabled={props.canReorder}
         drag={drag}
-        onAutoScroll={props.onAutoScroll}
         onDrop={props.onDrop}
         onStep={(direction) => props.onAction(direction)}
       />
@@ -611,98 +472,6 @@ function QueuedRow(props: {
         onPress={() => props.onAction("remove")}
       />
     </Animated.View>
-  );
-}
-
-function hapticTick() {
-  void Haptics.selectionAsync();
-}
-
-/**
- * The leading drag handle: the row follows the finger on the UI thread, the rows it passes step
- * aside, and the drop settles into its slot before the new order renders. Holds the header icon's
- * column even with one message, so row text stays aligned under "Queued".
- */
-function QueueGrip(props: {
-  readonly palette: FlatGlassPalette;
-  readonly position: string;
-  readonly index: number;
-  readonly count: number;
-  readonly enabled: boolean;
-  readonly drag: QueueDrag;
-  readonly onAutoScroll: (active: boolean) => void;
-  readonly onDrop: (from: number, to: number) => void;
-  readonly onStep: (direction: "up" | "down") => void;
-}) {
-  const { drag, index, count, enabled, onAutoScroll, onDrop } = props;
-  // Claims the touch before the queue's ScrollView can, so a drag never scrolls the list.
-  // oxlint-disable-next-line react/capitalized-calls -- Gesture.Pan is a gesture factory, not a React component.
-  const gesture = Gesture.Pan()
-    .enabled(enabled)
-    .minDistance(0)
-    .shouldCancelWhenOutside(false)
-    .onStart((event) => {
-      // One drag at a time: a second finger on another grip does nothing.
-      if (drag.owner.get() >= 0) return;
-      drag.owner.set(event.handlerTag);
-      drag.y.set(0);
-      drag.translation.set(0);
-      drag.scrollAtLift.set(drag.scroll.get());
-      drag.to.set(index);
-      drag.from.set(index);
-      scheduleOnRN(hapticTick);
-      scheduleOnRN(onAutoScroll, true);
-    })
-    .onUpdate((event) => {
-      if (drag.owner.get() !== event.handlerTag || drag.from.get() !== index) return;
-      drag.translation.set(event.translationY);
-      followFinger(drag);
-    })
-    .onFinalize((event, success) => {
-      if (drag.owner.get() !== event.handlerTag) return;
-      drag.owner.set(-1);
-      scheduleOnRN(onAutoScroll, false);
-      // A queue change mid-drag already dropped the lift.
-      if (drag.from.get() !== index) return;
-      const to = success ? drag.to.get() : index;
-      drag.to.set(to);
-      drag.y.set(
-        // A queue change or another drag cuts the settle short; that drop is stale.
-        withTiming((to - index) * drag.rowHeight.get(), SETTLE_TIMING, (finished) => {
-          if (finished) scheduleOnRN(onDrop, index, to);
-        }),
-      );
-    });
-  if (count < 2) return <View style={{ width: 40, alignSelf: "stretch" }} />;
-  return (
-    <GestureDetector gesture={gesture}>
-      <View
-        collapsable={false}
-        accessible
-        accessibilityRole="adjustable"
-        accessibilityLabel={`Reorder ${props.position}`}
-        accessibilityState={{ disabled: !enabled }}
-        accessibilityActions={[
-          ...(index > 0 ? [{ name: "decrement", label: "Move up" }] : []),
-          ...(index < count - 1 ? [{ name: "increment", label: "Move down" }] : []),
-        ]}
-        onAccessibilityAction={({ nativeEvent }) => {
-          if (!enabled) return;
-          if (nativeEvent.actionName === "decrement" && index > 0) props.onStep("up");
-          if (nativeEvent.actionName === "increment" && index < count - 1) props.onStep("down");
-        }}
-        style={{
-          width: 40,
-          paddingLeft: 8,
-          alignSelf: "stretch",
-          alignItems: "center",
-          justifyContent: "center",
-          opacity: enabled ? 1 : 0.35,
-        }}
-      >
-        <HugeIcon icon={GripVerticalIcon} size={16} color={props.palette.faintInk} />
-      </View>
-    </GestureDetector>
   );
 }
 

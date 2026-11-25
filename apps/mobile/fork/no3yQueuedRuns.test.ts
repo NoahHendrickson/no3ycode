@@ -4,27 +4,14 @@ import {
   no3yQueueAutoScroll,
   no3yQueueDrop,
   no3yQueueDropIndex,
-  no3yQueueMove,
   no3yQueueRowShift,
-  no3yQueueShownOrder,
+  no3yQueueShownRuns,
 } from "./no3yQueuedRuns";
 
 describe("no3y queued banner reorder", () => {
   const ids = ["a", "b", "c"];
 
-  it("moves a row up before its predecessor, and not past the top", () => {
-    expect(no3yQueueMove(ids, "b", "up")).toEqual({ runId: "b", beforeRunId: "a" });
-    expect(no3yQueueMove(ids, "a", "up")).toBeNull();
-  });
-
-  it("moves a row down past its successor, to the end when that is last", () => {
-    expect(no3yQueueMove(ids, "a", "down")).toEqual({ runId: "a", beforeRunId: "c" });
-    expect(no3yQueueMove(ids, "b", "down")).toEqual({ runId: "b", beforeRunId: null });
-    expect(no3yQueueMove(ids, "c", "down")).toBeNull();
-    expect(no3yQueueMove(ids, "z", "down")).toBeNull();
-  });
-
-  it("drops a dragged row into any slot, and sends the run it now sits before", () => {
+  it("drops a row into any slot, and sends the run it now sits before", () => {
     expect(no3yQueueDrop(ids, 2, 0)).toEqual({
       move: { runId: "c", beforeRunId: "a" },
       order: ["c", "a", "b"],
@@ -33,8 +20,12 @@ describe("no3y queued banner reorder", () => {
       move: { runId: "a", beforeRunId: null },
       order: ["b", "c", "a"],
     });
+    // One place up or down, as Move up / Move down send it.
+    expect(no3yQueueDrop(ids, 1, 0)?.move).toEqual({ runId: "b", beforeRunId: "a" });
+    expect(no3yQueueDrop(ids, 1, 2)?.move).toEqual({ runId: "b", beforeRunId: null });
     expect(no3yQueueDrop(ids, 1, 1)).toBeNull();
-    expect(no3yQueueDrop(ids, 1, 3)).toBeNull();
+    expect(no3yQueueDrop(ids, 0, -1)).toBeNull();
+    expect(no3yQueueDrop(ids, 2, 3)).toBeNull();
   });
 
   it("lands a drag on the nearest slot, clamped to the list", () => {
@@ -52,12 +43,14 @@ describe("no3y queued banner reorder", () => {
     expect([0, 1, 2].map((index) => no3yQueueRowShift(index, -1, 0, 44))).toEqual([0, 0, 0]);
   });
 
-  it("shows a dropped order until the server's order changes from the one it replaced", () => {
+  it("shows rows in a dropped order until the server's order changes from the one it replaced", () => {
+    const rows = ids.map((id) => ({ id }));
+    const idOf = (row: { id: string }) => row.id;
     const pending = { order: ["b", "a", "c"], base: ids };
-    expect(no3yQueueShownOrder(ids, pending)).toEqual(["b", "a", "c"]);
-    expect(no3yQueueShownOrder(["b", "a", "c"], pending)).toBeNull();
-    expect(no3yQueueShownOrder(["a", "b"], pending)).toBeNull();
-    expect(no3yQueueShownOrder(ids, null)).toBeNull();
+    expect(no3yQueueShownRuns(rows, idOf, pending)?.map(idOf)).toEqual(["b", "a", "c"]);
+    expect(no3yQueueShownRuns([{ id: "b" }, { id: "a" }, { id: "c" }], idOf, pending)).toBeNull();
+    expect(no3yQueueShownRuns([{ id: "a" }, { id: "b" }], idOf, pending)).toBeNull();
+    expect(no3yQueueShownRuns(rows, idOf, null)).toBeNull();
   });
 
   it("scrolls a long queue toward the edge a lifted row presses into, and stops at its ends", () => {

@@ -35,17 +35,6 @@ export function no3yQueueDrop<RunId extends string>(
   return { move: { runId, beforeRunId: order[to + 1] ?? null }, order };
 }
 
-/** The queued-run.reorder input that moves a row one place, or null at either end. */
-export function no3yQueueMove<RunId extends string>(
-  runIds: ReadonlyArray<RunId>,
-  runId: RunId,
-  direction: "up" | "down",
-): { readonly runId: RunId; readonly beforeRunId: RunId | null } | null {
-  const index = runIds.indexOf(runId);
-  if (index < 0) return null;
-  return no3yQueueDrop(runIds, index, direction === "up" ? index - 1 : index + 1)?.move ?? null;
-}
-
 /** The slot a row dragged from `from` lands in after moving `translationY`. */
 export function no3yQueueDropIndex(
   from: number,
@@ -73,18 +62,22 @@ export function no3yQueueRowShift(
 }
 
 /**
- * The order to show: a dropped order, until the server's order moves off the one it replaced.
- * The reorder command resolves on the server's receipt, which can land before the new order does.
+ * The rows in a dropped order, until the server's order moves off the one it replaced; null when
+ * there is no drop to show. The reorder command resolves on the server's receipt, which can land
+ * before the new order does.
  */
-export function no3yQueueShownOrder<RunId extends string>(
-  serverIds: ReadonlyArray<RunId>,
+export function no3yQueueShownRuns<T, RunId extends string>(
+  rows: ReadonlyArray<T>,
+  idOf: (row: T) => RunId,
   pending: { readonly order: ReadonlyArray<RunId>; readonly base: ReadonlyArray<RunId> } | null,
-): ReadonlyArray<RunId> | null {
+): ReadonlyArray<T> | null {
   if (pending === null) return null;
   const unchanged =
-    serverIds.length === pending.base.length &&
-    serverIds.every((id, index) => id === pending.base[index]);
-  return unchanged ? pending.order : null;
+    rows.length === pending.base.length &&
+    rows.every((row, index) => idOf(row) === pending.base[index]);
+  if (!unchanged) return null;
+  const rank = new Map(pending.order.map((id, index) => [id, index]));
+  return [...rows].sort((left, right) => rank.get(idOf(left))! - rank.get(idOf(right))!);
 }
 
 /**
