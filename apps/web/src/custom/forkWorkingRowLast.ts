@@ -209,10 +209,12 @@ export function forkStatusLineReconcile(
   const toolKey = voices.tool?.key ?? null;
   if (toolKey === line.toolKey && voices.thought === line.thought) return line;
   const seen = { ...line, toolKey, thought: voices.thought };
+  // A thought still streaming only grows; it is the same arrival, not a new one per token.
+  const grew = line.thought !== null && voices.thought?.startsWith(line.thought) === true;
   const arrived: ForkStatusVoice | null =
     toolKey !== null && toolKey !== line.toolKey
       ? "tool"
-      : voices.thought !== null && voices.thought !== line.thought
+      : voices.thought !== null && voices.thought !== line.thought && !grew
         ? "thought"
         : null;
   if (arrived !== null) return { ...seen, voice: arrived, arrival: line.arrival + 1 };

@@ -805,6 +805,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
        Find matches reply text, so it shows the replies, as it swaps Zen for hideAll. */
     forkHoldLiveReplies: !findActive && !forkStreamLiveReplies,
+    forkShowLatestHeldReply: awaitingUser !== null,
     /* fork:end fork-quiet-live-turn */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
@@ -1259,8 +1260,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
     providerStartingLabel,
     latestRunId: latestRun?.runId ?? null,
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-       Upstream reads the preview in Zen only; every mode now holds a running turn's replies. */
-    liveAnswerPreview: isWorking ? liveAnswerPreview(timelineEntries) : null,
+       Upstream reads the preview in Zen only; every mode now holds a running turn's replies,
+       except while Find shows them. */
+    liveAnswerPreview: isWorking && !findActive ? liveAnswerPreview(timelineEntries) : null,
     /* fork:end fork-quiet-live-turn */
   };
   // Mounted in both the empty and filled timeline so a thread's first turn

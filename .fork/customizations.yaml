@@ -6573,11 +6573,12 @@
     tool or thought takes the line at once; otherwise it turns every 4s,
     skipping voices with nothing to say, and the word changes each lap. A
     provider startup or "Waiting on N subagents" holds the line alone and
-    stops the clock. The
-    thinking word comes from
-    @t3tools/shared/forkThinkingWords, seeded by what last landed (the row
-    above the line or the live step), so it holds until something new lands;
-    the no3y iOS line uses the same module (no3y-mobile-redesign). Neither
+    stops the clock. The thinking word comes from
+    @t3tools/shared/forkThinkingWords: the seed is what last landed (the row
+    above the line or the live step) and picks the first word, and each lap
+    of the rotation moves on to the next; with nothing else to say the line
+    has no laps, so the word holds until something new lands. The no3y iOS
+    line uses the same module (no3y-mobile-redesign). Neither
     the working row nor the finished turn's "Worked for …" row has a divider
     (theme.custom.css).
   tier: 4
@@ -6625,7 +6626,11 @@
     preview of them. MessagesTimeline opts in with forkHoldLiveReplies,
     except while Find is open, which searches reply text, and the guest share
     page opts out (forkStreamLiveReplies), so a guest still watches replies
-    stream as upstream shows them. Upstream's logic
+    stream as upstream shows them. While the turn waits on the user (an
+    approval or a question), the latest held reply shows, since it usually
+    explains the request (forkShowLatestHeldReply); unlike Zen. The hold runs
+    after settleSupersededReasoning, so a thought followed only by a held
+    reply still reads settled. Upstream's logic
     tests derive without the flag and keep upstream's shapes. The guard runs
     one fixture through Zen and through the hold and requires the same
     replies, so a sync that adds a Zen exemption fails it. The no3y iOS app

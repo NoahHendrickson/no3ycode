@@ -82,6 +82,9 @@ describe("fork guard: fork-quiet-live-turn", () => {
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
       "forkHoldLiveReplies: !findActive && !forkStreamLiveReplies,",
     );
+    expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
+      "forkShowLatestHeldReply: awaitingUser !== null,",
+    );
     expect(readSibling("../components/chat/ReadOnlyThreadTimeline.tsx")).toContain(
       "forkStreamLiveReplies={props.forkStreamLiveReplies === true}",
     );
@@ -92,7 +95,7 @@ describe("fork guard: fork-quiet-live-turn", () => {
 
   it("reads the live preview in every mode, not only Zen", () => {
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
-      "liveAnswerPreview: isWorking ? liveAnswerPreview(timelineEntries) : null,",
+      "liveAnswerPreview: isWorking && !findActive ? liveAnswerPreview(timelineEntries) : null,",
     );
   });
 });

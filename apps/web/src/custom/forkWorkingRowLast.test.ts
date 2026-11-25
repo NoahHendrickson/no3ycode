@@ -326,6 +326,14 @@ describe("the status line rotation", () => {
     expect(settled.arrival).toBe(line.arrival + 1);
   });
 
+  it("treats a thought that is still streaming as the same arrival", () => {
+    const word = advance(forkStatusLineStart(voices("vp", "Check")));
+    const grown = forkStatusLineReconcile(word, voices("vp", "Checking the tests"));
+    expect(grown.voice).toBe("word");
+    expect(grown.arrival).toBe(word.arrival);
+    expect(grown.thought).toBe("Checking the tests");
+  });
+
   it("hands the line to a new tool or a new thought at once", () => {
     const line = forkStatusLineStart(voices("a", "old"));
     expect(forkStatusLineReconcile(line, voices("b", "old")).voice).toBe("tool");
@@ -358,7 +366,7 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     completedAt: isWorking ? null : at(9),
     ...(isWorking ? {} : { turnEnded: true }),
   });
-  const rowsFor = (entries: Entries, isWorking: boolean) =>
+  const rowsFor = (entries: Entries, isWorking: boolean, waitingOnUser = false) =>
     forkLiveStatusRows(
       deriveMessagesTimelineRows({
         timelineEntries: entries,
@@ -368,6 +376,7 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
         turnDiffSummaries: [],
         supportsConversationRollback: false,
         forkHoldLiveReplies: true,
+        forkShowLatestHeldReply: waitingOnUser,
       }),
     );
   const turn = [
@@ -379,6 +388,23 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
 
   it("folds steps and replies alike into the one status line", () => {
     expect(kinds(rowsFor(turn, true))).toEqual(["working"]);
+  });
+
+  it("settles a thought whose only follower is a held reply", () => {
+    const live = (rows: MessagesTimelineRow[]) => {
+      const line = statusLine(rows);
+      return line?.kind === "work-live" && line.active && line.entry.itemType === "reasoning";
+    };
+    expect(live(rowsFor([reasoning(2)], true))).toBe(true);
+    expect(live(rowsFor([reasoning(2), commentary(3)], true))).toBe(false);
+  });
+
+  it("shows only the reply that led to the request while the turn waits on the user", () => {
+    const earlier = { ...commentary(2), id: "earlier-entry" };
+    const shown = (rows: MessagesTimelineRow[]) =>
+      rows.flatMap((row) => (row.kind === "message" ? [row.id] : []));
+    expect(shown(rowsFor([earlier, commentary(4)], true, true))).toEqual(["commentary-entry"]);
+    expect(shown(rowsFor([earlier, commentary(4)], true))).toEqual([]);
   });
 
   it("shows the replies once the turn ends", () => {
