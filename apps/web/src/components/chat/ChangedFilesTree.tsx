@@ -80,7 +80,8 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
   const gt = useGT();
   const syncTimelineLayout = useSyncLayout();
   /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
-  // The persisted per-run "all folders" flag opens the card: unset, it starts folded.
+  // The persisted per-run "all folders" flag opens the card (unset, it starts folded); folders
+  // inside always start collapsed and open one at a time.
   const forkOpen = allDirectoriesExpanded;
   /* fork:end fork-changed-files-fold */
   const listedFiles = groups ? groups.flatMap((group) => group.files) : files;
@@ -138,7 +139,6 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
       {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
       {forkOpen && (
         <>
-          {/* fork:end fork-changed-files-fold */}
           <div className="p-2">
             {groups ? (
               groups.map((group) => (
@@ -146,7 +146,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
                   key={group.key}
                   runId={runId}
                   group={group}
-                  allDirectoriesExpanded={allDirectoriesExpanded}
+                  allDirectoriesExpanded={false}
                   resolvedTheme={resolvedTheme}
                   onOpenTurnDiff={onOpenTurnDiff}
                   onFileContextMenu={onFileContextMenu}
@@ -154,16 +154,17 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
               ))
             ) : (
               <ChangedFilesTree
-                key={`${runId}:${allDirectoriesExpanded}`}
+                key={runId}
                 runId={runId}
                 files={files}
-                allDirectoriesExpanded={allDirectoriesExpanded}
+                allDirectoriesExpanded={false}
                 resolvedTheme={resolvedTheme}
                 onOpenTurnDiff={onOpenTurnDiff}
                 onFileContextMenu={onFileContextMenu}
               />
             )}
           </div>
+          {/* fork:end fork-changed-files-fold */}
           {hiddenFileCount > 0 && (
             <div className="px-3 pb-2">
               <Button

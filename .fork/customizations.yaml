@@ -9499,8 +9499,9 @@
     expand chevron at the far right, and the whole strip is the fold button.
     Its open state is upstream's persisted per-run all-folders flag
     (threadChangedFilesExpandedById via allDirectoriesExpanded and
-    onToggleAllDirectories), so a card starts folded, stays as left across
-    scrolling and reloads, and opens with every folder expanded. Upstream's
+    onToggleAllDirectories), so a card starts folded and stays as left across
+    scrolling and reloads. Folders inside always start collapsed
+    (allDirectoriesExpanded={false} to the trees) and open one at a time. Upstream's
     header actions (collapse all folders, Open diff) are removed with their
     Tooltip, T and icon imports and the hasDirectories helper. The header's
     padding moves onto the button. The tree and the "N more files" footer

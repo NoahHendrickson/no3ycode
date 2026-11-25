@@ -41,11 +41,13 @@ describe("fork guard: fork-message-bubble-shape", () => {
 });
 
 describe("fork guard: fork-changed-files-fold", () => {
-  it("opens from the persisted folders flag and unmounts the tree while folded", () => {
+  it("opens from the persisted folders flag, folders collapsed, tree unmounted while folded", () => {
     const card = readSibling("../components/chat/ChangedFilesTree.tsx");
     expect(card).toContain("const forkOpen = allDirectoriesExpanded;");
     expect(card).toContain("onToggleAllDirectories();");
     expect(card).toMatch(/\{forkOpen && \(\s*<>/u);
+    // Folders start collapsed and open one at a time, in the plain tree and each repository group.
+    expect(card.split("allDirectoriesExpanded={false}").length - 1).toBe(2);
   });
 
   it("rounds the folded header and draws one fill on Flat Glass", () => {

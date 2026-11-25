@@ -51,9 +51,7 @@ describe("fork guard: fork-changed-files-card", () => {
     // The rules hang off the header's following sibling divs: the p-2 wrapper around the tree
     // or its repository groups (a fragment or another tag would drop the well) and the
     // "N more files" footer, both unmounted while fork-changed-files-fold has the card folded.
-    expect(changedFiles).toMatch(
-      /\{\/\* fork:end fork-changed-files-fold \*\/\}\s*<div className="p-2">\s*\{groups \?/u,
-    );
+    expect(changedFiles).toMatch(/\{forkOpen && \(\s*<>\s*<div className="p-2">\s*\{groups \?/u);
     expect(changedFiles).toMatch(/hiddenFileCount > 0 && \(\s*<div /u);
     const rules = cssRules(theme).map((rule) => ({
       ...rule,
