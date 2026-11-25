@@ -95,7 +95,7 @@ describe("fork guard: fork-quiet-live-turn", () => {
 
   it("reads the live preview in every mode, not only Zen", () => {
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
-      "liveAnswerPreview: isWorking && !findActive ? liveAnswerPreview(timelineEntries) : null,",
+      'isWorking && (toolCallVisibility === "zen" || (!findActive && !forkStreamLiveReplies))',
     );
   });
 });

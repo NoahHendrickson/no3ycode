@@ -1260,9 +1260,12 @@ const ConversationTimeline = memo(function ConversationTimeline({
     providerStartingLabel,
     latestRunId: latestRun?.runId ?? null,
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-       Upstream reads the preview in Zen only; every mode now holds a running turn's replies,
-       except while Find shows them. */
-    liveAnswerPreview: isWorking && !findActive ? liveAnswerPreview(timelineEntries) : null,
+       Upstream reads the preview in Zen only; the fork also reads it wherever replies are held,
+       so not while Find or a guest's live stream shows them. */
+    liveAnswerPreview:
+      isWorking && (toolCallVisibility === "zen" || (!findActive && !forkStreamLiveReplies))
+        ? liveAnswerPreview(timelineEntries)
+        : null,
     /* fork:end fork-quiet-live-turn */
   };
   // Mounted in both the empty and filled timeline so a thread's first turn
