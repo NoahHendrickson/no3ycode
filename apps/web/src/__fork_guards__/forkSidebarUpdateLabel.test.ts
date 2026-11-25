@@ -23,7 +23,7 @@ describe("fork guard: fork-sidebar-update-label", () => {
   it("labels an actionable update as a white Update pill", () => {
     expect(updatePill).toContain('iconStatus === "downloading" ||');
     expect(updatePill).toContain("<ForkUpdateDownloadRing");
-    expect(updatePill).toContain('{showUpdateLabel ? "Update" : statusIcon}');
+    expect(updatePill).toMatch(/showUpdateLabel \? \([\s\S]*?Update[\s\S]*?\) : \(\s*statusIcon/);
     expect(updatePill).toContain("dark:bg-white dark:text-black");
   });
 

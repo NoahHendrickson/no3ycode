@@ -518,7 +518,7 @@ function SidebarUpdateControl() {
         /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
         showUpdateLabel &&
           cn(
-            "size-auto shrink-0 bg-foreground px-3 py-2 font-medium text-background text-xs dark:bg-white dark:text-black",
+            "size-auto gap-1.5 bg-foreground px-3 py-2 font-medium text-background text-xs dark:bg-white dark:text-black",
             !isInteractionDisabled && "hover:bg-foreground/85 dark:hover:bg-white/85",
           ),
         /* fork:end fork-sidebar-update-label */
@@ -548,27 +548,23 @@ function SidebarUpdateControl() {
       }}
     >
       {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
-      {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
-      {showUpdateLabel ? "Update" : statusIcon}
+      {showUpdateLabel ? (
+        <>
+          {showDownloadRing ? (
+            <ForkUpdateDownloadRing percent={state?.downloadPercent ?? null} />
+          ) : null}
+          {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
+          Update
+        </>
+      ) : (
+        statusIcon
+      )}
       {/* fork:end fork-sidebar-update-label */}
     </button>
   );
 
   return (
-    <SidebarMenuItem
-      className={cn(
-        "ml-auto shrink-0",
-        /* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */
-        // Only the download ring may give way; the other states keep base layout.
-        showDownloadRing && "flex min-w-0 shrink items-center",
-        /* fork:end fork-sidebar-update-label */
-      )}
-    >
-      {/* fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label */}
-      {showDownloadRing ? (
-        <ForkUpdateDownloadRing percent={state?.downloadPercent ?? null} />
-      ) : null}
-      {/* fork:end fork-sidebar-update-label */}
+    <SidebarMenuItem className="ml-auto shrink-0">
       <Popover
         handle={releaseNotesPopoverHandle}
         open={releaseNotesOpen && showReleaseNotesPopover}

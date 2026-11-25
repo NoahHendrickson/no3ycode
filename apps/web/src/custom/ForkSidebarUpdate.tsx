@@ -16,45 +16,38 @@ import { Button } from "~/components/ui/button";
 const RING_RADIUS = 6;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-/**
- * Sits beside the sidebar's "Update" pill while the app update downloads. It shrinks
- * and clips first when the footer is too narrow, so the pill never leaves the sidebar.
- */
+/** Leads the sidebar's "Update" pill label while the app update downloads. */
 export function ForkUpdateDownloadRing({ percent }: { readonly percent: number | null }) {
   const clamped =
     percent === null || !Number.isFinite(percent) ? 0 : Math.min(100, Math.max(0, percent));
   return (
-    <span
-      className="flex min-w-0 shrink justify-end overflow-hidden"
+    <svg
+      aria-hidden="true"
+      className="size-3.5 shrink-0 -rotate-90"
       data-fork-update-download-ring=""
+      viewBox="0 0 16 16"
     >
-      <svg
-        aria-hidden="true"
-        className="mr-2 size-4 shrink-0 -rotate-90 text-sidebar-foreground"
-        viewBox="0 0 16 16"
-      >
-        <circle
-          cx="8"
-          cy="8"
-          r={RING_RADIUS}
-          fill="none"
-          className="stroke-current/20"
-          strokeWidth="2"
-        />
-        <circle
-          cx="8"
-          cy="8"
-          r={RING_RADIUS}
-          fill="none"
-          stroke="currentColor"
-          strokeDasharray={RING_CIRCUMFERENCE}
-          strokeDashoffset={RING_CIRCUMFERENCE * (1 - clamped / 100)}
-          strokeLinecap="round"
-          strokeWidth="2"
-          className="transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none"
-        />
-      </svg>
-    </span>
+      <circle
+        cx="8"
+        cy="8"
+        r={RING_RADIUS}
+        fill="none"
+        className="stroke-current/20"
+        strokeWidth="2"
+      />
+      <circle
+        cx="8"
+        cy="8"
+        r={RING_RADIUS}
+        fill="none"
+        stroke="currentColor"
+        strokeDasharray={RING_CIRCUMFERENCE}
+        strokeDashoffset={RING_CIRCUMFERENCE * (1 - clamped / 100)}
+        strokeLinecap="round"
+        strokeWidth="2"
+        className="transition-[stroke-dashoffset] duration-300 ease-out motion-reduce:transition-none"
+      />
+    </svg>
   );
 }
 

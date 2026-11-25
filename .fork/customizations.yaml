@@ -7430,8 +7430,8 @@
     white with black text in dark mode (a fixed white, not --primary, which
     palettes recolour), inverted foreground/background in light mode where
     white would vanish on the sidebar. While the update downloads the pill
-    stays as it is, with a small progress ring to its left, instead of turning
-    into upstream's download-icon ring. Checking, idle, and download/install
+    stays, with a small progress ring inside it before the label, instead of
+    turning into upstream's download-icon ring. Checking, idle, and download/install
     errors (whose aria-label does not contain "Update") keep upstream's icon
     button. The click, tooltip, aria-label, and release-notes popover stay
     upstream's. Installing a downloaded update (from the pill or Settings >
