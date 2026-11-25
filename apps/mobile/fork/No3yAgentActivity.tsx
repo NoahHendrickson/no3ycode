@@ -166,7 +166,7 @@ function No3yAgentActivity(
         >
           {item.threadTitle}
         </Text>
-        {withProject ? (
+        {withProject && item.projectTitle !== "" ? (
           <Text modifiers={[font({ size: 13 }), foregroundStyle(secondary), lineLimit(1)]}>
             {item.projectTitle}
           </Text>
