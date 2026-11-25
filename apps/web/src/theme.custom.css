@@ -2664,6 +2664,85 @@
   }
 }
 
+/* The / and @ menu is a card like the queue and the stash (fork-composer-command-card): the
+   composer's full width, 8px above it, the card fill under the composer hairline, and 40px rows
+   that run edge to edge between full-width hairlines. It is portaled, so the banners slot can't
+   reach it: a 0 drawer inset makes the layer span the prompt, and the drawer lifts itself clear of
+   the 1rem + 1px the layer tucks it under. Inlet builds it as a Questions card instead. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"]) [data-chat-composer-form] {
+  --chat-composer-drawer-inset: 0rem;
+}
+
+/* The lift leaves the layer taller than the card; only the card takes the pointer. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-composer-drawer-layer] {
+  pointer-events: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer] {
+  & {
+    --chat-composer-attachment-overlap: 0px;
+    /* Lifted clear of the prompt, the card has no seam to shade. */
+    --chat-composer-attached-seam: transparent;
+    /* The active row fills with --accent. Arrow keys move it, so it reads a step above a hover. */
+    --accent: color-mix(in srgb, var(--foreground) 7%, transparent);
+    /* The menu's rows set text-xs; here it reads at the chat stream size, like the queue's rows. */
+    --text-xs: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+    margin-bottom: calc(1rem + 1px + 8px);
+    overflow: clip;
+    pointer-events: auto;
+    border-radius: var(--fork-composer-radius);
+  }
+
+  &::before {
+    border: 0;
+    border-radius: var(--fork-composer-radius);
+    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+    mask-image: none;
+  }
+
+  & [data-slot="command-list"] {
+    padding: 0;
+  }
+
+  & [data-slot="command-item"][data-composer-item-id] {
+    min-height: 40px;
+    padding-block: 0;
+    padding-inline: 12px;
+    border-radius: 0;
+  }
+
+  & [data-slot="command-item"][data-composer-item-id] + [data-slot="command-item"] {
+    border-top: 1px solid var(--fork-composer-border);
+  }
+
+  /* The skill's source is a quiet trailing label, not a filled pill. */
+  & [data-slot="badge"] {
+    padding-inline: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: calc(
+      0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
+    font-weight: 400;
+  }
+}
+
+/* A new agent's draft keeps the frost, since its menu opens over a picture. The Flat Glass and
+   Basic thread fill is in theme.custom.thread-composer.css, beside the banner cards'. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"]):not(
+    [data-fork-draft-hero-shown]
+  )
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer]::before {
+  background: var(--fork-composer-bg, var(--card));
+  /* An opaque card, like the banner cards: no blur behind it. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 /* One action size for every card above the composer: notices, the question card and the
    approval notice (whose rule is below, unscoped by theme). */
 :root[data-fork="noahhendrickson-t3code"] {
