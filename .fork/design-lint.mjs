@@ -610,6 +610,8 @@ const numericLiterals = (value) =>
   ].map((match) => ({ number: Number(match[1]), unit: match[2].toLowerCase() }));
 
 const RADIUS_PROPERTY = /radius$/u;
+const INTERFACE_SCALED_REM =
+  /-?\d*\.?\d+rem\s*\*\s*(?:var\(\s*--fork-chat-text-scale\s*,\s*1\s*\)\s*\*\s*)?var\(\s*--fork-interface-text-scale\s*,\s*1\s*\)/gu;
 const SPACE_PROPERTY =
   /^(?:(?:min-|max-)?(?:width|height|block-size|inline-size)|padding(?:-[\w-]+)?|margin(?:-[\w-]+)?|gap|row-gap|column-gap)$/u;
 const RADIUS_TOKEN_NAME = /radius/u;
@@ -746,9 +748,12 @@ export function checkStylesheet(sheet, slots = new Set()) {
           property === "line-height" ||
           (custom && TYPE_TOKEN_NAME.test(property)))
       ) {
-        // A step on the spacing scale (calc(var(--spacing) * 4)) is the scale, not a ratio.
+        // A step on the spacing scale (calc(var(--spacing) * 4)) is the scale, not a ratio, and
+        // a rem size times the interface text scale is a text size that follows the setting.
         const literals = numericLiterals(
-          value.replace(/var\(\s*--spacing\s*\)\s*\*\s*-?\d*\.?\d+/gu, "var(--spacing)"),
+          value
+            .replace(/var\(\s*--spacing\s*\)\s*\*\s*-?\d*\.?\d+/gu, "var(--spacing)")
+            .replace(INTERFACE_SCALED_REM, "var(--text-base)"),
         ).filter(({ number, unit }) =>
           property === "font-size" || /font-size|text-size/u.test(property)
             ? unit !== "" && !(number === 100 && unit === "%") && !(number === 1 && unit === "em")

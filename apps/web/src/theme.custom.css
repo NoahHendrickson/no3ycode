@@ -795,6 +795,9 @@
     1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
   );
   --fork-inline-code-size: 0.95em;
+  /* Geist Mono's ascent + descent, which sizes inline code's background, so a file link
+     (one line box tall) matches it under any interface font. */
+  --fork-inline-code-leading: 1.3;
   /* Segmented tab labels: 12px wherever the strip sits, the sidebar's remapped text-xs included. */
   --fork-segmented-tab-font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));
   --fork-inline-code-radius: 0.3125rem;
@@ -1069,7 +1072,7 @@
   border-radius: var(--radius-md);
   font-size: var(--fork-composer-chip-text);
   font-weight: 400;
-  line-height: calc(var(--fork-composer-chip-text) + 6px);
+  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1273,7 +1276,7 @@
   [data-chat-composer-actions="right"]
   [data-fork-dictation-action="done"]
   + [data-fork-composer-action="stop"] {
-  margin-inline-start: -4px;
+  margin-inline-start: calc(var(--spacing) * -1);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1470,14 +1473,14 @@
   /* Text + 10px tall, 6px radius. Inline padding is refined per trigger below so
      workspace and branch match; [data-fork-context-chip] is the locked
      workspace/env span — same pill when there is no interactive trigger. */
-  height: calc(var(--fork-composer-chip-text) + 10px);
-  min-height: calc(var(--fork-composer-chip-text) + 10px);
+  height: calc(var(--fork-composer-chip-text) + var(--spacing) * 2.5);
+  min-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 2.5);
   gap: calc(var(--spacing) * 1.5);
   padding-inline: calc(var(--spacing) * 2);
   border-radius: var(--radius-md);
   font-size: var(--fork-composer-chip-text);
   font-weight: 400;
-  line-height: calc(var(--fork-composer-chip-text) + 6px);
+  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
   background: var(--fork-context-chip-bg);
 }
 
@@ -2718,7 +2721,7 @@
     }
 
     & [data-has-overflow-y] li[data-composer-banner-row] {
-      padding-inline-end: 16px;
+      padding-inline-end: calc(var(--spacing) * 4);
     }
   }
 }
@@ -2749,7 +2752,7 @@
     --accent: color-mix(in srgb, var(--foreground) 7%, transparent);
     /* The menu's rows set text-xs; here it reads at the chat stream size, like the queue's rows. */
     --text-xs: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
-    margin-bottom: calc(1rem + 1px + 8px);
+    margin-bottom: calc(var(--spacing) * 6 + 1px);
     overflow: clip;
     pointer-events: auto;
     border-radius: var(--fork-composer-radius);
@@ -2762,14 +2765,16 @@
     mask-image: none;
   }
 
+  /* design-lint-disable-next-line C1 -- upstream's composer command menu; CommandList reads no padding token */
   & [data-slot="command-list"] {
     padding: 0;
   }
 
+  /* design-lint-disable-next-line C1 -- upstream's composer command menu; CommandItem reads no size or padding tokens, and the square corners must outrank Flat Glass's command-item radius */
   & [data-slot="command-item"][data-composer-item-id] {
-    min-height: 40px;
+    min-height: calc(var(--spacing) * 10);
     padding-block: 0;
-    padding-inline: 12px;
+    padding-inline: calc(var(--spacing) * 3);
     border-radius: 0;
   }
 
@@ -3192,11 +3197,16 @@
     [data-slot="combobox-item"]
   ):is([data-highlighted], [data-popup-open], :hover),
 /* A model row stays lit while the menu its control opened is open, the pointer inside that menu
-   (fork-model-picker); dark palettes light rows with this wash instead of --accent. */
+   (fork-model-picker); dark palettes light rows with this wash, light ones with --accent (below). */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
   color: var(--foreground);
+}
+
+:root[data-fork="noahhendrickson-t3code"]:not(.dark)
+  [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
+  background-color: var(--accent);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark
@@ -3285,7 +3295,7 @@
    raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
-  --fork-card-radius: 12px;
+  --fork-card-radius: var(--radius-xl);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--fork-card-radius);
@@ -3334,7 +3344,11 @@
    a white share, and the glass vibrancy wash (theme.custom.palettes.css) still
    outranks this rule. The send button's message-action tokens are untouched. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]) .bg-message {
-  background-color: color-mix(in srgb, #ffffff var(--fork-message-bubble-lift, 0%), var(--card));
+  background-color: color-mix(
+    in srgb,
+    var(--fork-white) var(--fork-message-bubble-lift, 0%),
+    var(--card)
+  );
 }
 
 /* Flat Glass and dark Basic lift the sent bubble 3% white off the card (fork-message-bubble-shape). */
@@ -3594,9 +3608,7 @@
   padding: 0 calc(var(--spacing) * 1.5);
   color: var(--info-foreground);
   font-size: var(--fork-inline-code-size);
-  /* Geist Mono's ascent + descent, which sizes inline code's background, so a file link
-     (one line box tall) matches it under any interface font. */
-  line-height: 1.3;
+  line-height: var(--fork-inline-code-leading);
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs

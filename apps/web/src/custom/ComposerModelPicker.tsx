@@ -81,7 +81,7 @@ function TraitIcon(props: { id: string; className: string }) {
 
 /** A value on a model row, laid out the same on the selected row and in previews. */
 const EFFORT_VALUE_CLASS =
-  "flex h-6 shrink-0 cursor-pointer items-center gap-0.5 rounded-[4px] px-1 text-base outline-none hover:bg-foreground/10";
+  "flex h-6 shrink-0 cursor-pointer items-center gap-0.5 rounded-sm px-1 text-base outline-none hover:bg-foreground/10";
 /** Rules a section off edge to edge, through the popup's and the menu's 4px insets. */
 const SECTION_RULE_CLASS = "-mx-2 my-1";
 

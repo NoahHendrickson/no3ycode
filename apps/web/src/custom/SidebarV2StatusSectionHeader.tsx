@@ -69,7 +69,7 @@ export function SidebarV2StatusSectionHeader(props: {
           data-fork-menu-open={menuOpen ? "" : undefined}
           className={cn(
             // 28px squares, inset 2px inside the header's 32px hover fill, corners concentric with it.
-            "flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px] [&_button:hover]:bg-foreground/10",
+            "flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-lg [&_button:hover]:bg-foreground/10",
             SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
           )}
         >

@@ -78,6 +78,53 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
   "w-[min(24rem,calc(100vw-2rem))]",
   // The music seek bar's fill: a gradient sized by the --fill the component sets, on tokens.
   "[background:linear-gradient(var(--muted-foreground),var(--muted-foreground))_0_0/var(--fill)_100%_no-repeat,var(--border)]",
+  // A rem text size times the Interface font size's text scale (#472): the text-* tokens' own form.
+  "text-[length:calc(0.6875rem*var(--fork-interface-text-scale,1))]",
+  // More viewport and container clamps: the vw/vh/%/anchor term is the point.
+  "max-w-[min(22rem,calc(100vw-2rem))]",
+  "max-w-[calc(100vw-3rem)]",
+  "max-h-[min(28rem,calc(var(--available-height)-1rem))]",
+  "min-w-[min(100%,11rem)]",
+  // Flex proportions in the PR header: how the branch names share the row, not sizes.
+  "max-w-[40%]",
+  "shrink-[12]",
+  // Grid tracks: a fixed label or avatar column beside fr/auto tracks, and the sidebar's
+  // scale-following row heights with their px floors.
+  "grid-cols-[4.5rem_minmax(0,1fr)]",
+  "grid-cols-[32px_minmax(0,1fr)_auto]",
+  "grid-cols-[repeat(auto-fit,minmax(56px,1fr))]",
+  "grid-rows-[max(16px,var(--spacing-sidebar-16))_max(14px,var(--spacing-sidebar-14))]",
+  // Built only from tokens: the titlebar controls' inset, and a 1px rim in --color-border.
+  "pl-[calc(var(--workspace-controls-left)+var(--workspace-titlebar-control-size)+var(--workspace-titlebar-control-gap))]",
+  "shadow-[inset_0_1px_0_var(--color-border)]",
+  // Nested corners: a parent's radius less the inset or rim between them.
+  "rounded-t-[11px]",
+  "rounded-[calc(var(--radius-sm)-2px)]",
+  // Sidebar header rows round at 10px, between rounded-lg and rounded-xl.
+  "rounded-[10px]",
+  "focus-visible:rounded-[10px]",
+  // Thread tab titles fade out under their hover actions: mask stops, not sizes.
+  "group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]",
+  "group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]",
+  "group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))]",
+  "group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))]",
+  // A keyframes name with its timing: Tailwind has no utility for a fork keyframe.
+  "animate-[sidebar-v2-film_linear_infinite]",
+  // The status mark's size inside the usage popover's 16px slot.
+  "[--fork-mark-size:14px]",
+  // The Petal card's badge, placed from Figma's 2/3-scale frame.
+  "right-[6.33px]",
+  "size-[10.67px]",
+  // One-off shadows and rings with no shadow token yet: the Petal mascot's rim, the music
+  // strip's drop, and design mode's swatch rings and active-dot glow.
+  "shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)]",
+  "dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]",
+  "shadow-[0_12px_32px_-18px_rgb(0_0_0/45%)]",
+  "shadow-[0_0_0_1px_rgba(0,0,0,0.4)]",
+  "shadow-[0_0_6px_1px_var(--fork-design-accent-bg),0_0_2px_var(--fork-design-accent)]",
+  // Design mode's swatches and code chips keep the Forge panel's 3px corners and 9px mono.
+  "rounded-[3px]",
+  "text-[9px]",
 ];
 
 /** oxlint rule id → the rule in DESIGN-RULES.md it enforces. */

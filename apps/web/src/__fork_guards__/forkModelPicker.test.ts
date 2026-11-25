@@ -223,7 +223,7 @@ describe("fork guard: fork-model-picker", () => {
 
   it("renders models as 32px rows, pin on hover beside the effort, check at the far right", () => {
     // 32px rows; MenuItem size="xs" is the regular label at the interface size.
-    expect(content).toContain('const ROW_CLASS = "h-8 min-h-8 rounded-sm sm:min-h-8";');
+    expect(content).toContain('const ROW_CLASS = "h-8 min-h-8 sm:min-h-8";');
     expect(content.split('size="xs"').length - 1).toBeGreaterThanOrEqual(5);
     expect(readSibling("../components/ui/menu.tsx")).toContain(
       'xs: "py-0 text-base font-normal sm:text-base"',

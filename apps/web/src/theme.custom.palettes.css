@@ -381,7 +381,7 @@
     :is(li[data-fork-status-section-header], [data-testid="sidebar-v2-project-group-header"])
     [data-fork-section-actions]
     button {
-    border-radius: calc(var(--fork-flat-radius) - 2px);
+    border-radius: calc(var(--fork-flat-radius) - var(--spacing) * 0.5);
     corner-shape: superellipse(1.6);
   }
 
@@ -1911,12 +1911,12 @@
   /* Clear over the glass, so the wallpaper's colour comes through; its foot takes the docked
      sidebar's edge over glass. */
   & [data-fork-thread-tabs] {
-    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 16%);
-    --border: rgb(255 255 255 / 12%);
-    --sidebar-row-hover: rgb(255 255 255 / 6%);
-    --sidebar-row-active: rgb(255 255 255 / 10%);
-    --sidebar-row-selected: rgb(255 255 255 / 8%);
-    --accent: rgb(255 255 255 / 10%);
+    box-shadow: inset 0 -1px 0 var(--fork-white-16);
+    --border: var(--fork-white-12);
+    --sidebar-row-hover: var(--fork-white-6);
+    --sidebar-row-active: var(--fork-white-10);
+    --sidebar-row-selected: var(--fork-white-8);
+    --accent: var(--fork-white-10);
   }
 
   /* The floating sidebar toggle sits on the same glass, outside the strip; it hovers with the

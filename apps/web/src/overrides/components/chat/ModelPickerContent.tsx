@@ -195,8 +195,8 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
   return event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
 }
 
-/** Every row shares one shape: 32px, 4px corners, and MenuItem size="xs" for the regular label. */
-const ROW_CLASS = "h-8 min-h-8 rounded-sm sm:min-h-8";
+/** Every row is 32px; MenuItem size="xs" is the regular label. */
+const ROW_CLASS = "h-8 min-h-8 sm:min-h-8";
 
 /** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
 const HOVER_REVEAL_CLASS =
@@ -815,13 +815,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         // renders below the list.
         closeOnClick={false}
         size="xs"
-        className={cn(
-          ROW_CLASS,
-          "group",
-          // Lit while the menu its control opened is open (dark palettes: theme.custom.css).
-          "has-[>*>[data-model-row-control]>[data-open]]:bg-accent",
-          disabledReason && "data-disabled:pointer-events-auto",
-        )}
+        className={cn(ROW_CLASS, "group", disabledReason && "data-disabled:pointer-events-auto")}
         onClick={(event) => chooseModel(model, event.shiftKey)}
         // ArrowRight opens the row's control (the effort menu), as a submenu trigger would.
         onKeyDown={(event) => {
