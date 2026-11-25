@@ -56,13 +56,22 @@ export function startCinnabarLive(): void {
     shown = version;
   }
 
-  const events = new EventSource(`${studio}/live/events`);
-  events.addEventListener("message", (event) => {
-    const version = Number(event.data);
-    if (Number.isFinite(version)) {
-      swapTo(version).catch((error: unknown) => {
-        console.warn("[cinnabar-live] couldn't load the Studio's live font", error);
-      });
-    }
-  });
+  // EventSource retries a dropped connection on its own, but gives up for good on an HTTP error
+  // (a Studio without /live, or one that restarted mid-request). Reopen it a few seconds later, so
+  // the app follows whenever the Studio comes (back) up.
+  const connect = (): void => {
+    const events = new EventSource(`${studio}/live/events`);
+    events.addEventListener("message", (event) => {
+      const version = Number(event.data);
+      if (Number.isFinite(version)) {
+        swapTo(version).catch((error: unknown) => {
+          console.warn("[cinnabar-live] couldn't load the Studio's live font", error);
+        });
+      }
+    });
+    events.addEventListener("error", () => {
+      if (events.readyState === EventSource.CLOSED) setTimeout(connect, 5000);
+    });
+  };
+  connect();
 }
