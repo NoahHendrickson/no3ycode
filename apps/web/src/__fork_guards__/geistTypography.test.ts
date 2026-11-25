@@ -21,6 +21,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { FORK_MARKER_ATTRIBUTE, FORK_MARKER_VALUE } from "../custom/forkMarker";
 import { FORK_TERMINAL_FONT_FALLBACK } from "../custom/terminalFont";
+import { fontFamilies } from "./cssRules";
 
 function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -35,15 +36,6 @@ function markerBlock(css: string): string {
   const end = css.indexOf("\n}", start);
   expect(end).toBeGreaterThan(start);
   return css.slice(start, end);
-}
-
-/** A CSS font stack as a comparable list — quoting and spacing are noise. */
-function fontFamilies(stack: string): string[] {
-  return stack
-    .replace(/\/\*[\s\S]*?\*\//gu, "")
-    .split(",")
-    .map((family) => family.trim().replace(/^["']|["']$/gu, ""))
-    .filter((family) => family.length > 0);
 }
 
 describe("fork guard: geist-typography", () => {
@@ -61,12 +53,11 @@ describe("fork guard: geist-typography", () => {
     expect(theme).toContain('@import "@fontsource-variable/geist-mono/index.css"');
   });
 
-  it("declares the Geist stacks inside the marker-scoped block", () => {
+  it("declares the Geist Mono stack inside the marker-scoped block", () => {
     // Bounded to the block: a declaration that lost its scoping and moved to a
-    // bare `:root { }` has to fail here, which is the point of the test.
+    // bare `:root { }` has to fail here, which is the point of the test. The
+    // sans stack is cinnabar-sans-typeface's to guard.
     const block = markerBlock(readSibling("../theme.custom.css"));
-    expect(block).toContain("--fork-font-sans:");
-    expect(block).toContain('"Geist Variable"');
     expect(block).toContain("--fork-font-mono:");
     expect(block).toContain('"Geist Mono Variable"');
   });

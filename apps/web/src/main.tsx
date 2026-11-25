@@ -30,6 +30,9 @@ import "./theme.custom.interface-size.css";
 /* fork:begin fork-dev-house-look — see .fork/customizations.yaml#fork-dev-house-look */
 import { applyDevHouseLook } from "./custom/devHouseLook";
 /* fork:end fork-dev-house-look */
+/* fork:begin fork-cinnabar-live — see .fork/customizations.yaml#fork-cinnabar-live */
+import { startCinnabarLive } from "./custom/cinnabarLive";
+/* fork:end fork-cinnabar-live */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 import { initializeForkTheme } from "./custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
@@ -70,6 +73,9 @@ applyForkMarker(document.documentElement);
 /* fork:begin fork-dev-house-look — see .fork/customizations.yaml#fork-dev-house-look */
 applyDevHouseLook();
 /* fork:end fork-dev-house-look */
+/* fork:begin fork-cinnabar-live — see .fork/customizations.yaml#fork-cinnabar-live */
+startCinnabarLive();
+/* fork:end fork-cinnabar-live */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 initializeForkTheme();
 /* fork:end fork-cool-dark-theme */

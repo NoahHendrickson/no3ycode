@@ -5,6 +5,7 @@
  * an agent started it with. Once per window session, so a reload keeps what changed since launch
  * (a window reopened from the dock is a new session and gets it again).
  */
+import { DEFAULT_UNIFIED_SETTINGS } from "@t3tools/contracts";
 import { isElectron } from "~/env";
 import { setTheme } from "~/hooks/useTheme";
 import { updateClientSettings } from "~/hooks/useSettings";
@@ -32,5 +33,8 @@ export function applyDevHouseLook(): void {
   setGlassNewAgentBackdrop("jollyPetal");
   setForkWorkingMark("bead");
   setForkSidebarFontSize(14);
-  void updateClientSettings({ fontFamilySans: "Inter Variable", fontSizeInterface: 15 });
+  void updateClientSettings({
+    fontFamilySans: DEFAULT_UNIFIED_SETTINGS.fontFamilySans,
+    fontSizeInterface: 15,
+  });
 }

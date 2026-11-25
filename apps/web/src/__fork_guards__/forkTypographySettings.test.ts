@@ -124,8 +124,9 @@ describe("fork guard: fork-typography-settings", () => {
     expect(shadow).toContain("const sans = FORK_DEFAULT_SANS_FAMILY;");
   });
 
-  it("maps the fork default to Geist and keeps Inter loaded", () => {
-    expect(forkInterfaceFontPreset("")?.label).toBe("Geist");
+  it("maps the fork default to Cinnabar Sans, offers Geist, and keeps Inter loaded", () => {
+    expect(forkInterfaceFontPreset("")?.label).toBe("Cinnabar Sans");
+    expect(forkInterfaceFontPreset("Geist Variable")?.label).toBe("Geist");
     expect(forkInterfaceFontPreset(" Inter Variable ")?.label).toBe("Inter");
     expect(forkInterfaceFontPreset("Comic Sans MS")).toBeNull();
     expect(readSibling("../main.tsx")).toContain('import "@fontsource-variable/inter";');

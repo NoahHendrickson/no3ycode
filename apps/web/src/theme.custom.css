@@ -28,10 +28,28 @@
 /* Geist ships as two variable faces: `Geist Variable` (100..900) and
    `Geist Mono Variable` (100..900). Both are pulled in here rather than from
    `main.tsx` so the fork owns its own font loading — since upstream dropped
-   its DM Sans / JetBrains Mono webfonts for system stacks (v0.0.32 cycle),
-   these are the only bundled faces in the app. */
+   its DM Sans / JetBrains Mono webfonts for system stacks (v0.0.32 cycle).
+   Geist backs the Geist preset and the sans fallback; Geist Mono is the code face. */
 @import "@fontsource-variable/geist/index.css";
 @import "@fontsource-variable/geist-mono/index.css";
+
+/* Cinnabar Sans — see `.fork/customizations.yaml#cinnabar-sans-typeface`. Both
+   faces span 100..900, so no weight or the italic is ever synthesized. */
+@font-face {
+  font-family: "Cinnabar Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Cinnabar Sans";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./custom/fonts/cinnabar-sans/CinnabarSans-Italic-Variable.woff2")
+    format("woff2-variations");
+}
 
 /* The stacks themselves. `index.css` reads these through
    `--font-sans: var(--fork-font-sans, <upstream stack>)` inside its non-inline
@@ -46,7 +64,8 @@
    renders — keeping that order would make shipping Geist Mono pointless. */
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-font-sans:
-    "Geist Variable", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    "Cinnabar Sans", "Geist Variable", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
   /* "JetBrains Mono" is kept by name from the era its Fontsource face was
      bundled: a Linux user with it installed still gets it ahead of
      Liberation Mono / the generic when the Geist Mono face fails. */
