@@ -24,6 +24,7 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
 
+import { ListItem } from "../ListItem";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
@@ -338,15 +339,11 @@ export function BotThreadsRowView(props: {
 }) {
   return (
     <li>
-      <button
-        type="button"
+      <ListItem
         aria-current={props.current ? "page" : undefined}
         onClick={props.onOpen}
         onContextMenu={props.onContextMenu}
-        className={cn(
-          "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          props.current ? "bg-accent" : "hover:bg-accent",
-        )}
+        className={cn("items-start gap-2.5 px-1.5 py-1.5", props.current && "bg-accent")}
         data-testid="bot-threads-row"
       >
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">
@@ -379,7 +376,7 @@ export function BotThreadsRowView(props: {
             ) : null}
           </span>
         </span>
-      </button>
+      </ListItem>
     </li>
   );
 }

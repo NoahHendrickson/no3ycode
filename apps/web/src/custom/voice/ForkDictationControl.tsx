@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, MicIcon, XIcon } from "../icons/lucide-hugeicons";
@@ -230,8 +231,7 @@ export function ForkDictationPrimaryButton(props: {
       <DictationTooltip
         label={busy ? label : "Dictate"}
         trigger={
-          <button
-            type="button"
+          <ButtonPrimitive
             // Keeps the send button's fork styling while the second attribute
             // names what it does now.
             data-fork-composer-action="send"

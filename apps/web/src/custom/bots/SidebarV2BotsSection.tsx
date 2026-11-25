@@ -2,6 +2,7 @@
  * The sidebar's Bots section — see `.fork/customizations.yaml#fork-bots`: its row, its cards'
  * density, naming a new bot, and what folds it and the Threads list under it.
  */
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import * as Schema from "effect/Schema";
 import { PlusIcon } from "../icons/lucide-hugeicons";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
@@ -112,8 +113,7 @@ export function SidebarV2NewBotRow(props: {
     >
       {/* The card's mascot column (22px compact, the 32px tile full); the 36px button overhangs it
           evenly, so the draft's mascot and name sit where the saved card puts them. */}
-      <button
-        type="button"
+      <ButtonPrimitive
         disabled={creating}
         aria-label={`Mascot: ${mascot}. Change mascot`}
         data-testid="sidebar-v2-new-bot-mascot"
@@ -137,7 +137,7 @@ export function SidebarV2NewBotRow(props: {
         ) : (
           <BotMascotTile shape={mascot} mood="Idle" />
         )}
-      </button>
+      </ButtonPrimitive>
       <input
         autoFocus
         value={name}

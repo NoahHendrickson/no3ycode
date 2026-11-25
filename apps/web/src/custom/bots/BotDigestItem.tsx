@@ -2,6 +2,7 @@
  * One line of a bot's digest — see `.fork/customizations.yaml#fork-bot-digest`: its words, then
  * the threads and pull requests it links (client-runtime fork-bot-digest-links), each opening its target.
  */
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
@@ -102,8 +103,7 @@ function BotDigestThreadChip(props: {
     wokeAt: null,
   });
   return (
-    <button
-      type="button"
+    <ButtonPrimitive
       className={cn(chipClassName, "max-w-full")}
       onClick={() => openThread(scopeThreadRef(shell.environmentId, shell.id))}
       data-testid="bot-digest-thread"
@@ -112,7 +112,7 @@ function BotDigestThreadChip(props: {
         <SidebarV2StatusMark status={card.topStatus} seed={key} idle="dot" />
       </span>
       <span className="truncate">{shell.title}</span>
-    </button>
+    </ButtonPrimitive>
   );
 }
 
@@ -131,8 +131,7 @@ function BotDigestPullRequestChip(props: {
     <Tooltip>
       <TooltipTrigger
         render={
-          <button
-            type="button"
+          <ButtonPrimitive
             className={chipClassName}
             onClick={(event) => {
               const ref =

@@ -9562,8 +9562,12 @@
     "chip" (the composer strip's muted chip trigger). InlineButton takes size
     "xs" (the tab PR badge). PopoverTrigger takes focusRing "inset" and
     RadioGroup density "compact". Every default is upstream's look, unchanged.
+    custom/ListItem.tsx is a row for lists that stay on screen (the new agent
+    launchpad, the music strip, the Petal threads panel), drawn as MenuItem's
+    row on Base UI's Button; themes style it with the menu rows.
   tier: 4
-  files: []
+  files:
+    - apps/web/src/custom/ListItem.tsx
   shadows: []
   watch:
     - apps/web/src/components/ui/menu.tsx

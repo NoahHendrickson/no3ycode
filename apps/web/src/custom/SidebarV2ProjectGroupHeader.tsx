@@ -55,6 +55,7 @@
  * visually hidden, since the header carries it for sighted users — so grouped
  * mode never carries less information than flat mode.
  */
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import type { ReactNode } from "react";
 import {
   CheckIcon,
@@ -175,8 +176,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             SIDEBAR_V2_CARD_ALIGNMENT.headerGap,
           )}
         >
-          <button
-            type="button"
+          <ButtonPrimitive
             data-testid="sidebar-v2-project-group-collapse"
             aria-expanded={!props.collapsed}
             aria-label={props.collapsed ? `Expand ${label}` : `Collapse ${label}`}

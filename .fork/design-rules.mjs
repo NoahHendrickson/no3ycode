@@ -136,37 +136,6 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
  * file never joins this list.
  */
 export const DESIGN_LINT_PENDING = {
-  // B2: raw <button>s that would become Button. Button adds its press scale, the 44px coarse
-  // hit area and a ::before layer, so each swap changes how the control looks and feels.
-  "t3code/no-hand-built-primitives": [
-    "apps/web/src/custom/CollapsedThreadTabs.tsx", // 5
-    "apps/web/src/custom/ComposerModelPicker.tsx", // 2
-    "apps/web/src/custom/ComposerWorkspaceFooter.tsx", // 1
-    "apps/web/src/custom/DraftLaunchpad.tsx", // 5
-    "apps/web/src/custom/ForkLiveStatusLine.tsx", // 1
-    "apps/web/src/custom/ForkQueuedRunsBanner.tsx", // 1
-    "apps/web/src/custom/ForkSubagentGroup.tsx", // 1
-    "apps/web/src/custom/ForkSwatchPicker.tsx", // 1
-    "apps/web/src/custom/ForkThemePicker.tsx", // 1
-    "apps/web/src/custom/SidebarProviderUpdatesButton.tsx", // 1
-    "apps/web/src/custom/SidebarV2ProjectGroupHeader.tsx", // 1
-    "apps/web/src/custom/SidebarV2SectionLabel.tsx", // 1
-    "apps/web/src/custom/SidebarV2StatusSectionHeader.tsx", // 1
-    "apps/web/src/custom/bots/BotDigest.tsx", // 1
-    "apps/web/src/custom/bots/BotDigestItem.tsx", // 2
-    "apps/web/src/custom/bots/BotMascotDetailsSection.tsx", // 1
-    "apps/web/src/custom/bots/BotThreadsPanel.tsx", // 1
-    "apps/web/src/custom/bots/SidebarV2BotsSection.tsx", // 1
-    "apps/web/src/custom/designMode/ForkComposerDesignChanges.tsx", // 1
-    "apps/web/src/custom/designMode/panel/CanvasControls.tsx", // 5
-    "apps/web/src/custom/designMode/panel/DesignColorPicker.tsx", // 2
-    "apps/web/src/custom/designMode/panel/DesignPanelFields.tsx", // 5
-    "apps/web/src/custom/designMode/panel/DesignPanelLayoutControls.tsx", // 3
-    "apps/web/src/custom/designMode/panel/sections/section.tsx", // 1
-    "apps/web/src/custom/music/MusicStrip.tsx", // 3
-    "apps/web/src/custom/scheduled/ScheduledTaskDetail.tsx", // 1
-    "apps/web/src/custom/voice/ForkDictationControl.tsx", // 1
-  ],
   // B4: Hugeicons drawn from the icon package's raw data through the shim's HugeGlyph (masked
   // marks, design mode's icon sets). Moving them into the shim's table is the call.
   "t3code/no-direct-icon-imports": [
@@ -227,6 +196,13 @@ export const DESIGN_LINT_OVERRIDES = [
   {
     files: ["apps/web/src/custom/SidebarV2StatusIndicator.tsx"],
     rules: { "t3code/no-hand-built-status-marks": "off" },
+  },
+  {
+    // Design mode's panel is the Forge editor's own dense control set (fields, steppers, swatches,
+    // canvas controls), sized and styled as one instrument; Button's press scale and hit area would
+    // break its 22px rows.
+    files: ["apps/web/src/custom/designMode/panel/**"],
+    rules: { "t3code/no-hand-built-primitives": "off" },
   },
   ...(process.env[DESIGN_LINT_PENDING_ENV] === "1"
     ? []

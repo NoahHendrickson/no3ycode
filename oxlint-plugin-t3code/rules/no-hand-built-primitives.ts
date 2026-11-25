@@ -27,7 +27,7 @@ export default defineRule({
             context.report({
               node,
               message:
-                "A styled raw <button> rebuilds Button. Use Button (components/ui/button) with a variant and size, or add the variant there.",
+                "A styled raw <button> rebuilds Button. Use Button (components/ui/button) with a variant and size, ListItem (custom/ListItem) for a list row, or Base UI's Button, Toggle or Radio for a feature's own control.",
             });
           }
           if (attribute.name.name !== "role" || attribute.value?.type !== "Literal") continue;

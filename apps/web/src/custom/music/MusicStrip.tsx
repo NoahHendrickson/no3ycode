@@ -21,6 +21,7 @@ import {
   Volume2,
   VolumeOff,
 } from "../icons/lucide-hugeicons";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { type CSSProperties, memo, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -30,6 +31,7 @@ import { useSidebar } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
+import { ListItem } from "../ListItem";
 import { SegmentedTab, SegmentedTabs } from "../SegmentedTabs";
 import { useSidebarPeekState } from "../sidebarPeek";
 import {
@@ -60,8 +62,8 @@ import { setMusicStripMode, useMusicStripMode } from "./musicStripMode";
 
 type ReadyState = Extract<MusicState, { status: "ready" }>;
 
-const ROW_CLASS =
-  "flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
+// Music rows sit a step taller than a menu row: a song carries its cover and two lines.
+const ROW_CLASS = "py-1.5";
 
 function MusicUnavailable(props: {
   status: Exclude<MusicState["status"], "ready">;
@@ -385,7 +387,7 @@ function SongRow(props: {
   onPlay: () => void;
 }) {
   return (
-    <button
+    <ListItem
       aria-current={props.playing ? "true" : undefined}
       // Rows off screen skip layout and paint; a library's list runs to hundreds.
       className={cn(
@@ -394,7 +396,6 @@ function SongRow(props: {
         props.playing && "bg-accent",
       )}
       onClick={props.onPlay}
-      type="button"
     >
       <Cover src={props.artwork} />
       <span className="min-w-0 flex-1">
@@ -402,7 +403,7 @@ function SongRow(props: {
         <span className="block truncate text-xs text-muted-foreground">{props.artist}</span>
       </span>
       {props.playing ? <Volume2 className="size-3.5 shrink-0 text-muted-foreground" /> : null}
-    </button>
+    </ListItem>
   );
 }
 
@@ -475,11 +476,10 @@ const CoverGrid = memo(function CoverGrid(props: {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1 py-1">
       {rows.map((row) => (
-        <button
+        <ButtonPrimitive
           className="flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-md p-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           key={row.id}
           onClick={() => void openMusicRow(row, kind)}
-          type="button"
         >
           {row.artwork === null ? (
             <span className="flex aspect-square w-full items-center justify-center rounded-sm bg-muted text-muted-foreground">
@@ -496,7 +496,7 @@ const CoverGrid = memo(function CoverGrid(props: {
             />
           )}
           <span className="block w-full truncate text-xs font-medium">{row.name}</span>
-        </button>
+        </ButtonPrimitive>
       ))}
     </div>
   );
@@ -505,15 +505,14 @@ const CoverGrid = memo(function CoverGrid(props: {
 const ArtistList = memo(function ArtistList({ rows }: { rows: ReadonlyArray<MusicRow> }) {
   if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
   return rows.map((artist) => (
-    <button
+    <ListItem
       className={cn(ROW_CLASS, "[contain-intrinsic-size:auto_2rem] [content-visibility:auto]")}
       key={artist.id}
       onClick={() => void openMusicRow(artist, "artists")}
-      type="button"
     >
       <UserRoundIcon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm">{artist.name}</span>
-    </button>
+    </ListItem>
   ));
 });
 

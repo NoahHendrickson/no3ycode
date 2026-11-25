@@ -341,10 +341,9 @@
       [data-slot="select-item"],
       [data-slot="combobox-item"],
       [data-slot="command-item"],
-      [data-testid="bot-threads-row"]
+      [data-slot="list-item"]
     ),
-  & [data-fork-model-picker="list"] > label,
-  & [data-fork-draft-launchpad-card] button {
+  & [data-fork-model-picker="list"] > label {
     corner-shape: superellipse(1.6);
   }
 
@@ -356,7 +355,8 @@
       [data-slot="menu-radio-item"],
       [data-slot="menu-sub-trigger"],
       [data-slot="select-item"],
-      [data-slot="combobox-item"]
+      [data-slot="combobox-item"],
+      [data-slot="list-item"]
     ) {
     --fork-menu-row-radius: var(--fork-flat-radius);
     border-radius: var(--fork-flat-radius);
@@ -374,9 +374,8 @@
       li[data-fork-status-section-header]
     ),
   & [data-fork-thread-tabs] [data-fork-thread-tab],
-  & :is([data-slot="command-item"], [data-testid="bot-threads-row"]),
-  & [data-fork-model-picker="list"] > label,
-  & [data-fork-draft-launchpad-card] button {
+  & [data-slot="command-item"],
+  & [data-fork-model-picker="list"] > label {
     border-radius: var(--fork-flat-radius);
   }
 

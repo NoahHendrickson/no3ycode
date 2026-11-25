@@ -47,6 +47,7 @@ import {
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
 import { isChatDraft } from "./chatMode";
+import { ListItem } from "./ListItem";
 
 const KIND_ICON: Record<LaunchpadSuggestionKind, typeof CircleXIcon> = {
   conflicts: CircleAlertIcon,
@@ -60,9 +61,6 @@ const KIND_ICON: Record<LaunchpadSuggestionKind, typeof CircleXIcon> = {
   "review-open": EyeIcon,
   "dev-server": PlayIcon,
 };
-
-const ROW_CLASS_NAME =
-  "flex h-8 w-full min-w-0 cursor-pointer select-none items-center gap-2 rounded-sm px-2 text-left text-foreground text-sm outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground";
 
 /** Only what the suggestions read, so a file edit that keeps the counts doesn't re-render. */
 const launchpadGitStatusAtom = Atom.family((status: ReturnType<typeof vcsEnvironment.status>) =>
@@ -247,10 +245,8 @@ export function DraftLaunchpad(
         {rows.map(({ suggestion, entry }) => {
           const Icon = KIND_ICON[suggestion.kind];
           return (
-            <button
+            <ListItem
               key={suggestion.id}
-              type="button"
-              className={ROW_CLASS_NAME}
               onClick={(event) => {
                 if (entry !== null) {
                   choices.pick(
@@ -281,7 +277,7 @@ export function DraftLaunchpad(
                 <Icon className="size-4 shrink-0 text-muted-foreground" />
               )}
               <span className="min-w-0 flex-1 truncate">{suggestion.title}</span>
-            </button>
+            </ListItem>
           );
         })}
       </Card>
@@ -415,10 +411,8 @@ function ProjectList(props: {
     <Card header={search}>
       <div>
         {rows.map((entry) => (
-          <button
+          <ListItem
             key={entry.group.projectKey}
-            type="button"
-            className={ROW_CLASS_NAME}
             onClick={(event) => choices.pick(entry.group.projectKey, event.currentTarget)}
           >
             <ProjectFavicon
@@ -427,7 +421,7 @@ function ProjectList(props: {
               fallbackIcon={FolderIcon}
             />
             <span className="min-w-0 flex-1 truncate">{entry.group.displayName}</span>
-          </button>
+          </ListItem>
         ))}
         {searching && rows.length === 0 ? (
           <div className="flex h-8 items-center px-2 text-muted-foreground/70 text-sm">
@@ -435,36 +429,26 @@ function ProjectList(props: {
           </div>
         ) : null}
         {!searching && choices.noProjectEnvironmentId !== null ? (
-          <button
-            type="button"
-            className={ROW_CLASS_NAME}
+          <ListItem
+            tone="muted"
             onClick={(event) => choices.pick(NO_PROJECT_VALUE, event.currentTarget)}
           >
-            <MessageSquareDashedIcon className="size-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 flex-1 truncate text-muted-foreground">No project</span>
-          </button>
+            <MessageSquareDashedIcon className="size-4 shrink-0" />
+            <span className="min-w-0 flex-1 truncate">No project</span>
+          </ListItem>
         ) : null}
         {open || !hasMore ? (
-          <button
-            type="button"
-            className={`${ROW_CLASS_NAME} text-muted-foreground`}
-            onClick={openAddProject}
-          >
+          <ListItem tone="muted" onClick={openAddProject}>
             <FolderPlusIcon className="size-4 shrink-0" />
             <span className="min-w-0 flex-1 truncate">Add a project</span>
-          </button>
+          </ListItem>
         ) : null}
       </div>
       {searching || !hasMore ? null : (
         <>
           {/* The divider spans the card edge to edge, past the list padding. */}
           {expanded ? <div className="-mx-1 my-1 border-border border-t" /> : null}
-          <button
-            type="button"
-            aria-expanded={expanded}
-            className={`${ROW_CLASS_NAME} text-muted-foreground`}
-            onClick={toggle}
-          >
+          <ListItem tone="muted" aria-expanded={expanded} onClick={toggle}>
             {expanded ? (
               <ChevronUpIcon className="size-4 shrink-0 opacity-60" />
             ) : (
@@ -473,7 +457,7 @@ function ProjectList(props: {
             <span className="min-w-0 flex-1 truncate">
               {expanded ? "Fewer projects" : `All projects (${choices.entries.length})`}
             </span>
-          </button>
+          </ListItem>
         </>
       )}
     </Card>

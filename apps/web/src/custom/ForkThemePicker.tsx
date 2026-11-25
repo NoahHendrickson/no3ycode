@@ -4,6 +4,9 @@
  * options below.
  */
 
+import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
+import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
+
 import { ThemeWireframe } from "../components/settings/ThemeWireframe";
 import type { ThemeCardPreviewColors } from "../components/settings/ThemePreviewCircles";
 import { cn } from "../lib/utils";
@@ -95,12 +98,20 @@ export function ForkThemePicker(props: {
   readonly onChange: (palette: ForkPalette) => void;
 }) {
   return (
-    <div aria-label="Theme" className="grid w-full grid-cols-3 gap-3" role="group">
+    <ToggleGroupPrimitive
+      aria-label="Theme"
+      className="grid w-full grid-cols-3 gap-3"
+      value={props.value === null ? [] : [props.value]}
+      onValueChange={(next) => {
+        const palette = FORK_PALETTES.find((candidate) => candidate === next[0]);
+        if (palette) props.onChange(palette);
+      }}
+    >
       {FORK_PALETTES.map((palette) => {
         const isActive = props.value === palette;
         return (
-          <button
-            aria-pressed={isActive}
+          <TogglePrimitive
+            value={palette}
             className={cn(
               "flex cursor-pointer flex-col items-stretch gap-2 rounded-xl border p-2 text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-solid focus-visible:-outline-offset-7 focus-visible:outline-foreground/60",
               // The pick is the most solid card, never the most see-through (accent is a faint tint
@@ -111,8 +122,6 @@ export function ForkThemePicker(props: {
                 : "border-border/70 bg-card/60 hover:border-foreground/24",
             )}
             key={palette}
-            onClick={() => props.onChange(palette)}
-            type="button"
           >
             <ThemeWireframe
               className="h-30"
@@ -140,9 +149,9 @@ export function ForkThemePicker(props: {
                 {FORK_PALETTE_DESCRIPTIONS[palette]}
               </span>
             </span>
-          </button>
+          </TogglePrimitive>
         );
       })}
-    </div>
+    </ToggleGroupPrimitive>
   );
 }

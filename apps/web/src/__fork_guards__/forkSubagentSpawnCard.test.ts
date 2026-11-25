@@ -62,7 +62,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).not.toContain('term: "Model"');
     // One list of rows gates the chevron and the well, so a card with nothing to list offers neither.
     expect(group).toMatch(
-      /details\.length === 0 \? \(\s*<span[\s\S]*?\) : \(\s*\/\/[^\n]*\n\s*<button/u,
+      /details\.length === 0 \? \(\s*<span[\s\S]*?\) : \(\s*\/\/[^\n]*\n\s*<ButtonPrimitive/u,
     );
     expect(group).toMatch(/details\.length === 0 \? null : \(\s*<dl/u);
     // The fork mark stays for Codex and Claude; upstream's avatar over it draws only the badge.
@@ -72,7 +72,7 @@ describe("fork guard: fork-subagent-spawn-card", () => {
     expect(group).toContain("ctx.workGroupViewState.expandedEntries");
     // The header strip, chevron included, is the disclosure…
     expect(group).toMatch(
-      /data-fork-subagent-toggle=""[\s\S]*?onClick=\{onToggle\}[\s\S]*?<ChevronDownIcon[\s\S]*?open && "rotate-180"[\s\S]*?<\/button>/u,
+      /data-fork-subagent-toggle=""[\s\S]*?onClick=\{onToggle\}[\s\S]*?<ChevronDownIcon[\s\S]*?open && "rotate-180"[\s\S]*?<\/ButtonPrimitive>/u,
     );
     // …and a member with a thread of its own opens it from the arrow after it.
     // The click's intent rides along, so it opens beside the thread or in its place.

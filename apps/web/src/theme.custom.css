@@ -3196,6 +3196,7 @@
     [data-slot="select-item"],
     [data-slot="combobox-item"]
   ):is([data-highlighted], [data-popup-open], :hover),
+:root[data-fork="noahhendrickson-t3code"].dark [data-slot="list-item"]:is(:hover, :focus-visible),
 /* A model row stays lit while the menu its control opened is open, the pointer inside that menu
    (fork-model-picker); dark palettes light rows with this wash, light ones with --accent (below). */
 :root[data-fork="noahhendrickson-t3code"].dark

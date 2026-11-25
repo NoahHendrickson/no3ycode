@@ -15,6 +15,7 @@
  * keeps it current, falling back to the item's own fields for settled
  * history. Elapsed timers self-tick through `AgentElapsed`'s DOM writes.
  */
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
@@ -399,8 +400,7 @@ export function ForkSubagentCardView(props: {
           </span>
         ) : (
           // The strip opens and folds the well, ending in the chevron that says so.
-          <button
-            type="button"
+          <ButtonPrimitive
             data-fork-subagent-toggle=""
             aria-expanded={open}
             aria-controls={wellId}
@@ -421,7 +421,7 @@ export function ForkSubagentCardView(props: {
                 className={cn("size-3 transition-transform", open && "rotate-180")}
               />
             </span>
-          </button>
+          </ButtonPrimitive>
         )}
         {openThread === null ? null : (
           <Tooltip>

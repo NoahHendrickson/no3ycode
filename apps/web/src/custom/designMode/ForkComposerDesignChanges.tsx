@@ -1,3 +1,4 @@
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { PaintbrushIcon, X } from "../icons/lucide-hugeicons";
 
@@ -93,8 +94,7 @@ export function DesignChangeChip({
                 {entry.elements.length === 1 ? "no source" : `${unresolved} without source`}
               </span>
             ) : null}
-            <button
-              type="button"
+            <ButtonPrimitive
               className="flex size-5 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/16"
               onClick={(event) => {
                 event.stopPropagation();
@@ -103,7 +103,7 @@ export function DesignChangeChip({
               aria-label="Remove design change"
             >
               <X className="size-3" />
-            </button>
+            </ButtonPrimitive>
           </span>
         }
       />

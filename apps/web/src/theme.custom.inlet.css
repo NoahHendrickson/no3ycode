@@ -222,7 +222,8 @@
     [data-slot="menu-sub-trigger"],
     [data-slot="select-item"],
     [data-slot="combobox-item"],
-    [data-slot="autocomplete-item"]
+    [data-slot="autocomplete-item"],
+    [data-slot="list-item"]
   ) {
   border-radius: var(--fork-menu-row-radius);
 }
