@@ -8,6 +8,7 @@ import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
+import { GHOST_ICON_TINT_CLASS } from "./ghostIconTint";
 import { SIDEBAR_V2_SLIM_ROW_ACTION_CLASS } from "./sidebarV2TrailingColumn";
 
 const BOX = {
@@ -32,9 +33,7 @@ export function SidebarV2IconButton({
       size={BOX[box].size}
       className={cn(
         BOX[box].className,
-        // A foreground tint, not accent: accent is the row's own hover or selected fill in some
-        // themes, and the target's edge would vanish on it.
-        "[:hover,[data-pressed]]:bg-foreground/10",
+        GHOST_ICON_TINT_CLASS,
         // Mounted hidden on every row of an unvirtualized list; a compositor layer each is the
         // cost, and the press scale runs without one.
         "[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto",

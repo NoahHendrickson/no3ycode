@@ -36,6 +36,9 @@ import {
   deriveLockedProvider,
   makeModelDisabledReason,
 } from "../ChatView.logic";
+/* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker */
+import { resolvePickOptions } from "../../custom/pickOptions";
+/* fork:end fork-model-picker */
 /* fork:begin fork-new-worktree-default-base — see .fork/customizations.yaml#fork-new-worktree-default-base */
 import { resolveEffectiveEnvMode } from "../BranchToolbar.logic";
 /* fork:end fork-new-worktree-default-base */
@@ -204,18 +207,22 @@ export function useComposerSelection(input: ComposerSelectionInput) {
       useComposerDraftStore.getState().stickyOptionsByModelByProvider[instanceId]?.[resolvedModel];
     const threadSelection = activeThread.modelSelection;
     // This pick replaces the stored options, so the thread's own model carries them over.
-    const pickOptions =
-      rememberedOptions !== undefined && rememberedOptions.length > 0
-        ? rememberedOptions
-        : threadSelection.instanceId === instanceId &&
-            entry !== undefined &&
-            isSameModel(
-              { providers: providerStatuses, selectedProvider: entry.driver, settings },
-              threadSelection,
-              { instanceId, model: resolvedModel },
-            )
+    /* fork:begin fork-model-picker — see .fork/customizations.yaml#fork-model-picker
+       One rule with the model menu's effort preview (custom/pickOptions). */
+    const pickOptions = resolvePickOptions({
+      remembered: rememberedOptions,
+      threadOptions:
+        threadSelection.instanceId === instanceId &&
+        entry !== undefined &&
+        isSameModel(
+          { providers: providerStatuses, selectedProvider: entry.driver, settings },
+          threadSelection,
+          { instanceId, model: resolvedModel },
+        )
           ? threadSelection.options
-          : undefined;
+          : undefined,
+    });
+    /* fork:end fork-model-picker */
     const nextModelSelection: ModelSelection =
       pickOptions !== undefined && pickOptions.length > 0
         ? { instanceId, model: resolvedModel, options: [...pickOptions] }

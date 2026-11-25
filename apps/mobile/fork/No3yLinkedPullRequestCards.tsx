@@ -10,7 +10,7 @@ import type { PullRequestListLine } from "@t3tools/client-runtime/thread-pull-re
 import type { PullRequestChecksState, PullRequestReviewDecision } from "@t3tools/contracts";
 import { useGT } from "gt-react-native";
 import type { ReactElement } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RelativeTime } from "../src/components/RelativeTime";
@@ -25,6 +25,7 @@ import {
 import type { LinkedPullRequestActions } from "../src/features/threads/useLinkedPullRequestActions";
 import { flatGlassPalette, NO3Y_FONT, type FlatGlassPalette } from "./flatGlassTheme";
 import { HugeIcon } from "./HugeIcon";
+import { no3yCardDivider, No3yGlassCard } from "./No3yGlassCard";
 import { useNo3yBottomNavEnabled } from "./no3yBottomNavEnabled";
 import { ChecksFailingMark, ChecksRunningMark } from "./No3yChecksMarks";
 import { NO3Y_PULL_REQUEST_GLYPHS } from "./No3yPullRequestMark";
@@ -90,17 +91,7 @@ function No3yLinkedPullRequestCards(props: CardsProps) {
             {gt("{open} open · {linked} linked", { open: openCount, linked: lines.length })}
           </Text>
           {no3yPullRequestCards(lines).map((card) => (
-            <View
-              key={card[0]!.chainKey}
-              style={{
-                marginTop: 8,
-                borderRadius: 20,
-                borderWidth: StyleSheet.hairlineWidth,
-                borderColor: palette.controlBorder,
-                backgroundColor: palette.controlSurface,
-                overflow: "hidden",
-              }}
-            >
+            <No3yGlassCard key={card[0]!.chainKey} palette={palette}>
               {card.length > 1 ? (
                 <View
                   style={{
@@ -127,7 +118,7 @@ function No3yLinkedPullRequestCards(props: CardsProps) {
                   actions={props.actions}
                 />
               ))}
-            </View>
+            </No3yGlassCard>
           ))}
         </>
       )}
@@ -197,8 +188,7 @@ function Layer(props: {
           paddingRight: 12,
           paddingTop: 10,
           paddingBottom: 11,
-          borderTopWidth: props.divider ? StyleSheet.hairlineWidth : 0,
-          borderColor: palette.controlBorder,
+          ...no3yCardDivider(palette, props.divider),
           backgroundColor: pressed ? palette.rowSelected : "transparent",
         })}
       >

@@ -9163,6 +9163,8 @@
   "6afaa3e3739dc570": "Choisir une icône de projet",
   "51651ce45d481a20": "Choisir un fichier d’icône de projet",
   "a10ff8b39e16d7f8": "Épingler",
+  "876e7a8c229f3d07": "Désépingler",
+  "7253764d0ff8ff8e": "Aucun modèle épinglé pour l’instant. Épinglez un modèle pour le garder ici.",
   "c65b6d4b82c9eb43": "Les projets épinglés apparaissent en premier dans les sélecteurs de projet.",
   "2a546119bf3879ee": "Archives",
   "63e237776ff48bea": "Masqué dans les sélecteurs de projet. Les fils et les fichiers sont conservés.",
@@ -12461,5 +12463,6 @@
   "27d76249d09eb69f": "Guide de revue prêt",
   "faa3bb26abb39c93": "Échec du guide de revue",
   "b7df38b7d8792d78": "Ouvrir le guide",
-  "9e91e9a77b664e4e": "Impossible de démarrer un guide de revue"
+  "9e91e9a77b664e4e": "Impossible de démarrer un guide de revue",
+  "93804cc08b314998": "fusionne dans"
 }

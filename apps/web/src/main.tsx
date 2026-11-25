@@ -27,6 +27,9 @@ import "./theme.custom.focus-rings.css";
 /* fork:begin fork-interface-size-text-only — see .fork/customizations.yaml#fork-interface-size-text-only */
 import "./theme.custom.interface-size.css";
 /* fork:end fork-interface-size-text-only */
+/* fork:begin fork-dev-house-look — see .fork/customizations.yaml#fork-dev-house-look */
+import { applyDevHouseLook } from "./custom/devHouseLook";
+/* fork:end fork-dev-house-look */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 import { initializeForkTheme } from "./custom/forkTheme";
 /* fork:end fork-cool-dark-theme */
@@ -64,6 +67,9 @@ const router = startAppServices();
 /* fork:begin fork-marker — see .fork/customizations.yaml#fork-marker */
 applyForkMarker(document.documentElement);
 /* fork:end fork-marker */
+/* fork:begin fork-dev-house-look — see .fork/customizations.yaml#fork-dev-house-look */
+applyDevHouseLook();
+/* fork:end fork-dev-house-look */
 /* fork:begin fork-cool-dark-theme — see .fork/customizations.yaml#fork-cool-dark-theme */
 initializeForkTheme();
 /* fork:end fork-cool-dark-theme */

@@ -1677,7 +1677,6 @@ function useMarkdownStyles(): MarkdownStyleSets {
         ...(no3yCode
           ? {
               inlineCodeBackgroundColor: no3yCode.inlineCodeWash,
-              inlineCodeFontScale: 0.95,
               inlineCodeChip: NO3Y_INLINE_CODE_CHIP,
               emphasisFontWeight: "500" as const,
               tableHeaderBackgroundColor: no3yCode.cardWash,
@@ -4192,6 +4191,7 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
     jumpReady,
     settling,
     reduceMotion,
+    sendingWithKeyboard: props.sendingWithKeyboard ?? false,
   });
   /* fork:end mobile-feed-stable-end */
   if (jumpReady && revealedMessageId !== jumpToMessageId) {
@@ -4780,7 +4780,9 @@ export const ThreadFeed = memo(function ThreadFeed(props: ThreadFeedProps) {
             // Android scrolls a tapped selectable message into view when it takes focus, which reads
             // as a user scroll and drops end following before the keyboard closes.
             scrollsChildToFocus={false}
-            keyboardLiftBehavior={props.sendingWithKeyboard ? "persistent" : "whenAtEnd"}
+            /* fork:begin mobile-feed-stable-end — see .fork/customizations.yaml#mobile-feed-stable-end */
+            keyboardLiftBehavior={endBehavior.keyboardLiftBehavior}
+            /* fork:end mobile-feed-stable-end */
             // Seed the initial viewport before native onLayout.
             {...(viewportHeight > 0 && viewportWidth > 0
               ? { estimatedListSize: { height: viewportHeight, width: viewportWidth } }

@@ -415,7 +415,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
     expect(geometry?.body).toMatch(/font-size:\s*var\(--fork-composer-chip-text\)/u);
     // A pixel under the Interface font size, so the row follows the setting.
-    expect(theme).toContain("--fork-composer-chip-text: calc(1rem - 1px);");
+    expect(theme).toContain("--fork-composer-chip-text: calc(var(--text-base) - 1px);");
     expect(theme).toContain(
       "--fork-composer-control-height: calc(var(--fork-composer-chip-text) + 12px);",
     );
@@ -820,6 +820,10 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(shell).toContain("empty:hidden");
     expect(composer).toContain("statusChips={props.statusChips}");
+    // ChatComposer owns the stash pill, so the new agent screen shows it too, and the shell
+    // keeps it over the collapsed phone pill.
+    expect(composer).toMatch(/persistentChips=\{[\s\S]*?<ComposerStashChip/u);
+    expect(shell).toMatch(/\{collapsedMobile \? null : statusChips\}\s*\{persistentChips\}/u);
     expect(chatView).toContain("statusChips={composerStatusChips}");
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");

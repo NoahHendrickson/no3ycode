@@ -106,8 +106,10 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
         {...composerFloatingLayerProps}
         /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
            Glass draws the mode menu's selected row as a pane of glass
-           (theme.custom.glass-surfaces.css). */
+           (theme.custom.glass-surfaces.css). It opens above the chip, like the model menu
+           beside it, and flips below only when there is no room above. */
         data-fork-glass-selection
+        side="top"
         /* fork:end fork-composer-shell */
       >
         <ComposerPermissionsSection
@@ -138,10 +140,7 @@ export function ComposerPermissionsSection(props: {
      Radio items keep menu arrow-key navigation and close the menu on a pick. */
   return (
     <div data-composer-permissions className="grid w-72 gap-0.5 p-1">
-      <div
-        data-composer-permissions-label
-        className="px-2 pb-1 font-medium text-muted-foreground text-sm"
-      >
+      <div data-composer-permissions-label className="px-2 pb-1 text-base text-muted-foreground">
         <T>Permissions</T>
       </div>
       <MenuRadioGroup
@@ -161,12 +160,13 @@ export function ComposerPermissionsSection(props: {
             aria-label={option.label}
             aria-describedby={`${descriptionId}-${option.mode}`}
           >
-            <span className="flex w-full items-center gap-3 py-0.5">
+            {/* The interface size, like the model menu; the description a step down. */}
+            <span className="flex w-full items-center gap-3 py-0.5 text-base">
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="font-medium">{option.label}</span>
+                <span>{option.label}</span>
                 <span
                   id={`${descriptionId}-${option.mode}`}
-                  className="text-muted-foreground text-xs leading-4"
+                  className="text-muted-foreground text-sm leading-5"
                 >
                   {option.disabledReason ?? option.description}
                 </span>

@@ -225,9 +225,6 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --text-sidebar-caption--line-height: calc(15 / 11);
   --text-sidebar-status: calc(var(--fork-sidebar-px, 1px) * 12);
   --text-sidebar-status--line-height: calc(14 / 12);
-  --text-sidebar-tile: calc(var(--fork-sidebar-px, 1px) * 10);
-  --text-sidebar-tile--line-height: calc(12 / 10);
-  --spacing-sidebar-12: calc(var(--fork-sidebar-px, 1px) * 12);
   --spacing-sidebar-14: calc(var(--fork-sidebar-px, 1px) * 14);
   --spacing-sidebar-16: calc(var(--fork-sidebar-px, 1px) * 16);
   --spacing-sidebar-18: calc(var(--fork-sidebar-px, 1px) * 18);

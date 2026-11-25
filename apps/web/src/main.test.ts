@@ -8,6 +8,7 @@ vi.mock("react-dom/client", () => ({ default: { createRoot: () => ({ render: () 
    main.tsx also boots the fork's page-level installers, which need a real document. */
 vi.mock("./custom/sideChat/surface", () => ({}));
 vi.mock("./custom/forkMarker", () => ({ applyForkMarker: () => {} }));
+vi.mock("./custom/devHouseLook", () => ({ applyDevHouseLook: () => {} }));
 vi.mock("./custom/forkTheme", () => ({ initializeForkTheme: () => {} }));
 vi.mock("./custom/forkGlassNewAgentPicture", () => ({
   initializeForkGlassNewAgentPicture: () => {},

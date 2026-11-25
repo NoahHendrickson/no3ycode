@@ -49,9 +49,9 @@ export function petalTileHoverAnchor(threadKey: string) {
 }
 
 /** A bot in the Petals grid (Figma no3y-code 11:3126): a tile washed 4% in the sidebar's ink,
-    the mascot fitted to 24px in a 28px box over its 10px name, 8 + 28 + 12 + 10 = 58px tall (the
-    box's own 2px slack evens the gaps above the mascot and below the name), and the status mark
-    in its top-right corner. */
+    the mascot fitted to 24px in a 28px box over its name at the group labels' size, 8 + 28 +
+    16 + 10 = 62px tall (the box's own 2px slack evens the gaps above the mascot and below the
+    name), and the status mark in its top-right corner. */
 export function SidebarV2BotGridBody(props: {
   readonly shell: Parameters<typeof botMascotShape>[0];
   readonly mood: BotMascotMood;
@@ -80,9 +80,9 @@ export function SidebarV2BotGridBody(props: {
       </span>
       <span
         className={cn(
-          // A 12px line at the default size: room for descenders, and the taller rename field overhangs the padding
-          // instead of growing the tile.
-          "flex h-sidebar-12 w-full min-w-0 items-center justify-center text-center text-sidebar-tile font-medium",
+          // A group label's 16px line at the default size: room for descenders, and the taller
+          // rename field overhangs the padding instead of growing the tile.
+          "flex h-sidebar-16 w-full min-w-0 items-center justify-center text-center text-sidebar-label",
           props.regenerating && "opacity-55",
         )}
       >

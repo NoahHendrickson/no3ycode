@@ -9171,6 +9171,8 @@
   "6afaa3e3739dc570": "Choose a project icon",
   "51651ce45d481a20": "Choose a project icon file",
   "a10ff8b39e16d7f8": "Pin",
+  "876e7a8c229f3d07": "Unpin",
+  "7253764d0ff8ff8e": "No pinned models yet. Pin a model to keep it here.",
   "c65b6d4b82c9eb43": "Pinned projects come first in project pickers.",
   "2a546119bf3879ee": "Archive",
   "63e237776ff48bea": "Hidden from project pickers. Threads and files are kept.",
@@ -12470,5 +12472,6 @@
   "27d76249d09eb69f": "Review guide ready",
   "faa3bb26abb39c93": "Review guide failed",
   "b7df38b7d8792d78": "Open guide",
-  "9e91e9a77b664e4e": "Could not start a review guide"
+  "9e91e9a77b664e4e": "Could not start a review guide",
+  "93804cc08b314998": "merges into"
 }

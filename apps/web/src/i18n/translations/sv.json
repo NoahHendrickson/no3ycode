@@ -9169,6 +9169,8 @@
   "6afaa3e3739dc570": "Välj en projektikon",
   "51651ce45d481a20": "Välj en fil för projektikonen",
   "a10ff8b39e16d7f8": "Fäst",
+  "876e7a8c229f3d07": "Lossa",
+  "7253764d0ff8ff8e": "Inga fästa modeller än. Fäst en modell för att ha den här.",
   "c65b6d4b82c9eb43": "Fästa projekt visas först i projektväljare.",
   "2a546119bf3879ee": "Arkiv",
   "63e237776ff48bea": "Dold i projektväljare. Trådar och filer behålls.",
@@ -12468,5 +12470,6 @@
   "27d76249d09eb69f": "Granskningsguiden är klar",
   "faa3bb26abb39c93": "Granskningsguiden misslyckades",
   "b7df38b7d8792d78": "Öppna guiden",
-  "9e91e9a77b664e4e": "Kunde inte starta en granskningsguide"
+  "9e91e9a77b664e4e": "Kunde inte starta en granskningsguide",
+  "93804cc08b314998": "sammanfogas i"
 }

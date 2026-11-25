@@ -341,17 +341,6 @@
   box-shadow: none;
 }
 
-/* The effort knob is edged in 16% black on every tone. The light tones keep upstream's
-   page-coloured fill and drop its shadow, so the edge alone holds it against a light menu. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-effort-thumb] {
-  border: 1px solid rgb(0 0 0 / 16%);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
-  [data-fork-effort-thumb]:not(:focus-visible) {
-  box-shadow: none;
-}
-
 /* The music strip (fork-music-panel) floats over the sidebar like a popover: the
    popover's fill, edge and shadow, which its open button shares so the two still
    read as one piece. */

@@ -5,9 +5,9 @@
  * Same export, same props as upstream, so ProviderModelPicker's import is
  * untouched; the four helpers are upstream's verbatim. The render
  * is the fork's, hosted by ProviderModelPicker's shadow in a Base UI Menu: a
- * vertical rail of provider icon tabs (Favorites, then one per provider
+ * vertical rail of provider icon tabs (Pinned, then one per provider
  * instance) beside the search field and the chosen scope's models, legacy
- * ones behind an inline toggle. It opens on Favorites when there are favorites, else on the current
+ * ones behind an inline toggle. It opens on Pinned when models are pinned, else on the current
  * model's provider. Typing anywhere lands in the search field, and a query
  * swaps the list for one flat, provider-agnostic list of matching models.
  * Picking a model never closes the menu from here; the host decides, since it
@@ -33,15 +33,13 @@ import { groupModelsBySubProvider } from "@t3tools/client-runtime/providerSubPro
 import { useNavigate } from "@tanstack/react-router";
 import { Fragment, memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
-import { CheckIcon, ChevronDownIcon, HeartIcon, SearchIcon, StarIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, PinIcon, SearchIcon } from "lucide-react";
 import { getProviderStatusMessage, hasProviderSetup } from "./ProviderStatusBanner";
 import { useProviderWorkspaceSnapshotRefresh } from "./useProviderWorkspaceSnapshotRefresh";
 import { rankModelPickerSearch } from "@t3tools/client-runtime/model-search";
 import { getDisplayModelName, ModelEsque } from "./providerIconUtils";
-import { Button } from "../ui/button";
 import { MenuItem } from "../ui/menu";
 import { Badge } from "../ui/badge";
-import { Kbd } from "../ui/kbd";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { isCommandPaletteOpen } from "../../commandPaletteBus";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
@@ -51,7 +49,6 @@ import {
   modelPickerJumpCommandForIndex,
   modelPickerJumpIndexFromCommand,
   resolveShortcutCommand,
-  shortcutLabelForCommand,
 } from "../../keybindings";
 import {
   useEnvironmentModelPreferences,
@@ -60,6 +57,8 @@ import {
 import { announce } from "~/lib/announce";
 import { cn } from "~/lib/utils";
 import { stripProviderName } from "~/custom/modelPickerDisplayName";
+import { type RenderRowControl, RowControlSlot } from "~/custom/modelRowControl";
+import { orderClaudeFamilies } from "~/custom/claudeFamilyOrder";
 import { ModelPickerProviderGlyph } from "~/custom/icons/ModelPickerProviderGlyph";
 import { MenuIconTab, MenuTabs } from "~/custom/Tabs";
 import {
@@ -196,10 +195,10 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
   return event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
 }
 
-const EMPTY_MODEL_JUMP_LABELS = new Map<string, string>();
-
 /** Every row shares one shape: 32px, 4px corners, 12px medium label. */
-const ROW_CLASS = "h-8 min-h-8 rounded-[4px] px-2 py-0 text-xs font-medium sm:min-h-8 sm:text-xs";
+const ROW_CLASS =
+  "h-8 min-h-8 rounded-[4px] px-2 py-0 text-base font-normal sm:min-h-8 sm:text-base";
+
 /** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
 const HOVER_REVEAL_CLASS =
   "opacity-0 transition-opacity group-hover:opacity-100 group-data-highlighted:opacity-100";
@@ -227,6 +226,11 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   onOpenProviderSetup?: (instanceId: ProviderInstanceId) => void;
   getModelDisabledReason?: (instanceId: ProviderInstanceId, model: string) => string | null;
   onInstanceModelChange: (instanceId: ProviderInstanceId, model: string) => void;
+  /**
+   * A row's control before its pin (the composer's effort). The current model's row always gets
+   * one; other rows only outside search and when they can be picked. `pick` chooses the row.
+   */
+  renderRowControl?: RenderRowControl;
   /** The search field; a Menu has no `initialFocus`, so this content focuses it itself. */
   searchInputRef: RefObject<HTMLInputElement | null>;
 }) {
@@ -312,6 +316,12 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   // Favorites are keyed by `${instanceId}:${slug}`; pre-migration favorites
   // keyed by driver slugs still resolve — the default instance id equals it.
   const favoritesSet = new Set(favorites.map((fav) => providerModelKey(fav.provider, fav.model)));
+  // Where a row sits in a provider's list or search (a pinned legacy model among the current ones,
+  // search ties) reads the pins as they stood at the first pin toggle of this open, so pinning
+  // never moves a row under the pointer; it shows on the next open. The pin and the Pinned tab,
+  // which is the list of pins, are live.
+  const [placementPins, setPlacementPins] = useState<ReadonlySet<string> | null>(null);
+  const placementSet = placementPins ?? favoritesSet;
   const entryByInstanceId = new Map(instanceEntries.map((entry) => [entry.instanceId, entry]));
   const instanceOrder = instanceEntries.map((entry) => entry.instanceId);
   const matchesLockedProvider = (
@@ -381,18 +391,20 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           ...(model.subProvider ? { subProvider: model.subProvider } : {}),
           driverKind: model.driverKind,
           providerDisplayName: model.instanceDisplayName,
-          isFavorite: favoritesSet.has(providerModelKey(model.instanceId, model.slug)),
+          isFavorite: placementSet.has(providerModelKey(model.instanceId, model.slug)),
         }),
       )
     : [];
 
-  const favoriteModels = sortProviderModelItems(
-    flatModels.filter(
-      (model) =>
-        matchesLockedProvider(model) &&
-        favoritesSet.has(providerModelKey(model.instanceId, model.slug)),
+  const favoriteModels = orderClaudeFamilies(
+    sortProviderModelItems(
+      flatModels.filter(
+        (model) =>
+          matchesLockedProvider(model) &&
+          favoritesSet.has(providerModelKey(model.instanceId, model.slug)),
+      ),
+      { favoriteModelKeys: favoritesSet, groupFavorites: false, instanceOrder },
     ),
-    { favoriteModelKeys: favoritesSet, groupFavorites: false, instanceOrder },
   );
 
   // The menu remounts on every open and picks its scope once: Favorites when
@@ -427,11 +439,19 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   });
 
   const isLegacyModel = (model: ModelPickerItem) =>
-    model.isLegacy === true && !favoritesSet.has(providerModelKey(model.instanceId, model.slug));
+    model.isLegacy === true && !placementSet.has(providerModelKey(model.instanceId, model.slug));
   const modelsForInstance = (instanceId: ProviderInstanceId) => {
-    const models = sortProviderModelItems(
-      flatModels.filter((model) => model.instanceId === instanceId),
-      { favoriteModelKeys: favoritesSet, groupFavorites: true, instanceOrder: [] },
+    // The provider's own order (Claude's by family): pinned models gather on the Pinned tab,
+    // not atop this list.
+    const models = orderClaudeFamilies(
+      sortProviderModelItems(
+        flatModels.filter((model) => model.instanceId === instanceId),
+        {
+          favoriteModelKeys: placementSet,
+          groupFavorites: false,
+          instanceOrder: [],
+        },
+      ),
     );
     return {
       all: models,
@@ -586,7 +606,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     });
     selectScope(next);
     announce(
-      next === "favorites" ? gt("Favorites") : (entryByInstanceId.get(next)?.displayName ?? next),
+      next === "favorites" ? gt("Pinned") : (entryByInstanceId.get(next)?.displayName ?? next),
       "model-picker",
     );
   };
@@ -615,17 +635,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     terminalOpen: props.terminalOpen,
     modelPickerOpen: true,
   } as const;
-  const modelJumpLabelByKey = ((): ReadonlyMap<string, string> => {
-    if (jumpTargets.length === 0) return EMPTY_MODEL_JUMP_LABELS;
-    const options = { platform: navigator.platform, context: modelJumpShortcutContext };
-    const mapping = new Map<string, string>();
-    jumpTargets.forEach((model, index) => {
-      const command = modelPickerJumpCommandForIndex(index);
-      const label = command ? shortcutLabelForCommand(keybindings, command, options) : null;
-      if (label) mapping.set(providerModelKey(model.instanceId, model.slug), label);
-    });
-    return mapping.size > 0 ? mapping : EMPTY_MODEL_JUMP_LABELS;
-  })();
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- subscribes a capture-phase window keydown listener for the picker's lifetime
   useEffect(() => {
@@ -732,7 +741,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       );
       return notice
         ? [
-            <div key={`update:${entry.instanceId}`} className="px-2 py-1.5 text-xs leading-snug">
+            <div key={`update:${entry.instanceId}`} className="px-2 py-1.5 text-base leading-snug">
               <p className="text-muted-foreground">{notice}</p>
               {providerUpdateChannelLags(entry.snapshot, searchQuery) ? null : (
                 <MenuItem
@@ -755,7 +764,12 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     const disabledReason = getModelDisabledReason?.(model.instanceId, model.slug) ?? null;
     const isFavorite = favoritesSet.has(modelKey);
     const isSelected = selectedModelKeySet.has(modelKey);
-    const jumpLabel = modelJumpLabelByKey.get(modelKey);
+    const isActive = modelKey === activeModelKey;
+    // Not on other rows in search results (a pick there refocuses the search field), on rows
+    // that cannot be picked, or on touch, where a control shown only on hover is a hidden target.
+    const showsRowControl =
+      props.renderRowControl !== undefined &&
+      (isActive || (!isSearching && !disabledReason && !coarsePointer));
     // Upstream retired its driver-keyed glyph table; the instance icon carries
     // the ACP registry art and accent the row's provider actually has.
     const providerEntry = showProvider ? entryByInstanceId.get(model.instanceId) : undefined;
@@ -798,8 +812,24 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         // The host closes the menu on a pick, or keeps it open for what it
         // renders below the list.
         closeOnClick={false}
-        className={cn(ROW_CLASS, "group", disabledReason && "data-disabled:pointer-events-auto")}
+        className={cn(
+          ROW_CLASS,
+          "group",
+          // Lit while the menu its control opened is open (dark palettes: theme.custom.css).
+          "has-[>*>[data-model-row-control]>[data-open]]:bg-accent",
+          disabledReason && "data-disabled:pointer-events-auto",
+        )}
         onClick={(event) => chooseModel(model, event.shiftKey)}
+        // ArrowRight opens the row's control (the effort menu), as a submenu trigger would.
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowRight" || !showsRowControl) return;
+          const control = event.currentTarget.querySelector<HTMLElement>(
+            "[data-model-row-control] button",
+          );
+          if (!control) return;
+          event.preventDefault();
+          control.click();
+        }}
       >
         {disabledReason ? (
           <Tooltip>
@@ -814,32 +844,38 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           <span className="flex min-w-0 flex-1 items-center gap-2">{label}</span>
         )}
         <span className="flex shrink-0 items-center gap-1">
-          {jumpLabel ? (
-            <Kbd
-              className={cn(
-                "h-4 min-w-0 rounded-sm bg-foreground/4 px-1.5 text-[10px]",
-                HOVER_REVEAL_CLASS,
-              )}
+          {showsRowControl && props.renderRowControl ? (
+            // Hidden when the host renders nothing for this row, so the trailing gap holds.
+            <span
+              className={cn("flex empty:hidden", !isActive && HOVER_REVEAL_CLASS)}
+              data-model-row-control=""
             >
-              {jumpLabel}
-            </Kbd>
+              <RowControlSlot
+                render={props.renderRowControl}
+                model={model}
+                selected={isActive}
+                onPick={() => chooseModel(model)}
+              />
+            </span>
           ) : null}
-          {/* Toggles the favorite without choosing the row: the item selects
-              on click, so the star's click must not reach it. */}
-          <Button
-            variant="ghost-muted"
-            size="icon-xs"
+          {/* Pins the model without choosing the row: the item selects on click, so
+              the pin's click must not reach it. Pins are the favorites. Not a Button: its
+              variants paint an opaque hover fill, a dark square on the lit row; this one takes a
+              white wash a step past the row's. It sits between the effort and the check. */}
+          <button
+            type="button"
             tabIndex={-1}
-            aria-label={isFavorite ? gt("Remove from favorites") : gt("Add to favorites")}
+            aria-label={isFavorite ? gt("Unpin") : gt("Pin")}
             className={cn(
-              HOVER_REVEAL_CLASS,
-              // No hover on touch: the star stays shown, or tapping a row's
-              // right edge would toggle a favorite the user cannot see.
+              "flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-muted-foreground outline-none hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed",
+              // A pinned model shows its filled pin at rest, so the pin reads at a glance and
+              // unpins from there; an unpinned one shows the outline on hover.
+              !isFavorite && HOVER_REVEAL_CLASS,
+              // No hover on touch: the pin stays shown, or tapping a row's
+              // right edge would toggle a pin the user cannot see.
               "pointer-coarse:opacity-100",
-              // Button's 44px coarse-pointer target would reach into the next row's star.
-              "pointer-coarse:after:hidden",
-              // Button fades a disabled button to 64%; this one stays hidden until its row is
-              // hovered, like any other row's star.
+              isFavorite && "text-foreground",
+              // A disabled row's pin stays hidden until the row is hovered, then shows faded.
               "disabled:opacity-0 disabled:group-hover:opacity-64 disabled:group-data-highlighted:opacity-64",
             )}
             disabled={Boolean(disabledReason)}
@@ -849,14 +885,18 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
+              setPlacementPins((current) => current ?? favoritesSet);
               void toggleFavorite(model.instanceId, model.slug);
             }}
           >
-            <StarIcon className={cn("size-3.5", isFavorite && "fill-current text-yellow-500")} />
-          </Button>
+            <PinIcon className="size-3.5" weight={isFavorite ? "fill" : "stroke"} />
+          </button>
           {isSelected ? (
             <CheckIcon className="size-4 shrink-0 text-foreground" aria-label="Selected" />
-          ) : null}
+          ) : (
+            // Holds the check's place at the far right, so every row's pin and effort line up.
+            <span className="size-4 shrink-0" aria-hidden />
+          )}
         </span>
       </MenuItem>
     );
@@ -961,8 +1001,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       >
         {renderScopeTab({
           target: "favorites",
-          title: gt("Favorites"),
-          icon: <HeartIcon className="size-4 shrink-0" aria-hidden />,
+          title: gt("Pinned"),
+          icon: <PinIcon className="size-4 shrink-0" aria-hidden />,
         })}
         {providerEntries.map(renderProviderTab)}
       </MenuTabs>
@@ -1065,7 +1105,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           </>
         )}
         {needsSetup ? (
-          <div className="px-2 py-1.5 text-xs leading-snug">
+          <div className="px-2 py-1.5 text-base leading-snug">
             <p className="line-clamp-3 text-muted-foreground">
               {getProviderStatusMessage(entry.snapshot, messages)}
             </p>
@@ -1084,7 +1124,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         legacy.length === 0 &&
         !subProviderSections?.sections.length &&
         !needsSetup ? (
-          <p className="px-2 py-2 text-xs text-muted-foreground">
+          <p className="px-2 py-2 text-base text-muted-foreground">
             {workspaceModelsScanning ? gt("Searching project models...") : "No models"}
           </p>
         ) : null}
@@ -1100,7 +1140,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           {searchResults.length > 0 ? (
             searchResults.map((model) => renderModelItem(model, true))
           ) : (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{gt("No models found")}</p>
+            <p className="px-2 py-2 text-base text-muted-foreground">{gt("No models found")}</p>
           )}
           {renderUpdateRequiredNotices(instanceEntries.filter(matchesLockedProvider))}
         </>
@@ -1110,8 +1150,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       return favoriteModels.length > 0 ? (
         favoriteModels.map((model) => renderModelItem(model, true))
       ) : (
-        <p className="px-2 py-2 text-xs text-muted-foreground">
-          No favorites yet. Star a model to add it here.
+        <p className="px-2 py-2 text-base text-muted-foreground">
+          <T>No pinned models yet. Pin a model to keep it here.</T>
         </p>
       );
     }
@@ -1129,7 +1169,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       >
         {renderProviderTabs()}
         <div className="flex min-w-0 flex-1 flex-col gap-1 p-2" data-fork-model-picker="list">
-          <label className="flex h-8 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
+          <label className="flex h-9 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
               ref={searchInputRef}
@@ -1138,7 +1178,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               tabIndex={coarsePointer ? -1 : undefined}
               aria-label={gt("Search models")}
               placeholder={gt("Search models")}
-              className="h-full min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
+              className="h-full min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
               value={searchQuery}
               onChange={(event) => {
                 setSearchQuery(event.target.value);

@@ -7,15 +7,16 @@
    a step back toward the stage behind the same ring; each theme names that one fill,
    --fork-thread-composer-card.
 
-   Scoped to the thread composer's form: a new agent's draft keeps its own composer, and Petal
-   digest cards and the scheduled editor reuse the vessel, box and surface markers outside any
-   form. */
+   Scoped to the thread composer's body (ComposerShell): a new agent's draft keeps its own
+   composer, and Petal digest cards (in the form's aside, outside the body) and the scheduled
+   editor reuse the vessel, box and surface markers. */
 :root[data-fork="noahhendrickson-t3code"]:is(
     [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
     [data-fork-theme="basic"]
   )
   [data-chat-composer-overlay="true"]:not([data-draft-hero])
-  [data-chat-composer-form] {
+  [data-chat-composer-form]
+  :where([data-fork-composer-body]) {
   --fork-composer-radius: 12px;
 
   & [data-fork-composer-vessel] {

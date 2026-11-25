@@ -10,8 +10,8 @@ import { cn } from "~/lib/utils";
 import type { ProviderInstanceEntry } from "~/providerInstances";
 import codexMarkUrl from "../assets/codex-mark.png";
 
-export const CLAUDE_INK = "#D97757";
-export const CODEX_INK = "#8680ff";
+const CLAUDE_INK = "#D97757";
+const CODEX_INK = "#8680ff";
 const MARK_SIZE = "var(--fork-mark-size, 1rem)";
 
 const CLAUDE_MARK_STYLE: CSSProperties = {

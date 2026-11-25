@@ -9163,6 +9163,8 @@
   "6afaa3e3739dc570": "Projektsymbol auswählen",
   "51651ce45d481a20": "Datei für Projektsymbol auswählen",
   "a10ff8b39e16d7f8": "Anheften",
+  "876e7a8c229f3d07": "Lösen",
+  "7253764d0ff8ff8e": "Noch keine angehefteten Modelle. Hefte ein Modell an, um es hier zu behalten.",
   "c65b6d4b82c9eb43": "Angeheftete Projekte stehen in der Projektauswahl oben.",
   "2a546119bf3879ee": "Archivieren",
   "63e237776ff48bea": "In der Projektauswahl ausgeblendet. Threads und Dateien bleiben erhalten.",
@@ -12461,5 +12463,6 @@
   "27d76249d09eb69f": "Review-Leitfaden bereit",
   "faa3bb26abb39c93": "Review-Leitfaden fehlgeschlagen",
   "b7df38b7d8792d78": "Leitfaden öffnen",
-  "9e91e9a77b664e4e": "Review-Leitfaden konnte nicht gestartet werden"
+  "9e91e9a77b664e4e": "Review-Leitfaden konnte nicht gestartet werden",
+  "93804cc08b314998": "wird zusammengeführt in"
 }

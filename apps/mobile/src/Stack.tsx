@@ -638,10 +638,10 @@ const RootStackConfig = createWorkspaceStackNavigator({
       screen: No3yPromptStashSheet,
       options: no3ySheetOptions(sheetRoute({ detent: 0.5, header: "none" })),
     }),
-    // The thread status pill's half sheet (fork/No3yStatusPill.tsx), the usage sheet's shape.
+    // The thread status pill's half sheet (fork/No3yStatusPill.tsx), drawn like the Agents sheet.
     No3yThreadStatus: createNativeStackScreen({
       screen: No3yStatusSheet,
-      options: no3ySheetOptions(sheetRoute({ detent: 0.5, maxDetent: 0.5, header: "none" })),
+      options: no3ySheetOptions(sheetRoute({ detent: 0.5 })),
     }),
     /* fork:end no3y-mobile-redesign */
     PullRequest: createNativeStackScreen({

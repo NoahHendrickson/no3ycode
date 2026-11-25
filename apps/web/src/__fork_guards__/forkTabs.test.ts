@@ -57,10 +57,6 @@ describe("fork-tabs", () => {
     expect(basic.slice(at)).toMatch(
       /\{\s*gap: 2px;\s*padding: 2px;\s*border-radius: 8px;\s*background-color: var\(--basic-wash-2\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*calc\(0\.75rem \* var\(--fork-interface-text-scale, 1\)\);/u,
     );
-    // The model menu's option strips are Tabs, so this rule draws them too.
-    expect(read("../custom/ComposerModelPicker.tsx")).toMatch(
-      /<Tabs\s+data-fork-segmented-trait=""/u,
-    );
     // No strip keeps an older Basic look of its own.
     expect(basic).not.toMatch(/\[data-slot="sidebar-inset"\]\s*\[data-fork-segmented-tabs\]/u);
   });

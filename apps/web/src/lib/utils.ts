@@ -25,7 +25,6 @@ const twMerge = extendTailwindMerge({
         "sidebar-meta",
         "sidebar-caption",
         "sidebar-status",
-        "sidebar-tile",
         /* fork:end fork-sidebar-type-size */
       ],
     },
