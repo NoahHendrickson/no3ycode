@@ -46,6 +46,9 @@ import {
   getAgentLiveActivities,
   startAgentLiveActivity,
 } from "./agentLiveActivity";
+/* fork:begin no3y-live-activity — see .fork/customizations.yaml#no3y-live-activity */
+import { armNo3yLiveActivityOnSend } from "../../../fork/no3yLiveActivityHook";
+/* fork:end no3y-live-activity */
 import { resolveCloudPublicConfig } from "../cloud/publicConfig";
 import { supportsAgentAwarenessPush } from "./capabilities";
 import { makeRelayDeviceRegistrationRequest, resolveApsEnvironment } from "./registrationPayload";
@@ -500,6 +503,9 @@ export function armAgentAwarenessLiveActivityForLocalWork(input: {
   readonly threadTitle: string;
   readonly projectTitle: string;
 }): void {
+  /* fork:begin no3y-live-activity — see .fork/customizations.yaml#no3y-live-activity */
+  if (armNo3yLiveActivityOnSend(input)) return;
+  /* fork:end no3y-live-activity */
   if (!canRegisterRemoteLiveActivities() || !relayTokenProvider) {
     return;
   }

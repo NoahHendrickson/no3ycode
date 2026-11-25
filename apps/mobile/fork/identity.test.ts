@@ -60,6 +60,10 @@ it.each([
   );
   expect(pluginOptions(config, "expo-camera")?.cameraPermission).toMatch(/^Allow no3y Code /u);
   expect(JSON.stringify(config)).not.toMatch(/\bT3 Code\b/u);
+  // Mods run in reverse: listed first, the Live Activity marks land after expo-widgets wipes the target.
+  const plugins = config.plugins ?? [];
+  const logo = plugins.indexOf("./plugins/withWidgetLogoAsset.cjs");
+  expect(plugins[logo - 1]).toBe("./fork/plugins/withNo3yWidgetAssets.cjs");
 });
 
 it("renames only display copy, never build inputs such as file paths", async () => {
