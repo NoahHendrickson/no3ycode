@@ -20,10 +20,8 @@ import { StopSquareIcon } from "~/custom/StopSquareIcon";
 import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
-import {
-  ForkDictationCancelButton,
-  type ForkDictationPrimary,
-} from "~/custom/voice/ForkDictationControl";
+import { ForkDictationCancelButton } from "~/custom/voice/ForkDictationControl";
+import type { ForkDictation } from "~/custom/voice/forkDictation";
 /* fork:end fork-local-dictation */
 import { useEnvironmentIdentificationMode } from "~/hooks/useSettings";
 import type { MessageResolver } from "~/i18n/messages";
@@ -71,7 +69,7 @@ interface ComposerPrimaryActionsProps {
   preserveComposerFocusOnPointerDown?: boolean;
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
   /** Set while a dictation session is live: its cancel X takes the send slot. */
-  forkDictation?: ForkDictationPrimary | null;
+  forkDictation?: ForkDictation | null;
   /* fork:end fork-local-dictation */
   isEditingQueuedMessage?: boolean;
   onSubmitMessage?: MouseEventHandler<HTMLButtonElement>;
@@ -376,7 +374,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   const sendButtonClassName =
     "relative isolate flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-message-action text-message-action-foreground shadow-xs transition-all duration-150 enabled:cursor-pointer enabled:inset-shadow-control-highlight enabled:shadow-message-action/24 hover:scale-105 hover:bg-message-action-hover active:inset-shadow-control-pressed active:shadow-none disabled:pointer-events-none disabled:opacity-64 disabled:shadow-none disabled:hover:scale-100 sm:h-8 sm:w-8 [&_svg]:pointer-events-none";
   const forkDictationButton = forkDictation ? (
-    <ForkDictationCancelButton dictation={forkDictation.dictation} />
+    <ForkDictationCancelButton dictation={forkDictation} />
   ) : null;
   /* fork:end fork-local-dictation */
 
@@ -392,7 +390,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
     if (forkDictation) {
       return (
         <>
-          <ForkDictationCancelButton dictation={forkDictation.dictation} leading />
+          <ForkDictationCancelButton dictation={forkDictation} leading />
           {renderStopGenerationButton(false)}
         </>
       );

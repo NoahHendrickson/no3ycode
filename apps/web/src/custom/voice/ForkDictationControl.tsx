@@ -5,7 +5,6 @@ import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
-import { useInletMorphPresence } from "../inletMenuMorph";
 import type { ForkDictation } from "./forkDictation";
 
 const METER_BARS = 11;
@@ -129,12 +128,6 @@ export function ForkDictationPreview(props: {
 
 const DONE_LABEL = "Done, transcribe (Right Command)";
 
-/** What ComposerPrimaryActions needs to put the cancel X in the send slot. */
-export type ForkDictationPrimary = {
-  readonly dictation: ForkDictation;
-  readonly disabled: boolean;
-};
-
 /**
  * The mic's hover: the word Dictate on the frosted glass tooltip, a step
  * larger than the default chip. A live session shows its action label instead.
@@ -149,9 +142,6 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
     </Tooltip>
   );
 }
-
-/** How long the meter outlives its session, for Inlet's exit animation. */
-const TIMELINE_CLOSE_MS = 320;
 
 /**
  * The blue check (the done status colour) that ends a session, at the pill's right end so it lands
@@ -203,7 +193,6 @@ function DictationDoneButton(props: { dictation: ForkDictation }) {
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
   const live = dictation.blocksSubmission;
-  const closing = useInletMorphPresence(live, TIMELINE_CLOSE_MS).ending;
   if (!dictation.isAvailable) return null;
   if (live) {
     return (
@@ -231,31 +220,23 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
     );
   }
   return (
-    <div
-      {...(closing ? { "data-fork-dictation-closing": "" } : {})}
-      data-fork-dictation-mic=""
-      className="flex shrink-0 items-center"
-    >
-      {closing ? (
-        <VoiceLevelMeter level={dictation.level} />
-      ) : (
-        <DictationTooltip
-          label="Dictate"
-          trigger={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Dictate (Right Command)"
-              data-fork-composer-action="dictate"
-              disabled={disabled}
-              onPointerDown={(event) => event.preventDefault()}
-              onClick={dictation.start}
-            />
-          }
-          icon={<MicIcon weight="fill" />}
-        />
-      )}
+    <div data-fork-dictation-mic="" className="flex shrink-0 items-center">
+      <DictationTooltip
+        label="Dictate"
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Dictate (Right Command)"
+            data-fork-composer-action="dictate"
+            disabled={disabled}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={dictation.start}
+          />
+        }
+        icon={<MicIcon weight="fill" />}
+      />
     </div>
   );
 }

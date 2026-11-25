@@ -3948,9 +3948,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         onSubmitMessage={handleSubmitMessageStable}
         onResume={onResume}
         /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
-        forkDictation={
-          dictationOwnsPrimaryAction ? { dictation, disabled: forkDictationStartBlocked } : null
-        }
+        forkDictation={dictationOwnsPrimaryAction ? dictation : null}
         /* fork:end fork-local-dictation */
         /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
            Previous lives in the question card (onPrevious below). */

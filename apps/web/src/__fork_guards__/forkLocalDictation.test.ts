@@ -66,9 +66,7 @@ describe("fork local dictation", () => {
     expect(composer).toContain(
       "pendingAction={dictationOwnsPrimaryAction ? null : pendingPrimaryAction}",
     );
-    expect(composer).toContain(
-      "dictationOwnsPrimaryAction ? { dictation, disabled: forkDictationStartBlocked } : null",
-    );
+    expect(composer).toContain("forkDictation={dictationOwnsPrimaryAction ? dictation : null}");
     // Since the orchestrator-V2 sync upstream renders stop alone (no send
     // beside it); the fork keeps the mic to stop's left on that branch and
     // otherwise hands the whole slot to the dictation button, bare.
@@ -76,7 +74,7 @@ describe("fork local dictation", () => {
       /const forkDictationButton = forkDictation \? \(\s*<ForkDictationCancelButton/u,
     );
     expect(primary).toMatch(
-      /if \(forkDictation\) \{\s*return \(\s*<>\s*<ForkDictationCancelButton dictation=\{forkDictation\.dictation\} leading \/>\s*\{renderStopGenerationButton\(false\)\}\s*<\/>/u,
+      /if \(forkDictation\) \{\s*return \(\s*<>\s*<ForkDictationCancelButton dictation=\{forkDictation\} leading \/>\s*\{renderStopGenerationButton\(false\)\}\s*<\/>/u,
     );
     expect(primary).toMatch(
       /if \(forkDictationButton\) \{\s*return withStopButton\(forkDictationButton\);\s*\}/u,
@@ -127,13 +125,10 @@ describe("fork local dictation", () => {
       /export function ForkDictationCancelButton[\s\S]*?<Button[^>]*data-fork-composer-action="dictate-cancel"/su,
     );
     expect(theme).toContain('[data-fork-composer-action="dictate-cancel"]');
-    // The meter outlives the session briefly for Inlet's exit animation
-    // (useInletMorphPresence). Its bars react in place, each on its own drifting weight, to
-    // the current level (dots in silence), never scrolling a history.
-    expect(control).toMatch(
-      /closing \? \(\s*<VoiceLevelMeter level=\{dictation\.level\} \/>\s*\) : \(/u,
-    );
-    expect(control).toContain("useInletMorphPresence(live, TIMELINE_CLOSE_MS)");
+    // The meter's bars react in place, each on its own drifting weight, to the
+    // current level (dots in silence), never scrolling a history. It mounts
+    // only in the live capsule: nothing outlives the session.
+    expect(control).not.toContain("data-fork-dictation-closing");
     expect(control).toContain('data-fork-dictation-meter=""');
     expect(control).toContain("const METER_CENTRE_BIAS");
     // The meter undoes upstream's level easing so bars drop the moment speech
