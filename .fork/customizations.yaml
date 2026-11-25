@@ -2743,7 +2743,7 @@
     root and is the thread title's size, 14px by default. theme.custom.css turns
     it into one unit, --fork-sidebar-px (a drawn px at the current size), and
     index.css registers the panel's named sizes as multiples of it: text-sidebar-title (14 on an 18px
-    line, card titles), -row (14/16, slim titles, the rename field and a Petals grid name),
+    line, card titles), -row (14/16, slim titles and the rename field),
     -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
     and status headers, the repo line, the card's PR badge) and -caption
     (11/15, model label and subagent count), -status (12/14, a Petal card's
@@ -7645,7 +7645,7 @@
     draws SidebarV2BotGridBody: a 62px tile (8 + 28 + 16 + 10) washed 4% in the
     sidebar's ink, the columns sharing the width at least 56px each and 8px
     apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 24px in a 28px box over its name in
-    regular text-sidebar-row (14px), the
+    regular text-sidebar-label (the Sidebar font size less 1px, as group labels), the
     status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover
     actions (its context menu keeps them), and its hover card opens beyond the
