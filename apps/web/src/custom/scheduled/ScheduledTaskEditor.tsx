@@ -390,7 +390,7 @@ function TriggerFields(props: ScheduledTaskEditorProps) {
           <Field label="Repositories">
             <div className="flex flex-col gap-3">
               {props.projects.map((project) => (
-                <Label key={project.id} className="flex items-center gap-2">
+                <Label key={project.id} className="flex items-center">
                   <Checkbox
                     checked={draft.githubProjectIds?.includes(project.id) ?? false}
                     onCheckedChange={(checked) =>

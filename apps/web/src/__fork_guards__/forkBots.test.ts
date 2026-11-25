@@ -243,7 +243,7 @@ describe("fork guard: fork-bots", () => {
     expect(cardBody).toContain("<BotMascotTile");
     // The new-Petal draft previews the card it becomes: the tile, in the same 32px column.
     const botsSection = readSibling("../custom/bots/SidebarV2BotsSection.tsx");
-    expect(botsSection).toContain('compact ? "-mx-[7px]" : "-mx-[2px]"');
+    expect(botsSection).toContain('compact ? "-mx-1.75" : "-mx-0.5"');
     expect(botsSection).toContain('<BotMascotTile shape={mascot} mood="Idle" />');
     // The avatar card is 6 + 16 + 2 + 14 + 6 (44px at the default size), so its offscreen size hint
     // says so too, with both lines on Sidebar font size.

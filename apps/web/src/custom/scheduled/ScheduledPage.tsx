@@ -351,10 +351,10 @@ const TASK_COLUMN_COUNT = 6;
 
 function TaskNoticeRow(props: { readonly children: string; readonly tone?: "error" | "muted" }) {
   return (
-    <TableRow className="hover:bg-transparent">
+    <TableRow interactive={false}>
       <TableCell
         colSpan={TASK_COLUMN_COUNT}
-        className={props.tone === "error" ? "text-destructive" : "text-muted-foreground"}
+        tone={props.tone === "error" ? "destructive" : "muted"}
         role="status"
       >
         {props.children}
@@ -382,8 +382,8 @@ function EnvironmentTaskRows(props: {
   return (
     <TableBody>
       {props.showEnvironment ? (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={TASK_COLUMN_COUNT} className="text-muted-foreground">
+        <TableRow interactive={false}>
+          <TableCell colSpan={TASK_COLUMN_COUNT} tone="muted">
             {props.environment.label}
           </TableCell>
         </TableRow>
@@ -400,12 +400,9 @@ function EnvironmentTaskRows(props: {
         groupAutomations(tasks, props.grouping, petalTitles).map((group) => (
           <Fragment key={group.key}>
             {group.label === null ? null : (
-              <TableRow className="hover:bg-transparent" data-testid="scheduled-task-group">
-                <TableCell
-                  colSpan={TASK_COLUMN_COUNT}
-                  className="font-medium text-muted-foreground"
-                >
-                  {group.label}
+              <TableRow interactive={false} data-testid="scheduled-task-group">
+                <TableCell colSpan={TASK_COLUMN_COUNT} tone="muted">
+                  <span className="font-medium">{group.label}</span>
                 </TableCell>
               </TableRow>
             )}
@@ -551,9 +548,7 @@ function TaskRow(props: {
           </div>
         )}
       </TableCell>
-      <TableCell className="text-muted-foreground">
-        {shortModelName(task.modelSelection.model)}
-      </TableCell>
+      <TableCell tone="muted">{shortModelName(task.modelSelection.model)}</TableCell>
       <TableCell className="text-right">
         <div
           className="inline-flex items-center gap-2"

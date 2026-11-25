@@ -58,7 +58,7 @@ export function BotMascotTile(props: {
   return (
     <span
       data-fork-bot-mascot-tile=""
-      className="flex size-8 shrink-0 items-center justify-center rounded-[8px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]"
+      className="flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]"
       style={{
         backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,
       }}
@@ -74,7 +74,7 @@ export function BotMascotLead(props: {
   readonly mood: BotMascotMood;
 }) {
   return (
-    <span className="flex h-[18px] w-[22px] shrink-0 items-center justify-center">
+    <span className="flex h-4.5 w-5.5 shrink-0 items-center justify-center">
       <BotMascot shape={props.shape} mood={props.mood} />
     </span>
   );

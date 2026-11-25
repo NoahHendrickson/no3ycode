@@ -179,7 +179,8 @@ export function BotThreadsPanelControls(props: {
                 key={option}
                 value={option}
                 closeOnClick
-                className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                size="chrome"
+                className="h-8 min-h-8"
               >
                 {BOT_WORK_SORT_LABELS[option]}
               </MenuRadioItem>

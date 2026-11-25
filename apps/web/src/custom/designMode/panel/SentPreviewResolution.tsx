@@ -206,8 +206,8 @@ export function SentPreviewResolution({
      * user a choice between restoring everything and discarding everything. */
     const landed = measured?.summary.applied ?? 0;
     return (
-      <Alert variant="success" className="rounded-md px-2.5 py-2" data-fork-design-resolve-previews>
-        <AlertTitle className="text-[11px] leading-relaxed">
+      <Alert variant="success" size="sm" data-fork-design-resolve-previews>
+        <AlertTitle>
           {comparing
             ? "Showing the live page — your previews are hidden."
             : "The agent finished this turn."}
@@ -216,7 +216,7 @@ export function SentPreviewResolution({
           /* The peek's exits. The discard's blast radius is stated beside the button that
              has it, on this path as on every other — a user who kept editing after the
              send must read it. */
-          <AlertDescription className="gap-1.5 text-[11px] leading-relaxed">
+          <AlertDescription>
             <p>Discarding clears every edit on this tab — including any made after the send.</p>
             <div className="flex flex-wrap items-center gap-1">
               <Button variant="secondary" size="xs" onClick={onRestorePreviews} type="button">
@@ -250,19 +250,19 @@ export function SentPreviewResolution({
 
   return (
     <div
-      className="space-y-1.5 rounded-md bg-[var(--fork-design-field)] px-2.5 py-2"
+      className="space-y-1.5 rounded-md bg-(--fork-design-field) px-2.5 py-2"
       data-fork-design-resolve-previews
     >
       {/* Counts and verdicts only — measurements of the page, never a paraphrase of
           the agent's reply (the two must read as separate kinds of evidence). */}
-      <p className="text-[11px] leading-relaxed text-foreground">
+      <p className="text-2xs leading-relaxed text-foreground">
         {verifySummaryLine(summary)}
         {measuredReport.viewportChanged
           ? ` — ${VERIFY_REASON_LABELS.viewport}, so differing values can't be judged`
           : ""}
         {measuredReport.truncated ? " (report truncated)" : ""}
       </p>
-      <details className="text-[11px] text-muted-foreground">
+      <details className="text-(length:--text-2xs) text-muted-foreground">
         <summary className="cursor-pointer select-none">Each change</summary>
         <ul className="mt-1 space-y-0.5">
           {rows.map(({ key, element }) => (
@@ -302,7 +302,7 @@ export function SentPreviewResolution({
       </details>
       {/* The blast radius is stated on EVERY path — a user who kept editing after the send
           must read it beside counts that describe only the sent changes. */}
-      <p className="text-[11px] leading-relaxed text-muted-foreground">
+      <p className="text-2xs leading-relaxed text-muted-foreground">
         Discarding clears every edit on this tab — including any made after the send.
       </p>
       <div className="flex flex-wrap items-center gap-1">

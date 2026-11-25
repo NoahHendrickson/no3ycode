@@ -40,7 +40,7 @@ export function SegmentField({
   className?: string;
 }) {
   return (
-    <div className={cn("flex h-6 items-center rounded bg-[var(--fork-design-field)]", className)}>
+    <div className={cn("flex h-6 items-center rounded bg-(--fork-design-field)", className)}>
       {options.map((option) => {
         const selected = !mixed && value === option.value;
         return (
@@ -55,7 +55,7 @@ export function SegmentField({
             className={cn(
               "flex h-full flex-1 items-center justify-center rounded px-1 text-xs transition-colors [&_svg]:size-4",
               selected
-                ? "bg-[var(--fork-design-selected)] text-foreground shadow-[inset_0_0_0_1px_var(--border)]"
+                ? "bg-(--fork-design-selected) text-foreground inset-ring inset-ring-border"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -106,7 +106,7 @@ export function AlignRow({
       {(["horizontal", "vertical"] as const).map((axis) => {
         const enabled = axis === "horizontal" ? caps.horizontal : caps.vertical;
         return (
-          <div key={axis} className="flex h-6 items-center rounded bg-[var(--fork-design-field)]">
+          <div key={axis} className="flex h-6 items-center rounded bg-(--fork-design-field)">
             {ALIGN_BUTTONS.filter((button) => button.axis === axis).map(
               ({ value, title, Icon }) => (
                 <button
@@ -119,7 +119,7 @@ export function AlignRow({
                   className={cn(
                     "flex h-full flex-1 items-center justify-center rounded transition-colors [&_svg]:size-4",
                     enabled
-                      ? "text-muted-foreground hover:bg-[var(--fork-design-selected)] hover:text-foreground"
+                      ? "text-muted-foreground hover:bg-(--fork-design-selected) hover:text-foreground"
                       : "text-muted-foreground/30",
                   )}
                 >
@@ -161,7 +161,7 @@ export function SelectRow({
   const selected = mixed ? undefined : options.find((option) => valueOf(option) === value);
   return (
     <label
-      className="flex h-6 items-center overflow-hidden rounded bg-[var(--fork-design-field)]"
+      className="flex h-6 items-center overflow-hidden rounded bg-(--fork-design-field)"
       title={title}
     >
       <span className="flex h-6 min-w-6 shrink-0 select-none items-center justify-center px-1 text-xs text-muted-foreground [&_svg]:size-4">
@@ -220,7 +220,7 @@ export function AlignMatrix({
   const align = mixed ? "" : normalizeAxisValue(alignItems);
   return (
     <div
-      className="grid grid-cols-3 grid-rows-3 rounded bg-[var(--fork-design-field)]"
+      className="grid grid-cols-3 grid-rows-3 rounded bg-(--fork-design-field)"
       role="group"
       aria-label="Alignment"
     >
@@ -242,7 +242,7 @@ export function AlignMatrix({
                 className={cn(
                   "size-1 rounded-full transition-all",
                   active
-                    ? "bg-[var(--fork-design-accent)] shadow-[0_0_6px_1px_var(--fork-design-accent-bg),0_0_2px_var(--fork-design-accent)]"
+                    ? "bg-(--fork-design-accent) shadow-[0_0_6px_1px_var(--fork-design-accent-bg),0_0_2px_var(--fork-design-accent)]"
                     : "bg-muted-foreground/40 group-hover:bg-muted-foreground/70",
                 )}
               />

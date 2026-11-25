@@ -464,7 +464,7 @@ function TaskDetailForm(props: {
           onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
         />
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <Label className="inline-flex items-center gap-2">
+          <Label className="inline-flex items-center">
             <Switch
               size="sm"
               checked={draft.enabled}

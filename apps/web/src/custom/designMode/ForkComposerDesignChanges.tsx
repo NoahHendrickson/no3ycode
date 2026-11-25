@@ -89,7 +89,7 @@ export function DesignChangeChip({
                 right-most child is the X — an unremovable attachment is a one-way door
                 (PR #71 review). */}
             {unresolved > 0 ? (
-              <span className="min-w-0 truncate text-[11px] font-medium opacity-80">
+              <span className="min-w-0 truncate text-(length:--text-2xs) font-medium opacity-80">
                 {entry.elements.length === 1 ? "no source" : `${unresolved} without source`}
               </span>
             ) : null}
@@ -107,12 +107,14 @@ export function DesignChangeChip({
           </span>
         }
       />
-      <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-[11px]">
-        {unresolved > 0
-          ? `${unresolved === entry.elements.length ? (unresolved === 1 ? "This element has" : "These elements have") : `${unresolved} of ${entry.elements.length} elements ${unresolved === 1 ? "has" : "have"}`} no source location — the request carries selector and text context instead.\n\n`
-          : ""}
-        {entry.markdown.slice(0, 600)}
-        {entry.markdown.length > 600 ? "…" : ""}
+      <TooltipPopup className="max-w-96 whitespace-pre-wrap">
+        <span className="block font-mono text-2xs leading-snug">
+          {unresolved > 0
+            ? `${unresolved === entry.elements.length ? (unresolved === 1 ? "This element has" : "These elements have") : `${unresolved} of ${entry.elements.length} elements ${unresolved === 1 ? "has" : "have"}`} no source location — the request carries selector and text context instead.\n\n`
+            : ""}
+          {entry.markdown.slice(0, 600)}
+          {entry.markdown.length > 600 ? "…" : ""}
+        </span>
       </TooltipPopup>
     </Tooltip>
   );

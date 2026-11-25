@@ -8,12 +8,21 @@ const alertVariants = cva("relative rounded-xl border px-3.5 py-3 text-card-fore
   defaultVariants: {
     surface: "default",
     variant: "default",
+    /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+    size: "default",
+    /* fork:end fork-design-table-alert-variants */
   },
   variants: {
     surface: {
       default: "",
       glass: "alert-glass",
     },
+    /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+    size: {
+      default: "",
+      sm: "rounded-md px-2.5 py-2 text-2xs leading-relaxed [&_[data-slot=alert-description]]:gap-1.5",
+    },
+    /* fork:end fork-design-table-alert-variants */
     variant: {
       default: "bg-transparent dark:bg-input/32 [&_svg]:text-muted-foreground",
       sidebar:
@@ -51,6 +60,9 @@ function Alert({
   className,
   variant,
   surface,
+  /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+  size,
+  /* fork:end fork-design-table-alert-variants */
   controlAlignment = "center",
   children,
   ...props
@@ -79,7 +91,16 @@ function Alert({
 
   return (
     <div
-      className={cn(alertVariants({ surface, variant }), className)}
+      className={cn(
+        alertVariants({
+          surface,
+          variant,
+          /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+          size,
+          /* fork:end fork-design-table-alert-variants */
+        }),
+        className,
+      )}
       data-slot="alert"
       data-variant={variant ?? "default"}
       role="alert"

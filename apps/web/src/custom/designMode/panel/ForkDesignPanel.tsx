@@ -313,16 +313,16 @@ export function ForkDesignPanel({ runtimeTabId, threadRef, tabId }: Props) {
 
   return (
     <div
-      className="flex w-[325px] shrink-0 flex-col border-l border-border bg-[var(--fork-design-surface)]"
+      className="flex w-81.25 shrink-0 flex-col border-l border-border bg-(--fork-design-surface)"
       data-fork-design-panel
     >
       <header className="flex h-9 shrink-0 items-center gap-2 border-b border-border px-4">
         {first ? (
           <>
-            <span className="rounded bg-[var(--fork-design-field)] px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+            <span className="rounded bg-(--fork-design-field) px-1.5 py-0.5 font-mono text-(length:--text-2xs) text-foreground">
               {first.tag}
             </span>
-            <span className="truncate font-mono text-[11px] text-muted-foreground">
+            <span className="truncate font-mono text-(length:--text-2xs) text-muted-foreground">
               {tab.selection.length > 1
                 ? `${tab.selection.length} selected`
                 : (first.sourceLabel ?? "no source")}
@@ -348,7 +348,7 @@ export function ForkDesignPanel({ runtimeTabId, threadRef, tabId }: Props) {
         >
           {unaddressable ? (
             <p
-              className="mb-4 rounded-md bg-[var(--fork-design-field)] px-3 py-2 text-xs leading-relaxed text-muted-foreground"
+              className="mb-4 rounded-md bg-(--fork-design-field) px-3 py-2 text-xs leading-relaxed text-muted-foreground"
               data-fork-design-unaddressable-note
             >
               {tab.selection.length === 1 ? "This element" : "These elements"} can&apos;t be traced
@@ -407,7 +407,7 @@ export function ForkDesignPanel({ runtimeTabId, threadRef, tabId }: Props) {
           onDiscard={onDiscard}
         />
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-(length:--text-2xs) text-muted-foreground">
             {tab.draftCount === 0
               ? "No edits yet"
               : tab.draftCount === 1

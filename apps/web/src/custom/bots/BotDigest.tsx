@@ -373,7 +373,7 @@ export function BotDigestAskCardView(props: {
         <span
           aria-hidden
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
+            "flex size-8 shrink-0 items-center justify-center rounded-lg bg-current/14",
             props.toneClassName,
           )}
         >
