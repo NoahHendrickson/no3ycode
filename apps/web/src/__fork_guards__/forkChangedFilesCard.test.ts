@@ -28,9 +28,6 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(changedFiles).toContain('data-changed-files-header=""');
     // Upstream still ships the translucent wash the fork overrides.
     expect(changedFiles).toMatch(/dark:bg-input\/\d+/u);
-    // Outline actions are Tooltip triggers — CSS must select `button`, not
-    // data-slot="button" (TooltipTrigger wins the slot).
-    expect(changedFiles).toContain("TooltipTrigger");
   });
 
   it("paints the card from --card under the fork dark marker", () => {
@@ -45,15 +42,16 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.selector).toContain(".dark");
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
     expect(card?.body).toMatch(/border-radius:\s*var\(--fork-card-radius\)/u);
-    expect(card?.body).toMatch(/--fork-card-radius:\s*var\(--fork-composer-radius\)/u);
-    expect(card?.body).toMatch(/border:\s*1px solid var\(--fork-composer-border\)/u);
+    // A subagent card's corners and border.
+    expect(card?.body).toMatch(/--fork-card-radius:\s*12px/u);
+    expect(card?.body).toMatch(/border:\s*1px solid var\(--border\)/u);
   });
 
   it("draws the file tree under a loose header, parted by a rounded hairline", () => {
     // The rules hang off the header's following sibling divs: the p-2 wrapper around the tree
     // or its repository groups (a fragment or another tag would drop the well) and the
-    // "N more files" footer.
-    expect(changedFiles).toMatch(/<\/div>\s*<div className="p-2">\s*\{groups \?/u);
+    // "N more files" footer, both unmounted while fork-changed-files-fold has the card folded.
+    expect(changedFiles).toMatch(/\{forkOpen && \(\s*<>\s*<div className="p-2">\s*\{groups \?/u);
     expect(changedFiles).toMatch(/hiddenFileCount > 0 && \(\s*<div /u);
     const rules = cssRules(theme).map((rule) => ({
       ...rule,
@@ -95,7 +93,10 @@ describe("fork guard: fork-changed-files-card", () => {
     const bubble = cssRules(theme).find(
       (rule) => rule.selector === `${MARKER}:is(.dark, [data-fork-theme="basic"]) .bg-message`,
     );
-    expect(bubble?.body).toMatch(/background-color:\s*var\(--card\)/u);
+    // fork-message-bubble-shape lifts it off that rung by a per-theme white share.
+    expect(bubble?.body).toMatch(
+      /background-color:\s*color-mix\(\s*in srgb,\s*#ffffff var\(--fork-message-bubble-lift, 0%\),\s*var\(--card\)\s*\)/u,
+    );
     expect(theme).not.toMatch(/--message-surface:/u);
     expect(readSibling("../components/chat/TimelineUserMessageRow.tsx")).toContain("bg-message ");
   });
@@ -115,7 +116,7 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(token?.body).toMatch(/--fork-outline-hover-bg:\s*rgb\(255 255 255 \/ 4%\)/u);
   });
 
-  it("lifts path labels outside the header and keeps header action buttons borderless", () => {
+  it("lifts path labels outside the header and keeps the header borderless", () => {
     const label = cssRules(theme).find(
       (rule) =>
         rule.selector.includes("[data-changed-files-state]") &&
@@ -127,15 +128,6 @@ describe("fork guard: fork-changed-files-card", () => {
     // MiddleTruncate's tail half takes the same ink as its truncating head.
     expect(label?.selector).toContain("span.truncate + span.shrink-0");
 
-    // The header actions are ghost-muted Buttons upstream: they keep the
-    // foreground ink but must not be pulled into the outline recipe, which
-    // would recolour their transparent border into a visible one.
-    const button = cssRules(theme).find((rule) =>
-      rule.selector.replace(/\s+/gu, " ").includes("[data-changed-files-header] > div button"),
-    );
-    expect(button?.selector).toContain(MARKER);
-    expect(button?.selector).toContain(".dark");
-    expect(button?.body).toMatch(/color:\s*var\(--foreground\)/u);
     for (const rule of cssRules(theme)) {
       if (!rule.selector.includes("[data-changed-files-header]")) continue;
       expect(rule.body).not.toMatch(/border-color:\s*var\(--fork-outline-border/u);

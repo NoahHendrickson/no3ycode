@@ -2289,20 +2289,6 @@
   padding: 0;
 }
 
-/* The changed-files header actions (fold toggle, Open diff) are ghost-muted
-   Buttons upstream and draw no border; they used to ride a shared outline
-   rule, which recoloured their transparent border into a visible one. What
-   they keep is the foreground ink; their hover is the card-wide lift
-   (fork-changed-files-card). Selected as `button`, not `[data-slot="button"]`
-   — see fork-workspace-header note: TooltipTrigger stamps
-   data-slot="tooltip-trigger" over Button. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-changed-files-header]
-  > div
-  button {
-  color: var(--foreground);
-}
-
 /* ── Questions card stacked on the prompt surface ────────────────────────────
    Figma t3-fork 322:6316. Upstream's top drawer (#7150) is a 1.375rem-inset
    glass card: 16px corners, its own backdrop-filter, overlapping the surface
@@ -2662,6 +2648,85 @@
       padding-inline-end: 16px;
     }
   }
+}
+
+/* The / and @ menu is a card like the queue and the stash (fork-composer-command-card): the
+   composer's full width, 8px above it, the card fill under the composer hairline, and 40px rows
+   that run edge to edge between full-width hairlines. It is portaled, so the banners slot can't
+   reach it: a 0 drawer inset makes the layer span the prompt, and the drawer lifts itself clear of
+   the 1rem + 1px the layer tucks it under. Inlet builds it as a Questions card instead. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"]) [data-chat-composer-form] {
+  --chat-composer-drawer-inset: 0rem;
+}
+
+/* The lift leaves the layer taller than the card; only the card takes the pointer. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-composer-drawer-layer] {
+  pointer-events: none;
+}
+
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer] {
+  & {
+    --chat-composer-attachment-overlap: 0px;
+    /* Lifted clear of the prompt, the card has no seam to shade. */
+    --chat-composer-attached-seam: transparent;
+    /* The active row fills with --accent. Arrow keys move it, so it reads a step above a hover. */
+    --accent: color-mix(in srgb, var(--foreground) 7%, transparent);
+    /* The menu's rows set text-xs; here it reads at the chat stream size, like the queue's rows. */
+    --text-xs: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+    margin-bottom: calc(1rem + 1px + 8px);
+    overflow: clip;
+    pointer-events: auto;
+    border-radius: var(--fork-composer-radius);
+  }
+
+  &::before {
+    border: 0;
+    border-radius: var(--fork-composer-radius);
+    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+    mask-image: none;
+  }
+
+  & [data-slot="command-list"] {
+    padding: 0;
+  }
+
+  & [data-slot="command-item"][data-composer-item-id] {
+    min-height: 40px;
+    padding-block: 0;
+    padding-inline: 12px;
+    border-radius: 0;
+  }
+
+  & [data-slot="command-item"][data-composer-item-id] + [data-slot="command-item"] {
+    border-top: 1px solid var(--fork-composer-border);
+  }
+
+  /* The skill's source is a quiet trailing label, not a filled pill. */
+  & [data-slot="badge"] {
+    padding-inline: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: calc(
+      0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+    );
+    font-weight: 400;
+  }
+}
+
+/* A new agent's draft keeps the frost, since its menu opens over a picture. The Flat Glass and
+   Basic thread fill is in theme.custom.thread-composer.css, beside the banner cards'. */
+:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"]):not(
+    [data-fork-draft-hero-shown]
+  )
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer]::before {
+  background: var(--fork-composer-bg, var(--card));
+  /* An opaque card, like the banner cards: no blur behind it. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* One action size for every card above the composer: notices, the question card and the
@@ -3143,19 +3208,18 @@
    fork dark palette --input is the border grey, so that wash lands the card
    on a smeared border tint over the stage instead of the palette's own card
    step (--secondary is the chip step, not a card). Freeze the card to
-   --card so each palette's stage tokens actually show.
+   --card so each palette's stage tokens actually show, in a subagent card's
+   shape: 12px corners on the stage border.
 
-   The header and the file tree under it share the card's fill, parted by the
-   prompt's hairline, which the whole card takes too. A lighter well under the
-   header sat so close to that hairline's tone that the card's sides vanished
-   beside it. The tree strokes only its top: the card border is the line on its
-   other three sides. Basic paints its own raised well (theme.custom.basic.css). */
+   The header and the file tree under it share the card's fill, parted by a
+   hairline on the tree's top: the card border is the line on its other three
+   sides. Flat Glass draws one fill with no hairline. Basic paints its own
+   raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
-  /* The composer's corners: the card is the composer turned over (fork-changed-files-card). */
-  --fork-card-radius: var(--fork-composer-radius);
+  --fork-card-radius: 12px;
   background: var(--card);
-  border: 1px solid var(--fork-composer-border);
+  border: 1px solid var(--border);
   border-radius: var(--fork-card-radius);
 }
 
@@ -3165,8 +3229,17 @@
   border-radius: calc(var(--fork-card-radius) - 1px) calc(var(--fork-card-radius) - 1px) 0 0;
 }
 
-/* Rounded at the top too, so the hairline curves down into the card's sides. */
+/* Folded, the header is the card's only child: round its foot too, or its square corners poke
+   past the card's (fork-changed-files-fold). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+  [data-changed-files-header]:last-child {
+  border-radius: calc(var(--fork-card-radius) - 1px);
+}
+
+/* Rounded at the top too, so the hairline curves down into the card's sides. */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]):not(
+    [data-fork-glass-3d="off"][data-fork-theme="cool-darker"]
+  )
   [data-changed-files-header]
   + div {
   box-shadow: inset 0 1px 0 var(--fork-composer-border);
@@ -3181,29 +3254,25 @@
   border-bottom-right-radius: calc(var(--fork-card-radius) - 1px);
 }
 
-/* On Flat Glass the tree and its footer lift 4% off the card, like the composer's prompt well. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-changed-files-state]
-  > :not([data-changed-files-header]) {
-  background: rgb(255 255 255 / 4%);
-}
-
-/* The user's sent bubble takes the same fill as the card above it. Upstream
-   paints `bg-message` → --message-surface → --accent; on every fork palette
-   that is the secondary/hover step (cool #353a3d, neutral dark #42403d), one rung
-   brighter than the changed-files card, so the two surfaces in the same
-   column disagreed.
+/* The user's sent bubble is painted from the card's fill. Upstream paints
+   `bg-message` → --message-surface → --accent; on every fork palette that is
+   the secondary/hover step, one rung brighter than the changed-files card.
 
    Painted on the element rather than by retargeting the surface token.
    Tailwind declares --color-message on :root, so a var(--card) inside it
    computes at the root — but the chat column sits under [data-sidebar-version="v2"],
-   which rescopes --card (above), and the changed-files card reads that
-   scoped value. Only an element-level var(--card) lands on the same rung.
-   Keyed on the utility class: the bubble carries no data attribute, and the
-   guard pins `bg-message` on MessagesTimeline's bubble. bg-message has that
-   one consumer; the send button's message-action tokens are untouched. */
+   which rescopes --card (above). Only an element-level var(--card) lands on the
+   card's rung. Themes lift the bubble off that rung with --fork-message-bubble-lift,
+   a white share, and the glass vibrancy wash (theme.custom.palettes.css) still
+   outranks this rule. The send button's message-action tokens are untouched. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]) .bg-message {
-  background-color: var(--card);
+  background-color: color-mix(in srgb, #ffffff var(--fork-message-bubble-lift, 0%), var(--card));
+}
+
+/* Flat Glass and dark Basic lift the sent bubble 3% white off the card (fork-message-bubble-shape). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"].dark {
+  --fork-message-bubble-lift: 3%;
 }
 
 /* Hover fills inside the card. Upstream's `hover:bg-accent/60` is 60% of an

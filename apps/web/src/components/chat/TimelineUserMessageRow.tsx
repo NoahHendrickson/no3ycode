@@ -328,7 +328,9 @@ function AutomationMessageRow({ row }: { row: Extract<TimelineRow, { kind: "mess
       ) : null}
       <div
         className={cn(
-          "min-w-0 max-w-[80%] rounded-2xl bg-message text-message-foreground",
+          /* fork:begin fork-message-bubble-shape — see .fork/customizations.yaml#fork-message-bubble-shape */
+          "min-w-0 max-w-[80%] rounded-xl bg-message text-message-foreground",
+          /* fork:end fork-message-bubble-shape */
           BUBBLE_CHIP_CLASS_NAME,
           expanded && "w-full",
         )}
@@ -951,14 +953,18 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
       ) : null}
       <div
         className={cn(
-          "relative min-w-0 max-w-[80%] rounded-2xl text-message-foreground",
+          /* fork:begin fork-message-bubble-shape — see .fork/customizations.yaml#fork-message-bubble-shape */
+          "relative min-w-0 max-w-[80%] rounded-xl text-message-foreground",
+          /* fork:end fork-message-bubble-shape */
           (mediaAboveText || row.groupedWithPrevious) && "rounded-tr-md",
           row.groupedWithNext && "rounded-br-md",
           BUBBLE_CHIP_CLASS_NAME,
           userMessage.attribution === "guest"
             ? guestBubbleClassName(false)
             : !mediaOnly && !fileCardsOnly && !audioOnly && "bg-message",
-          !folded && !mediaOnly && !fileCardsOnly && !audioOnly && "p-3",
+          /* fork:begin fork-message-bubble-shape — see .fork/customizations.yaml#fork-message-bubble-shape */
+          !folded && !mediaOnly && !fileCardsOnly && !audioOnly && "px-4 py-2",
+          /* fork:end fork-message-bubble-shape */
           folded && expanded && "w-full",
         )}
         data-user-message-bubble=""
