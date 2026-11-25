@@ -68,7 +68,8 @@ function No3yAgentActivity(
         return light ? "#059669" : "#24FE8A";
     }
   };
-  const symbol = (phase: Phase): SFName => {
+  // Null is work in flight, drawn with the app's bead ring.
+  const symbol = (phase: Phase): SFName | null => {
     switch (phase) {
       case "waiting_for_approval":
       case "waiting_for_input":
@@ -79,9 +80,11 @@ function No3yAgentActivity(
       case "stale":
         return "clock";
       default:
-        return "circle.dotted";
+        return null;
     }
   };
+  // Project labels and separators: a fixed ink on the card's own tint, not the wallpaper's.
+  const quiet: Foreground = plain ? secondary : light ? "#0000009E" : "#FFFFFF9E";
 
   // Past the stale date nothing in flight is known to still be running.
   const rows: ReadonlyArray<No3yLiveActivityRow> = environment.isStale
@@ -103,11 +106,18 @@ function No3yAgentActivity(
   const link = deepLink ? [widgetURL(deepLink)] : [];
 
   // Images ignore frame/foregroundStyle; size and tint them through a container they fill.
-  const glyph = (phase: Phase, size: number) => (
-    <HStack modifiers={[frame({ width: size, height: size }), foregroundStyle(tint(phase))]}>
-      <Image systemName={symbol(phase)} modifiers={[resizable()]} />
-    </HStack>
-  );
+  const glyph = (phase: Phase, size: number) => {
+    const name = symbol(phase);
+    return (
+      <HStack modifiers={[frame({ width: size, height: size }), foregroundStyle(tint(phase))]}>
+        {name ? (
+          <Image systemName={name} modifiers={[resizable()]} />
+        ) : (
+          <Image assetName="No3yBeadRing" modifiers={[resizable()]} />
+        )}
+      </HStack>
+    );
+  };
   const asset = (name: string, size: number) => (
     <HStack modifiers={[frame({ width: size, height: size })]}>
       <Image assetName={name} modifiers={[resizable()]} />
@@ -128,7 +138,7 @@ function No3yAgentActivity(
   );
 
   const parts: Array<{ readonly text: string; readonly color: Foreground }> = [];
-  if (environment.isStale) parts.push({ text: "Out of date", color: secondary });
+  if (environment.isStale) parts.push({ text: "Out of date", color: quiet });
   if (working > 0) parts.push({ text: `${working} working`, color: primary });
   if (waiting > 0)
     parts.push({
@@ -148,7 +158,7 @@ function No3yAgentActivity(
   const summary = (
     <HStack spacing={5} alignment="center">
       {part0 ? summaryText(part0.text, part0.color) : null}
-      {part1 ? <Text modifiers={[font({ size: 13 }), foregroundStyle(secondary)]}>·</Text> : null}
+      {part1 ? <Text modifiers={[font({ size: 13 }), foregroundStyle(quiet)]}>·</Text> : null}
       {part1 ? summaryText(part1.text, part1.color) : null}
     </HStack>
   );
@@ -167,7 +177,7 @@ function No3yAgentActivity(
           {item.threadTitle}
         </Text>
         {withProject && item.projectTitle !== "" ? (
-          <Text modifiers={[font({ size: 13 }), foregroundStyle(secondary), lineLimit(1)]}>
+          <Text modifiers={[font({ size: 13 }), foregroundStyle(quiet), lineLimit(1)]}>
             {item.projectTitle}
           </Text>
         ) : null}
@@ -224,8 +234,11 @@ function No3yAgentActivity(
         spacing={4}
         modifiers={[
           padding({ top: 14, bottom: 10, leading: 16, trailing: 16 }),
-          // A clear tint shows iOS 26's glass; older systems keep the standard surface.
-          activityBackgroundTint(environment.isLiquidGlassAvailable ? "clear" : null),
+          // iOS 26 glass tinted to Flat Glass ink at about half, so it reads on any wallpaper; older
+          // systems keep the standard surface.
+          activityBackgroundTint(
+            environment.isLiquidGlassAvailable ? (light ? "#F2F2F285" : "#12121285") : null,
+          ),
           ...link,
         ]}
       >
