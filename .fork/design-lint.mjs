@@ -725,7 +725,8 @@ export function checkStylesheet(sheet, slots = new Set()) {
       !rule.keyframes && selectors.some((selector) => stylesPrimitive(selector, slots));
     const pseudo = selectors.some(
       (selector) =>
-        stylesPrimitive(selector, slots) && /::(?:before|after)\b/u.test(subjectCompound(selector)),
+        stylesPrimitive(selector, slots) &&
+        /::(?:before|after)\b/u.test(subjectCompound(selector).replace(/\[[^\]]*\]/gu, "")),
     );
     for (const declaration of rule.declarations) {
       if (!sheet.owns(declaration.line)) continue;
@@ -1063,6 +1064,12 @@ function cssConsumers(sheet) {
   return out;
 }
 
+/** A CSS string or identifier with its escapes (\2e , \.) decoded. */
+const cssUnescape = (text) =>
+  text?.replace(/\\(?:([0-9a-f]{1,6})\s?|(.))/giu, (_, hex, char) =>
+    hex ? String.fromCodePoint(Number.parseInt(hex, 16)) : char,
+  );
+
 export function checkDeadForkAttributes(sheets, sourceText) {
   const templatePrefixes = [...sourceText.matchAll(/data-fork-([\w-]*?)-?\$\{/gu)].map(
     (match) => `data-fork-${match[1]}`,
@@ -1076,12 +1083,14 @@ export function checkDeadForkAttributes(sheets, sourceText) {
       if (rule.kind !== "style" || !sheet.owns(rule.line)) continue;
       const attributes = rule.selectors.flatMap((selector) => [
         ...selector.matchAll(
-          /\[\s*(data-fork-[\w-]+)(?:\s*=\s*(?:["']([^"']*)["']|((?:[\w-]|\\.)+)))?/gu,
+          /\[\s*(data-fork-[\w-]+)(?:\s*=\s*(?:["']([^"']*)["']|((?:[\w-]|\\[0-9a-fA-F]{1,6}\s?|\\.)+)))?/gu,
         ),
       ]);
       const names = new Set(attributes.map((match) => match[1]));
-      // A selector only Glass 3D can match is reported, never blocking (isBlocking).
-      const themes = [...new Set(rule.selectors.flatMap(themesFor))];
+      // Themes from the selectors that hold the attribute: one only Glass 3D can match never blocks.
+      const themesOf = (name) => [
+        ...new Set(rule.selectors.filter((s) => s.includes(name)).flatMap(themesFor)),
+      ];
       for (const name of names) {
         if (!checked.has(name)) {
           const used =
@@ -1095,14 +1104,14 @@ export function checkDeadForkAttributes(sheets, sourceText) {
             finding("C5", sheet.path, rule.line, `[${name}] is set nowhere in source`, {
               attribute: name,
               selector: rule.selectors[0],
-              themes,
+              themes: themesOf(name),
             }),
           );
         }
       }
       // A live attribute can still carry a value nothing sets.
       for (const [, name, quoted, bare] of attributes) {
-        const value = quoted ?? bare?.replace(/\\(.)/gu, "$1");
+        const value = cssUnescape(quoted ?? bare);
         if (value === undefined || !checked.get(name)) continue;
         const escaped = value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
         if (!new RegExp(`["'\`]${escaped}["'\`]`, "u").test(sourceText)) {
@@ -1112,7 +1121,7 @@ export function checkDeadForkAttributes(sheets, sourceText) {
               sheet.path,
               rule.line,
               `[${name}="${value}"]: no source sets "${value}"`,
-              { attribute: name, selector: rule.selectors[0], themes },
+              { attribute: name, selector: rule.selectors[0], themes: themesOf(name) },
             ),
           );
         }

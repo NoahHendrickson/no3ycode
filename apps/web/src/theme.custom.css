@@ -3366,7 +3366,8 @@
    menu keeps upstream's radius. */
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-  --fork-menu-radius: var(--radius-lg);
+  /* Fixed, not --radius-lg: an imported theme's --radius must not reshape it. */
+  --fork-menu-radius: 0.5rem;
 }
 
 /* ── Changed-files card in the chat column ───────────────────────────────────

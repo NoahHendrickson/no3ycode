@@ -104,7 +104,8 @@ describe("fork guard: fork-design-lint", () => {
         ${ROOT} [data-slot="menu-popup"] > div { height: var(--fork-row-height); }
         ${ROOT} .fork-wrapper:has(> [data-slot="menu-popup"]) { padding: var(--spacing); }
         ${ROOT} [data-slot="menu-popup"], ${ROOT} .fork-x::before { color: var(--foreground); }
-        ${ROOT} [data-slot="menu-popup"], ${ROOT} .fork-x::before { display: none; }`;
+        ${ROOT} [data-slot="menu-popup"], ${ROOT} .fork-x::before { display: none; }
+        ${ROOT} [data-slot="menu-popup"]:has([title="::before"]) { display: none; }`;
       expect(rules(check(css))).toEqual([]);
     });
 
@@ -203,16 +204,18 @@ describe("fork guard: fork-design-lint", () => {
       expect(DesignLint.isBlocking({ rule: "A1", themes: ["glass-3d"] })).toBe(false);
       expect(DesignLint.isBlocking({ rule: "A1", themes: ["glass-3d", "flat-glass"] })).toBe(true);
       expect(DesignLint.isBlocking({ rule: "B5" })).toBe(true);
+      // A dead attribute only Glass 3D can match stays non-blocking beside a live Basic selector.
       const glassOnly = DesignLint.checkDeadForkAttributes(
         [
           sheet(
-            `${ROOT}.dark[data-fork-theme="cool-darker"]:not([data-fork-glass-3d="off"]) [data-fork-gone] { color: red; }`,
+            `${ROOT}.dark[data-fork-theme="cool-darker"]:not([data-fork-glass-3d="off"]) [data-fork-gone], ${BASIC} .fork-live { color: red; }`,
           ),
         ],
-        "",
+        `data-fork-theme="cool-darker" data-fork-theme="basic" data-fork-glass-3d="off"`,
       );
-      // Every finding here, the dead attribute included, is one only Glass 3D can see.
-      expect(glassOnly.some(DesignLint.isBlocking)).toBe(false);
+      expect(
+        glassOnly.map((finding: Finding) => [finding.message, DesignLint.isBlocking(finding)]),
+      ).toEqual([["[data-fork-gone] is set nowhere in source", false]]);
     });
   });
 
@@ -221,7 +224,7 @@ describe("fork guard: fork-design-lint", () => {
       DesignLint.checkDeadForkAttributes([sheet(css)], source) as readonly Finding[];
 
     it("allows attributes source sets, literally or through dataset", () => {
-      const css = `${ROOT} [data-fork-chip="solo"] { color: red; } ${ROOT} [data-fork-morphing] { color: red; } ${ROOT} [data-fork-k=foo\\.bar] { color: red; }`;
+      const css = `${ROOT} [data-fork-chip="solo"] { color: red; } ${ROOT} [data-fork-morphing] { color: red; } ${ROOT} [data-fork-k=foo\\.bar] { color: red; } ${ROOT} [data-fork-k=foo\\2e bar] { color: red; }`;
       const source = `<div data-fork-chip={solo ? "solo" : "pair"} data-fork-k="foo.bar" />; trigger.dataset.forkMorphing = "";`;
       expect(run(css, source)).toEqual([]);
     });
