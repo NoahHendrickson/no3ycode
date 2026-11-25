@@ -89,8 +89,8 @@ describe("fork guard: fork-design-lint", () => {
       }`;
       expect(rules(check(css))).toEqual(["A2", "A3", "A3", "A4", "A4"]);
       // A condition nested in the rule styles the same elements.
-      const nested = `${ROOT} .fork-x { @media (pointer: coarse) { gap: 6px; } @supports (display: grid) { color: red; } }`;
-      expect(rules(check(nested))).toEqual(["A3", "A1"]);
+      const nested = `${ROOT} .fork-x { @media (pointer: coarse) { gap: 6px; } @supports (display: grid) { color: red; } @media (hover: hover) { @supports (display: grid) { padding: 3px; } } }`;
+      expect(rules(check(nested))).toEqual(["A3", "A1", "A3"]);
     });
   });
 
@@ -101,7 +101,10 @@ describe("fork guard: fork-design-lint", () => {
         ${ROOT} [data-slot="button"] { color: var(--foreground); }
         ${ROOT} [data-fork-chip] { padding: var(--fork-chip-pad); }
         ${ROOT} :not([data-slot="button"]).fork-x { padding: var(--fork-chip-pad); }
-        ${ROOT} [data-slot="menu-popup"] > div { height: var(--fork-row-height); }`;
+        ${ROOT} [data-slot="menu-popup"] > div { height: var(--fork-row-height); }
+        ${ROOT} .fork-wrapper:has(> [data-slot="menu-popup"]) { padding: var(--spacing); }
+        ${ROOT} [data-slot="menu-popup"], ${ROOT} .fork-x::before { color: var(--foreground); }
+        ${ROOT} [data-slot="menu-popup"], ${ROOT} .fork-x::before { display: none; }`;
       expect(rules(check(css))).toEqual([]);
     });
 
@@ -161,6 +164,12 @@ describe("fork guard: fork-design-lint", () => {
       expect(run(`${BASIC} { --fork-x: red; } ${INLET} { --fork-x: blue; }`)).toEqual([]);
     });
 
+    it("reads definitions nested in a condition", () => {
+      expect(
+        run(`${BASIC} { @media (hover: hover) { --fork-x: red; } } ${INLET} { --fork-x: blue; }`),
+      ).toEqual([]);
+    });
+
     it("reports the theme a token is missing from", () => {
       const findings = run(`${BASIC} { --fork-x: red; } ${INLET}:not(.dark) { --fork-x: blue; }`);
       expect(findings.map((finding) => finding.message)).toEqual([
@@ -194,6 +203,16 @@ describe("fork guard: fork-design-lint", () => {
       expect(DesignLint.isBlocking({ rule: "A1", themes: ["glass-3d"] })).toBe(false);
       expect(DesignLint.isBlocking({ rule: "A1", themes: ["glass-3d", "flat-glass"] })).toBe(true);
       expect(DesignLint.isBlocking({ rule: "B5" })).toBe(true);
+      const glassOnly = DesignLint.checkDeadForkAttributes(
+        [
+          sheet(
+            `${ROOT}.dark[data-fork-theme="cool-darker"]:not([data-fork-glass-3d="off"]) [data-fork-gone] { color: red; }`,
+          ),
+        ],
+        "",
+      );
+      // Every finding here, the dead attribute included, is one only Glass 3D can see.
+      expect(glassOnly.some(DesignLint.isBlocking)).toBe(false);
     });
   });
 
@@ -202,8 +221,8 @@ describe("fork guard: fork-design-lint", () => {
       DesignLint.checkDeadForkAttributes([sheet(css)], source) as readonly Finding[];
 
     it("allows attributes source sets, literally or through dataset", () => {
-      const css = `${ROOT} [data-fork-chip="solo"] { color: red; } ${ROOT} [data-fork-morphing] { color: red; }`;
-      const source = `<div data-fork-chip={solo ? "solo" : "pair"} />; trigger.dataset.forkMorphing = "";`;
+      const css = `${ROOT} [data-fork-chip="solo"] { color: red; } ${ROOT} [data-fork-morphing] { color: red; } ${ROOT} [data-fork-k=foo\\.bar] { color: red; }`;
+      const source = `<div data-fork-chip={solo ? "solo" : "pair"} data-fork-k="foo.bar" />; trigger.dataset.forkMorphing = "";`;
       expect(run(css, source)).toEqual([]);
     });
 
@@ -223,12 +242,13 @@ describe("fork guard: fork-design-lint", () => {
 export function ForkChip() {}
 export const ForkRow = memo(function ForkRow() {});
 export const ForkBadge = props => null;
+export const ForkDot = _props => null;
 export const FORK_LEVELS = ([1, 2]);
 export function ForkThemeProvider() {}
 function Local() {}`;
       expect(
         DesignLint.exportedComponents(source).map((entry: { name: string }) => entry.name),
-      ).toEqual(["ForkChip", "ForkRow", "ForkBadge"]);
+      ).toEqual(["ForkChip", "ForkRow", "ForkBadge", "ForkDot"]);
       const story = `import { ForkChip, type ForkChipProps } from "~/custom/ForkChip";\nimport { Button } from "~/components/ui/button";`;
       expect([...DesignLint.storyImports(story)]).toEqual(["ForkChip", "ForkChipProps"]);
     });

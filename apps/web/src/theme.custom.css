@@ -779,11 +779,15 @@
    cutoff. Any future attempt at a blur ramp here has to solve the double
    composite first; the graduated-opacity tail below is doing that job instead. */
 
-:root[data-fork="noahhendrickson-t3code"] {
-  --fork-composer-radius: 16px;
-  /* Menu corners: rows inside a menu, and the menu itself. */
+/* Menu corners: rows inside a menu, and the menu itself. Under a fork palette only: an
+   imported theme has none, so its menus keep the primitives' own corners. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme] {
   --fork-menu-row-radius: 0.5rem;
   --fork-menu-radius: 0.75rem;
+}
+
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-composer-radius: 16px;
   /* 13px, between text-xs and text-sm: notice and approval actions, the Dictate tooltip. */
   --fork-text-chip: calc(0.8125rem * var(--fork-interface-text-scale, 1));
   /* The chat stream's sizes, for its cards outside the timeline. */

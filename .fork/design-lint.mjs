@@ -320,7 +320,7 @@ export function parseCss(text) {
     );
     if (prelude.startsWith("@")) {
       // A conditional block nested in a style rule (CSS nesting) styles that rule's elements.
-      const host = stack.at(-1)?.kind === "style" ? stack.at(-1) : null;
+      const host = stack.at(-1)?.selectors ? stack.at(-1) : null;
       stack.push({
         kind: "at",
         name: /^@([\w-]+)/u.exec(prelude)?.[1] ?? "",
@@ -691,23 +691,26 @@ export function primitiveSlots(root = REPO_ROOT) {
   return slots;
 }
 
-/** Does the subject compound style a primitive? A slot only inside :not(…) does not count. */
+/** Does the subject compound style a primitive? A slot only inside :not(…) or :has(…) does not. */
 const stylesPrimitive = (selector, slots) =>
-  [...stripNot(subjectCompound(selector)).matchAll(/\[\s*data-slot\s*=\s*["']?([\w-]+)/gu)].some(
-    (match) => slots.has(match[1]),
-  );
+  [
+    ...stripNot(subjectCompound(selector), [":not(", ":has("]).matchAll(
+      /\[\s*data-slot\s*=\s*["']?([\w-]+)/gu,
+    ),
+  ].some((match) => slots.has(match[1]));
 
-function stripNot(compound) {
+function stripNot(compound, functions = [":not("]) {
   let out = compound;
-  for (let index = out.indexOf(":not("); index !== -1; index = out.indexOf(":not(")) {
-    let depth = 0;
-    let end = index + 4;
-    for (; end < out.length; end++) {
-      if (out[end] === "(") depth++;
-      else if (out[end] === ")" && --depth === 0) break;
+  for (const fn of functions)
+    for (let index = out.indexOf(fn); index !== -1; index = out.indexOf(fn)) {
+      let depth = 0;
+      let end = index + 4;
+      for (; end < out.length; end++) {
+        if (out[end] === "(") depth++;
+        else if (out[end] === ")" && --depth === 0) break;
+      }
+      out = out.slice(0, index) + out.slice(end + 1);
     }
-    out = out.slice(0, index) + out.slice(end + 1);
-  }
   return out;
 }
 
@@ -720,8 +723,9 @@ export function checkStylesheet(sheet, slots = new Set()) {
     const themes = [...new Set(selectors.flatMap(themesFor))];
     const primitive =
       !rule.keyframes && selectors.some((selector) => stylesPrimitive(selector, slots));
-    const pseudo = selectors.some((selector) =>
-      /::(?:before|after)\b/u.test(subjectCompound(selector)),
+    const pseudo = selectors.some(
+      (selector) =>
+        stylesPrimitive(selector, slots) && /::(?:before|after)\b/u.test(subjectCompound(selector)),
     );
     for (const declaration of rule.declarations) {
       if (!sheet.owns(declaration.line)) continue;
@@ -956,10 +960,9 @@ export function buildTokenIndex(sheets, runtime = new Set()) {
               line: rule.line,
             });
         }
-        if (rule.name !== "theme") continue;
+        if (rule.name !== "theme" && !rule.selectors) continue;
       }
-      const themes =
-        rule.kind === "at" ? allThemes : [...new Set(rule.selectors.flatMap(themesFor))];
+      const themes = rule.selectors ? [...new Set(rule.selectors.flatMap(themesFor))] : allThemes;
       for (const declaration of rule.declarations) {
         if (!declaration.property.startsWith("--")) continue;
         define(declaration.property, {
@@ -968,9 +971,9 @@ export function buildTokenIndex(sheets, runtime = new Set()) {
           file: sheet.path,
           line: declaration.line,
           tokenBlock: isTokenBlock(rule),
-          global:
-            rule.kind === "at" ||
-            rule.selectors.every((selector) => compounds(selector).length === 1),
+          global: rule.selectors
+            ? rule.selectors.every((selector) => compounds(selector).length === 1)
+            : rule.kind === "at",
           tailwindDefault: sheet.path === "tailwindcss/theme.css",
         });
       }
@@ -1046,11 +1049,10 @@ export function checkThemeContract(consumers, definitions, themes = THEMES) {
 function cssConsumers(sheet) {
   const out = [];
   for (const rule of sheet.rules) {
-    if (rule.kind === "at" && rule.name !== "theme") continue;
-    const themes =
-      rule.kind === "at"
-        ? THEMES.map((theme) => theme.id)
-        : [...new Set(rule.selectors.flatMap(themesFor))];
+    if (rule.kind === "at" && rule.name !== "theme" && !rule.selectors) continue;
+    const themes = rule.selectors
+      ? [...new Set(rule.selectors.flatMap(themesFor))]
+      : THEMES.map((theme) => theme.id);
     for (const declaration of rule.declarations) {
       if (!sheet.owns(declaration.line)) continue;
       for (const reference of references(declaration.value)) {
@@ -1073,9 +1075,13 @@ export function checkDeadForkAttributes(sheets, sourceText) {
     for (const rule of sheet.rules) {
       if (rule.kind !== "style" || !sheet.owns(rule.line)) continue;
       const attributes = rule.selectors.flatMap((selector) => [
-        ...selector.matchAll(/\[\s*(data-fork-[\w-]+)(?:\s*=\s*(?:["']([^"']*)["']|([\w-]+)))?/gu),
+        ...selector.matchAll(
+          /\[\s*(data-fork-[\w-]+)(?:\s*=\s*(?:["']([^"']*)["']|((?:[\w-]|\\.)+)))?/gu,
+        ),
       ]);
       const names = new Set(attributes.map((match) => match[1]));
+      // A selector only Glass 3D can match is reported, never blocking (isBlocking).
+      const themes = [...new Set(rule.selectors.flatMap(themesFor))];
       for (const name of names) {
         if (!checked.has(name)) {
           const used =
@@ -1089,13 +1095,14 @@ export function checkDeadForkAttributes(sheets, sourceText) {
             finding("C5", sheet.path, rule.line, `[${name}] is set nowhere in source`, {
               attribute: name,
               selector: rule.selectors[0],
+              themes,
             }),
           );
         }
       }
       // A live attribute can still carry a value nothing sets.
       for (const [, name, quoted, bare] of attributes) {
-        const value = quoted ?? bare;
+        const value = quoted ?? bare?.replace(/\\(.)/gu, "$1");
         if (value === undefined || !checked.get(name)) continue;
         const escaped = value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
         if (!new RegExp(`["'\`]${escaped}["'\`]`, "u").test(sourceText)) {
@@ -1105,7 +1112,7 @@ export function checkDeadForkAttributes(sheets, sourceText) {
               sheet.path,
               rule.line,
               `[${name}="${value}"]: no source sets "${value}"`,
-              { attribute: name, selector: rule.selectors[0] },
+              { attribute: name, selector: rule.selectors[0], themes },
             ),
           );
         }
@@ -1116,7 +1123,7 @@ export function checkDeadForkAttributes(sheets, sourceText) {
 }
 
 const EXPORTED_COMPONENT =
-  /^export (?:default )?(?:function ([A-Z]\w*)|const ([A-Z]\w*)\s*(?::[^=]+)?=\s*(?:memo|forwardRef|React\.memo|function|\(|[a-z]\w*\s*=>))/gmu;
+  /^export (?:default )?(?:function ([A-Z]\w*)|const ([A-Z]\w*)\s*(?::[^=]+)?=\s*(?:memo|forwardRef|React\.memo|function|\(|[a-z_$][\w$]*\s*=>))/gmu;
 
 export function exportedComponents(text) {
   return [...text.matchAll(EXPORTED_COMPONENT)]
