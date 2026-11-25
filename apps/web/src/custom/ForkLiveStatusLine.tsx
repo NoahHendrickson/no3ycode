@@ -3,9 +3,13 @@
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
 import { ChevronRightIcon } from "lucide-react";
+import { useMessages } from "gt-react";
 import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import { use, type ReactNode } from "react";
+import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
+import { ActivityShimmerOverlay } from "~/components/chat/TimelineRowParts";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
+import { observeVisibleAnimation } from "~/lib/visibleAnimation";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { forkStatusLineLabel, type ForkStatusLineRow } from "./forkWorkingRowLast";
 
@@ -19,20 +23,30 @@ export function ForkLiveStatusLine({
   trailing: ReactNode;
 }) {
   const ctx = use(TimelineRowCtx);
+  const m = useMessages();
   const live = row.forkLive;
   const groupId = live?.groupId;
   const label =
-    forkStatusLineLabel(live, use(TimelineRowActivityCtx)) ?? forkThinkingWord(row.forkWordSeed);
+    forkStatusLineLabel(live, use(TimelineRowActivityCtx), (entry) =>
+      liveWorkEntryLabel(entry, ctx.workspaceRoot, true, m),
+    ) ?? forkThinkingWord(row.forkWordSeed);
+  const text = (
+    <>
+      <span className="min-w-0 truncate">{label}</span>
+      {timer ? <span className="shrink-0">{timer}</span> : null}
+    </>
+  );
   const content = (
     <>
       <SidebarV2WorkingMark seed={row.id} />
-      <span className="min-w-0 truncate">{label}</span>
-      {timer ? (
-        <>
-          <span aria-hidden className="size-[3px] shrink-0 rounded-full bg-current" />
-          <span className="shrink-0">{timer}</span>
-        </>
-      ) : null}
+      <span
+        ref={observeVisibleAnimation}
+        data-fork-status-line
+        className="relative flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap"
+      >
+        {text}
+        <ActivityShimmerOverlay className="flex items-center gap-2">{text}</ActivityShimmerOverlay>
+      </span>
       {groupId === undefined ? null : (
         <ChevronRightIcon
           aria-hidden

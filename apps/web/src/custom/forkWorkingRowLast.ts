@@ -1,7 +1,8 @@
 /**
  * Live status line — see `.fork/customizations.yaml#fork-working-row-last`.
- * The working row moves to the end. It absorbs the turn's live thinking row or
- * live reasoning; a running tool keeps its own row above a plain Thinking line.
+ * The working row moves to the end. It absorbs the turn's live thinking row, live
+ * reasoning, or the tool stretch at the turn's tail, so the tail is one line. A
+ * running tool with a reply after it keeps its row above a plain Thinking line.
  * A failed group's `thinking` row keeps its own upstream row.
  */
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
@@ -9,7 +10,7 @@ import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.log
 type WorkingRow = Extract<MessagesTimelineRow, { kind: "working" }>;
 type WorkLiveRow = Extract<MessagesTimelineRow, { kind: "work-live" }>;
 export type ForkLiveRow = Extract<MessagesTimelineRow, { kind: "thinking" | "work-live" }>;
-/** `forkLive` is the folded live row, or null for a plain Thinking line under a running tool. */
+/** `forkLive` is the folded live row, or null for a plain Thinking line under a tool that stays in place. */
 export type ForkStatusLineRow = WorkingRow & {
   readonly forkLive: ForkLiveRow | null;
   /** Picks the thinking word (forkThinkingWord); it changes only when a new row or step lands. */
@@ -26,6 +27,10 @@ const settledTools = new WeakMap<WorkLiveRow, ForkSettledToolRow>();
 
 const isLive = (row: MessagesTimelineRow): row is ForkLiveRow =>
   row.kind === "thinking" || (row.kind === "work-live" && row.active);
+
+// Upstream follows the live group with its open details and thumbnails; those stay in place.
+const isGroupDetail = (row: MessagesTimelineRow) =>
+  (row.kind === "work" && row.isExpandedToolGroup) || row.kind === "viewed-images";
 
 // Upstream keeps the latest tool as the active live row after it succeeds; out of
 // the status line it would still read "Running". Only an end status settles it:
@@ -74,10 +79,16 @@ function fold(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
   if (live === undefined || (live.kind === "thinking" && live.groupId !== undefined)) {
     return workingIndex === rows.length - 1 ? rows : [...rest, working];
   }
-  if (live.kind === "thinking" || live.entry.itemType === "reasoning") {
+  if (
+    live.kind === "thinking" ||
+    live.entry.itemType === "reasoning" ||
+    rest.slice(liveIndex + 1).every(isGroupDetail)
+  ) {
     const above = rest.toSpliced(liveIndex, 1);
-    const seed = live.kind === "work-live" ? live.entry.id : rowSeed(above.at(-1));
-    return [...above, mergedWorkingRow(working, live, seed)];
+    if (live.kind === "thinking") {
+      return [...above, mergedWorkingRow(working, live, rowSeed(above.at(-1)))];
+    }
+    return [...above, mergedWorkingRow(working, settled(live), live.entry.id)];
   }
   const above = rest.toSpliced(liveIndex, 1, settled(live));
   return [...above, mergedWorkingRow(working, null, rowSeed(above.at(-1)))];
@@ -108,7 +119,8 @@ export function forkStatusLineRow(
 
 /**
  * One-line text for the status line; upstream's richer previews stay in the open group.
- * Null is the thinking slot, which shows forkThinkingWord.
+ * A running tool reads as its live row would ("Running vp"); reasoning and a settled tool
+ * return null, the thinking slot, which shows forkThinkingWord.
  */
 export function forkStatusLineLabel(
   live: ForkLiveRow | null,
@@ -116,8 +128,11 @@ export function forkStatusLineLabel(
     readonly providerStartingLabel: string | null;
     readonly liveAnswerPreview: string | null;
   },
+  toolLabel: (entry: WorkLiveRow["entry"]) => string,
 ): string | null {
   const label = live?.kind === "thinking" ? live.label : undefined;
-  if (live?.kind === "work-live") return null;
+  if (live?.kind === "work-live") {
+    return live.active && live.entry.itemType !== "reasoning" ? toolLabel(live.entry) : null;
+  }
   return activity.providerStartingLabel ?? label ?? activity.liveAnswerPreview ?? null;
 }

@@ -376,7 +376,7 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       />
     );
   }
-  // The compaction or setup label owns the line; folded live reasoning keeps its row above it.
+  // The compaction or setup label owns the line; the folded live row keeps its own row above it.
   const forkFoldedReasoning =
     isForkStatusLine(row) && row.forkLive?.kind === "work-live" ? (
       <WorkLogBlock>

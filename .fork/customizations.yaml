@@ -6422,8 +6422,12 @@
   intent: >
     A live turn shows one status line at the bottom, the way Claude Code
     does: the working mark, what the agent is doing now ("Thinking", a
-    startup label), and the turn's timer. Upstream derives the working row
-    at the head of the active turn (the slot the turn's fold divider takes
+    startup label, the running tool's label such as "Running vp"), and the
+    turn's timer, with no separator between them and upstream's
+    ActivityShimmerOverlay sweeping the text (paused off screen). The sweep
+    keeps upstream's 2.2s cycle but runs in its first 35% and then rests
+    (theme.custom.css, `[data-fork-status-line]`), so it flashes, not drifts.
+    Upstream derives the working row at the head of the active turn (the slot the turn's fold divider takes
     when it ends) with a bottom border, and draws at most one live activity
     row (a thinking line, live reasoning, or the running tool) at the
     turn's tail. The fork reorders and folds useStableRows' output, so
@@ -6431,14 +6435,16 @@
     the working row moves to the end and branches on that live row. A plain
     thinking row or live reasoning is removed from wherever it sits and
     carried on a copy of the working row as `forkLive`, which renders
-    ForkLiveStatusLine. A running tool keeps its own upstream row in the
-    transcript (its toggle opens the group in place) and the copy carries
-    `forkLive: null`, a plain "Thinking" line with the timer, matching the
-    no3y iPhone transcript. Upstream keeps the latest tool as the active
-    live row after it succeeds; out of the line it would still read
-    "Running", so a tool with an end status is handed over settled
-    (`active: false`, `forkSettled`, which row motion still counts as the
-    live slot). A tool with no status stays running, as upstream counts it.
+    ForkLiveStatusLine. So is the tool stretch at the turn's tail (nothing
+    after it but its open details and thumbnails): finished stretches stay in
+    the trail as upstream's summary rows, and the one still running draws no
+    row of its own; the line names its tool and its chevron opens the group
+    in place. A running tool with a reply after it keeps its own upstream row
+    and the copy carries `forkLive: null`, a plain "Thinking" line with the
+    timer. Upstream keeps the latest tool as the active live row after it
+    succeeds; it would still read "Running", so a tool with an end status is
+    handed over settled (`active: false`, `forkSettled`, which row motion
+    still counts as the live slot) and the line shows the thinking word. A tool with no status stays running, as upstream counts it.
     The in-place row's label drops upstream's endlessly repainting
     live-tool-shine; the line carries the motion. While the turn waits on
     an approval or an answer (TimelineRowActivityCtx's awaitingUser) the
@@ -6480,6 +6486,10 @@
     # border-b. forkStatusLineLabel condenses ThinkingTimelineRow's and
     # LiveWorkEntryTimelineRow's labels here.
     - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # The line reuses ActivityShimmerOverlay; theme.custom.css retimes its
+    # live-activity-focus classes under [data-fork-status-line].
+    - apps/web/src/components/chat/TimelineRowParts.tsx
+    - apps/web/src/index.css
     # Unfenced (strict JSON): the `./forkThinkingWords` subpath export.
     - packages/shared/package.json
   verify:

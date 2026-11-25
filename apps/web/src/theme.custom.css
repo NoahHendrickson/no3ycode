@@ -3604,6 +3604,37 @@
   background: none;
   color: inherit;
 }
+
+/* The status line's shimmer keeps upstream's 2.2s cycle but sweeps in its first
+   35% and rests for the rest. Guarded so reduced motion keeps upstream's `none`. */
+@keyframes fork-status-line-flash {
+  from {
+    transform: translateX(0);
+  }
+  35%,
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes fork-status-line-flash-counter {
+  from {
+    transform: translateX(0);
+  }
+  35%,
+  to {
+    transform: translateX(-100%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-status-line] .live-activity-focus {
+    animation-name: fork-status-line-flash;
+    animation-timing-function: steps(23);
+  }
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-status-line] .live-activity-focus-counter {
+    animation-name: fork-status-line-flash-counter;
+    animation-timing-function: steps(23);
+  }
+}
 /* fork:end fork-working-row-last */
 
 /* The permissions menu (fork-composer-shell): rounder than a stock menu, its rows concentric
