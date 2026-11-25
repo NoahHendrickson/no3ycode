@@ -95,6 +95,15 @@ function withNo3ySplash(plugins: ExpoConfig["plugins"]): ExpoConfig["plugins"] {
   });
 }
 
+// The Live Activity's marks (#no3y-live-activity) join the widget catalog after upstream's logo.
+function withNo3yWidgetAssets(plugins: ExpoConfig["plugins"]): ExpoConfig["plugins"] {
+  return plugins?.flatMap((plugin) =>
+    plugin === "./plugins/withWidgetLogoAsset.cjs"
+      ? ["./fork/plugins/withNo3yWidgetAssets.cjs", plugin]
+      : [plugin],
+  );
+}
+
 // Ping's Apple team, linked domains and Expo project cannot sign or serve a different bundle.
 export function no3yNativeConfig(config: ExpoConfig, env: RepoEnv): ExpoConfig {
   if (!isNo3yMobileIdentity(env)) return config;
@@ -104,7 +113,7 @@ export function no3yNativeConfig(config: ExpoConfig, env: RepoEnv): ExpoConfig {
     ...config,
     ios,
     updates: { enabled: false },
-    plugins: withNo3ySplash(config.plugins),
+    plugins: withNo3yWidgetAssets(withNo3ySplash(config.plugins)),
     extra: { ...config.extra, eas: { observe: config.extra?.eas?.observe } },
   };
   delete next.owner;

@@ -5598,6 +5598,64 @@
     - apps/web/src/__fork_guards__/no3yPush.test.ts
     - apps/mobile/fork/push-service/no3yPush.test.ts
 
+- id: no3y-live-activity
+  intent: >
+    The no3y iOS app shows one lock-screen and Dynamic Island Live Activity
+    for the agents running on the Mac, without Ping's relay. The Mac push
+    service (no3y-push) keeps the card's rows from the same per-thread
+    awareness it alerts on (waiting threads first, then failures, running
+    work, and what finished in the last 15 minutes) with totals over every
+    thread. Up to three threads the card lists them all; past three it shows
+    the two most urgent as rows above a full-width strip of tiles (status
+    mark, white count) for every thread not in a row, so it fits the lock
+    screen's 160pt. Status reads from the marks alone: rows carry no status
+    words and the header count is white. The Mac pushes the card to every
+    registered activity token as ActivityKit
+    `liveactivity` pushes: an update when what the card shows changes, a
+    re-push every 4 minutes while work runs (the card goes stale after 10),
+    and an end 5 seconds after nothing is active, dismissed 5 minutes later.
+    The phone only ever starts the card in the foreground, as upstream does:
+    on a send (upstream's armAgentAwarenessLiveActivityForLocalWork, fenced
+    to take the no3y path first) or on opening the app while the Mac reports
+    running work (GET /no3y-push/live-activity). It then POSTs the card's
+    update token to /no3y-push/live-activity on each Tailscale route (the
+    send hook goes through the dependency-free no3yLiveActivityHook); the
+    Mac answers with the current card at once. The card is the fork's own
+    layout (fork/No3yAgentActivity.tsx, ActivityKit name
+    No3yAgentActivity): Flat Glass status colours, SF Symbol marks matching
+    the sidebar's (dotted ring working, half circle waiting, dot finished),
+    the pixel leaf, and the Claude and Codex marks, which a fork config
+    plugin adds to the widget asset catalog after upstream's logo plugin.
+    Upstream's AgentActivity card and relay path stay for an
+    upstream-identity build (NO3Y_MOBILE_IDENTITY=0).
+  tier: 4
+  files:
+    - apps/mobile/fork/no3yLiveActivity.ts
+    - apps/mobile/fork/no3yLiveActivity.test.ts
+    - apps/mobile/fork/no3yLiveActivityClient.ts
+    - apps/mobile/fork/no3yLiveActivityHook.ts
+    - apps/mobile/fork/no3yLiveActivityFactory.ts
+    - apps/mobile/fork/no3yLiveActivityFactory.ios.ts
+    - apps/mobile/fork/No3yAgentActivity.tsx
+    - apps/mobile/fork/plugins/withNo3yWidgetAssets.cjs
+    - apps/mobile/fork/assets/widget/No3yClaude.svg
+    - apps/mobile/fork/assets/widget/No3yCodex.png
+    - apps/mobile/fork/pushRegistration.ts
+    - apps/mobile/fork/push-service/no3yPush.mts
+    - apps/mobile/fork/identity.ts
+  shadows: []
+  watch:
+    - knip.jsonc
+    - apps/mobile/src/features/agent-awareness/remoteRegistration.ts
+    - apps/mobile/src/widgets/AgentActivity.tsx
+    - apps/mobile/plugins/withWidgetLogoAsset.cjs
+    - infra/relay/src/agentActivity/ApnsClient.ts
+  verify:
+    - apps/web/src/__fork_guards__/no3yLiveActivity.test.ts
+    - apps/mobile/fork/no3yLiveActivity.test.ts
+    - apps/mobile/fork/push-service/no3yPush.test.ts
+    - apps/mobile/fork/identity.test.ts
+
 - id: fork-glass-preview-parking
   intent: >
     A preview guest that is rendering but not on screen (an agent driving the

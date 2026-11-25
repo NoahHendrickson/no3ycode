@@ -4,9 +4,13 @@ import * as DateTime from "effect/DateTime";
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import { extractAgentNotificationDeepLink } from "../../src/features/agent-awareness/notificationPayload";
+import type { No3yLiveActivityProps } from "../no3yLiveActivity";
 import {
   apnsPayload,
+  applyShellItem,
   isAutomationRunWithoutThread,
+  liveActivityRequest,
+  makeLiveActivityPublisher,
   makeTracker,
   observeThread,
   pairingTokenFromUrl,
@@ -16,9 +20,14 @@ import {
 
 function tracker() {
   const sent: ApnsNotification[] = [];
-  const t = makeTracker("env-1" as EnvironmentId, (notification) => sent.push(notification));
+  const changes = { count: 0 };
+  const t = makeTracker(
+    "env-1" as EnvironmentId,
+    (notification) => sent.push(notification),
+    () => changes.count++,
+  );
   t.projectTitles.set("project-1", "no3ycode");
-  return Object.assign(t, { sent });
+  return Object.assign(t, { sent, changes });
 }
 
 type ObservedThread = Parameters<typeof observeThread>[1];
@@ -151,6 +160,180 @@ describe("no3y push transitions", () => {
     observeThread(t, thread({ status: "completed", settledOverride: "settled" }), false);
     vi.advanceTimersByTime(5_000);
     expect(t.sent.map((n) => n.body)).toEqual(["Agent finished: no3ycode"]);
+  });
+});
+
+describe("live activity rows", () => {
+  const card = (t: ReturnType<typeof tracker>) =>
+    [...t.activity.values()].map(({ state, provider }) => [state.threadId, state.phase, provider]);
+
+  it("follows a thread from running to finished to settled, even in the startup snapshot", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+    observeThread(t, thread({ status: "completed" }), false);
+    expect(card(t)).toEqual([["thread-1", "completed", "codex"]]);
+    observeThread(t, thread({ status: "completed", settledOverride: "settled" }), false);
+    expect(card(t)).toEqual([]);
+    expect(t.changes.count).toBe(3);
+  });
+
+  it("leaves off hidden automation runs and work that finished before the service started", () => {
+    const t = tracker();
+    const run = { scheduledTaskId: ScheduledTaskId.make("scheduled-task:review") };
+    observeThread(t, { ...thread({}), ...run }, false);
+    const before = DateTime.makeUnsafe(t.startedAt - 1_000);
+    const done = thread({ status: "completed", latestRunCompletedAt: before });
+    observeThread(t, { ...done, id: "thread-2" as ThreadId }, true);
+    expect(card(t)).toEqual([]);
+    expect(t.changes.count).toBe(0);
+  });
+
+  it("drops rows a reconnect snapshot no longer has, and wakes the publisher regardless", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    const other = { ...thread({ status: "completed" }), id: "thread-2" as ThreadId };
+    const snapshot = (threads: ReadonlyArray<ObservedThread>) =>
+      ({ kind: "snapshot", snapshot: { projects: [], threads } }) as unknown as Parameters<
+        typeof applyShellItem
+      >[1];
+    applyShellItem(t, snapshot([other]));
+    expect(card(t)).toEqual([]);
+    const changes = t.changes.count;
+    applyShellItem(t, snapshot([other]));
+    expect(t.changes.count).toBe(changes + 1);
+
+    // An empty full snapshot is authoritative too; a projects-only refresh is not.
+    observeThread(t, thread({}), false);
+    applyShellItem(t, {
+      kind: "snapshot",
+      snapshot: { projects: [], threads: [] },
+      resolvedRepositoryIdentityRoots: [],
+    } as unknown as Parameters<typeof applyShellItem>[1]);
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+    applyShellItem(t, snapshot([]));
+    expect(card(t)).toEqual([]);
+  });
+
+  it("lets a parent stop waiting when its waiting subagent is gone from a reconnect snapshot", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    observeThread(t, subagent(approval("child-a")), true);
+    expect(card(t)).toEqual([["thread-1", "waiting_for_approval", "codex"]]);
+    applyShellItem(t, {
+      kind: "snapshot",
+      snapshot: { projects: [], threads: [thread({})] },
+    } as unknown as Parameters<typeof applyShellItem>[1]);
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+  });
+});
+
+describe("live activity pushes", () => {
+  const row = (phase: No3yLiveActivityProps["rows"][number]["phase"]) => ({
+    environmentId: "env-1",
+    threadId: "thread-1",
+    threadTitle: "Fix the composer",
+    projectTitle: "no3ycode",
+    provider: "codex",
+    phase,
+    updatedAt: "2026-11-22T12:00:00.000Z",
+    deepLink: "/threads/env-1/thread-1",
+  });
+  const props = (phase: Parameters<typeof row>[0], activeCount = 1): No3yLiveActivityProps => ({
+    activeCount,
+    waitingCount: 0,
+    failedCount: 0,
+    doneCount: 0,
+    updatedAt: "2026-11-22T12:00:00.000Z",
+    rows: [row(phase)],
+  });
+  const now = Date.parse("2026-11-22T12:00:00.000Z");
+
+  it("builds updates that go stale and ends that dismiss, as expo-widgets content state", () => {
+    const update = liveActivityRequest("update", props("running"), now);
+    expect(update).toEqual({
+      priority: "5",
+      payload: {
+        aps: {
+          timestamp: now / 1000,
+          event: "update",
+          "content-state": { name: "No3yAgentActivity", props: JSON.stringify(props("running")) },
+          "stale-date": now / 1000 + 600,
+        },
+      },
+    });
+    expect(liveActivityRequest("update", props("waiting_for_input"), now).priority).toBe("10");
+    const end = liveActivityRequest("end", props("completed", 0), now);
+    expect(end.priority).toBe("10");
+    expect(end.payload.aps).toMatchObject({ event: "end", "dismissal-date": now / 1000 + 300 });
+    expect(liveActivityRequest("end", null, now).payload.aps).toEqual({
+      timestamp: now / 1000,
+      event: "end",
+      "dismissal-date": now / 1000 + 15,
+    });
+  });
+
+  it("coalesces updates and holds the end through a continuation", () => {
+    using _timers = { [Symbol.dispose]: () => vi.useRealTimers() };
+    vi.useFakeTimers();
+    let current: No3yLiveActivityProps | null = props("running");
+    const pushed: string[] = [];
+    const publisher = makeLiveActivityPublisher(
+      () => current,
+      (event, p) => pushed.push(`${event}:${p?.rows[0]?.phase ?? "none"}`),
+      false,
+    );
+    publisher.changed();
+    publisher.changed();
+    vi.advanceTimersByTime(500);
+    publisher.changed();
+    vi.advanceTimersByTime(500);
+    expect(pushed).toEqual(["update:running"]);
+
+    current = props("completed", 0);
+    publisher.changed();
+    vi.advanceTimersByTime(500);
+    current = props("running");
+    publisher.changed();
+    vi.advanceTimersByTime(5_000);
+    expect(pushed).toEqual(["update:running"]);
+
+    current = props("completed", 0);
+    publisher.changed();
+    vi.advanceTimersByTime(5_500);
+    expect(pushed).toEqual(["update:running", "end:completed"]);
+  });
+
+  it("stops refreshing while the stream is down and resumes on the next change", () => {
+    using _timers = { [Symbol.dispose]: () => vi.useRealTimers() };
+    vi.useFakeTimers();
+    let current = props("running");
+    const pushed: string[] = [];
+    const publisher = makeLiveActivityPublisher(
+      () => current,
+      (event) => pushed.push(event),
+      false,
+    );
+    publisher.changed();
+    vi.advanceTimersByTime(4 * 60_000 + 500);
+    expect(pushed).toEqual(["update", "update"]);
+    publisher.changed();
+    publisher.pause();
+    vi.advanceTimersByTime(20 * 60_000);
+    expect(pushed).toHaveLength(2);
+    publisher.changed();
+    vi.advanceTimersByTime(4 * 60_000 + 500);
+    expect(pushed).toHaveLength(3);
+
+    // A held end cut short by a continuation must not re-arm the refresh while paused.
+    current = props("completed", 0);
+    publisher.changed();
+    vi.advanceTimersByTime(500);
+    current = props("running");
+    publisher.changed();
+    publisher.pause();
+    vi.advanceTimersByTime(20 * 60_000);
+    expect(pushed).toHaveLength(3);
   });
 });
 

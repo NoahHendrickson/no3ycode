@@ -53,6 +53,10 @@ it.each([
     dark: { image: "./fork/assets/no3y-splash-leaf.png", backgroundColor: "#191817" },
   });
   expect(config.extra?.eas?.projectId).toBeUndefined();
+  // Mods run in reverse: listed first, the Live Activity marks land after expo-widgets wipes the target.
+  const plugins = config.plugins ?? [];
+  const logo = plugins.indexOf("./plugins/withWidgetLogoAsset.cjs");
+  expect(plugins[logo - 1]).toBe("./fork/plugins/withNo3yWidgetAssets.cjs");
 });
 
 it("builds upstream's identity with NO3Y_MOBILE_IDENTITY=0", async () => {
