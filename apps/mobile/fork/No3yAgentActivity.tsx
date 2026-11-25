@@ -68,7 +68,8 @@ function No3yAgentActivity(
         return light ? "#059669" : "#24FE8A";
     }
   };
-  const symbol = (phase: Phase): SFName => {
+  // Null is work in flight, drawn with the app's bead ring.
+  const symbol = (phase: Phase): SFName | null => {
     switch (phase) {
       case "waiting_for_approval":
       case "waiting_for_input":
@@ -79,9 +80,11 @@ function No3yAgentActivity(
       case "stale":
         return "clock";
       default:
-        return "circle.dotted";
+        return null;
     }
   };
+  // Project labels and separators: a fixed ink on the card's own tint, not the wallpaper's.
+  const quiet: Foreground = plain ? secondary : light ? "#0000009E" : "#FFFFFF9E";
 
   // Past the stale date nothing in flight is known to still be running.
   const rows: ReadonlyArray<No3yLiveActivityRow> = environment.isStale
@@ -89,11 +92,6 @@ function No3yAgentActivity(
         row.phase === "completed" || row.phase === "failed" ? row : { ...row, phase: "stale" },
       )
     : props.rows;
-  // Totals over every thread: the card shows three rows, the header counts the rest too.
-  const waiting = environment.isStale ? 0 : props.waitingCount;
-  const failed = props.failedCount;
-  const done = props.doneCount;
-  const working = environment.isStale ? 0 : props.activeCount - props.waitingCount;
   const hero = rows[0];
 
   const deepLink =
@@ -103,11 +101,18 @@ function No3yAgentActivity(
   const link = deepLink ? [widgetURL(deepLink)] : [];
 
   // Images ignore frame/foregroundStyle; size and tint them through a container they fill.
-  const glyph = (phase: Phase, size: number) => (
-    <HStack modifiers={[frame({ width: size, height: size }), foregroundStyle(tint(phase))]}>
-      <Image systemName={symbol(phase)} modifiers={[resizable()]} />
-    </HStack>
-  );
+  const glyph = (phase: Phase, size: number) => {
+    const name = symbol(phase);
+    return (
+      <HStack modifiers={[frame({ width: size, height: size }), foregroundStyle(tint(phase))]}>
+        {name ? (
+          <Image systemName={name} modifiers={[resizable()]} />
+        ) : (
+          <Image assetName="No3yBeadRing" modifiers={[resizable()]} />
+        )}
+      </HStack>
+    );
+  };
   const asset = (name: string, size: number) => (
     <HStack modifiers={[frame({ width: size, height: size })]}>
       <Image assetName={name} modifiers={[resizable()]} />
@@ -119,39 +124,6 @@ function No3yAgentActivity(
       : provider === "codex"
         ? asset("No3yCodex", 15)
         : null;
-
-  const brand = (
-    <HStack spacing={6} alignment="center">
-      {asset("No3yLeaf", 18)}
-      <Text modifiers={[font({ weight: "medium", size: 14 }), foregroundStyle(primary)]}>no3y</Text>
-    </HStack>
-  );
-
-  const parts: Array<{ readonly text: string; readonly color: Foreground }> = [];
-  if (environment.isStale) parts.push({ text: "Out of date", color: secondary });
-  if (working > 0) parts.push({ text: `${working} working`, color: primary });
-  if (waiting > 0)
-    parts.push({
-      text: `${waiting} need${waiting === 1 ? "s" : ""} you`,
-      color: primary,
-    });
-  if (props.activeCount === 0 && failed > 0)
-    parts.push({ text: `${failed} failed`, color: primary });
-  if (props.activeCount === 0 && done > 0) parts.push({ text: `${done} done`, color: primary });
-  const part0 = parts[0];
-  const part1 = parts[1];
-  const summaryText = (text: string, color: Foreground) => (
-    <Text modifiers={[font({ weight: "regular", size: 13 }), foregroundStyle(color), lineLimit(1)]}>
-      {text}
-    </Text>
-  );
-  const summary = (
-    <HStack spacing={5} alignment="center">
-      {part0 ? summaryText(part0.text, part0.color) : null}
-      {part1 ? <Text modifiers={[font({ size: 13 }), foregroundStyle(secondary)]}>·</Text> : null}
-      {part1 ? summaryText(part1.text, part1.color) : null}
-    </HStack>
-  );
 
   const row = (item: No3yLiveActivityRow | undefined, withProject: boolean) =>
     item ? (
@@ -166,8 +138,8 @@ function No3yAgentActivity(
         >
           {item.threadTitle}
         </Text>
-        {withProject ? (
-          <Text modifiers={[font({ size: 13 }), foregroundStyle(secondary), lineLimit(1)]}>
+        {withProject && item.projectTitle !== "" ? (
+          <Text modifiers={[font({ size: 13 }), foregroundStyle(quiet), lineLimit(1)]}>
             {item.projectTitle}
           </Text>
         ) : null}
@@ -223,17 +195,15 @@ function No3yAgentActivity(
         alignment="leading"
         spacing={4}
         modifiers={[
-          padding({ top: 14, bottom: 10, leading: 16, trailing: 16 }),
-          // A clear tint shows iOS 26's glass; older systems keep the standard surface.
-          activityBackgroundTint(environment.isLiquidGlassAvailable ? "clear" : null),
+          padding({ vertical: 10, horizontal: 16 }),
+          // iOS 26 glass tinted to Flat Glass ink at about half, so it reads on any wallpaper; older
+          // systems keep the standard surface.
+          activityBackgroundTint(
+            environment.isLiquidGlassAvailable ? (light ? "#F2F2F285" : "#12121285") : null,
+          ),
           ...link,
         ]}
       >
-        <HStack alignment="center" modifiers={[padding({ bottom: 4 })]}>
-          {brand}
-          <Spacer minLength={8} />
-          {summary}
-        </HStack>
         {row(r0, true)}
         {divided(r1)}
         {row(r1, true)}
@@ -243,12 +213,7 @@ function No3yAgentActivity(
       </VStack>
     ),
     bannerSmall: (
-      <VStack alignment="leading" spacing={5} modifiers={[padding({ all: 10 }), ...link]}>
-        <HStack spacing={6} alignment="center">
-          {asset("No3yLeaf", 14)}
-          <Spacer minLength={4} />
-          {summary}
-        </HStack>
+      <VStack alignment="leading" modifiers={[padding({ all: 10 }), ...link]}>
         {row(r0, false)}
       </VStack>
     ),
@@ -263,8 +228,8 @@ function No3yAgentActivity(
     ) : (
       asset("No3yLeaf", 14)
     ),
-    expandedLeading: <HStack modifiers={[padding({ leading: 6, top: 4 })]}>{brand}</HStack>,
-    expandedTrailing: <HStack modifiers={[padding({ trailing: 6, top: 4 })]}>{summary}</HStack>,
+    expandedLeading: null,
+    expandedTrailing: null,
     expandedCenter: null,
     expandedBottom: (
       <VStack

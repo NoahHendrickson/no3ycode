@@ -747,6 +747,19 @@ function install() {
   log(`installed; logs in ${logPath}`);
 }
 
+function launchAgentLoaded(): boolean {
+  try {
+    NodeChildProcess.execFileSync(
+      "launchctl",
+      ["print", `gui/${process.getuid?.()}/${LAUNCH_AGENT_LABEL}`],
+      { stdio: "ignore" },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function uninstallLaunchAgent() {
   try {
     NodeChildProcess.execFileSync(
@@ -756,6 +769,14 @@ function uninstallLaunchAgent() {
     );
   } catch {
     // Not loaded.
+  }
+  // bootout returns while the old process is still exiting; a bootstrap then fails with I/O error 5.
+  // launchd SIGKILLs it after its 20 s exit timeout, so wait a little past that.
+  for (let tries = 0; tries < 250 && launchAgentLoaded(); tries += 1) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
+  }
+  if (launchAgentLoaded()) {
+    throw new Error(`the old ${LAUNCH_AGENT_LABEL} agent did not exit; run install again`);
   }
   NodeFS.rmSync(launchAgentPath(), { force: true });
 }

@@ -6,6 +6,7 @@ import {
   aggregateNo3yLiveActivity,
   NO3Y_LIVE_ACTIVITY_TERMINAL_TTL_MS,
   no3yLiveActivitySignature,
+  startingNo3yLiveActivity,
 } from "./no3yLiveActivity";
 
 const now = Date.parse("2026-11-24T12:00:00.000Z");
@@ -94,5 +95,14 @@ describe("aggregateNo3yLiveActivity", () => {
     expect(
       no3yLiveActivitySignature(aggregateNo3yLiveActivity([input("t", "waiting_for_input")], now)),
     ).not.toBe(at("2026-11-24T11:59:00.000Z"));
+  });
+
+  it("leaves the Mac's name out of the placeholder a send starts", () => {
+    // Upstream's send hook passes the environment label as its project title.
+    const sent = { threadTitle: "Fix the composer", projectTitle: "noey's MacBook Pro (2)" };
+    expect(startingNo3yLiveActivity(sent, "2026-11-24T12:00:00.000Z").rows[0]).toMatchObject({
+      threadTitle: "Fix the composer",
+      projectTitle: "",
+    });
   });
 });
