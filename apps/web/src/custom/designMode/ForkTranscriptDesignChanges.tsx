@@ -78,11 +78,10 @@ export function ForkTranscriptDesignChanges({
                 />
               }
             />
-            <TooltipPopup className="max-w-96 whitespace-pre-wrap">
-              <span className="block font-mono text-2xs leading-snug">
-                {block.slice(0, 600)}
-                {block.length > 600 ? "…" : ""}
-              </span>
+            {/* oxlint-disable-next-line shadcn/no-restyle -- monospace for the request it previews; theme.custom.css keeps .font-mono tooltips at the compact metrics */}
+            <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-2xs">
+              {block.slice(0, 600)}
+              {block.length > 600 ? "…" : ""}
             </TooltipPopup>
           </Tooltip>
         );

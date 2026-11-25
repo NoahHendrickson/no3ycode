@@ -205,6 +205,13 @@
   border-radius: var(--fork-inlet-menu-radius);
 }
 
+/* The effort menu keeps Inlet's 10px: the round permissions corner (theme.custom.css) sets its
+   token on the popup itself, which outranks Inlet's inherited one. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-slot="menu-popup"]:has([data-fork-option-menu]) {
+  --fork-menu-radius: var(--fork-inlet-menu-radius);
+}
+
 /* Command rows keep upstream's 4px: Inlet's row radius never reached them. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-slot="command-item"] {
   --fork-menu-row-radius: var(--radius-sm);

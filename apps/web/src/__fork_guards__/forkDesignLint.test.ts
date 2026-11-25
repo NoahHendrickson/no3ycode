@@ -88,6 +88,9 @@ describe("fork guard: fork-design-lint", () => {
         line-height: 1.4;
       }`;
       expect(rules(check(css))).toEqual(["A2", "A3", "A3", "A4", "A4"]);
+      // A condition nested in the rule styles the same elements.
+      const nested = `${ROOT} .fork-x { @media (pointer: coarse) { gap: 6px; } @supports (display: grid) { color: red; } }`;
+      expect(rules(check(nested))).toEqual(["A3", "A1"]);
     });
   });
 
@@ -205,10 +208,11 @@ describe("fork guard: fork-design-lint", () => {
     });
 
     it("reports an attribute or a value nothing sets", () => {
-      const css = `${ROOT} [data-fork-gone] { color: red; } ${ROOT} [data-fork-chip="trio"] { color: red; }`;
+      const css = `${ROOT} [data-fork-gone] { color: red; } ${ROOT} [data-fork-chip="trio"] { color: red; } ${ROOT} [data-fork-chip=quad] { color: red; }`;
       expect(run(css, `<div data-fork-chip="solo" />`).map((finding) => finding.message)).toEqual([
         "[data-fork-gone] is set nowhere in source",
         '[data-fork-chip="trio"]: no source sets "trio"',
+        '[data-fork-chip="quad"]: no source sets "quad"',
       ]);
     });
   });
@@ -218,12 +222,13 @@ describe("fork guard: fork-design-lint", () => {
       const source = `
 export function ForkChip() {}
 export const ForkRow = memo(function ForkRow() {});
+export const ForkBadge = props => null;
 export const FORK_LEVELS = ([1, 2]);
 export function ForkThemeProvider() {}
 function Local() {}`;
       expect(
         DesignLint.exportedComponents(source).map((entry: { name: string }) => entry.name),
-      ).toEqual(["ForkChip", "ForkRow"]);
+      ).toEqual(["ForkChip", "ForkRow", "ForkBadge"]);
       const story = `import { ForkChip, type ForkChipProps } from "~/custom/ForkChip";\nimport { Button } from "~/components/ui/button";`;
       expect([...DesignLint.storyImports(story)]).toEqual(["ForkChip", "ForkChipProps"]);
     });

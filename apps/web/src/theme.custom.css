@@ -781,10 +781,9 @@
 
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-composer-radius: 16px;
-  /* Menu corners: rows inside a menu, the menu itself, popovers off the composer. */
+  /* Menu corners: rows inside a menu, and the menu itself. */
   --fork-menu-row-radius: 0.5rem;
   --fork-menu-radius: 0.75rem;
-  --fork-composer-popover-radius: 1rem;
   /* 13px, between text-xs and text-sm: notice and approval actions, the Dictate tooltip. */
   --fork-text-chip: calc(0.8125rem * var(--fork-interface-text-scale, 1));
   /* The chat stream's sizes, for its cards outside the timeline. */

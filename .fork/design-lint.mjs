@@ -319,6 +319,8 @@ export function parseCss(text) {
       (frame) => frame.kind === "at" && /^@(?:-\w+-)?keyframes\b/u.test(frame.prelude),
     );
     if (prelude.startsWith("@")) {
+      // A conditional block nested in a style rule (CSS nesting) styles that rule's elements.
+      const host = stack.at(-1)?.kind === "style" ? stack.at(-1) : null;
       stack.push({
         kind: "at",
         name: /^@([\w-]+)/u.exec(prelude)?.[1] ?? "",
@@ -326,6 +328,7 @@ export function parseCss(text) {
         declarations: [],
         line: bufferLine,
         atRules,
+        ...(host && !host.keyframes ? { selectors: host.selectors } : {}),
       });
       return;
     }
@@ -659,7 +662,9 @@ function fenceRanges(text) {
 const isTokenBlock = (rule) =>
   rule.declarations.length > 0 &&
   rule.declarations.every((declaration) => declaration.property.startsWith("--")) &&
-  (rule.kind === "at" || rule.selectors.every((selector) => rootCompound(selector) !== null));
+  (rule.selectors
+    ? rule.selectors.every((selector) => rootCompound(selector) !== null)
+    : rule.kind === "at");
 
 export function loadStylesheet(path, text, { fenced = false } = {}) {
   const { rules, comments } = parseCss(text);
@@ -709,9 +714,9 @@ function stripNot(compound) {
 export function checkStylesheet(sheet, slots = new Set()) {
   const out = [];
   for (const rule of sheet.rules) {
-    if (rule.kind === "at" && rule.name !== "theme") continue;
+    if (rule.kind === "at" && rule.name !== "theme" && !rule.selectors) continue;
     const tokenBlock = isTokenBlock(rule);
-    const selectors = rule.kind === "style" ? rule.selectors : [];
+    const selectors = rule.selectors ?? [];
     const themes = [...new Set(selectors.flatMap(themesFor))];
     const primitive =
       !rule.keyframes && selectors.some((selector) => stylesPrimitive(selector, slots));
@@ -1068,7 +1073,7 @@ export function checkDeadForkAttributes(sheets, sourceText) {
     for (const rule of sheet.rules) {
       if (rule.kind !== "style" || !sheet.owns(rule.line)) continue;
       const attributes = rule.selectors.flatMap((selector) => [
-        ...selector.matchAll(/\[\s*(data-fork-[\w-]+)(?:\s*=\s*["']([^"']*)["'])?/gu),
+        ...selector.matchAll(/\[\s*(data-fork-[\w-]+)(?:\s*=\s*(?:["']([^"']*)["']|([\w-]+)))?/gu),
       ]);
       const names = new Set(attributes.map((match) => match[1]));
       for (const name of names) {
@@ -1089,7 +1094,8 @@ export function checkDeadForkAttributes(sheets, sourceText) {
         }
       }
       // A live attribute can still carry a value nothing sets.
-      for (const [, name, value] of attributes) {
+      for (const [, name, quoted, bare] of attributes) {
+        const value = quoted ?? bare;
         if (value === undefined || !checked.get(name)) continue;
         const escaped = value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
         if (!new RegExp(`["'\`]${escaped}["'\`]`, "u").test(sourceText)) {
@@ -1110,7 +1116,7 @@ export function checkDeadForkAttributes(sheets, sourceText) {
 }
 
 const EXPORTED_COMPONENT =
-  /^export (?:default )?(?:function ([A-Z]\w*)|const ([A-Z]\w*)\s*(?::[^=]+)?=\s*(?:memo|forwardRef|React\.memo|function|\())/gmu;
+  /^export (?:default )?(?:function ([A-Z]\w*)|const ([A-Z]\w*)\s*(?::[^=]+)?=\s*(?:memo|forwardRef|React\.memo|function|\(|[a-z]\w*\s*=>))/gmu;
 
 export function exportedComponents(text) {
   return [...text.matchAll(EXPORTED_COMPONENT)]
