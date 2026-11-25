@@ -795,6 +795,10 @@ const ConversationTimeline = memo(function ConversationTimeline({
        Find searches every run, so quiet wakes show while it is open. */
     hideQuietBotWakes: forkIsBotThread && !findActive,
     /* fork:end fork-bots */
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+       Find matches reply text, so it shows the replies, as it swaps Zen for hideAll. */
+    forkHoldLiveReplies: !findActive,
+    /* fork:end fork-quiet-live-turn */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
   const stableRows = useStableRows(rawRows, listIdentityKey);
@@ -1247,8 +1251,10 @@ const ConversationTimeline = memo(function ConversationTimeline({
     isPreparingWorktree,
     providerStartingLabel,
     latestRunId: latestRun?.runId ?? null,
-    liveAnswerPreview:
-      isWorking && toolCallVisibility === "zen" ? liveAnswerPreview(timelineEntries) : null,
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+       Upstream reads the preview in Zen only; every mode now holds a running turn's replies. */
+    liveAnswerPreview: isWorking ? liveAnswerPreview(timelineEntries) : null,
+    /* fork:end fork-quiet-live-turn */
   };
   // Mounted in both the empty and filled timeline so a thread's first turn
   // starts from a baseline instead of a fresh, silent region.

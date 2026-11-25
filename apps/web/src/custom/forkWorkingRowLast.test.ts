@@ -5,7 +5,10 @@ import {
 } from "~/components/chat/MessagesTimeline.logic";
 import {
   forkLiveStatusRows,
-  forkStatusLineLabel,
+  forkStatusLineCycle,
+  forkStatusLineLead,
+  forkStatusLineVoice,
+  forkStatusLineVoices,
   isForkStatusLine,
   type ForkLiveRow,
 } from "./forkWorkingRowLast";
@@ -217,7 +220,7 @@ describe("forkLiveStatusRows while the line yields the tail", () => {
   });
 });
 
-describe("forkStatusLineLabel", () => {
+describe("forkStatusLineVoices", () => {
   const activity = { providerStartingLabel: null, liveAnswerPreview: null };
   const thinking = { kind: "thinking", id: "live", createdAt: null } as ForkLiveRow;
   const reasoning = {
@@ -229,24 +232,123 @@ describe("forkStatusLineLabel", () => {
     statusLine(forkLiveStatusRows(derive([command("first", 5, status)]))) ?? null;
 
   it.each([
-    ["the thinking line", thinking, activity, null],
+    ["the thinking line", thinking, activity, { pinned: null, tool: null, thought: null }],
     [
       "a provider startup",
       thinking,
       { ...activity, providerStartingLabel: "Starting session" },
-      "Starting session",
+      { pinned: "Starting session", tool: null, thought: null },
     ],
     [
-      "a zen answer preview",
-      thinking,
-      { ...activity, liveAnswerPreview: "Tiger cubs" },
-      "Tiger cubs",
+      "subagents it waits on",
+      { ...thinking, label: "waiting" },
+      activity,
+      { pinned: "waiting", tool: null, thought: null },
     ],
-    ["live reasoning", reasoning, activity, null],
-    ["a running tool", tool("inProgress"), activity, "Running rg"],
-    ["a settled tool", tool("completed"), activity, null],
-    ["the line under a tool that stays in place", null, activity, null],
-  ])("labels %s", (_, live, state, label) => {
-    expect(forkStatusLineLabel(live, state, undefined)).toBe(label);
+    [
+      "a thought",
+      reasoning,
+      { ...activity, liveAnswerPreview: "Tiger cubs" },
+      { pinned: null, tool: null, thought: "Tiger cubs" },
+    ],
+    [
+      "a running tool",
+      tool("inProgress"),
+      activity,
+      {
+        pinned: null,
+        tool: { key: "first", label: expect.stringMatching(/ rg$/u) },
+        thought: null,
+      },
+    ],
+    ["a settled tool", tool("completed"), activity, { pinned: null, tool: null, thought: null }],
+    [
+      "the line under a tool that stays in place",
+      null,
+      activity,
+      { pinned: null, tool: null, thought: null },
+    ],
+  ])("reads %s", (_, live, state, voices) => {
+    expect(forkStatusLineVoices(live, state, undefined)).toEqual(voices);
+  });
+
+  it.each([
+    ["cubs.", "cubs"],
+    ["cubs...", "cubs..."],
+    ["cubs?", "cubs?"],
+  ])("reads the thought %s as %s", (preview, thought) => {
+    expect(
+      forkStatusLineVoices(reasoning, { ...activity, liveAnswerPreview: preview }, undefined)
+        .thought,
+    ).toBe(thought);
+  });
+});
+
+describe("the status line rotation", () => {
+  const voices = (tool: string | null, thought: string | null) => ({
+    pinned: null,
+    tool: tool === null ? null : { key: tool, label: tool },
+    thought,
+  });
+
+  it("cycles thought, tool and word from whoever spoke last, skipping the silent", () => {
+    const all = forkStatusLineCycle(voices("vp", "Checking tests."));
+    expect(all).toEqual(["thought", "tool", "word"]);
+    expect([0, 1, 2, 3].map((beat) => forkStatusLineVoice(all, "tool", beat))).toEqual([
+      "tool",
+      "word",
+      "thought",
+      "tool",
+    ]);
+    const quiet = forkStatusLineCycle(voices(null, "Checking tests."));
+    expect([0, 1, 2].map((beat) => forkStatusLineVoice(quiet, "tool", beat))).toEqual([
+      "thought",
+      "word",
+      "thought",
+    ]);
+    expect(forkStatusLineCycle(voices(null, null))).toEqual(["word"]);
+  });
+
+  it("hands the line to a new tool or a new thought, and holds the lead otherwise", () => {
+    const seen = { toolKey: "a", thought: "Old." };
+    expect(forkStatusLineLead(seen, voices("b", "Old."), "thought")).toBe("tool");
+    expect(forkStatusLineLead(seen, voices("a", "New."), "tool")).toBe("thought");
+    expect(forkStatusLineLead(seen, voices(null, "Old."), "word")).toBe("word");
+  });
+});
+
+describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
+  const run = (isWorking: boolean) => ({
+    runId: "turn-1" as never,
+    status: isWorking ? ("running" as const) : ("completed" as const),
+    startedAt: at(0),
+    completedAt: isWorking ? null : at(9),
+    ...(isWorking ? {} : { turnEnded: true }),
+  });
+  const rowsFor = (entries: Entries, isWorking: boolean) =>
+    forkLiveStatusRows(
+      deriveMessagesTimelineRows({
+        timelineEntries: entries,
+        latestRun: run(isWorking),
+        isWorking,
+        activeTurnStartedAt: at(0),
+        turnDiffSummaries: [],
+        supportsConversationRollback: false,
+        forkHoldLiveReplies: true,
+      }),
+    );
+  const turn = [
+    reasoning(2),
+    command("first", 3, "completed"),
+    commentary(4),
+    command("second", 5, "inProgress"),
+  ];
+
+  it("folds steps and replies alike into the one status line", () => {
+    expect(kinds(rowsFor(turn, true))).toEqual(["working"]);
+  });
+
+  it("shows the replies once the turn ends", () => {
+    expect(kinds(rowsFor(turn, false))).toContain("message");
   });
 });

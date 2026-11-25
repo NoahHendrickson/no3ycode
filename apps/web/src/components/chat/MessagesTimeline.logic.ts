@@ -1519,6 +1519,33 @@ export function liveAnswerPreview(entries: ReadonlyArray<TimelineEntry>): string
   return null;
 }
 
+/* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+   The replies Zen holds back while answering, narrowed to the run still going. */
+function forkHeldLiveReplyIds(
+  entries: ReadonlyArray<TimelineEntry>,
+  answeringRunId: RunId,
+  revealedMessageId: string | null | undefined,
+): ReadonlySet<string> {
+  const held = new Set<string>();
+  const steerAnswerIds = deriveInFlightSteerAnswerIds(entries);
+  const retainedReplyIds = retainedAssistantReplyEntryIds(entries);
+  for (let index = lastResponseBoundaryIndex(entries) + 1; index < entries.length; index += 1) {
+    const entry = entries[index]!;
+    if (
+      entry.kind === "message" &&
+      entry.message.role === "assistant" &&
+      entry.message.runId === answeringRunId &&
+      entry.message.id !== revealedMessageId &&
+      !steerAnswerIds.has(entry.message.id) &&
+      !retainedReplyIds.has(entry.id)
+    ) {
+      held.add(entry.id);
+    }
+  }
+  return held;
+}
+/* fork:end fork-quiet-live-turn */
+
 /** Reads entries before tool visibility filters them, so hidden newer parent work still counts. */
 function runningSubagentsAtRunTail(entries: ReadonlyArray<TimelineEntry>, runId: RunId): number {
   let running = 0;
@@ -1545,6 +1572,9 @@ function timelineRowEntries(
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
     | "hideQuietBotWakes"
     /* fork:end fork-bots */
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    | "forkHoldLiveReplies"
+    /* fork:end fork-quiet-live-turn */
   >,
 ) {
   const visibility = input.toolCallVisibility ?? "showAll";
@@ -1580,6 +1610,25 @@ function timelineRowEntries(
         entry.kind !== "work" || !workEntryHiddenByToolCallVisibility(entry.entry, visibility),
     );
   }
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+     Zen's rule in every mode: a running turn's replies wait for it to end; the status line reads them. */
+  if (
+    input.forkHoldLiveReplies === true &&
+    visibility !== "zen" &&
+    input.isWorking &&
+    input.latestRun?.turnEnded !== true
+  ) {
+    const answeringRunId = deriveUnsettledRunId(
+      input.latestRun ?? null,
+      input.runningRunId ?? null,
+    );
+    const held =
+      answeringRunId === null
+        ? null
+        : forkHeldLiveReplyIds(entries, answeringRunId, input.revealedMessageId);
+    if (held !== null && held.size > 0) shown = shown.filter((entry) => !held.has(entry.id));
+  }
+  /* fork:end fork-quiet-live-turn */
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
      Decided from every entry, so the visibility filters above never change which runs hide. */
   if (input.hideQuietBotWakes === true) {
@@ -1653,6 +1702,10 @@ export function deriveMessagesTimelineRows(
     /** A bot's quiet wakes stay out of the shown rows; see custom/bots/quietBotWakes. */
     hideQuietBotWakes?: boolean;
     /* fork:end fork-bots */
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    /** Outside Zen, a running turn's replies stay out of the rows until it ends, as Zen's do. */
+    forkHoldLiveReplies?: boolean;
+    /* fork:end fork-quiet-live-turn */
   },
   resolve: MessageResolver = m,
 ): MessagesTimelineRow[] {

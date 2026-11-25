@@ -118,12 +118,19 @@ export function isForkStatusLine(row: WorkingRow): row is ForkStatusLineRow {
   return "forkLive" in row;
 }
 
-/**
- * One-line text for the status line; upstream's richer previews stay in the open group.
- * A running tool reads as its live row would ("Running vp"); reasoning and a settled tool
- * return null, the thinking slot, which shows forkThinkingWord.
- */
-export function forkStatusLineLabel(
+/** What the status line can say; ForkLiveStatusLine rotates between them. */
+export interface ForkStatusLineVoices {
+  /** Holds the line alone: a provider startup, or waiting on subagents. */
+  readonly pinned: string | null;
+  /** The running tool as its live row would read it ("Running vp"). */
+  readonly tool: { readonly key: string; readonly label: string } | null;
+  /** Zen's preview: the heading or first sentence of the latest reply or thinking trace. */
+  readonly thought: string | null;
+}
+
+export type ForkStatusVoice = "thought" | "tool" | "word";
+
+export function forkStatusLineVoices(
   live: ForkLiveRow | null,
   activity: {
     readonly providerStartingLabel: string | null;
@@ -131,12 +138,51 @@ export function forkStatusLineLabel(
   },
   workspaceRoot: string | undefined,
   resolve?: MessageResolver,
-): string | null {
-  const label = live?.kind === "thinking" ? live.label : undefined;
-  if (live?.kind === "work-live") {
-    return live.active && live.entry.itemType !== "reasoning"
-      ? liveWorkEntryLabel(live.entry, workspaceRoot, true, resolve)
+): ForkStatusLineVoices {
+  const runningTool =
+    live?.kind === "work-live" && live.active && live.entry.itemType !== "reasoning"
+      ? live.entry
       : null;
-  }
-  return activity.providerStartingLabel ?? label ?? activity.liveAnswerPreview ?? null;
+  return {
+    pinned:
+      activity.providerStartingLabel ?? (live?.kind === "thinking" ? live.label : null) ?? null,
+    tool:
+      runningTool === null
+        ? null
+        : {
+            key: runningTool.id,
+            label: liveWorkEntryLabel(runningTool, workspaceRoot, true, resolve),
+          },
+    // A status, not a sentence: drop one closing period, keep an ellipsis, ? and !.
+    thought: activity.liveAnswerPreview?.replace(/(?<![.])[.。]$/u, "") ?? null,
+  };
+}
+
+const VOICE_ORDER: ReadonlyArray<ForkStatusVoice> = ["thought", "tool", "word"];
+
+/** The voices with something to say, in rotation order; the word always has something. */
+export function forkStatusLineCycle(voices: ForkStatusLineVoices): ReadonlyArray<ForkStatusVoice> {
+  return VOICE_ORDER.filter((voice) => voice === "word" || voices[voice] !== null);
+}
+
+/** The voice on the line `beats` beats after `lead` last spoke up. */
+export function forkStatusLineVoice(
+  cycle: ReadonlyArray<ForkStatusVoice>,
+  lead: ForkStatusVoice,
+  beats: number,
+): ForkStatusVoice {
+  const start = Math.max(0, cycle.indexOf(lead));
+  return cycle[(start + beats) % cycle.length] ?? "word";
+}
+
+/** A new tool or a new thought takes the line at once; otherwise the lead holds. */
+export function forkStatusLineLead(
+  previous: { readonly toolKey: string | null; readonly thought: string | null },
+  voices: ForkStatusLineVoices,
+  lead: ForkStatusVoice,
+): ForkStatusVoice {
+  const toolKey = voices.tool?.key ?? null;
+  if (toolKey !== null && toolKey !== previous.toolKey) return "tool";
+  if (voices.thought !== null && voices.thought !== previous.thought) return "thought";
+  return lead;
 }

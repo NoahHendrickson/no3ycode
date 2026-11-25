@@ -30,10 +30,10 @@ describe("fork guard: fork-working-row-last", () => {
     );
   });
 
-  it("shows a word where upstream says Thinking", () => {
-    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toMatch(
-      /\?\?\s*forkThinkingWord\(row\.forkWordSeed\)/u,
-    );
+  it("rotates a word where upstream says Thinking with the thought and the running tool", () => {
+    const line = readSibling("../custom/ForkLiveStatusLine.tsx");
+    expect(line).toMatch(/\?\?\s*forkThinkingWord\(lap === 0 \? row\.forkWordSeed/u);
+    expect(line).toContain("useStatusLineVoice(voices)");
   });
 
   it("stills the shine on a running tool's transcript row", () => {
