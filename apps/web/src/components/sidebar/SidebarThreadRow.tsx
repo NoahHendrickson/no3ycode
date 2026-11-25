@@ -1090,7 +1090,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       ref={isRegeneratingTitle ? observeVisibleAnimation : undefined}
       className={cn(
         "min-w-0 flex-1 text-start text-sm transition-opacity motion-reduce:transition-none",
-        shouldRecede ? "font-normal" : "font-medium",
+        /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+        shouldRecede || variantAction === "unsettle" ? "font-normal" : "font-medium",
+        /* fork:end sidebar-v2-card-rows */
         isRegeneratingTitle
           ? "relative truncate text-muted-foreground"
           : variant !== "slim"
