@@ -130,17 +130,17 @@ function No3yAgentActivity(
         ? asset("No3yCodex", 15)
         : null;
 
-  // The Figma lockup at a 20pt leaf: words half its height, gaps as drawn (32 of 180).
+  // The Figma lockup at a 14pt leaf: words half its height in the quiet ink, gaps as drawn (32 of 180).
   const word = (name: string, width: number) => (
-    <HStack modifiers={[frame({ width, height: 10 }), foregroundStyle(primary)]}>
+    <HStack modifiers={[frame({ width, height: 7 }), foregroundStyle(quiet)]}>
       <Image assetName={name} modifiers={[resizable()]} />
     </HStack>
   );
   const brand = (
-    <HStack spacing={3.5} alignment="center">
-      {word("No3yWordNoey", 43.3)}
-      {asset("No3yLeafSquares", 20)}
-      {word("No3yWordCode", 36.7)}
+    <HStack spacing={2.5} alignment="center">
+      {word("No3yWordNoey", 30.3)}
+      {asset("No3yLeafSquares", 14)}
+      {word("No3yWordCode", 25.7)}
     </HStack>
   );
 
