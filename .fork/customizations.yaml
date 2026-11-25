@@ -5040,6 +5040,34 @@
   verify:
     - apps/web/src/__fork_guards__/forkComposerBannerSurface.test.ts
 
+- id: fork-composer-command-card
+  intent: >
+    The / and @ menu reads like the banner cards above the composer (the
+    queue, the stash): a card at the composer's full width, 8px above the
+    prompt, on the banner cards' fill (--fork-thread-composer-card, a step
+    back from the prompt, on 12px corners under Flat Glass and Basic; the
+    composer fill elsewhere) under the composer hairline, with
+    40px rows that run edge to edge between full-width hairlines, text at the
+    chat stream size, and the skill source as a quiet trailing label instead
+    of a filled pill. Upstream draws it as a frosted card inset 1.375rem and
+    tucked 1rem + 1px under the prompt. The menu is portaled, so the banners
+    slot's rules can't reach it: the form's drawer inset goes to 0 so the
+    layer spans the prompt, and the drawer adds its own 8px lift over the
+    tuck. Inlet keeps its Questions-card construction
+    (theme.custom.inlet-composer.css).
+  tier: 1
+  files:
+    - apps/web/src/theme.custom.css
+  shadows: []
+  watch:
+    # Owns data-composer-command-drawer, data-composer-item-id and the
+    # ComposerBanner.Surface the card paints over.
+    - apps/web/src/components/chat/ComposerCommandMenu.tsx
+    # Owns data-composer-drawer-layer, the drawer-inset read and the tuck.
+    - apps/web/src/components/chat/ComposerCommandMenuLayer.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkComposerCommandCard.test.ts
+
 - id: fork-resume-compaction-banner
   intent: >
     Returning to a large, stale Claude thread shows the "Resume with less
