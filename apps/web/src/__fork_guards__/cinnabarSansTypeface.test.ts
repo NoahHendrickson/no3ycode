@@ -8,7 +8,6 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import { FORK_DEFAULT_SANS_FAMILY } from "../custom/forkTypographyScale";
 import { atRuleBodies, cssRules, fontFamilies } from "./cssRules";
 
 function siblingPath(relativePath: string): string {
@@ -18,8 +17,6 @@ function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(siblingPath(relativePath), "utf8");
 }
 
-const normalize = (value: string) => value.replace(/\s+/gu, " ").trim();
-const MARKER = ':root[data-fork="noahhendrickson-t3code"]';
 const css = readSibling("../theme.custom.css");
 const cinnabarFaces = atRuleBodies(css, "@font-face").filter((body) =>
   /font-family:\s*"Cinnabar Sans"/u.test(body),
@@ -49,11 +46,10 @@ describe("fork guard: cinnabar-sans-typeface", () => {
     expect(italic).toContain("cinnabar-sans/CinnabarSans-Italic-Variable.woff2");
   });
 
-  it("leads the marker-scoped sans stack with the default family, Geist next as the fallback", () => {
+  // The stack's lead and scope are pinned in forkTypographySettings.test.ts.
+  it("keeps Geist right behind it as the fallback", () => {
     const fonts = cssRules(css).find((entry) => entry.body.includes("--fork-font-sans:"));
-    expect(normalize(fonts?.selector ?? "")).toBe(MARKER);
     const stack = fontFamilies(/--fork-font-sans:([^;]*);/u.exec(fonts?.body ?? "")?.[1] ?? "");
-    // FORK_DEFAULT_SANS_FAMILY is what Settings shows an empty preference rendering in.
-    expect(stack.slice(0, 2)).toEqual([FORK_DEFAULT_SANS_FAMILY, "Geist Variable"]);
+    expect(stack[1]).toBe("Geist Variable");
   });
 });

@@ -3697,7 +3697,7 @@
     Geist as a preset (fork-typography-settings). The font's sources and build
     pipeline live outside this repo; the woff2 files here are build outputs and
     are replaced wholesale, never hand-edited.
-  tier: 4
+  tier: 1
   files:
     - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2
     - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Italic-Variable.woff2
