@@ -169,6 +169,32 @@ export function parseHex(hex: string): readonly [number, number, number] {
   return [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff];
 }
 
+/**
+ * Bodies of every leaf at-rule block with this name (`@font-face`, `@property`),
+ * in source order. `cssRules` treats an `@…` header as a wrapper and returns only
+ * the rules inside it, so these never come back from it.
+ */
+export function atRuleBodies(css: string, name: string): ReadonlyArray<string> {
+  const source = stripComments(css);
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const bodies: string[] = [];
+  for (const match of source.matchAll(new RegExp(`${escaped}\\s*\\{`, "gu"))) {
+    const open = match.index + match[0].length - 1;
+    const close = matchingClose(source, open, source.length);
+    if (close >= 0) bodies.push(source.slice(open + 1, close));
+  }
+  return bodies;
+}
+
+/** A CSS font stack as a comparable list: quoting, spacing and comments are noise. */
+export function fontFamilies(stack: string): string[] {
+  return stack
+    .replace(/\/\*[\s\S]*?\*\//gu, "")
+    .split(",")
+    .map((family) => family.trim().replace(/^["']|["']$/gu, ""))
+    .filter((family) => family.length > 0);
+}
+
 /** Headers of the top-level blocks, at-rules included, in source order. */
 export function topLevelHeaders(css: string): ReadonlyArray<string> {
   const source = stripComments(css);

@@ -8,8 +8,8 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import { FORK_DEFAULT_SANS_FAMILY, forkInterfaceFontPreset } from "../custom/forkTypographyScale";
-import { cssRules } from "./cssRules";
+import { FORK_DEFAULT_SANS_FAMILY } from "../custom/forkTypographyScale";
+import { atRuleBodies, cssRules, fontFamilies } from "./cssRules";
 
 function siblingPath(relativePath: string): string {
   return NodeURL.fileURLToPath(new URL(relativePath, import.meta.url));
@@ -21,14 +21,9 @@ function readSibling(relativePath: string): string {
 const normalize = (value: string) => value.replace(/\s+/gu, " ").trim();
 const MARKER = ':root[data-fork="noahhendrickson-t3code"]';
 const css = readSibling("../theme.custom.css");
-const theme = cssRules(css);
-// cssRules treats an `@…` header as a wrapper and returns only the rules inside it, so an
-// @font-face (a leaf at-rule) never comes back from it. Its body cannot hold braces, so a plain
-// match over the comment-stripped sheet reads it exactly.
-const faces = [...css.replace(/\/\*[\s\S]*?\*\//gu, "").matchAll(/@font-face\s*\{([^}]*)\}/gu)].map(
-  (match) => ({ body: match[1] ?? "" }),
+const cinnabarFaces = atRuleBodies(css, "@font-face").filter((body) =>
+  /font-family:\s*"Cinnabar Sans"/u.test(body),
 );
-const cinnabarFaces = faces.filter((entry) => /font-family:\s*"Cinnabar Sans"/u.test(entry.body));
 
 describe("fork guard: cinnabar-sans-typeface", () => {
   it("bundles the upright and italic variable files with their license", () => {
@@ -45,24 +40,20 @@ describe("fork guard: cinnabar-sans-typeface", () => {
   it("declares a normal and an italic face, each spanning weights 100..900", () => {
     expect(cinnabarFaces).toHaveLength(2);
     const byStyle = (style: string) =>
-      cinnabarFaces.find((entry) => new RegExp(`font-style:\\s*${style};`, "u").test(entry.body));
+      cinnabarFaces.find((body) => new RegExp(`font-style:\\s*${style};`, "u").test(body));
     const upright = byStyle("normal");
     const italic = byStyle("italic");
-    expect(upright?.body).toMatch(/font-weight:\s*100 900;/u);
-    expect(italic?.body).toMatch(/font-weight:\s*100 900;/u);
-    expect(upright?.body).toContain("cinnabar-sans/CinnabarSans-Variable.woff2");
-    expect(italic?.body).toContain("cinnabar-sans/CinnabarSans-Italic-Variable.woff2");
+    expect(upright).toMatch(/font-weight:\s*100 900;/u);
+    expect(italic).toMatch(/font-weight:\s*100 900;/u);
+    expect(upright).toContain("cinnabar-sans/CinnabarSans-Variable.woff2");
+    expect(italic).toContain("cinnabar-sans/CinnabarSans-Italic-Variable.woff2");
   });
 
-  it("leads the marker-scoped sans stack, with Geist next as the fallback", () => {
-    const fonts = theme.find((entry) => entry.body.includes("--fork-font-sans:"));
+  it("leads the marker-scoped sans stack with the default family, Geist next as the fallback", () => {
+    const fonts = cssRules(css).find((entry) => entry.body.includes("--fork-font-sans:"));
     expect(normalize(fonts?.selector ?? "")).toBe(MARKER);
-    expect(fonts?.body).toMatch(/--fork-font-sans:\s*"Cinnabar Sans",\s*"Geist Variable",/u);
-    expect(FORK_DEFAULT_SANS_FAMILY).toBe("Cinnabar Sans");
-  });
-
-  it("labels the empty preference Cinnabar Sans and keeps Geist as a preset", () => {
-    expect(forkInterfaceFontPreset("")?.label).toBe("Cinnabar Sans");
-    expect(forkInterfaceFontPreset("Geist Variable")?.label).toBe("Geist");
+    const stack = fontFamilies(/--fork-font-sans:([^;]*);/u.exec(fonts?.body ?? "")?.[1] ?? "");
+    // FORK_DEFAULT_SANS_FAMILY is what Settings shows an empty preference rendering in.
+    expect(stack.slice(0, 2)).toEqual([FORK_DEFAULT_SANS_FAMILY, "Geist Variable"]);
   });
 });

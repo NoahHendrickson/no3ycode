@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useLayoutEffect, useRef, useState } from "react";
 
 // The type ramp as components use it: Tailwind's text-* utilities (index.css adds 2xs–5xs below
-// xs, and the fork's v2 sidebar remaps xs and sm to 13px), in Geist and Geist Mono.
+// xs, and the fork's v2 sidebar remaps xs and sm to 13px), in Cinnabar Sans and Geist Mono.
 const SCALE = [
   { utility: "text-5xs", sample: "Micro badge" },
   { utility: "text-4xs", sample: "Micro badge" },

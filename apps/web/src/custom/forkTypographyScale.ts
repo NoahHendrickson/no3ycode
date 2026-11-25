@@ -47,7 +47,7 @@ export const FORK_DEFAULT_SANS_FAMILY = "Cinnabar Sans";
 
 /** Interface font presets. Empty is the fork default, Cinnabar Sans; Geist stays one click away. */
 export const FORK_INTERFACE_FONT_PRESETS = [
-  { label: "Cinnabar Sans", value: "" },
+  { label: FORK_DEFAULT_SANS_FAMILY, value: "" },
   { label: "Geist", value: "Geist Variable" },
   { label: "Inter", value: "Inter Variable" },
   { label: "System", value: "BlinkMacSystemFont, Segoe UI, system-ui" },

@@ -28,18 +28,13 @@
 /* Geist ships as two variable faces: `Geist Variable` (100..900) and
    `Geist Mono Variable` (100..900). Both are pulled in here rather than from
    `main.tsx` so the fork owns its own font loading — since upstream dropped
-   its DM Sans / JetBrains Mono webfonts for system stacks (v0.0.32 cycle),
-   these are the only bundled faces in the app. */
+   its DM Sans / JetBrains Mono webfonts for system stacks (v0.0.32 cycle).
+   Geist backs the Geist preset and the sans fallback; Geist Mono is the code face. */
 @import "@fontsource-variable/geist/index.css";
 @import "@fontsource-variable/geist-mono/index.css";
 
-/* Cinnabar Sans — see `.fork/customizations.yaml#cinnabar-sans-typeface`. The
-   fork's own interface face: Geist reshaped toward Anthropic Sans proportions
-   (rounder bowls, shorter-reading lowercase, lighter horizontals), OFL-licensed
-   (custom/fonts/cinnabar-sans/OFL.txt). Two variable files, upright and italic,
-   each covering weights 100..900, so every weight and italic is a real face
-   rather than a synthesized one. Geist stays bundled: it backs the Geist preset
-   and sits next in the stack. */
+/* Cinnabar Sans — see `.fork/customizations.yaml#cinnabar-sans-typeface`. Both
+   faces span 100..900, so no weight or the italic is ever synthesized. */
 @font-face {
   font-family: "Cinnabar Sans";
   font-style: normal;

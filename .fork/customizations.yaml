@@ -3617,18 +3617,18 @@
 
 - id: geist-typography
   intent: >
-    The app's DEFAULT typefaces are Geist (UI) and Geist Mono (code), bundled
-    as Fontsource variable faces and imported from the fork's own theme layer;
-    since cinnabar-sans-typeface the UI stack leads with Cinnabar Sans and Geist
-    is its fallback (and the Geist preset) —
-    web and Electron renderer only; mobile and marketing keep upstream's fonts.
+    Geist and Geist Mono are bundled as Fontsource variable faces, imported
+    from the fork's own theme layer — web and Electron renderer only; mobile
+    and marketing keep upstream's fonts. Geist Mono is the default code and
+    terminal face; Geist backs the Geist interface preset and is the fallback
+    in the sans stack, whose value and lead family cinnabar-sans-typeface owns.
     Since upstream's v0.0.32 configurable-fonts work (Settings → Appearance:
     family, size, smoothing — applied as inline styles on the root by
     appearanceFonts.ts), the fork supplies the DEFAULT only: a user's explicit
     font preference outranks the fork stacks by design, and clearing the
-    preference falls back to Geist, not to upstream's system stacks.
-    The stacks live in theme.custom.css as --fork-font-sans / --fork-font-mono
-    and index.css's non-inline @theme block reads them through
+    preference falls back to the fork stacks, not to upstream's system stacks.
+    This entry owns the --fork-font-sans / --fork-font-mono indirection: the
+    stacks live in theme.custom.css and index.css's non-inline @theme block reads them through
     var(--fork-font-sans, <upstream stack>); that indirection is load-bearing,
     not ceremony — it keeps the values scoped under the fork marker while the
     fallbacks leave an unmarked build on upstream's system stacks. Upstream
@@ -3649,12 +3649,12 @@
     Geist Mono is listed AHEAD of SF Mono: upstream puts SF Mono first, which
     on macOS means a bundled mono webfont never renders at all.
     Upstream dropped its DM Sans / JetBrains Mono webfonts in the same cycle
-    (system stacks now); the fork followed, so the two Geist faces are the
-    app's only bundled fonts. "JetBrains Mono" stays NAMED in the fork's mono
-    stacks for a Linux user who has it installed, but no bundled face backs it
-    any more. Known cosmetic divergence: the Appearance font picker's
-    "Default" label names the face upstream's DEFAULT_*_FONT_STACK resolves to
-    (a system face), not Geist — appearanceFonts.ts is deliberately unfenced.
+    (system stacks now); the fork followed. "JetBrains Mono" stays NAMED in the
+    fork's mono stacks for a Linux user who has it installed, but no bundled
+    face backs it any more. Known cosmetic divergence: the Appearance font
+    picker's "Default" label names the face upstream's DEFAULT_*_FONT_STACK
+    resolves to (a system face), not the fork's — appearanceFonts.ts is
+    deliberately unfenced.
   tier: 4
   files:
     - apps/web/src/theme.custom.css
@@ -3684,19 +3684,19 @@
 - id: cinnabar-sans-typeface
   intent: >
     The app's default interface face is Cinnabar Sans, a fork-owned typeface:
-    Geist reshaped toward Anthropic Sans proportions (rounder bowls, a
+    Geist reshaped with Anthropic Sans as a visual reference, nothing traced (rounder bowls, a
     shorter-reading lowercase, lighter horizontals, a tailless u, a straight-tailed
     y, flat-cut S/s/a terminals, Inter's R and a), licensed OFL as a Modified
     Version of Geist and Inter (custom/fonts/cinnabar-sans/OFL.txt). It ships as
     two variable woff2 files — upright and italic, each weight 100..900 — declared
     with @font-face in theme.custom.css, so every weight and the italic are real
-    faces, never synthesized. --fork-font-sans leads with "Cinnabar Sans", with
-    geist-typography's Geist stack right behind it as the fallback; Geist and
-    Geist Mono stay bundled (Geist backs the Geist preset, Geist Mono is still the
-    code face). Settings → Appearance labels the empty preference Cinnabar Sans and
-    offers Geist as a preset (fork-typography-settings). The font's sources and
-    build pipeline live outside this repo; the woff2 files here are build outputs
-    and are replaced wholesale, never hand-edited.
+    faces, never synthesized. This entry owns the --fork-font-sans value: it
+    leads with FORK_DEFAULT_SANS_FAMILY ("Cinnabar Sans"), with Geist Variable
+    (bundled by geist-typography) right behind it as the fallback. Settings →
+    Appearance labels the empty preference with that same constant and offers
+    Geist as a preset (fork-typography-settings). The font's sources and build
+    pipeline live outside this repo; the woff2 files here are build outputs and
+    are replaced wholesale, never hand-edited.
   tier: 4
   files:
     - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2
@@ -3705,8 +3705,7 @@
     - apps/web/src/theme.custom.css
     - apps/web/src/custom/forkTypographyScale.ts
   shadows: []
-  watch:
-    - apps/web/src/index.css
+  watch: []
   verify:
     - apps/web/src/__fork_guards__/cinnabarSansTypeface.test.ts
 
