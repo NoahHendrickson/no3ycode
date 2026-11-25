@@ -13,57 +13,35 @@ import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { ForkLiveTaskList } from "./ForkLiveTaskList";
 import { ForkLiveTasksCtx } from "./forkLiveTasks";
 import {
-  forkStatusLineCycle,
-  forkStatusLineLead,
-  forkStatusLineVoice,
+  forkStatusLineRotates,
+  forkStatusLineStart,
+  forkStatusLineStep,
   forkStatusLineVoices,
   type ForkStatusLineRow,
   type ForkStatusLineVoices,
-  type ForkStatusVoice,
 } from "./forkWorkingRowLast";
 
 const BEAT_MS = 4000;
 
-/** Which voice speaks now: a new tool or thought at once, then a turn each per beat. */
+/** Which voice speaks now; forkStatusLineStep holds the rules, this hook the clock. */
 function useStatusLineVoice(voices: ForkStatusLineVoices) {
-  const toolKey = voices.tool?.key ?? null;
-  const [seen, setSeen] = useState(() => ({
-    toolKey,
-    thought: voices.thought,
-    lead: (toolKey !== null ? "tool" : "thought") as ForkStatusVoice,
-    arrival: 0,
-  }));
-  if (seen.toolKey !== toolKey || seen.thought !== voices.thought) {
-    setSeen({
-      toolKey,
-      thought: voices.thought,
-      lead: forkStatusLineLead(seen, voices, seen.lead),
-      arrival: seen.arrival + 1,
-    });
-  }
-  const cycle = forkStatusLineCycle(voices);
-  const rotates = cycle.length > 1;
-  const [clock, setClock] = useState({ arrival: 0, beats: 0 });
-  const beats = clock.arrival === seen.arrival ? clock.beats : 0;
-  const { arrival } = seen;
+  // Each beat names the arrival it counts from, so a beat queued before an arrival is dropped.
+  const [beat, setBeat] = useState({ arrival: 0, count: 0 });
+  const [line, setLine] = useState(() => forkStatusLineStart(voices));
+  const next = forkStatusLineStep(line, voices, beat);
+  if (next !== line) setLine(next);
+  const rotates = forkStatusLineRotates(voices);
+  const { arrival } = next;
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a wall-clock beat, restarted when something new speaks up
   useEffect(() => {
     if (!rotates) return;
     const id = window.setInterval(
-      () =>
-        setClock((previous) => ({
-          arrival,
-          beats: (previous.arrival === arrival ? previous.beats : 0) + 1,
-        })),
+      () => setBeat((previous) => ({ arrival, count: previous.count + 1 })),
       BEAT_MS,
     );
     return () => window.clearInterval(id);
   }, [rotates, arrival]);
-  return {
-    voice: forkStatusLineVoice(cycle, seen.lead, beats),
-    // A fresh word each lap; with nothing else to say it holds until something lands.
-    lap: Math.floor(beats / cycle.length),
-  };
+  return { voice: next.voice, lap: next.lap };
 }
 
 export function ForkLiveStatusLine({

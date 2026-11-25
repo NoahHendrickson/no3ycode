@@ -5,9 +5,9 @@ import {
 } from "~/components/chat/MessagesTimeline.logic";
 import {
   forkLiveStatusRows,
-  forkStatusLineCycle,
-  forkStatusLineLead,
-  forkStatusLineVoice,
+  forkStatusLineRotates,
+  forkStatusLineStart,
+  forkStatusLineStep,
   forkStatusLineVoices,
   isForkStatusLine,
   type ForkLiveRow,
@@ -276,6 +276,7 @@ describe("forkStatusLineVoices", () => {
     ["cubs.", "cubs"],
     ["cubs...", "cubs..."],
     ["cubs?", "cubs?"],
+    [".", null],
   ])("reads the thought %s as %s", (preview, thought) => {
     expect(
       forkStatusLineVoices(reasoning, { ...activity, liveAnswerPreview: preview }, undefined)
@@ -291,29 +292,57 @@ describe("the status line rotation", () => {
     thought,
   });
 
-  it("cycles thought, tool and word from whoever spoke last, skipping the silent", () => {
-    const all = forkStatusLineCycle(voices("vp", "Checking tests."));
-    expect(all).toEqual(["thought", "tool", "word"]);
-    expect([0, 1, 2, 3].map((beat) => forkStatusLineVoice(all, "tool", beat))).toEqual([
-      "tool",
-      "word",
-      "thought",
-      "tool",
-    ]);
-    const quiet = forkStatusLineCycle(voices(null, "Checking tests."));
-    expect([0, 1, 2].map((beat) => forkStatusLineVoice(quiet, "tool", beat))).toEqual([
-      "thought",
-      "word",
-      "thought",
-    ]);
-    expect(forkStatusLineCycle(voices(null, null))).toEqual(["word"]);
+  const start = (tool: string | null, thought: string | null) => {
+    const line = forkStatusLineStart(voices(tool, thought));
+    return { line, beat: { arrival: line.arrival, count: line.beat } };
+  };
+  const tick = (beat: { arrival: number; count: number }) => ({ ...beat, count: beat.count + 1 });
+
+  it("moves through thought, tool and word one beat at a time, skipping the silent", () => {
+    const { line, beat } = start("vp", "Checking tests");
+    expect(line.voice).toBe("tool");
+    const all = voices("vp", "Checking tests");
+    const word = forkStatusLineStep(line, all, tick(beat));
+    expect(word.voice).toBe("word");
+    expect(forkStatusLineStep(word, all, tick(tick(beat))).voice).toBe("thought");
+    const quiet = start(null, "Checking tests");
+    expect(
+      forkStatusLineStep(quiet.line, voices(null, "Checking tests"), tick(quiet.beat)).voice,
+    ).toBe("word");
+    expect(forkStatusLineRotates(voices(null, null))).toBe(false);
+    expect(forkStatusLineRotates({ ...voices("vp", "Checking tests"), pinned: "waiting" })).toBe(
+      false,
+    );
   });
 
-  it("hands the line to a new tool or a new thought, and holds the lead otherwise", () => {
-    const seen = { toolKey: "a", thought: "Old." };
-    expect(forkStatusLineLead(seen, voices("b", "Old."), "thought")).toBe("tool");
-    expect(forkStatusLineLead(seen, voices("a", "New."), "tool")).toBe("thought");
-    expect(forkStatusLineLead(seen, voices(null, "Old."), "word")).toBe("word");
+  it("keeps the word on the line, and its beat, when a tool it is not showing settles", () => {
+    const { line, beat } = start("vp", "Old");
+    const word = forkStatusLineStep(line, voices("vp", "Old"), tick(beat));
+    const settled = forkStatusLineStep(word, voices(null, "Old"), tick(beat));
+    expect(settled.voice).toBe("word");
+    expect(settled.arrival).toBe(word.arrival);
+  });
+
+  it("moves on once when the tool showing settles on a beat", () => {
+    const { line, beat } = start("vp", "Old");
+    expect(forkStatusLineStep(line, voices(null, "Old"), tick(beat)).voice).toBe("word");
+  });
+
+  it("gives the voice that takes over between beats a full beat", () => {
+    const { line, beat } = start("vp", "Old");
+    const settled = forkStatusLineStep(line, voices(null, "Old"), beat);
+    expect(settled.voice).toBe("word");
+    expect(settled.arrival).toBe(line.arrival + 1);
+  });
+
+  it("hands the line to a new tool or a new thought at once", () => {
+    const { line } = start("a", "Old");
+    expect(forkStatusLineStep(line, voices("b", "Old"), { arrival: 0, count: 0 }).voice).toBe(
+      "tool",
+    );
+    const thought = forkStatusLineStep(line, voices("a", "New"), { arrival: 0, count: 0 });
+    expect(thought.voice).toBe("thought");
+    expect(thought.arrival).toBe(line.arrival + 1);
   });
 });
 
