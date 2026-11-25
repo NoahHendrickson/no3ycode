@@ -7577,15 +7577,26 @@
     round update icon becomes a fully rounded pill reading "Update": pure
     white with black text in dark mode (a fixed white, not --primary, which
     palettes recolour), inverted foreground/background in light mode where
-    white would vanish on the sidebar. Checking, downloading (with its
-    progress ring), idle, and download/install errors (whose aria-label does
-    not contain "Update") keep upstream's icon button. Only the look changes: the click,
-    tooltip, aria-label, and release-notes popover stay upstream's.
+    white would vanish on the sidebar. While the update downloads the pill
+    stays, with a small progress ring inside it before the label, instead of
+    turning into upstream's download-icon ring. Checking, idle, and download/install
+    errors (whose aria-label does not contain "Update") keep upstream's icon
+    button. The click, tooltip, aria-label, and release-notes popover stay
+    upstream's. Installing a downloaded update (from the pill or Settings >
+    About) asks in a compact "Restart to update" dialog instead of the generic
+    confirm, whose long question title, wordy body and Cancel/Confirm footer
+    band read badly; it resolves the same yes/no, so the install path is
+    unchanged. That left upstream's confirmation-message helper unused, hence
+    its knip ignore.
   tier: 4
-  files: []
+  files:
+    - apps/web/src/custom/ForkSidebarUpdate.tsx
   shadows: []
   watch:
     - apps/web/src/components/sidebar/SidebarUpdatePill.tsx
+    - apps/web/src/components/settings/SettingsPanels.tsx
+    - apps/web/src/components/sidebar/DesktopUpdateStatusIcon.tsx
+    - knip.jsonc
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
 

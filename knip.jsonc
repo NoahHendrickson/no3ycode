@@ -188,6 +188,10 @@
         // window-pinned cluster or the header's lone details toggle.
         "src/components/chat/PanelLayoutControls.tsx": ["exports"],
         // fork:end fork-stage-columns
+        // fork:begin fork-sidebar-update-label — see .fork/customizations.yaml#fork-sidebar-update-label
+        // The fork's restart dialog replaced the generic confirm this message fed.
+        "src/components/desktopUpdate.logic.ts": ["exports"],
+        // fork:end fork-sidebar-update-label
         // fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode
         // Vendored verbatim from NoahHendrickson/the-forge and kept whole so
         // re-syncs diff cleanly, the same standing upstream gives _generated/.
