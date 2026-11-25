@@ -777,8 +777,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       ? `${model.instanceDisplayName} · ${model.subProvider}`
       : model.instanceDisplayName;
     const displayName = getDisplayModelName(model);
-    // The row's provider label, or the selected provider tab, names the
-    // provider already.
+    // The row's provider icon, or the selected provider tab, names the provider already.
     const modelName = stripProviderName(displayName, {
       driverKind: model.driverKind,
       displayName: model.instanceDisplayName,
@@ -792,11 +791,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           </span>
         ) : null}
         <span className="min-w-0 truncate">{modelName}</span>
-        {showProvider ? (
-          <span className="min-w-0 truncate font-normal text-muted-foreground/70">
-            {providerLabel}
-          </span>
-        ) : null}
+        {showProvider ? <span className="sr-only">, {providerLabel}</span> : null}
         {model.isUnavailable ? (
           <Badge variant="outline" size="sm">
             <T context="badge on a model that cannot be selected">Unavailable</T>
@@ -814,7 +809,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         closeOnClick={false}
         className={cn(
           ROW_CLASS,
-          "group",
+          // relative: contains the sr-only provider label inside the scrolling list.
+          "group relative",
           // Lit while the menu its control opened is open (dark palettes: theme.custom.css).
           "has-[>*>[data-model-row-control]>[data-open]]:bg-accent",
           disabledReason && "data-disabled:pointer-events-auto",
