@@ -803,7 +803,8 @@
     surface reads the same Done/Idle predicate as its title (`cardRecedes`);
     upstream's shouldRecede survives for the slim shelves only, where
     brightness still encodes unread-ness — the card delegates unread to the
-    Done dot.
+    Done dot. Settled slim titles stay Regular even when unread; upstream
+    lifts them to Medium, which made a few settled rows read as bold.
 
     Status text labels ("Working", "Approval", "Monitoring") are replaced by a
     single mark in a fixed box on the trailing end of the title line (10px

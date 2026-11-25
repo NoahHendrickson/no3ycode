@@ -1706,7 +1706,9 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
             ? threadCardTitleClassName({ recedes: cardRecedes })
             : cn(
                 THREAD_TITLE_TYPE,
-                shouldRecede ? "font-normal" : "font-medium",
+                /* fork:begin sidebar-v2-card-rows — see .fork/customizations.yaml#sidebar-v2-card-rows */
+                shouldRecede || variantAction === "unsettle" ? "font-normal" : "font-medium",
+                /* fork:end sidebar-v2-card-rows */
                 "truncate group-focus-within/v2-row:text-foreground group-any-hover/v2-row:text-foreground",
                 // Upstream #9759 puts recede ahead of unread/woke here. Under the
                 // fork's predicate above the two orders agree (receding already
