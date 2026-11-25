@@ -224,7 +224,7 @@
     [data-slot="combobox-item"],
     [data-slot="autocomplete-item"]
   ) {
-  border-radius: var(--fork-inlet-menu-row-radius);
+  border-radius: var(--fork-menu-row-radius);
 }
 
 /* The combobox and autocomplete paint their wrappers, which keep 8px. */

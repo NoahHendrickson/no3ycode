@@ -390,7 +390,7 @@
         [data-slot="combobox-item"]
       ):not([data-fork-model-picker] *) {
       --fork-menu-row-radius: var(--radius-lg);
-      border-radius: var(--radius-lg);
+      border-radius: var(--fork-menu-row-radius);
     }
 
     /* design-lint-disable-next-line C1, C2 -- the rim's glint layer takes the popup's corner and replaces upstream's top highlight */
