@@ -760,8 +760,11 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
   });
 
   it("gives Flat Glass's tab row the docked sidebar's washes over the same glass", () => {
+    // The tab row may name the same wash by its token (--fork-white-12 is rgb(255 255 255 / 12%)).
     const declared = (body: string | undefined, token: string) =>
-      new RegExp(`${token}:\\s*([^;]+);`, "u").exec(body ?? "")?.[1];
+      new RegExp(`${token}:\\s*([^;]+);`, "u")
+        .exec(body ?? "")?.[1]
+        ?.replace(/^var\(--fork-white-(\d+)\)$/u, "rgb(255 255 255 / $1%)");
     const docked = glassRules.find(
       (rule) =>
         rule.selector.includes('[data-fork-sidebar-vibrancy="liquid-glass"]') &&

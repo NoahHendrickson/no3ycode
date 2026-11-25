@@ -516,7 +516,7 @@ describe("fork guard: fork-composer-shell", () => {
     const context = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("height: calc(var(--fork-composer-chip-text) + 10px)"),
+        rule.body.includes("height: calc(var(--fork-composer-chip-text) + var(--spacing) * 2.5)"),
     );
     expect(context?.body).toMatch(/border-radius:\s*var\(--radius-md\)/u);
     expect(context?.body).toMatch(/padding-inline:\s*calc\(var\(--spacing\) \* 2\)/u);
