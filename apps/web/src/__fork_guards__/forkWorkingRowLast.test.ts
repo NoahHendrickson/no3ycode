@@ -46,6 +46,20 @@ describe("fork guard: fork-working-row-last", () => {
     );
   });
 
+  it("retimes upstream's shimmer on the status line only", () => {
+    const line = readSibling("../custom/ForkLiveStatusLine.tsx");
+    expect(line).toContain("data-fork-status-line");
+    expect(line).toContain("<ActivityShimmerOverlay");
+    const css = readSibling("../theme.custom.css");
+    expect(css).toMatch(
+      /\[data-fork-status-line\] \.live-activity-focus \{\s*animation-name: fork-status-line-flash;/u,
+    );
+    expect(css).toMatch(
+      /\[data-fork-status-line\] \.live-activity-focus-counter \{\s*animation-name: fork-status-line-flash-counter;/u,
+    );
+    expect(readSibling("../index.css")).toMatch(/@utility live-activity-focus-counter \{/u);
+  });
+
   it("drops the working row's bottom divider", () => {
     const rows = readSibling("../components/chat/TimelineWorkGroupRows.tsx");
     const start = rows.indexOf("export function WorkingTimelineRow");

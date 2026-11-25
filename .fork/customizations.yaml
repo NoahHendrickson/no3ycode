@@ -6394,7 +6394,9 @@
     the data after the synced thread primed, past the last row already there,
     so virtualized remounts, thread switches, "Load earlier", the cached or
     remembered snapshot ChatView shows while a thread syncs, and large
-    catch-up batches all stay still. The slide runs on LegendList's
+    catch-up batches all stay still. A live row the status line carries
+    (fork-working-row-last) counts as live, so it stays still when a reply
+    lands after it and it returns to the transcript. The slide runs on LegendList's
     positioned container (it paints with contain: paint, which would clip a
     transform on the row frame) and keys off its style.top mutations, which
     relies on the conversation list leaving recycleItems off so that
