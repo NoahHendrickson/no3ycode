@@ -5058,6 +5058,7 @@
   tier: 1
   files:
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.thread-composer.css
   shadows: []
   watch:
     # Owns data-composer-command-drawer, data-composer-item-id and the

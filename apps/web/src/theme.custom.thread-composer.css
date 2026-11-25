@@ -42,3 +42,20 @@
     background: var(--fork-thread-composer-card);
   }
 }
+
+/* The / and @ menu is one of those cards (fork-composer-command-card). It is portaled out of the
+   body, so it keys on the root's draft stamp instead. */
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  ):not([data-fork-draft-hero-shown])
+  [data-composer-drawer-layer]
+  [data-composer-command-drawer] {
+  & {
+    --fork-composer-radius: 12px;
+  }
+
+  &::before {
+    background: var(--fork-thread-composer-card);
+  }
+}

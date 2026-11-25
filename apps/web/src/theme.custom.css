@@ -2682,22 +2682,20 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-composer-drawer-layer]
   [data-composer-command-drawer] {
-  --chat-composer-attachment-overlap: 0px;
-  /* Lifted clear of the prompt, the card has no seam to shade. */
-  --chat-composer-attached-seam: transparent;
-  /* The active row fills with --accent. Arrow keys move it, so it reads a step above a hover. */
-  --accent: color-mix(in srgb, var(--foreground) 7%, transparent);
-  /* Rows read at the chat stream size, like the queue's and the stash's. */
-  --text-xs: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
-  margin-bottom: calc(1rem + 1px + 8px);
-  overflow: clip;
-  pointer-events: auto;
-  border-radius: var(--fork-composer-radius);
-}
+  & {
+    --chat-composer-attachment-overlap: 0px;
+    /* Lifted clear of the prompt, the card has no seam to shade. */
+    --chat-composer-attached-seam: transparent;
+    /* The active row fills with --accent. Arrow keys move it, so it reads a step above a hover. */
+    --accent: color-mix(in srgb, var(--foreground) 7%, transparent);
+    /* The menu's rows set text-xs; here it reads at the chat stream size, like the queue's rows. */
+    --text-xs: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+    margin-bottom: calc(1rem + 1px + 8px);
+    overflow: clip;
+    pointer-events: auto;
+    border-radius: var(--fork-composer-radius);
+  }
 
-:root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
-  [data-composer-drawer-layer]
-  [data-composer-command-drawer] {
   &::before {
     border: 0;
     border-radius: var(--fork-composer-radius);
@@ -2732,7 +2730,8 @@
   }
 }
 
-/* A new agent's draft keeps the frost, since its menu opens over a picture. */
+/* A new agent's draft keeps the frost, since its menu opens over a picture. The Flat Glass and
+   Basic thread fill is in theme.custom.thread-composer.css, beside the banner cards'. */
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"]):not(
     [data-fork-draft-hero-shown]
   )
@@ -2742,26 +2741,6 @@
   /* An opaque card, like the banner cards: no blur behind it. */
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-}
-
-/* On a thread's composer under Flat Glass and Basic, the cards above the prompt sit a step back
-   toward the stage on 12px corners (theme.custom.thread-composer.css); the menu matches them. */
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
-  ):not([data-fork-draft-hero-shown])
-  [data-composer-drawer-layer]
-  [data-composer-command-drawer] {
-  --fork-composer-radius: 12px;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
-  ):not([data-fork-draft-hero-shown])
-  [data-composer-drawer-layer]
-  [data-composer-command-drawer]::before {
-  background: var(--fork-thread-composer-card);
 }
 
 /* One action size for every card above the composer: notices, the question card and the

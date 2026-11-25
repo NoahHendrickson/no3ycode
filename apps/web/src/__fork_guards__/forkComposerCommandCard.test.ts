@@ -18,6 +18,7 @@ function readSibling(relativePath: string): string {
 const flat = (selector: string) =>
   selector.replace(/\s+/gu, " ").replace(/\( /gu, "(").replace(/ \)/gu, ")");
 const rules = cssRules(readSibling("../theme.custom.css"));
+const threadRules = cssRules(readSibling("../theme.custom.thread-composer.css"));
 const menu = readSibling("../components/chat/ComposerCommandMenu.tsx");
 const layer = readSibling("../components/chat/ComposerCommandMenuLayer.tsx");
 
@@ -63,7 +64,7 @@ describe("fork guard: fork-composer-command-card", () => {
     const thread =
       ':root[data-fork="noahhendrickson-t3code"]:is([data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"], [data-fork-theme="basic"]):not([data-fork-draft-hero-shown])';
     const rule = (suffix: string) =>
-      rules.find((candidate) => flat(candidate.selector) === `${thread} ${DRAWER}${suffix}`);
+      threadRules.find((candidate) => flat(candidate.selector) === `${thread} ${DRAWER}${suffix}`);
     expect(rule("")?.body).toMatch(/--fork-composer-radius:\s*12px/u);
     expect(rule("::before")?.body).toMatch(/background:\s*var\(--fork-thread-composer-card\)/u);
   });
