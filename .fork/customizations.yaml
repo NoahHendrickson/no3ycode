@@ -58,33 +58,39 @@
     left running when its pane loses input or the plan follow-up's
     Implement takes the slot settles on the spot. In a split, the pane
     without window input binds upstream's mod+shift+d only while its form
-    has focus. A live session keeps stop beside the check while a turn runs.
-    The mic is a filled-glyph ghost in the composer's control row, after
-    attach and before the mode controls (Full access), at the row's 20px
-    ghost size; the send slot always shows send while idle. Dictation is off
+    has focus.
+    The mic is a filled-glyph ghost just left of the send slot; the send
+    slot always shows send while idle. Dictation is off
     while a send is in flight, Implement/Refine holds the slot, the draft is
     locked to a project pick, or a question has no slot for the controls (a
     choice-only question, or any question on a compact viewport, where
     Next/Submit sit in a strip below the editor). A typed-answer question is
     dictated into like the prompt and a live session holds its Next/Submit
-    slot as it holds send's. A live session borrows the send button: it
-    becomes the check with a ghost cancel X beside it, and the check spins
-    while transcribing or cleaning up; the control-row mic stays in place,
-    lit (full ink, pure white in dark), and while recording a click on it finishes the session as the check does. The level timeline is a small fixed canvas right after the mic,
-    pushing the mode controls along for the session so the prompt row stays
-    the text's: a 2px dot per 50 ms sample, newest at the right, so silence is
-    dots and speech is bars scrolling left, on a -50…-10 dB scale, painted in
-    the mic's colour. Mic and timeline share one
-    rounded rectangle on the control row's 4% fill. The X sits 4px from the
-    check and its margins cancel its own footprint, so a one-button send slot
-    does not widen and the prompt beside it does not reflow.
+    slot as it holds send's. A live session swaps the mic for one fully
+    rounded, pure-white capsule (in every mode) holding the level meter
+    and a check circle in the done-status blue at its right end, the check
+    exactly where the mic was so finishing needs no pointer travel. The
+    capsule morphs open leftward out of the check on transforms alone: its
+    white fill is two round caps and a body, the start cap sliding out while
+    the body stretches behind it and the meter follows the edge in, so the
+    ends never distort and the prompt beside it reflows once rather than
+    every frame (a fade under reduced motion). The X fades in.
+    The check spins while transcribing or cleaning up. The send slot shows
+    only a ghost cancel X, in send's box, to the capsule's right. The level
+    meter is a row of 2px bars that react in place to the current level, each
+    on its own slowly drifting weight with a lean to the middle, so speech
+    reads uneven rather than as one shape (dots in silence), on a -56…-20 dB
+    scale, painted in the capsule's dark ink; it never scrolls a history. It
+    undoes upstream's worklet level easing (speech/pcmWorklet.ts, 75 ms up,
+    200 ms down) so the bars drop the moment speech stops.
     Attach stays in the control row, disabled rather than hidden for the
     session. ChatComposer decides when dictation owns the slot
     and ComposerPrimaryActions hands it over on every path that renders send,
-    including while a turn runs, where it sits to stop's left so stop keeps
-    the right edge. The check wears the send button's own class list and fork
-    tone attribute; the X is a ghost in send's box in pure white, from
-    theme.custom.css. Nothing animates. The error popover renders beside the
+    including while a turn runs. Where stop was the only idle action it keeps
+    the right edge beside the capsule and the X moves to the capsule's left,
+    so the check still sits where the mic was and a second click in place
+    never cancels. The X is a ghost in send's box in pure white, from
+    theme.custom.css. The error popover renders beside the
     slot whatever it shows, with Open voice settings for a microphone
     permission error. The microphone tooltip is the word Dictate, on the popup
     frost every glass tooltip shares (fork-popup-surface), a step larger than
@@ -102,6 +108,7 @@
     - apps/web/src/components/chat/ComposerFooterControls.tsx
     - apps/web/src/routes/__root.tsx
     - apps/web/src/speech/useEnvironmentSpeechInput.ts
+    - apps/web/src/speech/pcmWorklet.ts
     - scripts/build-desktop-artifact.ts
     - scripts/build-desktop-artifact.test.ts
     - docs/user/composer.md

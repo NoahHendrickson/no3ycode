@@ -910,7 +910,7 @@
     color: inherit;
   }
 
-  & [data-fork-dictation-timeline] {
+  & [data-fork-dictation-meter] {
     margin-left: 4px;
   }
 }
@@ -923,7 +923,7 @@
       background-color 200ms ease-out,
       padding 320ms cubic-bezier(0.32, 0.72, 0, 1);
 
-    & [data-fork-dictation-timeline] {
+    & [data-fork-dictation-meter] {
       transition: width 320ms cubic-bezier(0.32, 0.72, 0, 1);
 
       @starting-style {
@@ -941,7 +941,7 @@
         padding 300ms cubic-bezier(0.55, 0, 0.85, 0.4);
     }
 
-    &[data-fork-dictation-closing] [data-fork-dictation-timeline] {
+    &[data-fork-dictation-closing] [data-fork-dictation-meter] {
       display: block;
       animation: fork-inlet-dictation-retract 300ms cubic-bezier(0.55, 0, 0.85, 0.4) forwards;
     }

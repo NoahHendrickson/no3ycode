@@ -8,83 +8,93 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useInletMorphPresence } from "../inletMenuMorph";
 import type { ForkDictation } from "./forkDictation";
 
-// 2px rounded bars on a 5px pitch, 3px in from either edge, up to 18px tall in
-// the action slot, painted in the canvas's own `color` (theme.custom.css).
-const BAR_WIDTH = 2;
-const BAR_PITCH = 5;
-const BAR_GAP = BAR_PITCH - BAR_WIDTH;
-const DOT_HEIGHT = 3;
-const BAR_MAX_HEIGHT = 18;
-const BAR_INSET = 3;
-// The bars a w-20 canvas holds; older samples are never drawn.
-const SLOTS = 15;
-// Quiet speech sits around -40 dBFS and normal speech near -20, so map the
-// -50…-10 dB range to the bar height instead of raw amplitude, which barely
-// moves for anything below a raised voice.
-const FLOOR_DB = -50;
-const CEILING_DB = -10;
+const METER_BARS = 11;
+// A silent bar is a 3px dot in the meter's 20px height.
+const METER_REST_SCALE = 3 / 20;
+// A lean toward the middle (edges keep about half); each bar's own drifting
+// weight shapes it too, so it never settles into one hill.
+const METER_CENTRE_BIAS = Array.from({ length: METER_BARS }, (_, index) => {
+  const distance = Math.abs(index - (METER_BARS - 1) / 2) / ((METER_BARS - 1) / 2);
+  return 1 - 0.55 * distance * distance;
+});
+const METER_BAR_IDS = METER_CENTRE_BIAS.map((_, index) => String(index));
+const METER_WEIGHT_MIN = 0.35;
+// Quiet or background speech sits around -40…-50 dBFS and normal speech near -20, so map
+// -56…-20 dB to the bar height (normal speech tops the centre bar) instead of
+// raw amplitude, which barely moves for anything below a raised voice.
+const FLOOR_DB = -56;
+const CEILING_DB = -20;
+// Below 1 lifts the middle of the range, so a slightly louder word shows.
+const METER_GAMMA = 0.8;
+
+// Upstream's worklet (speech/pcmWorklet.ts) eases its 20 Hz level, 75 ms up and
+// 200 ms down; that release held the bars up ~0.6 s after speech stopped. The
+// ease is a fixed per-sample blend, so two readings recover the raw level.
+const RISE_DECAY = Math.exp(-1 / 20 / 0.075);
+const FALL_DECAY = Math.exp(-1 / 20 / 0.2);
+
+function unsmoothLevel(level: number, previous: number): number {
+  const decay = level > previous ? RISE_DECAY : FALL_DECAY;
+  return Math.min(1, Math.max(0, (level - previous * decay) / (1 - decay)));
+}
 
 function levelToUnit(rms: number): number {
   if (rms <= 0) return 0;
   const db = 20 * Math.log10(rms);
-  return Math.min(1, Math.max(0, (db - FLOOR_DB) / (CEILING_DB - FLOOR_DB)));
-}
-
-function paintTimeline(canvas: HTMLCanvasElement, history: ReadonlyArray<number>) {
-  const context = canvas.getContext("2d");
-  if (!context) return;
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  const scale = window.devicePixelRatio || 1;
-  const pixelWidth = Math.round(width * scale);
-  const pixelHeight = Math.round(height * scale);
-  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
-    canvas.width = pixelWidth;
-    canvas.height = pixelHeight;
-  }
-  context.setTransform(scale, 0, 0, scale, 0, 0);
-  context.clearRect(0, 0, width, height);
-  context.fillStyle = getComputedStyle(canvas).color;
-  for (let slot = 0; slot < SLOTS; slot++) {
-    const sample = history[history.length - SLOTS + slot];
-    const barHeight =
-      sample === undefined
-        ? DOT_HEIGHT
-        : DOT_HEIGHT + Math.round(sample * (BAR_MAX_HEIGHT - DOT_HEIGHT));
-    const x = width - BAR_INSET + BAR_GAP - (SLOTS - slot) * BAR_PITCH;
-    context.beginPath();
-    context.roundRect(x, (height - barHeight) / 2, BAR_WIDTH, barHeight, BAR_WIDTH / 2);
-    context.fill();
-  }
+  return Math.min(1, Math.max(0, (db - FLOOR_DB) / (CEILING_DB - FLOOR_DB))) ** METER_GAMMA;
 }
 
 /**
- * Input-level timeline: one dot per sample, newest at the right edge, so
- * silence is a row of dots and speech is bars scrolling left. Mounted only
- * while a session is live, so each session starts empty. A canvas because every
- * sample moves every bar: one repaint at 20 Hz instead of 15 style writes.
+ * Bars that react in place to the current level, never scrolling. Each bar
+ * wanders its own weight and rises and falls on its own, so speech reads as an
+ * uneven voice rather than one shape. Repaints only on upstream's 20 Hz levels.
  */
-function VoiceLevelTimeline(props: { level: number }) {
+function VoiceLevelMeter(props: { level: number }) {
   const { level } = props;
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const historyRef = useRef<number[]>([]);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- appends each meter sample to the canvas history and repaints the bitmap
+  const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
+  const weightsRef = useRef<number[]>([]);
+  const heightsRef = useRef<number[]>([]);
+  const lastLevelRef = useRef(0);
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes each meter sample to the bars' native transforms
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const history = historyRef.current;
+    const weights = weightsRef.current;
+    const heights = heightsRef.current;
+    // Capture shutdown sends a bare 0 and then nothing more; rest every bar on it.
+    const resting = level === 0;
+    const raw = unsmoothLevel(level, lastLevelRef.current);
+    lastLevelRef.current = level;
     // Upstream meters min(1, 4 × RMS); undo the gain so the bars keep their dB scale.
-    history.push(levelToUnit(level / 4));
-    if (history.length > SLOTS) history.shift();
-    paintTimeline(canvas, history);
+    const unit = levelToUnit(raw / 4);
+    barsRef.current.forEach((bar, index) => {
+      const drifted = (weights[index] ?? Math.random()) + (Math.random() - 0.5) * 0.3;
+      const weight = Math.min(1, Math.max(METER_WEIGHT_MIN, drifted));
+      weights[index] = weight;
+      const target = unit * weight * (METER_CENTRE_BIAS[index] ?? 1);
+      const previous = heights[index] ?? 0;
+      const height = resting || target >= previous ? target : previous * 0.2 + target * 0.8;
+      heights[index] = height;
+      if (bar) {
+        bar.style.transform = `scaleY(${METER_REST_SCALE + (1 - METER_REST_SCALE) * height})`;
+      }
+    });
   }, [level]);
   return (
-    <canvas
-      ref={canvasRef}
+    <div
       aria-hidden
-      data-fork-dictation-timeline=""
-      className="block h-6 w-20 shrink-0"
-    />
+      data-fork-dictation-meter=""
+      className="flex h-5 shrink-0 items-center gap-[3px]"
+    >
+      {METER_BAR_IDS.map((id, index) => (
+        <span
+          key={id}
+          ref={(bar) => {
+            barsRef.current[index] = bar;
+          }}
+          className="h-full w-0.5 rounded-full bg-current transition-transform duration-75 ease-out motion-reduce:transition-none"
+          style={{ transform: `scaleY(${METER_REST_SCALE})` }}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -119,7 +129,7 @@ export function ForkDictationPreview(props: {
 
 const DONE_LABEL = "Done, transcribe (Right Command)";
 
-/** What ComposerPrimaryActions needs to hand the send slot to dictation. */
+/** What ComposerPrimaryActions needs to put the cancel X in the send slot. */
 export type ForkDictationPrimary = {
   readonly dictation: ForkDictation;
   readonly disabled: boolean;
@@ -140,30 +150,94 @@ function DictationTooltip(props: { label: string; trigger: ReactElement; icon: R
   );
 }
 
-/** How long the timeline outlives its session, for Inlet's exit animation. */
+/** How long the meter outlives its session, for Inlet's exit animation. */
 const TIMELINE_CLOSE_MS = 320;
 
 /**
- * The mic: a ghost in the composer's control row, beside attach and ahead of
- * the mode controls, with the level timeline beside it for a live session.
- * Starting a session hands the send slot to ForkDictationPrimaryButton; while
- * recording, a click finishes it, as the check does.
+ * The blue check (the done status colour) that ends a session, at the pill's right end so it lands
+ * under the mic that started it. It spins while transcribing or cleaning up.
+ */
+function DictationDoneButton(props: { dictation: ForkDictation }) {
+  const { dictation } = props;
+  const { phase } = dictation.state;
+  const recording = phase === "recording";
+  // Cleanup by a text model (upstream's post-processing) spins like transcription.
+  const transcribing = phase === "transcribing" || phase === "post-processing";
+  const label = transcribing ? "Transcribing (Escape to cancel)" : DONE_LABEL;
+  return (
+    <DictationTooltip
+      label={label}
+      trigger={
+        <button
+          type="button"
+          data-fork-dictation-action="done"
+          // Transcribing is inert but not dimmed; the check spins instead.
+          className={cn(
+            "flex size-7 shrink-0 items-center justify-center rounded-full bg-sidebar-v2-status-done text-white enabled:cursor-pointer enabled:hover:brightness-110 disabled:opacity-64 [&_svg]:pointer-events-none",
+            transcribing && "pointer-events-none",
+          )}
+          aria-label={label}
+          aria-busy={transcribing || undefined}
+          // Preparing has nothing to confirm yet; the X is the way out.
+          disabled={phase === "preparing"}
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={recording ? dictation.stop : undefined}
+        />
+      }
+      icon={
+        transcribing ? (
+          <Spinner className="size-3.5" aria-hidden />
+        ) : (
+          <CheckIcon className="size-3.5" strokeWidth={2.6} aria-hidden />
+        )
+      }
+    />
+  );
+}
+
+/**
+ * The mic, beside the send slot. A live session swaps it for the white capsule,
+ * its check exactly where the mic was so finishing needs no pointer travel.
+ * Pointer-down is swallowed so the transcript lands at the editor's caret.
  */
 export function ForkDictationGhostMic(props: { dictation: ForkDictation; disabled: boolean }) {
   const { dictation, disabled } = props;
   const live = dictation.blocksSubmission;
   const closing = useInletMorphPresence(live, TIMELINE_CLOSE_MS).ending;
   if (!dictation.isAvailable) return null;
-  const showTimeline = live || closing;
+  if (live) {
+    return (
+      <div
+        // A fresh element, not the idle mic's div reused: its grow is @starting-style.
+        key="live"
+        data-fork-dictation-live=""
+        data-fork-dictation-mic=""
+        className="relative isolate flex h-8 shrink-0 items-center gap-1.5 p-0.5 ps-2.5"
+      >
+        {/* The white fill as two caps and a body, so it can grow out of the
+            check on transforms alone without stretching its round ends. */}
+        <span
+          aria-hidden
+          data-fork-dictation-fill=""
+          className="pointer-events-none absolute inset-0 -z-10"
+        >
+          <span data-fork-dictation-fill-start="" className="absolute inset-y-0 left-0 w-8" />
+          <span data-fork-dictation-fill-body="" className="absolute inset-y-0 inset-x-4" />
+          <span data-fork-dictation-fill-end="" className="absolute inset-y-0 right-0 w-8" />
+        </span>
+        <VoiceLevelMeter level={dictation.level} />
+        <DictationDoneButton dictation={dictation} />
+      </div>
+    );
+  }
   return (
     <div
-      {...(live ? { "data-fork-dictation-live": "" } : {})}
       {...(closing ? { "data-fork-dictation-closing": "" } : {})}
       data-fork-dictation-mic=""
       className="flex shrink-0 items-center"
     >
-      {showTimeline ? (
-        <VoiceLevelTimeline level={dictation.level} />
+      {closing ? (
+        <VoiceLevelMeter level={dictation.level} />
       ) : (
         <DictationTooltip
           label="Dictate"
@@ -174,7 +248,7 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
               size="icon-sm"
               aria-label="Dictate (Right Command)"
               data-fork-composer-action="dictate"
-              disabled={disabled || dictation.blocksSubmission}
+              disabled={disabled}
               onPointerDown={(event) => event.preventDefault()}
               onClick={dictation.start}
             />
@@ -187,77 +261,25 @@ export function ForkDictationGhostMic(props: { dictation: ForkDictation; disable
 }
 
 /**
- * A live session borrows the send button: it becomes the check, with a cancel
- * X beside it, and the check spins while transcribing.
- * Everything appears in place: nothing slides, grows, or springs in.
- *
- * `className` is the send button's own, passed in by ComposerPrimaryActions so
- * the check is the send button in every respect but its glyph and click. Pointer-down is always swallowed so the editor keeps focus and the
- * transcript lands at its caret.
+ * A live session's cancel X, a ghost in the send button's box, so the
+ * capsule beside it keeps its check where the mic was.
  */
-export function ForkDictationPrimaryButton(props: {
-  dictation: ForkDictation;
-  disabled: boolean;
-  className: string;
-}) {
-  const { dictation, disabled, className } = props;
-  const { phase } = dictation.state;
-  const recording = phase === "recording";
-  // Cleanup by a text model (upstream's post-processing) spins like transcription.
-  const transcribing = phase === "transcribing" || phase === "post-processing";
-  const busy = dictation.blocksSubmission;
-  const label = transcribing
-    ? "Transcribing (Escape to cancel)"
-    : busy
-      ? DONE_LABEL
-      : "Dictate (Right Command)";
+export function ForkDictationCancelButton(props: { dictation: ForkDictation; leading?: boolean }) {
   return (
-    <>
-      {busy ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Cancel dictation (Escape)"
-          // Shares attach's box and hover from theme.custom.css.
-          data-fork-composer-action="dictate-cancel"
-          onPointerDown={(event) => event.preventDefault()}
-          onClick={dictation.cancel}
-        >
-          <XIcon />
-        </Button>
-      ) : null}
-      <DictationTooltip
-        label={busy ? label : "Dictate"}
-        trigger={
-          <button
-            type="button"
-            // Keeps the send button's fork styling while the second attribute
-            // names what it does now.
-            data-fork-composer-action="send"
-            data-fork-composer-send-tone="flat"
-            data-fork-dictation-action={busy ? "done" : "dictate"}
-            // Transcribing is inert but not dimmed; the check spins instead.
-            className={cn(className, transcribing && "pointer-events-none")}
-            aria-label={label}
-            aria-busy={transcribing || undefined}
-            // Preparing has nothing to confirm yet; the X is the way out.
-            disabled={phase === "preparing" || (!busy && disabled)}
-            onPointerDown={(event) => event.preventDefault()}
-            onClick={recording ? dictation.stop : transcribing ? undefined : dictation.start}
-          />
-        }
-        icon={
-          transcribing ? (
-            <Spinner className="size-3.5" aria-hidden />
-          ) : busy ? (
-            <CheckIcon className="size-3.5" strokeWidth={2.4} aria-hidden />
-          ) : (
-            <MicIcon weight="fill" className="size-4" aria-hidden />
-          )
-        }
-      />
-    </>
+    <Button
+      // Beside stop alone, theme.custom.css moves the X to the capsule's left.
+      {...(props.leading ? { "data-fork-dictation-cancel": "leading" } : {})}
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Cancel dictation (Escape)"
+      // Shares attach's box and hover from theme.custom.css.
+      data-fork-composer-action="dictate-cancel"
+      onPointerDown={(event) => event.preventDefault()}
+      onClick={props.dictation.cancel}
+    >
+      <XIcon />
+    </Button>
   );
 }
 

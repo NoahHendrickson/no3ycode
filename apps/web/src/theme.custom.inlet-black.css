@@ -254,13 +254,12 @@
     }
   }
 
-  /* Their open buttons, and a live dictation pill, sit on the shell in its ink. */
+  /* Their open buttons sit on the shell in its ink. */
 
   &
     :is(
       [data-chat-provider-model-picker][data-fork-tab-trigger][aria-expanded="true"],
-      [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled),
-      [data-fork-dictation-live]
+      [data-fork-composer-mode-chip][aria-expanded="true"]:not(:disabled)
     ) {
     color: var(--fork-inlet-black-ink);
 

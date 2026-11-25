@@ -21,7 +21,7 @@ import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
 /* fork:end fork-composer-shell */
 /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
 import {
-  ForkDictationPrimaryButton,
+  ForkDictationCancelButton,
   type ForkDictationPrimary,
 } from "~/custom/voice/ForkDictationControl";
 /* fork:end fork-local-dictation */
@@ -70,8 +70,7 @@ interface ComposerPrimaryActionsProps {
   canResume?: boolean;
   preserveComposerFocusOnPointerDown?: boolean;
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
-  /** Set while a dictation session is live: the check (and a cancel X beside
-   * it) take the send slot. */
+  /** Set while a dictation session is live: its cancel X takes the send slot. */
   forkDictation?: ForkDictationPrimary | null;
   /* fork:end fork-local-dictation */
   isEditingQueuedMessage?: boolean;
@@ -372,17 +371,12 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
   }
 
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
-     The send button's look, hoisted so dictation can wear it: a live session shows the check
-     with a cancel X beside it. Always filled: the transparent art variant would leave a white
-     glyph on nothing. ChatComposer hands over the slot only for a live session. */
+     The send button's look. Always filled: the transparent art variant would leave a white
+     glyph on nothing. ChatComposer hands the slot to the cancel X only for a live session. */
   const sendButtonClassName =
     "relative isolate flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-message-action text-message-action-foreground shadow-xs transition-all duration-150 enabled:cursor-pointer enabled:inset-shadow-control-highlight enabled:shadow-message-action/24 hover:scale-105 hover:bg-message-action-hover active:inset-shadow-control-pressed active:shadow-none disabled:pointer-events-none disabled:opacity-64 disabled:shadow-none disabled:hover:scale-100 sm:h-8 sm:w-8 [&_svg]:pointer-events-none";
   const forkDictationButton = forkDictation ? (
-    <ForkDictationPrimaryButton
-      dictation={forkDictation.dictation}
-      disabled={forkDictation.disabled}
-      className={sendButtonClassName}
-    />
+    <ForkDictationCancelButton dictation={forkDictation.dictation} />
   ) : null;
   /* fork:end fork-local-dictation */
 
@@ -393,12 +387,12 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
     !isSendHeld
   ) {
     /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
-       A live session sits to stop's left, so stop keeps the right edge: the
-       session's X and check grow leftward without moving it. */
-    if (forkDictationButton) {
+       Stop was the only idle action, so it keeps the right edge and the X leads the
+       capsule: the check stays where the mic was. */
+    if (forkDictation) {
       return (
         <>
-          {forkDictationButton}
+          <ForkDictationCancelButton dictation={forkDictation.dictation} leading />
           {renderStopGenerationButton(false)}
         </>
       );
