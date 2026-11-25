@@ -18,14 +18,17 @@ const ForkSidebarFontSizeSchema = Schema.Int.check(
   Schema.isBetween({ minimum: MIN_FORK_SIDEBAR_FONT_SIZE, maximum: MAX_FORK_SIDEBAR_FONT_SIZE }),
 );
 
-export const { initialize: initializeForkSidebarFontSize, useValue: useForkSidebarFontSize } =
-  createForkRootSetting({
-    storageKey: "t3code:fork:sidebar-font-size:v1",
-    schema: ForkSidebarFontSizeSchema,
-    defaultValue: DEFAULT_FORK_SIDEBAR_FONT_SIZE,
-    cssVariable: "--fork-sidebar-font-size",
-    cssValue: (size) => (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE ? null : `${size}px`),
-  });
+export const {
+  initialize: initializeForkSidebarFontSize,
+  useValue: useForkSidebarFontSize,
+  set: setForkSidebarFontSize,
+} = createForkRootSetting({
+  storageKey: "t3code:fork:sidebar-font-size:v1",
+  schema: ForkSidebarFontSizeSchema,
+  defaultValue: DEFAULT_FORK_SIDEBAR_FONT_SIZE,
+  cssVariable: "--fork-sidebar-font-size",
+  cssValue: (size) => (size === DEFAULT_FORK_SIDEBAR_FONT_SIZE ? null : `${size}px`),
+});
 
 export const FORK_TYPOGRAPHY_SCALE_OPTIONS = [
   80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 140, 150,

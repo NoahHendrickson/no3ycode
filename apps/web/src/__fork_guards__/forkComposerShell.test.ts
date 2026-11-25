@@ -415,7 +415,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
     expect(geometry?.body).toMatch(/font-size:\s*var\(--fork-composer-chip-text\)/u);
     // A pixel under the Interface font size, so the row follows the setting.
-    expect(theme).toContain("--fork-composer-chip-text: calc(1rem - 1px);");
+    expect(theme).toContain("--fork-composer-chip-text: calc(var(--text-base) - 1px);");
     expect(theme).toContain(
       "--fork-composer-control-height: calc(var(--fork-composer-chip-text) + 12px);",
     );

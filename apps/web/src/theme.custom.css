@@ -993,11 +993,10 @@
   }
 }
 
-/* The composer's chips and controls read a pixel under the Interface font size (1rem is that
-   setting); each row adds fixed room around the text. At the default 16px that is 15px text;
-   at 15px it is the 14px these rows used to hardcode. */
+/* The composer's chips and controls read a pixel under the Interface font size (--text-base is
+   that setting; rem stays 16px); each row adds fixed room around the text. */
 :root[data-fork="noahhendrickson-t3code"] {
-  --fork-composer-chip-text: calc(1rem - 1px);
+  --fork-composer-chip-text: calc(var(--text-base) - 1px);
   --fork-composer-control-height: calc(var(--fork-composer-chip-text) + 12px);
 }
 
