@@ -57,6 +57,7 @@ describe("fork-queued-runs-banner", () => {
     expect(mobileBanner).toContain("useAtomCommand(threadEnvironment.reorderQueuedRun");
     expect(mobileBanner).toContain('workflow?.canSendNow ? "Send now" : "Steer"');
     expect(mobileBanner).toContain('title: "Move up"');
+    expect(mobileBanner).toContain("<QueueGrip");
     expect(mobileBanner).toContain("<No3yGlassLayer radius={RADIUS} />");
     expect(mobilePill).toContain("queuedCount: 0,");
   });
