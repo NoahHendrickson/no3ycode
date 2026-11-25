@@ -1047,4 +1047,3 @@
   [data-fork-tab-actions]:has(> [data-fork-tab-actions-trigger][aria-expanded="true"]) {
   opacity: 1;
 }
-
