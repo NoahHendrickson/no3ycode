@@ -199,12 +199,31 @@
   border-radius: var(--fork-inlet-menu-radius);
 }
 
-/* A ghost item takes Button's corner through buttonVariants, which tailwind-merge puts over
-   the row token, so it is rounded as the other rows here. */
-
-/* design-lint-disable-next-line C1 -- the ghost variant's own class outranks the row token */
+/* design-lint-disable-next-line C1 -- the combobox and autocomplete popups carry no corner class to read the token, and a popover whose call site passes its own corner class must still round to Inlet's */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-slot="menu-item"][data-variant="ghost"] {
+  :is([data-slot="popover-popup"], [data-slot="combobox-popup"], [data-slot="autocomplete-popup"]) {
+  border-radius: var(--fork-inlet-menu-radius);
+}
+
+/* Command rows keep upstream's 4px: Inlet's row radius never reached them. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] [data-slot="command-item"] {
+  --fork-menu-row-radius: var(--radius-sm);
+}
+
+/* A ghost item takes Button's corner through buttonVariants, and some call sites pass their own
+   corner class; tailwind-merge puts either over the row token, so every row is rounded here. */
+
+/* design-lint-disable-next-line C1 -- a ghost variant's or call site's corner class outranks the row token */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  :is(
+    [data-slot="menu-item"],
+    [data-slot="menu-radio-item"],
+    [data-slot="menu-checkbox-item"],
+    [data-slot="menu-sub-trigger"],
+    [data-slot="select-item"],
+    [data-slot="combobox-item"],
+    [data-slot="autocomplete-item"]
+  ) {
   border-radius: var(--fork-inlet-menu-row-radius);
 }
 

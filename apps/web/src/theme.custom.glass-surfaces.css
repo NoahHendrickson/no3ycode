@@ -380,6 +380,7 @@
        calc(var(--radius) - 4px), so a --radius-sm override never reaches them.
        In :where() so the menus below that round their rows further win on
        source order. */
+    /* design-lint-disable-next-line C1 -- rows whose call site passes its own corner class still round to 8px, which the token alone cannot outrank */
     :where(&)
       :is(
         [data-slot="menu-item"],
@@ -389,6 +390,7 @@
         [data-slot="combobox-item"]
       ):not([data-fork-model-picker] *) {
       --fork-menu-row-radius: var(--radius-lg);
+      border-radius: var(--radius-lg);
     }
 
     /* design-lint-disable-next-line C1, C2 -- the rim's glint layer takes the popup's corner and replaces upstream's top highlight */

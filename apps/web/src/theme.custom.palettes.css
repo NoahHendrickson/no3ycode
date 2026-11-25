@@ -348,6 +348,7 @@
     corner-shape: superellipse(1.6);
   }
 
+  /* design-lint-disable-next-line C1 -- Flat Glass rounds every row, ghost items and rows whose call site passes its own corner class included, which the token alone cannot outrank */
   &
     :is(
       [data-slot="menu-item"],
@@ -358,6 +359,7 @@
       [data-slot="combobox-item"]
     ) {
     --fork-menu-row-radius: var(--fork-flat-radius);
+    border-radius: var(--fork-flat-radius);
   }
 
   /* design-lint-disable-next-line C1 -- command-item reads no row-radius token yet (fork-primitive-tokens covers menu, select, combobox and autocomplete rows) */
@@ -367,7 +369,9 @@
       [data-fork-thread-row],
       [data-fork-chrome-row],
       li[data-fork-split-pair] > ul,
-      [data-testid="sidebar-v2-project-group-collapse"]
+      [data-testid="sidebar-v2-project-group-collapse"],
+      [data-testid="sidebar-v2-project-group-header"],
+      li[data-fork-status-section-header]
     ),
   & [data-fork-thread-tabs] [data-fork-thread-tab],
   & :is([data-slot="command-item"], [data-testid="bot-threads-row"]),
@@ -401,6 +405,11 @@
       [data-slot="autocomplete-positioner"] > *
     ) {
     --fork-menu-radius: var(--fork-flat-popup-radius);
+  }
+
+  /* design-lint-disable-next-line C1 -- the tooltip-style popover draws no corner class to read the token */
+  & [data-slot="popover-popup"].dropdown-glass:not([data-fork-tab-menu]) {
+    border-radius: var(--fork-flat-popup-radius);
   }
 
   /* The popover's and autocomplete's top highlight, and a padding="none" viewport, sit inside
