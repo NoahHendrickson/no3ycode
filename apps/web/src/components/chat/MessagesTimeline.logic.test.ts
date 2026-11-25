@@ -262,9 +262,13 @@ describe("deriveMessagesTimelineRows", () => {
     const afterSteer = rows([first, steer]);
     expect(afterSteer.some((row) => row.kind === "work-live")).toBe(false);
     expect(afterSteer.at(-1)?.kind).toBe("thinking");
-    expect(afterSteer.find((row) => row.kind === "work")).toMatchObject({
-      groupedEntries: [{ id: "first-thought", toolLifecycleStatus: "completed" }],
+    /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+       Upstream settles the stranded thought into its own trace row; the fork draws it as a
+       "Thought" summary row, whose entries show when it opens. */
+    expect(afterSteer.find((row) => row.kind === "work-toggle")).toMatchObject({
+      summary: "Thought",
     });
+    /* fork:end fork-trail-summary */
     for (const entries of [
       [first, steer, next],
       [first, next],

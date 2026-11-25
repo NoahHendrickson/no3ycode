@@ -67,6 +67,21 @@ describe("createTimelineRowMotion", () => {
     expect(motion.takeEntrance("b")).toBe(true);
   });
 
+  it("keeps a tool the status line carried still when a reply lands after it", () => {
+    const tool = { kind: "work-live", id: "tool", active: true } as MessagesTimelineRow;
+    const carrying = {
+      kind: "working",
+      id: "working",
+      forkLive: tool,
+      forkWordSeed: "",
+    } as unknown as MessagesTimelineRow;
+    const working = { kind: "working", id: "working" } as MessagesTimelineRow;
+    const motion = primed([message("a"), carrying]);
+    motion.observe([message("a"), tool, message("b"), working], "thread", true);
+    expect(motion.takeEntrance("tool")).toBe(false);
+    expect(motion.takeEntrance("b")).toBe(true);
+  });
+
   it("records no insertion when the live tool finishes and is drawn settled", () => {
     const tool = {
       kind: "work-live",

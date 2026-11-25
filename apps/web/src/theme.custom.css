@@ -3623,7 +3623,60 @@
   background: none;
   color: inherit;
 }
+
+/* The status line's shimmer keeps upstream's 2.2s cycle but sweeps in its first
+   35% and rests for the rest. Steps apply per keyframe segment: 23 over the
+   0.77s sweep is ~30Hz, smoother than upstream's ~14Hz drift on purpose, since a
+   faster pass needs more steps to read as motion. Guarded so reduced motion keeps
+   upstream's `none`. */
+@keyframes fork-status-line-flash {
+  from {
+    transform: translateX(0);
+  }
+  35%,
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes fork-status-line-flash-counter {
+  from {
+    transform: translateX(0);
+  }
+  35%,
+  to {
+    transform: translateX(-100%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-status-line] .live-activity-focus {
+    animation-name: fork-status-line-flash;
+    animation-timing-function: steps(23);
+  }
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-status-line] .live-activity-focus-counter {
+    animation-name: fork-status-line-flash-counter;
+    animation-timing-function: steps(23);
+  }
+}
 /* fork:end fork-working-row-last */
+
+/* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+   An opened group hangs under its summary on a quiet rail instead of in a boxed scroller;
+   the list still caps its height and virtualizes, and its fades still mark overflow. */
+:root[data-fork="noahhendrickson-t3code"] [data-tool-group-scroll] {
+  margin-inline-start: 0.75rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border);
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+}
+/* A thought-only group opens as upstream's trace view; it takes the same rail. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-trace-group] > * {
+  margin-inline-start: 0.75rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border);
+  scrollbar-width: none;
+}
+/* fork:end fork-trail-summary */
 
 /* The permissions menu (fork-composer-shell): rounder than a stock menu, its rows concentric
    inside an even 8px inset (the popup's 4px plus the section's 4px). */

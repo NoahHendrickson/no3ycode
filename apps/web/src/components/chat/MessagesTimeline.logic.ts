@@ -15,6 +15,9 @@ import {
 } from "@t3tools/client-runtime/user-message";
 import type { HandoffTimelineRun } from "@t3tools/client-runtime/handoff";
 import { renderCodexDirectivesForCopy } from "~/markdown/markdownText";
+/* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary */
+import { forkTrailSummary } from "~/custom/forkTrailSummary";
+/* fork:end fork-trail-summary */
 import {
   commandDisplayText,
   commandProgramName,
@@ -2110,7 +2113,9 @@ export function deriveMessagesTimelineRows(
           nextEntry.entry.sourceActivityKind === "runtime.error" ||
           nextEntry.entry.itemType === "system_notice" ||
           nextEntry.entry.itemType === "notification" ||
-          nextEntry.entry.itemType === "todo_list" ||
+          /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+             Upstream also breaks here on todo_list; a task update joins the group it follows. */
+          /* fork:end fork-trail-summary */
           nextEntry.entry.questionAnswer !== undefined ||
           isPendingApproval(nextEntry.entry) ||
           activeWorkEntryIds.has(nextEntry.id) ||
@@ -2130,7 +2135,14 @@ export function deriveMessagesTimelineRows(
         workEntryIsVisibleInGroup(entry, workEntryIsInActiveRun(entry)),
       );
       if (visibleGroupedEntries.length > 0) {
-        const activeInProgressToolEntries = visibleGroupedEntries.filter(workEntryIsInActiveRun);
+        const activeInProgressToolEntries = visibleGroupedEntries.filter(
+          (entry) =>
+            workEntryIsInActiveRun(entry) &&
+            /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+               An unfinished task update that joined the group never reads as running. */
+            entry.itemType !== "todo_list",
+          /* fork:end fork-trail-summary */
+        );
         if (activeInProgressToolEntries.length > 0) {
           const groupId = workGroupId(timelineEntry.id);
           const expanded = input.expandedWorkGroupIds?.has(groupId) ?? false;
@@ -2153,7 +2165,11 @@ export function deriveMessagesTimelineRows(
           }
         } else if (
           visibleGroupedEntries.length === 1 &&
-          workLogEntryIsToolLike(visibleGroupedEntries[0]!)
+          workLogEntryIsToolLike(visibleGroupedEntries[0]!) &&
+          /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+             A lone thought takes the summary row below, so its trace shows only when opened. */
+          visibleGroupedEntries[0]!.itemType !== "reasoning"
+          /* fork:end fork-trail-summary */
         ) {
           const singleEntry = visibleGroupedEntries[0]!;
           nextRows.push({
@@ -2188,8 +2204,9 @@ export function deriveMessagesTimelineRows(
             primarySourceIcon ??
             visibleGroupedEntries.findLast((entry) => entry.toolIcon !== undefined)?.toolIcon;
           const latestToolEntry = visibleGroupedEntries.findLast(workLogEntryIsToolLike);
-          const singleEntry =
-            visibleGroupedEntries.length === 1 ? (visibleGroupedEntries[0] ?? null) : null;
+          /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary
+             Upstream kept the lone entry here for its summary; forkTrailSummary reads the group. */
+          /* fork:end fork-trail-summary */
           nextRows.push({
             kind: "work-toggle",
             id: `work-toggle:${timelineEntry.id}`,
@@ -2198,10 +2215,9 @@ export function deriveMessagesTimelineRows(
             groupId,
             hiddenCount: visibleGroupedEntries.length,
             expanded,
-            summary:
-              singleEntry !== null && !workLogEntryIsToolLike(singleEntry)
-                ? singleEntry.label
-                : summarizeToolGroup(visibleGroupedEntries, resolve).summary,
+            /* fork:begin fork-trail-summary — see .fork/customizations.yaml#fork-trail-summary */
+            summary: forkTrailSummary(visibleGroupedEntries, resolve),
+            /* fork:end fork-trail-summary */
             summaryKind,
             ...(groupToolSurface ? { toolSurface: groupToolSurface } : {}),
             ...(groupToolIcon ? { toolIcon: groupToolIcon } : {}),

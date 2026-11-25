@@ -21,7 +21,7 @@ import {
   type ComponentPropsWithoutRef,
 } from "react";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
-import { isForkSettledTool } from "./forkWorkingRowLast";
+import { isForkSettledTool, isForkStatusLine } from "./forkWorkingRowLast";
 
 // The live activity line: the thinking row, the working row, and a running
 // tool group. They reuse their ids across turns and sit at the tail.
@@ -32,6 +32,11 @@ function isLiveRow(row: MessagesTimelineRow): boolean {
     row.kind === "working" ||
     (row.kind === "work-live" && (row.active || isForkSettledTool(row)))
   );
+}
+// The live row the status line carries keeps its live slot, so when a reply lands
+// after it and it returns to the transcript, it stays put instead of entering.
+function carriedLiveId(row: MessagesTimelineRow | undefined): string | undefined {
+  return row?.kind === "working" && isForkStatusLine(row) ? row.forkLive?.id : undefined;
 }
 function isOpenGroupRow(row: MessagesTimelineRow): boolean {
   return (row.kind === "work" && row.isExpandedToolGroup) || row.kind === "viewed-images";
@@ -82,6 +87,8 @@ export function createTimelineRowMotion(): TimelineRowMotion {
         entering.clear();
         thread = { identity, rows, known: new Set(), liveIds: new Set() };
         for (const row of rows) (isLiveRow(row) ? thread.liveIds : thread.known).add(row.id);
+        const carried = carriedLiveId(rows.at(-1));
+        if (carried !== undefined) thread.liveIds.add(carried);
         return;
       }
 
@@ -97,6 +104,8 @@ export function createTimelineRowMotion(): TimelineRowMotion {
       const working = rows[start];
       if (working?.kind === "working") {
         liveIds.add(working.id);
+        const carried = carriedLiveId(working);
+        if (carried !== undefined) liveIds.add(carried);
         if (!thread.liveIds.has(working.id)) arrived.push(working);
         start -= 1;
         for (let row = rows[start]; row && isOpenGroupRow(row); row = rows[start]) {

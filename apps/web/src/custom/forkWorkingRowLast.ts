@@ -1,15 +1,19 @@
 /**
  * Live status line — see `.fork/customizations.yaml#fork-working-row-last`.
- * The working row moves to the end. It absorbs the turn's live thinking row or
- * live reasoning; a running tool keeps its own row above a plain Thinking line.
- * A failed group's `thinking` row keeps its own upstream row.
+ * The working row moves to the end. The live row folds into it iff it is the turn's
+ * tail, so the tail is one line; a live row with a reply after it stays in place above
+ * a plain Thinking line. A failed group's `thinking` row keeps its own upstream row.
  */
-import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import {
+  liveWorkEntryLabel,
+  type MessagesTimelineRow,
+} from "~/components/chat/MessagesTimeline.logic";
+import type { MessageResolver } from "~/i18n/messages";
 
 type WorkingRow = Extract<MessagesTimelineRow, { kind: "working" }>;
 type WorkLiveRow = Extract<MessagesTimelineRow, { kind: "work-live" }>;
 export type ForkLiveRow = Extract<MessagesTimelineRow, { kind: "thinking" | "work-live" }>;
-/** `forkLive` is the folded live row, or null for a plain Thinking line under a running tool. */
+/** `forkLive` is the folded live row, or null for a plain Thinking line under a tool that stays in place. */
 export type ForkStatusLineRow = WorkingRow & {
   readonly forkLive: ForkLiveRow | null;
   /** Picks the thinking word (forkThinkingWord); it changes only when a new row or step lands. */
@@ -21,11 +25,16 @@ type ForkSettledToolRow = WorkLiveRow & { readonly forkSettled: true };
 // Runs on useStableRows' output, whose array and rows keep their identity
 // while unchanged; these caches keep that identity through the fold.
 const folded = new WeakMap<MessagesTimelineRow[], MessagesTimelineRow[]>();
+const foldedWhileYielding = new WeakMap<MessagesTimelineRow[], MessagesTimelineRow[]>();
 const mergedByWorking = new WeakMap<WorkingRow, ForkStatusLineRow>();
 const settledTools = new WeakMap<WorkLiveRow, ForkSettledToolRow>();
 
 const isLive = (row: MessagesTimelineRow): row is ForkLiveRow =>
   row.kind === "thinking" || (row.kind === "work-live" && row.active);
+
+// Upstream follows the live group with its open details and thumbnails; those stay in place.
+const isGroupDetail = (row: MessagesTimelineRow) =>
+  (row.kind === "work" && row.isExpandedToolGroup) || row.kind === "viewed-images";
 
 // Upstream keeps the latest tool as the active live row after it succeeds; out of
 // the status line it would still read "Running". Only an end status settles it:
@@ -63,7 +72,7 @@ function mergedWorkingRow(
   return merged;
 }
 
-function fold(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
+function fold(rows: MessagesTimelineRow[], lineYields: boolean): MessagesTimelineRow[] {
   const workingIndex = rows.findIndex((row) => row.kind === "working");
   const working = rows[workingIndex];
   if (working?.kind !== "working") return rows;
@@ -71,23 +80,37 @@ function fold(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
   // Upstream derives at most one live activity row, at the turn's tail.
   const liveIndex = rest.findLastIndex(isLive);
   const live = liveIndex < 0 ? undefined : (rest[liveIndex] as ForkLiveRow);
-  if (live === undefined || (live.kind === "thinking" && live.groupId !== undefined)) {
+  if (
+    lineYields ||
+    working.compacting === true ||
+    live === undefined ||
+    (live.kind === "thinking" && live.groupId !== undefined)
+  ) {
     return workingIndex === rows.length - 1 ? rows : [...rest, working];
   }
-  if (live.kind === "thinking" || live.entry.itemType === "reasoning") {
+  const shown = live.kind === "thinking" ? live : settled(live);
+  if (rest.slice(liveIndex + 1).every(isGroupDetail)) {
     const above = rest.toSpliced(liveIndex, 1);
-    const seed = live.kind === "work-live" ? live.entry.id : rowSeed(above.at(-1));
-    return [...above, mergedWorkingRow(working, live, seed)];
+    const seed = rowSeed(live.kind === "thinking" ? above.at(-1) : live);
+    return [...above, mergedWorkingRow(working, shown, seed)];
   }
-  const above = rest.toSpliced(liveIndex, 1, settled(live));
+  const above = rest.toSpliced(liveIndex, 1, shown);
   return [...above, mergedWorkingRow(working, null, rowSeed(above.at(-1)))];
 }
 
-export function forkLiveStatusRows(rows: MessagesTimelineRow[]): MessagesTimelineRow[] {
-  const cached = folded.get(rows);
+/**
+ * `lineYields`: an approval, an answer, compaction or worktree setup owns the tail, so
+ * upstream's rows stay as they are and the working row draws "Working for …" at the end.
+ */
+export function forkLiveStatusRows(
+  rows: MessagesTimelineRow[],
+  lineYields = false,
+): MessagesTimelineRow[] {
+  const cache = lineYields ? foldedWhileYielding : folded;
+  const cached = cache.get(rows);
   if (cached) return cached;
-  const result = fold(rows);
-  folded.set(rows, result);
+  const result = fold(rows, lineYields);
+  cache.set(rows, result);
   return result;
 }
 
@@ -96,19 +119,9 @@ export function isForkStatusLine(row: WorkingRow): row is ForkStatusLineRow {
 }
 
 /**
- * The row to draw as the status line, or null for upstream's "Working for …":
- * while the turn waits on an approval or an answer, nothing is thinking.
- */
-export function forkStatusLineRow(
-  row: WorkingRow,
-  awaitingUser: boolean,
-): ForkStatusLineRow | null {
-  return isForkStatusLine(row) && !awaitingUser ? row : null;
-}
-
-/**
  * One-line text for the status line; upstream's richer previews stay in the open group.
- * Null is the thinking slot, which shows forkThinkingWord.
+ * A running tool reads as its live row would ("Running vp"); reasoning and a settled tool
+ * return null, the thinking slot, which shows forkThinkingWord.
  */
 export function forkStatusLineLabel(
   live: ForkLiveRow | null,
@@ -116,8 +129,14 @@ export function forkStatusLineLabel(
     readonly providerStartingLabel: string | null;
     readonly liveAnswerPreview: string | null;
   },
+  workspaceRoot: string | undefined,
+  resolve?: MessageResolver,
 ): string | null {
   const label = live?.kind === "thinking" ? live.label : undefined;
-  if (live?.kind === "work-live") return null;
+  if (live?.kind === "work-live") {
+    return live.active && live.entry.itemType !== "reasoning"
+      ? liveWorkEntryLabel(live.entry, workspaceRoot, true, resolve)
+      : null;
+  }
   return activity.providerStartingLabel ?? label ?? activity.liveAnswerPreview ?? null;
 }

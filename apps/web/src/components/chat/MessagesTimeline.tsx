@@ -15,6 +15,9 @@ import { ForkTimelineRowFrame, useTimelineRowMotion } from "~/custom/forkTimelin
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { forkLiveStatusRows } from "~/custom/forkWorkingRowLast";
 /* fork:end fork-working-row-last */
+/* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list */
+import { ForkLiveTasksCtx, forkLiveTaskSteps } from "~/custom/forkLiveTasks";
+/* fork:end fork-live-task-list */
 /* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
 import { forkSpaceTranscript, forkTranscriptGapStyle } from "~/custom/forkTranscriptSpacing";
 /* fork:end fork-transcript-spacing */
@@ -794,7 +797,14 @@ const ConversationTimeline = memo(function ConversationTimeline({
     /* fork:end fork-bots */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  const foldedRows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
+  const stableRows = useStableRows(rawRows, listIdentityKey);
+  // The line yields the tail as WorkingTimelineRow's compaction and setup labels do.
+  const foldedRows = forkLiveStatusRows(
+    stableRows,
+    awaitingUser !== null ||
+      isPreparingWorktree ||
+      (isCompacting && !stableRows.some((row) => row.kind === "context-compaction" && row.active)),
+  );
   /* fork:end fork-working-row-last */
   /* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
   const rows = forkSpaceTranscript(foldedRows);
@@ -1223,6 +1233,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
     latestRun?.startedAt != null
       ? worktreeSetup
       : null;
+  /* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list */
+  // Zen hides task lists with the rest of the work.
+  const forkLiveTasks =
+    isWorking && toolCallVisibility !== "zen" ? forkLiveTaskSteps(timelineEntries) : null;
+  /* fork:end fork-live-task-list */
   const activityState: TimelineRowActivityState = {
     isWorking,
     isCompacting: compactionAwaitingRow,
@@ -1499,94 +1514,103 @@ const ConversationTimeline = memo(function ConversationTimeline({
       {activityAnnouncer}
       <MarkdownFindContext value={findActive}>
         <TimelineRowActivityCtx value={activityState}>
-          <TooltipScrollDismissArea
-            ref={attachTimelineViewportElement}
-            className="relative h-full min-h-0"
-            data-assistant-citation-viewport="true"
-          >
-            {onCiteAssistantText && citationThreadRef ? (
-              <AssistantSelectionToolbar
-                viewport={timelineViewportElement}
-                threadRef={citationThreadRef}
-                onCite={onCiteAssistantText}
+          {/* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list */}
+          <ForkLiveTasksCtx value={forkLiveTasks}>
+            {/* fork:end fork-live-task-list */}
+            <TooltipScrollDismissArea
+              ref={attachTimelineViewportElement}
+              className="relative h-full min-h-0"
+              data-assistant-citation-viewport="true"
+            >
+              {onCiteAssistantText && citationThreadRef ? (
+                <AssistantSelectionToolbar
+                  viewport={timelineViewportElement}
+                  threadRef={citationThreadRef}
+                  onCite={onCiteAssistantText}
+                />
+              ) : null}
+              <LegendList<MessagesTimelineRow>
+                ref={setTimelineList}
+                data={rows}
+                extraData={listExtraData}
+                keyExtractor={keyExtractor}
+                getItemType={getItemType}
+                renderItem={renderItem}
+                estimatedItemSize={90}
+                initialScrollAtEnd={
+                  !findActive && citationRequest === null && rememberedPosition?.atEnd !== false
+                }
+                // Legend needs a data refresh to mount new pins without a scroll event.
+                dataVersion={`${readyCitationRequest?.key ?? listIdentityKey}:${alwaysRenderKeys.join(",")}`}
+                {...(alwaysRender ? { alwaysRender } : {})}
+                onLoad={handleListLoad}
+                {...(anchoredEndSpace ? { anchoredEndSpace } : {})}
+                contentInsetEndAdjustment={anchoredEndSpace ? contentInsetEndAdjustment : 0}
+                maintainScrollAtEnd={
+                  citationPositioning ||
+                  (restoringThreadPosition && rememberedPosition?.atEnd === false) ||
+                  anchoredEndSpace ||
+                  !liveFollowEnabled ||
+                  fullscreenAppRowId !== null
+                    ? false
+                    : isWorking &&
+                        !syncing &&
+                        !prefersReducedMotion &&
+                        settlingListIdentity === null
+                      ? TIMELINE_MAINTAIN_SCROLL_AT_END_SMOOTH
+                      : TIMELINE_MAINTAIN_SCROLL_AT_END
+                }
+                maintainVisibleContentPosition={
+                  findActive ||
+                  citationPositioning ||
+                  (restoringThreadPosition && rememberedPosition?.atEnd === false)
+                    ? false
+                    : maintainVisibleContentPosition
+                }
+                maintainScrollAtEndThreshold={1}
+                onScroll={handleScroll}
+                onItemSizeChanged={scheduleMinimapRefresh}
+                onMetricsChange={scheduleMinimapRefresh}
+                // Keyboard scrolling only moves the focused element; F6 and clicks land here.
+                tabIndex={-1}
+                data-workspace-focus-default
+                className={cn(
+                  "messages-timeline-scroll scrollbar-gutter-both h-full min-h-0 overflow-x-hidden overscroll-y-contain [overflow-anchor:none]",
+                  topFadeEnabled && "topbar-scroll-fade",
+                  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+                  // Unconditional, unlike the top fade beside it: theme.custom.css
+                  // masks the transcript so it ends above the composer, and that
+                  // has to hold whether or not a banner is suppressing the top
+                  // fade. The fork rule owns the whole mask and folds the top layer
+                  // in when the class above is present.
+                  // oxlint-disable-next-line shadcn/no-unknown-classes -- declared in theme.custom.css
+                  "fork-timeline-cutoff",
+                  /* fork:end fork-composer-shell */
+                )}
+                ListHeaderComponent={listHeader}
+                ListFooterComponent={timelineListFooter}
               />
-            ) : null}
-            <LegendList<MessagesTimelineRow>
-              ref={setTimelineList}
-              data={rows}
-              extraData={listExtraData}
-              keyExtractor={keyExtractor}
-              getItemType={getItemType}
-              renderItem={renderItem}
-              estimatedItemSize={90}
-              initialScrollAtEnd={
-                !findActive && citationRequest === null && rememberedPosition?.atEnd !== false
-              }
-              // Legend needs a data refresh to mount new pins without a scroll event.
-              dataVersion={`${readyCitationRequest?.key ?? listIdentityKey}:${alwaysRenderKeys.join(",")}`}
-              {...(alwaysRender ? { alwaysRender } : {})}
-              onLoad={handleListLoad}
-              {...(anchoredEndSpace ? { anchoredEndSpace } : {})}
-              contentInsetEndAdjustment={anchoredEndSpace ? contentInsetEndAdjustment : 0}
-              maintainScrollAtEnd={
-                citationPositioning ||
-                (restoringThreadPosition && rememberedPosition?.atEnd === false) ||
-                anchoredEndSpace ||
-                !liveFollowEnabled ||
-                fullscreenAppRowId !== null
-                  ? false
-                  : isWorking && !syncing && !prefersReducedMotion && settlingListIdentity === null
-                    ? TIMELINE_MAINTAIN_SCROLL_AT_END_SMOOTH
-                    : TIMELINE_MAINTAIN_SCROLL_AT_END
-              }
-              maintainVisibleContentPosition={
-                findActive ||
-                citationPositioning ||
-                (restoringThreadPosition && rememberedPosition?.atEnd === false)
-                  ? false
-                  : maintainVisibleContentPosition
-              }
-              maintainScrollAtEndThreshold={1}
-              onScroll={handleScroll}
-              onItemSizeChanged={scheduleMinimapRefresh}
-              onMetricsChange={scheduleMinimapRefresh}
-              // Keyboard scrolling only moves the focused element; F6 and clicks land here.
-              tabIndex={-1}
-              data-workspace-focus-default
-              className={cn(
-                "messages-timeline-scroll scrollbar-gutter-both h-full min-h-0 overflow-x-hidden overscroll-y-contain [overflow-anchor:none]",
-                topFadeEnabled && "topbar-scroll-fade",
-                /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
-                // Unconditional, unlike the top fade beside it: theme.custom.css
-                // masks the transcript so it ends above the composer, and that
-                // has to hold whether or not a banner is suppressing the top
-                // fade. The fork rule owns the whole mask and folds the top layer
-                // in when the class above is present.
-                // oxlint-disable-next-line shadcn/no-unknown-classes -- declared in theme.custom.css
-                "fork-timeline-cutoff",
-                /* fork:end fork-composer-shell */
-              )}
-              ListHeaderComponent={listHeader}
-              ListFooterComponent={timelineListFooter}
-            />
-            <TimelineMinimap
-              items={minimapItems}
-              hasPersistentGutter={minimapHasPersistentGutter}
-              hitStripWidth={minimapHitStripWidth}
-              currentIndex={minimapCurrentIndex}
-              atEnd={minimapAtEnd}
-              stripMap={minimapStripMap}
-              onWheel={forwardMinimapWheel}
-              onSelect={(item) => {
-                navigateTimeline();
-                void listRef.current?.scrollToIndex({
-                  index: item.rowIndex,
-                  animated: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-                  viewOffset: TIMELINE_MINIMAP_TARGET_OFFSET,
-                });
-              }}
-            />
-          </TooltipScrollDismissArea>
+              <TimelineMinimap
+                items={minimapItems}
+                hasPersistentGutter={minimapHasPersistentGutter}
+                hitStripWidth={minimapHitStripWidth}
+                currentIndex={minimapCurrentIndex}
+                atEnd={minimapAtEnd}
+                stripMap={minimapStripMap}
+                onWheel={forwardMinimapWheel}
+                onSelect={(item) => {
+                  navigateTimeline();
+                  void listRef.current?.scrollToIndex({
+                    index: item.rowIndex,
+                    animated: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+                    viewOffset: TIMELINE_MINIMAP_TARGET_OFFSET,
+                  });
+                }}
+              />
+            </TooltipScrollDismissArea>
+            {/* fork:begin fork-live-task-list — see .fork/customizations.yaml#fork-live-task-list */}
+          </ForkLiveTasksCtx>
+          {/* fork:end fork-live-task-list */}
         </TimelineRowActivityCtx>
       </MarkdownFindContext>
     </>

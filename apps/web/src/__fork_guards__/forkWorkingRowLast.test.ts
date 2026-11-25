@@ -18,21 +18,21 @@ function readSibling(relativePath: string): string {
 }
 
 describe("fork guard: fork-working-row-last", () => {
-  it("folds the stabilised rows into one live status line", () => {
-    expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
-      "forkLiveStatusRows(useStableRows(rawRows, listIdentityKey))",
-    );
+  it("folds the stabilised rows into one live status line unless the tail is taken", () => {
+    const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
+    expect(timeline).toContain("const stableRows = useStableRows(rawRows, listIdentityKey);");
+    expect(timeline).toMatch(/forkLiveStatusRows\(\s*stableRows,\s*awaitingUser !== null \|\|/u);
   });
 
   it("renders the folded live row as the status line", () => {
     expect(readSibling("../components/chat/TimelineWorkGroupRows.tsx")).toMatch(
-      /if \(forkLine && !shimmer\) \{\s*return \(\s*<ForkLiveStatusLine/u,
+      /if \(isForkStatusLine\(row\)\) \{\s*return \(\s*<ForkLiveStatusLine/u,
     );
   });
 
   it("shows a word where upstream says Thinking", () => {
-    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toContain(
-      "?? forkThinkingWord(row.forkWordSeed)",
+    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toMatch(
+      /\?\?\s*forkThinkingWord\(row\.forkWordSeed\)/u,
     );
   });
 
@@ -44,6 +44,20 @@ describe("fork guard: fork-working-row-last", () => {
     expect(readSibling("../components/chat/TimelineWorkGroupRows.tsx")).toContain(
       'active && "live-tool-shine"',
     );
+  });
+
+  it("retimes upstream's shimmer on the status line only", () => {
+    const line = readSibling("../custom/ForkLiveStatusLine.tsx");
+    expect(line).toContain("data-fork-status-line");
+    expect(line).toContain("<ActivityShimmerOverlay");
+    const css = readSibling("../theme.custom.css");
+    expect(css).toMatch(
+      /\[data-fork-status-line\] \.live-activity-focus \{\s*animation-name: fork-status-line-flash;/u,
+    );
+    expect(css).toMatch(
+      /\[data-fork-status-line\] \.live-activity-focus-counter \{\s*animation-name: fork-status-line-flash-counter;/u,
+    );
+    expect(readSibling("../index.css")).toMatch(/@utility live-activity-focus-counter \{/u);
   });
 
   it("drops the working row's bottom divider", () => {

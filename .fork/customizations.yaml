@@ -6424,7 +6424,9 @@
     the data after the synced thread primed, past the last row already there,
     so virtualized remounts, thread switches, "Load earlier", the cached or
     remembered snapshot ChatView shows while a thread syncs, and large
-    catch-up batches all stay still. The slide runs on LegendList's
+    catch-up batches all stay still. A live row the status line carries
+    (fork-working-row-last) counts as live, so it stays still when a reply
+    lands after it and it returns to the transcript. The slide runs on LegendList's
     positioned container (it paints with contain: paint, which would clip a
     transform on the row frame) and keys off its style.top mutations, which
     relies on the conversation list leaving recycleItems off so that
@@ -6450,45 +6452,37 @@
 
 - id: fork-working-row-last
   intent: >
-    A live turn shows one status line at the bottom, the way Claude Code
-    does: the working mark, what the agent is doing now ("Thinking", a
-    startup label), and the turn's timer. Upstream derives the working row
-    at the head of the active turn (the slot the turn's fold divider takes
-    when it ends) with a bottom border, and draws at most one live activity
-    row (a thinking line, live reasoning, or the running tool) at the
-    turn's tail. The fork reorders and folds useStableRows' output, so
-    upstream's row derivation, row equality and their tests stay untouched:
-    the working row moves to the end and branches on that live row. A plain
-    thinking row or live reasoning is removed from wherever it sits and
-    carried on a copy of the working row as `forkLive`, which renders
-    ForkLiveStatusLine. A running tool keeps its own upstream row in the
-    transcript (its toggle opens the group in place) and the copy carries
-    `forkLive: null`, a plain "Thinking" line with the timer, matching the
-    no3y iPhone transcript. Upstream keeps the latest tool as the active
-    live row after it succeeds; out of the line it would still read
-    "Running", so a tool with an end status is handed over settled
-    (`active: false`, `forkSettled`, which row motion still counts as the
-    live slot). A tool with no status stays running, as upstream counts it.
-    The in-place row's label drops upstream's endlessly repainting
-    live-tool-shine; the line carries the motion. While the turn waits on
-    an approval or an answer (TimelineRowActivityCtx's awaitingUser) the
-    line gives way to upstream's "Working for …", since nothing is
-    thinking; pending approvals reach the transcript as plain `work` rows,
-    so the fold cannot tell. Upstream's failed-tool shape, a `thinking` row
-    with a groupId, keeps its own row above a plain "Working for …" line,
-    even beside an earlier tool still running. Folded reasoning's open group
-    stays in place above the line, and the line stays mounted while its
-    group is open, so the toggle keeps keyboard focus. While compaction or
-    worktree setup owns the line, folded reasoning renders its upstream row
-    above it. Labels are one rule in forkStatusLineLabel; upstream's thought
-    and reasoning previews stay in the open group. Where upstream says
-    "Thinking", the line shows a word from @t3tools/shared/forkThinkingWords
-    ("Yapping", "Cooking", ...) seeded by what last landed: the row above the
-    line (a group's newest entry), or the live reasoning step itself. The word
-    holds until a new row or step lands. The no3y iOS line takes its word from
-    the same module (no3yLiveWordSeed, no3y-mobile-redesign). The working row
-    has no divider, and neither does the turn's fold row ("Worked for …") once the
-    turn ends (theme.custom.css).
+    A live turn ends in one status line, the way Claude Code does: the
+    working mark, what the agent is doing now (the thinking word, a startup
+    label, or the running tool's label such as "Running vp"), and the turn's
+    timer, with no separator. Upstream's ActivityShimmerOverlay sweeps the
+    text; the line keeps its 2.2s cycle but sweeps in the first 35% and rests
+    (theme.custom.css, `[data-fork-status-line]`), so it flashes, not drifts.
+    Upstream puts the working row at the head of the active turn with a
+    bottom border and at most one live row (a thinking line, live reasoning,
+    or the running tool group) at the turn's tail. The fork folds
+    useStableRows' output instead of touching upstream's derivation: the
+    working row moves to the end, and the live row folds into a copy of it
+    (`forkLive`, rendered by ForkLiveStatusLine) iff it is the tail, with
+    nothing after it but its own open details and thumbnails. So the stretch
+    still running draws no row of its own, its chevron opens the group in
+    place above the line, and finished stretches stay in the trail as
+    upstream's summary rows. A live row with a reply after it stays in place
+    above a plain thinking line (`forkLive: null`). A finished tool upstream
+    still holds as live is handed over settled (`active: false`,
+    `forkSettled`, which row motion counts as the live slot), so it never
+    reads "Running"; a tool with no status stays running, as upstream counts
+    it. In-place tool rows drop upstream's endlessly repainting
+    live-tool-shine. When an approval, an answer, compaction or worktree
+    setup owns the tail, MessagesTimeline passes `lineYields` and nothing
+    folds: upstream's rows keep their order above "Working for …". Upstream's
+    failed-tool shape (a `thinking` row with a groupId) never folds. Labels
+    are one rule in forkStatusLineLabel. The thinking word comes from
+    @t3tools/shared/forkThinkingWords, seeded by what last landed (the row
+    above the line or the live step), so it holds until something new lands;
+    the no3y iOS line uses the same module (no3y-mobile-redesign). Neither
+    the working row nor the finished turn's "Worked for …" row has a divider
+    (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts
@@ -6510,12 +6504,92 @@
     # border-b. forkStatusLineLabel condenses ThinkingTimelineRow's and
     # LiveWorkEntryTimelineRow's labels here.
     - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # The line reuses ActivityShimmerOverlay; theme.custom.css retimes its
+    # live-activity-focus classes under [data-fork-status-line].
+    - apps/web/src/components/chat/TimelineRowParts.tsx
+    - apps/web/src/index.css
     # Unfenced (strict JSON): the `./forkThinkingWords` subpath export.
     - packages/shared/package.json
   verify:
     - apps/web/src/__fork_guards__/forkWorkingRowLast.test.ts
     - apps/web/src/custom/forkWorkingRowLast.test.ts
     - packages/shared/src/forkThinkingWords.test.ts
+
+- id: fork-trail-summary
+  intent: >
+    A finished stretch of steps between two messages reads as one summary
+    row named for what it did ("Read 1 file"), the way Claude Code shows its
+    trail; its thoughts and task updates show only when the row opens.
+    Upstream breaks a group at every task-list update and draws a lone
+    thought as its own trace row, so a stretch read as three rows. In
+    deriveMessagesTimelineRows a task update now joins the group it follows
+    (one that starts a stretch keeps its own row, and the live stretch walker
+    still stops at it, so an unfinished task update never reads as running);
+    a lone thought takes the summary branch; and the summary comes from
+    forkTrailSummary, which counts tools only: a group of thoughts reads
+    "Thought", and a group of only task updates keeps its latest task line.
+    Rows read like Claude Code: a summary row carries a chevron that turns
+    when it opens, every work-log row sizes its label to its text so its
+    chevron hugs it (WorkLogLine; the hover timestamp, tagged
+    data-row-timestamp in TimelineRowParts, still sits at the far end), and an opened group hangs under its summary on a quiet left rail
+    without the scrollbar or its gutter (theme.custom.css,
+    `[data-tool-group-scroll]`), still height-capped and virtualized.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkTrailSummary.ts
+    - apps/web/src/custom/forkTrailSummary.test.ts
+  shadows: []
+  watch:
+    # Fenced: the todo_list group break, the lone-thought branch, the summary
+    # call, and the unused singleEntry upstream kept for it.
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    # Fenced: the stranded-thought case now expects a "Thought" summary row.
+    - apps/web/src/components/chat/MessagesTimeline.logic.test.ts
+    # Fenced: WorkLogLine label sizing and the timestamp order.
+    - apps/web/src/components/chat/WorkLog.tsx
+    # Fenced: the summary row chevron in WorkGroupHeader.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+    # Fenced: data-row-timestamp on TimelineRowTimestamp.
+    - apps/web/src/components/chat/TimelineRowParts.tsx
+    # Fenced: the opened group rail on [data-tool-group-scroll].
+    - apps/web/src/theme.custom.css
+    - packages/client-runtime/src/work-log/presentation.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkTrailAndTasks.test.ts
+    - apps/web/src/custom/forkTrailSummary.test.ts
+
+- id: fork-live-task-list
+  intent: >
+    While a turn runs, its latest task list draws as a checklist card just
+    above the live status line, the way the Claude app shows it: a check for
+    done steps, a dotted ring for the running one, and a plain ring for the
+    rest (never a dashed circle), updating in place as the agent ticks steps off. It reads
+    the todo_list turn item's steps (forkLiveTaskSteps: the newest list since
+    the user's last prompt; a steer stays in the turn) and reaches the line
+    through ForkLiveTasksCtx, which MessagesTimeline provides only while the
+    thread is working and not in Zen (which hides task lists); the response
+    boundary is upstream's timelineEntryStartsResponse. Each step carries
+    screen-reader text for its state. The icons do not animate: the line below carries the
+    turn's motion. When the turn ends the line and the card go away; the
+    trail keeps upstream's task rows. Client-only; the steps already arrive
+    on the item.
+  tier: 3
+  files:
+    - apps/web/src/custom/forkLiveTasks.ts
+    - apps/web/src/custom/forkLiveTasks.test.ts
+    - apps/web/src/custom/ForkLiveTaskList.tsx
+  shadows: []
+  watch:
+    # Fenced: the import, the steps computed beside activityState, and the
+    # provider inside TimelineRowActivityCtx.
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    # The card renders inside the fork status line (fork-working-row-last).
+    - apps/web/src/custom/ForkLiveStatusLine.tsx
+    # Fenced: the card above upstream fallback line in WorkingTimelineRow.
+    - apps/web/src/components/chat/TimelineWorkGroupRows.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkTrailAndTasks.test.ts
+    - apps/web/src/custom/forkLiveTasks.test.ts
 
 - id: fork-transcript-spacing
   intent: >
