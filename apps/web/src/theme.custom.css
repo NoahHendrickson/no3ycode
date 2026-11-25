@@ -3606,7 +3606,10 @@
 }
 
 /* The status line's shimmer keeps upstream's 2.2s cycle but sweeps in its first
-   35% and rests for the rest. Guarded so reduced motion keeps upstream's `none`. */
+   35% and rests for the rest. Steps apply per keyframe segment: 23 over the
+   0.77s sweep is ~30Hz, smoother than upstream's ~14Hz drift on purpose, since a
+   faster pass needs more steps to read as motion. Guarded so reduced motion keeps
+   upstream's `none`. */
 @keyframes fork-status-line-flash {
   from {
     transform: translateX(0);

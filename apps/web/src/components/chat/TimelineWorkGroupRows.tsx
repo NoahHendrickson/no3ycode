@@ -67,8 +67,7 @@ import { SidebarV2WorkingMark } from "~/custom/SidebarV2StatusIndicator";
 /* fork:end fork-chat-working-rain */
 /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
 import { ForkLiveStatusLine } from "~/custom/ForkLiveStatusLine";
-import { forkStatusLineRow, isForkStatusLine } from "~/custom/forkWorkingRowLast";
-import { WorkLogBlock } from "./WorkLog";
+import { isForkStatusLine } from "~/custom/forkWorkingRowLast";
 /* fork:end fork-working-row-last */
 
 export const WorkGroupSection = memo(function WorkGroupSection({
@@ -362,11 +361,10 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
   const compacting = row.compacting === true || isCompacting;
   const shimmer = isPreparingWorktree || compacting;
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  const forkLine = forkStatusLineRow(row, use(TimelineRowActivityCtx).awaitingUser);
-  if (forkLine && !shimmer) {
+  if (isForkStatusLine(row)) {
     return (
       <ForkLiveStatusLine
-        row={forkLine}
+        row={row}
         timer={row.createdAt ? <WorkingTimer createdAt={row.createdAt} /> : null}
         trailing={
           backgroundWorktreeSetup ? (
@@ -376,13 +374,6 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       />
     );
   }
-  // The compaction or setup label owns the line; the folded live row keeps its own row above it.
-  const forkFoldedReasoning =
-    isForkStatusLine(row) && row.forkLive?.kind === "work-live" ? (
-      <WorkLogBlock>
-        <LiveWorkEntryTimelineRow row={row.forkLive} />
-      </WorkLogBlock>
-    ) : null;
   /* fork:end fork-working-row-last */
   const label = isPreparingWorktree ? (
     <T>Setting up worktree…</T>
@@ -402,9 +393,6 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
       className="pb-2 pt-1"
       /* fork:end fork-working-row-last */
     >
-      {/* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */}
-      {forkFoldedReasoning}
-      {/* fork:end fork-working-row-last */}
       <div
         /* fork:begin fork-chat-working-rain — see .fork/customizations.yaml#fork-chat-working-rain
            Upstream's row has no leading mark and baseline-aligns its text; the

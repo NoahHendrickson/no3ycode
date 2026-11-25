@@ -18,21 +18,21 @@ function readSibling(relativePath: string): string {
 }
 
 describe("fork guard: fork-working-row-last", () => {
-  it("folds the stabilised rows into one live status line", () => {
-    expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
-      "forkLiveStatusRows(useStableRows(rawRows, listIdentityKey))",
-    );
+  it("folds the stabilised rows into one live status line unless the tail is taken", () => {
+    const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
+    expect(timeline).toContain("const stableRows = useStableRows(rawRows, listIdentityKey);");
+    expect(timeline).toMatch(/forkLiveStatusRows\(\s*stableRows,\s*awaitingUser !== null \|\|/u);
   });
 
   it("renders the folded live row as the status line", () => {
     expect(readSibling("../components/chat/TimelineWorkGroupRows.tsx")).toMatch(
-      /if \(forkLine && !shimmer\) \{\s*return \(\s*<ForkLiveStatusLine/u,
+      /if \(isForkStatusLine\(row\)\) \{\s*return \(\s*<ForkLiveStatusLine/u,
     );
   });
 
   it("shows a word where upstream says Thinking", () => {
-    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toContain(
-      "?? forkThinkingWord(row.forkWordSeed)",
+    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toMatch(
+      /\?\?\s*forkThinkingWord\(row\.forkWordSeed\)/u,
     );
   });
 

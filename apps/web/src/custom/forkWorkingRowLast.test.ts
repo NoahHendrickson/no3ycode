@@ -6,7 +6,6 @@ import {
 import {
   forkLiveStatusRows,
   forkStatusLineLabel,
-  forkStatusLineRow,
   isForkStatusLine,
   type ForkLiveRow,
 } from "./forkWorkingRowLast";
@@ -151,6 +150,12 @@ describe("forkLiveStatusRows", () => {
     expect(live?.kind === "work-live" && live.expanded).toBe(true);
   });
 
+  it("leaves reasoning a reply followed in the trail and folds the thinking row", () => {
+    const result = forkLiveStatusRows(derive([reasoning(5), commentary(6)]));
+    expect(kinds(result)).toEqual(["work", "message", "working"]);
+    expect(statusLine(result)?.kind).toBe("thinking");
+  });
+
   it("folds live reasoning into the line instead of doubling it", () => {
     const rows = derive([reasoning(5)]);
     expect(rows.some((row) => row.kind === "work-live" && row.entry.itemType === "reasoning")).toBe(
@@ -192,19 +197,23 @@ describe("forkLiveStatusRows", () => {
   });
 });
 
-describe("forkStatusLineRow", () => {
-  const line = (rows: MessagesTimelineRow[]) => {
-    const last = forkLiveStatusRows(rows).at(-1);
-    return last?.kind === "working" ? last : undefined;
-  };
-
+describe("forkLiveStatusRows while the line yields the tail", () => {
   it.each([
-    ["a running tool", [command("first", 5, "inProgress")]],
-    ["a folded thinking row", []],
-  ])("drops the line for Working for … under %s while the turn waits on the user", (_, entries) => {
-    const working = line(derive(entries))!;
-    expect(forkStatusLineRow(working, false)).toBe(working);
-    expect(forkStatusLineRow(working, true)).toBeNull();
+    ["a running tool", [command("first", 5, "inProgress")], ["work-live", "working"]],
+    ["the thinking row", [], ["thinking", "working"]],
+  ])("leaves %s in place above Working for …", (_, entries, expected) => {
+    const result = forkLiveStatusRows(derive(entries), true);
+    expect(kinds(result)).toEqual(expected);
+    const last = result.at(-1);
+    expect(last?.kind === "working" && isForkStatusLine(last)).toBe(false);
+  });
+
+  it("keeps an open group's toggle above its details", () => {
+    const groupId = derive([command("first", 5, "inProgress")]).find(
+      (row) => row.kind === "work-live",
+    )?.groupId;
+    const rows = derive([command("first", 5, "inProgress")], new Set([groupId!]));
+    expect(kinds(forkLiveStatusRows(rows, true))).toEqual(["work-live", "work", "working"]);
   });
 });
 
@@ -216,9 +225,8 @@ describe("forkStatusLineLabel", () => {
     active: true,
     entry: { itemType: "reasoning" },
   } as unknown as ForkLiveRow;
-  const tool = (active: boolean) =>
-    ({ kind: "work-live", active, entry: { label: "vp" } }) as unknown as ForkLiveRow;
-  const toolLabel = (entry: { label: string }) => `Running ${entry.label}`;
+  const tool = (status: "inProgress" | "completed") =>
+    statusLine(forkLiveStatusRows(derive([command("first", 5, status)]))) ?? null;
 
   it.each([
     ["the thinking line", thinking, activity, null],
@@ -235,10 +243,10 @@ describe("forkStatusLineLabel", () => {
       "Tiger cubs",
     ],
     ["live reasoning", reasoning, activity, null],
-    ["a running tool", tool(true), activity, "Running vp"],
-    ["a settled tool", tool(false), activity, null],
+    ["a running tool", tool("inProgress"), activity, "Running rg"],
+    ["a settled tool", tool("completed"), activity, null],
     ["the line under a tool that stays in place", null, activity, null],
   ])("labels %s", (_, live, state, label) => {
-    expect(forkStatusLineLabel(live, state, toolLabel)).toBe(label);
+    expect(forkStatusLineLabel(live, state, undefined)).toBe(label);
   });
 });

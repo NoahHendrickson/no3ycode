@@ -6,7 +6,6 @@ import { ChevronRightIcon } from "lucide-react";
 import { useMessages } from "gt-react";
 import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import { use, type ReactNode } from "react";
-import { liveWorkEntryLabel } from "~/components/chat/MessagesTimeline.logic";
 import { ActivityShimmerOverlay } from "~/components/chat/TimelineRowParts";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { observeVisibleAnimation } from "~/lib/visibleAnimation";
@@ -27,9 +26,8 @@ export function ForkLiveStatusLine({
   const live = row.forkLive;
   const groupId = live?.groupId;
   const label =
-    forkStatusLineLabel(live, use(TimelineRowActivityCtx), (entry) =>
-      liveWorkEntryLabel(entry, ctx.workspaceRoot, true, m),
-    ) ?? forkThinkingWord(row.forkWordSeed);
+    forkStatusLineLabel(live, use(TimelineRowActivityCtx), ctx.workspaceRoot, m) ??
+    forkThinkingWord(row.forkWordSeed);
   const text = (
     <>
       <span className="min-w-0 truncate">{label}</span>

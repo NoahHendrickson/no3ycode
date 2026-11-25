@@ -18,9 +18,7 @@ function readSibling(relativePath: string): string {
 describe("fork guard: fork-transcript-spacing", () => {
   it("spaces the folded rows and pads each row's root", () => {
     const timeline = readSibling("../components/chat/MessagesTimeline.tsx");
-    expect(timeline).toContain(
-      "const foldedRows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));",
-    );
+    expect(timeline).toMatch(/const foldedRows = forkLiveStatusRows\(\s*stableRows,/u);
     expect(timeline).toContain("const rows = forkSpaceTranscript(foldedRows);");
     expect(timeline).toMatch(
       /style=\{forkTranscriptGapStyle\(row\)\}[\s\S]{0,120}data-timeline-row-id=\{row\.id\}/u,

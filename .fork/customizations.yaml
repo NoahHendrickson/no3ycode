@@ -6420,51 +6420,37 @@
 
 - id: fork-working-row-last
   intent: >
-    A live turn shows one status line at the bottom, the way Claude Code
-    does: the working mark, what the agent is doing now ("Thinking", a
-    startup label, the running tool's label such as "Running vp"), and the
-    turn's timer, with no separator between them and upstream's
-    ActivityShimmerOverlay sweeping the text (paused off screen). The sweep
-    keeps upstream's 2.2s cycle but runs in its first 35% and then rests
+    A live turn ends in one status line, the way Claude Code does: the
+    working mark, what the agent is doing now (the thinking word, a startup
+    label, or the running tool's label such as "Running vp"), and the turn's
+    timer, with no separator. Upstream's ActivityShimmerOverlay sweeps the
+    text; the line keeps its 2.2s cycle but sweeps in the first 35% and rests
     (theme.custom.css, `[data-fork-status-line]`), so it flashes, not drifts.
-    Upstream derives the working row at the head of the active turn (the slot the turn's fold divider takes
-    when it ends) with a bottom border, and draws at most one live activity
-    row (a thinking line, live reasoning, or the running tool) at the
-    turn's tail. The fork reorders and folds useStableRows' output, so
-    upstream's row derivation, row equality and their tests stay untouched:
-    the working row moves to the end and branches on that live row. A plain
-    thinking row or live reasoning is removed from wherever it sits and
-    carried on a copy of the working row as `forkLive`, which renders
-    ForkLiveStatusLine. So is the tool stretch at the turn's tail (nothing
-    after it but its open details and thumbnails): finished stretches stay in
-    the trail as upstream's summary rows, and the one still running draws no
-    row of its own; the line names its tool and its chevron opens the group
-    in place. A running tool with a reply after it keeps its own upstream row
-    and the copy carries `forkLive: null`, a plain "Thinking" line with the
-    timer. Upstream keeps the latest tool as the active live row after it
-    succeeds; it would still read "Running", so a tool with an end status is
-    handed over settled (`active: false`, `forkSettled`, which row motion
-    still counts as the live slot) and the line shows the thinking word. A tool with no status stays running, as upstream counts it.
-    The in-place row's label drops upstream's endlessly repainting
-    live-tool-shine; the line carries the motion. While the turn waits on
-    an approval or an answer (TimelineRowActivityCtx's awaitingUser) the
-    line gives way to upstream's "Working for …", since nothing is
-    thinking; pending approvals reach the transcript as plain `work` rows,
-    so the fold cannot tell. Upstream's failed-tool shape, a `thinking` row
-    with a groupId, keeps its own row above a plain "Working for …" line,
-    even beside an earlier tool still running. Folded reasoning's open group
-    stays in place above the line, and the line stays mounted while its
-    group is open, so the toggle keeps keyboard focus. While compaction or
-    worktree setup owns the line, folded reasoning renders its upstream row
-    above it. Labels are one rule in forkStatusLineLabel; upstream's thought
-    and reasoning previews stay in the open group. Where upstream says
-    "Thinking", the line shows a word from @t3tools/shared/forkThinkingWords
-    ("Yapping", "Cooking", ...) seeded by what last landed: the row above the
-    line (a group's newest entry), or the live reasoning step itself. The word
-    holds until a new row or step lands. The no3y iOS line takes its word from
-    the same module (no3yLiveWordSeed, no3y-mobile-redesign). The working row
-    has no divider, and neither does the turn's fold row ("Worked for …") once the
-    turn ends (theme.custom.css).
+    Upstream puts the working row at the head of the active turn with a
+    bottom border and at most one live row (a thinking line, live reasoning,
+    or the running tool group) at the turn's tail. The fork folds
+    useStableRows' output instead of touching upstream's derivation: the
+    working row moves to the end, and the live row folds into a copy of it
+    (`forkLive`, rendered by ForkLiveStatusLine) iff it is the tail, with
+    nothing after it but its own open details and thumbnails. So the stretch
+    still running draws no row of its own, its chevron opens the group in
+    place above the line, and finished stretches stay in the trail as
+    upstream's summary rows. A live row with a reply after it stays in place
+    above a plain thinking line (`forkLive: null`). A finished tool upstream
+    still holds as live is handed over settled (`active: false`,
+    `forkSettled`, which row motion counts as the live slot), so it never
+    reads "Running"; a tool with no status stays running, as upstream counts
+    it. In-place tool rows drop upstream's endlessly repainting
+    live-tool-shine. When an approval, an answer, compaction or worktree
+    setup owns the tail, MessagesTimeline passes `lineYields` and nothing
+    folds: upstream's rows keep their order above "Working for …". Upstream's
+    failed-tool shape (a `thinking` row with a groupId) never folds. Labels
+    are one rule in forkStatusLineLabel. The thinking word comes from
+    @t3tools/shared/forkThinkingWords, seeded by what last landed (the row
+    above the line or the live step), so it holds until something new lands;
+    the no3y iOS line uses the same module (no3y-mobile-redesign). Neither
+    the working row nor the finished turn's "Worked for …" row has a divider
+    (theme.custom.css).
   tier: 4
   files:
     - apps/web/src/custom/forkWorkingRowLast.ts

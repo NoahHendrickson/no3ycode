@@ -794,7 +794,14 @@ const ConversationTimeline = memo(function ConversationTimeline({
     /* fork:end fork-bots */
   });
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
-  const foldedRows = forkLiveStatusRows(useStableRows(rawRows, listIdentityKey));
+  const stableRows = useStableRows(rawRows, listIdentityKey);
+  // The line yields the tail as WorkingTimelineRow's compaction and setup labels do.
+  const foldedRows = forkLiveStatusRows(
+    stableRows,
+    awaitingUser !== null ||
+      isPreparingWorktree ||
+      (isCompacting && !stableRows.some((row) => row.kind === "context-compaction" && row.active)),
+  );
   /* fork:end fork-working-row-last */
   /* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
   const rows = forkSpaceTranscript(foldedRows);
