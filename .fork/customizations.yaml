@@ -2796,7 +2796,7 @@
     -chrome (14/20, Search and the action rows), -meta (12/16, labels, project
     and status headers, the repo line, the card's PR badge) and -caption
     (11/15, model label and subagent count), -status (12/14, a Petal card's
-    status line), -tile (10/12, a Petals grid name), plus h-sidebar-12 / -14 /
+    status line), plus h-sidebar-14 /
     -16 / -18 for the fixed line boxes. The
     cards' offscreen contain-intrinsic-size hints sum the same tokens. Line heights are unitless ratios, so
     rows built from padding plus a line box grow with the text instead of
@@ -7735,10 +7735,10 @@
     (card, compact or grid; the Petals section derives its own from the two
     settings, so Compact cards never reaches the grid), and the kind alone sets
     the row's offscreen size hint and, for a tile, its shape. In Grid a bot
-    draws SidebarV2BotGridBody: a 58px tile (8 + 28 + 12 + 10) washed 4% in the
+    draws SidebarV2BotGridBody: a 62px tile (8 + 28 + 16 + 10) washed 4% in the
     sidebar's ink, the columns sharing the width at least 56px each and 8px
     apart (auto-fit, so fewer Petals than fit still span it), the bare mascot fitted to 24px in a 28px box over its name in
-    medium 10px, the
+    regular text-sidebar-label (the Sidebar font size less 1px, as group labels), the
     status mark in its top-right corner, the jump hint in its top-left corner and a sweep's
     verb badge over its top. A tile drops a card's working timer and hover
     actions (its context menu keeps them), and its hover card opens beyond the

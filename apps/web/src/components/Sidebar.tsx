@@ -712,8 +712,8 @@ const CARD_INTRINSIC_SIZE: Record<SidebarV2CardKind, string> = {
   // A bot's avatar card, 6 + 16 + 2 + 14 + 6; the rows never drop below the 32px mascot (fork-bots).
   bot: "[contain-intrinsic-size:auto_calc(max(16px,var(--spacing-sidebar-16))_+_max(14px,var(--spacing-sidebar-14))_+_14px)]",
   "bot-compact": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-18)_+_14px)]",
-  // A Petals grid tile, 8 + 28 + 12 + 10 (fork-bots).
-  "bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-12)_+_46px)]",
+  // A Petals grid tile, 8 + 28 + 16 + 10 (fork-bots).
+  "bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-16)_+_46px)]",
 };
 /* fork:end sidebar-v2-card-rows */
 

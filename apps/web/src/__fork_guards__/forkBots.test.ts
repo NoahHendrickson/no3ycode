@@ -263,7 +263,7 @@ describe("fork guard: fork-bots", () => {
     );
     expect(sidebar).toContain("<SidebarV2BotGridBody");
     expect(sidebar).toContain(
-      '"bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-12)_+_46px)]"',
+      '"bot-grid": "[contain-intrinsic-size:auto_calc(var(--spacing-sidebar-16)_+_46px)]"',
     );
     expect(sidebar).toContain('cardKind === "bot-grid"\n          ? "tile"');
     // The tile's hover card opens beyond the section, not over its neighbours.
