@@ -3,6 +3,8 @@ import type { ComponentProps } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { BotThreadsRowView } from "~/custom/bots/BotThreadsPanel";
+import { BotThreadsPanelControls } from "~/custom/bots/BotThreadsPanelControls";
+import { EMPTY_BOT_THREADS_VIEW, useBotThreadsViewStore } from "~/custom/bots/botThreadsPanelStore";
 
 type RowProps = ComponentProps<typeof BotThreadsRowView>;
 
@@ -111,4 +113,27 @@ export const States: Story = {
       ))}
     </>
   ),
+};
+
+const STORY_BOT_KEY = "story:petal";
+
+/** The work panel's header controls: search, the filter menu (status groups, and projects when
+    there is a choice) and sort. They act on the panel's view, held here as the panel holds it. */
+export const Controls: Story = {
+  decorators: [(Story) => <div className="flex w-80 items-center justify-end">{Story()}</div>],
+  render: function Render() {
+    const view = useBotThreadsViewStore(
+      (state) => state.byBotKey[STORY_BOT_KEY] ?? EMPTY_BOT_THREADS_VIEW,
+    );
+    return (
+      <BotThreadsPanelControls
+        botKey={STORY_BOT_KEY}
+        view={view}
+        projects={[
+          { id: "no3ycode", title: "no3ycode" },
+          { id: "marketing-site", title: "marketing-site" },
+        ]}
+      />
+    );
+  },
 };

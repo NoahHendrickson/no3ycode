@@ -4,7 +4,7 @@ import { useArgs } from "storybook/preview-api";
 import { type ComponentProps, useState } from "react";
 
 import { EffortSlider } from "~/custom/ComposerModelPicker";
-import { effortDitherStops } from "~/custom/EffortDither";
+import { EffortDither, effortDitherStops } from "~/custom/EffortDither";
 
 type SliderProps = ComponentProps<typeof EffortSlider>;
 
@@ -85,6 +85,24 @@ export const Levels: Story = {
     <div className="flex flex-col gap-4">
       {LEVELS.map((label, index) => (
         <Slider key={label} driver="codex" initial={index} />
+      ))}
+    </div>
+  ),
+};
+
+/** The fill alone: an ordered dither through each provider's colours, the default stops for the
+    rest. */
+export const Dither: Story = {
+  render: () => (
+    <div className="flex flex-col gap-3">
+      {(["codex", "claudeAgent", "antigravity", "grok", "opencode"] as const).map((driver) => (
+        <div
+          key={driver}
+          data-fork-effort-fill
+          className="relative h-6 w-full overflow-hidden rounded-md"
+        >
+          <EffortDither stops={effortDitherStops(ProviderDriverKind.make(driver))} />
+        </div>
       ))}
     </div>
   ),
