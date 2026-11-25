@@ -62,8 +62,9 @@ import { setMusicStripMode, useMusicStripMode } from "./musicStripMode";
 
 type ReadyState = Extract<MusicState, { status: "ready" }>;
 
-// Music rows sit a step taller than a menu row: a song carries its cover and two lines.
-const ROW_CLASS = "py-1.5";
+// Music rows sit a step taller than a menu row: a song carries its cover and two lines. The ring
+// marks keyboard focus on the playing row, which already wears the hover wash.
+const ROW_CLASS = "py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
 
 function MusicUnavailable(props: {
   status: Exclude<MusicState["status"], "ready">;

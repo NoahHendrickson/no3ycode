@@ -9693,7 +9693,7 @@
     - oxlint-plugin-t3code/index.ts
     # Appends the design overrides to lint.overrides behind the switch.
     - vite.config.ts
-    # Carries the commented-out step that turns the check on.
+    # Carries the step that runs the check.
     - .github/workflows/ci.yml
   verify:
     - apps/web/src/__fork_guards__/forkDesignLint.test.ts

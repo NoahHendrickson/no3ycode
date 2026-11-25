@@ -343,7 +343,10 @@ export function BotThreadsRowView(props: {
         aria-current={props.current ? "page" : undefined}
         onClick={props.onOpen}
         onContextMenu={props.onContextMenu}
-        className={cn("items-start gap-2.5 px-1.5 py-1.5", props.current && "bg-accent")}
+        className={cn(
+          "items-start gap-2.5 px-1.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          props.current && "bg-accent",
+        )}
         data-testid="bot-threads-row"
       >
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">

@@ -733,7 +733,7 @@ export default defineConfig({
       },
       /* fork:end fork-lint-cleanliness */
       /* fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint */
-      // Off until .fork/DESIGN-RULES.md's inventory reads zero; `design-lint.mjs --report` sets the env.
+      // On while DESIGN_LINT_BLOCKING is; with it off, `design-lint.mjs --report` sets the env.
       ...(DESIGN_LINT_BLOCKING || process.env[DESIGN_LINT_ENV] === "1"
         ? DESIGN_LINT_OVERRIDES
         : []),

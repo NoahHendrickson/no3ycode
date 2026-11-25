@@ -178,8 +178,6 @@ export const ALLOWLIST = [
     "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
     "bots/BotThreadsPanelToggle.tsx": ["BotThreadsPanelToggle"],
   }),
-  // Pending (Nov 25): props-only, but their stories need fixtures not written yet (an open menu's
-  // project choices; a connected environment).
 ];
 
 /** B5 entries for components that are not atomic: one per name, which must match exactly. */
@@ -913,8 +911,11 @@ function runtimeTokens(root) {
     ...walk(root, "apps/desktop/src", (path) => /\.ts$/u.test(path) && !isTestFile(path)),
   ];
   for (const path of sources) {
-    const text = read(root, path);
-    for (const match of text.matchAll(/(?:setProperty\(\s*|["'`])(--[\w-]+)["'`]?\s*[:,\])]/gu)) {
+    // Writers only: a getPropertyValue read or a name in a comment defines nothing.
+    const text = read(root, path).replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gmu, "");
+    for (const match of text.matchAll(
+      /(?<!getPropertyValue\(\s*)(?:setProperty\(\s*|["'`])(--[\w-]+)["'`]?\s*[:,\])]/gu,
+    )) {
       names.add(match[1]);
     }
     // Tailwind arbitrary properties: className="[--fork-x:20px]".
@@ -1071,7 +1072,7 @@ const cssUnescape = (text) =>
   );
 
 export function checkDeadForkAttributes(sheets, sourceText) {
-  const templatePrefixes = [...sourceText.matchAll(/data-fork-([\w-]*?)-?\$\{/gu)].map(
+  const templatePrefixes = [...sourceText.matchAll(/data-fork-([\w-]+?)-?\$\{/gu)].map(
     (match) => `data-fork-${match[1]}`,
   );
   const camel = (name) =>

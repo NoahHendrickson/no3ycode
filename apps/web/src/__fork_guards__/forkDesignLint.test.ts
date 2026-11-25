@@ -231,7 +231,9 @@ describe("fork guard: fork-design-lint", () => {
 
     it("reports an attribute or a value nothing sets", () => {
       const css = `${ROOT} [data-fork-gone] { color: red; } ${ROOT} [data-fork-chip="trio"] { color: red; } ${ROOT} [data-fork-chip=quad] { color: red; }`;
-      expect(run(css, `<div data-fork-chip="solo" />`).map((finding) => finding.message)).toEqual([
+      // A bare `data-fork-${name}` template names no family, so it must not excuse every attribute.
+      const source = `<div data-fork-chip="solo" />; el.setAttribute(\`data-fork-\${name}\`, "");`;
+      expect(run(css, source).map((finding) => finding.message)).toEqual([
         "[data-fork-gone] is set nowhere in source",
         '[data-fork-chip="trio"]: no source sets "trio"',
         '[data-fork-chip="quad"]: no source sets "quad"',

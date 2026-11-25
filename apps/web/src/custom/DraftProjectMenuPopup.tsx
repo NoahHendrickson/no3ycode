@@ -22,9 +22,6 @@ function PickerFolderIcon(props: { readonly className?: string | undefined }) {
   return <FolderIcon className={cn(props.className, "dark:text-white/40")} />;
 }
 
-const ROW_CLASS_NAME =
-  "[&>span:last-child]:flex [&>span:last-child]:min-w-0 [&>span:last-child]:items-center";
-
 export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectMenuChoices }) {
   const { choices } = props;
   return (
@@ -45,24 +42,23 @@ export function DraftProjectMenuPopup(props: { readonly choices: DraftProjectMen
         }}
       >
         {choices.noProjectEnvironmentId !== null ? (
-          <MenuRadioItem value={NO_PROJECT_VALUE} closeOnClick className={ROW_CLASS_NAME}>
-            <MessageSquareDashedIcon className="me-2 size-4 shrink-0 dark:text-white/40" />
-            <span className="min-w-0 truncate">No project</span>
+          <MenuRadioItem value={NO_PROJECT_VALUE} closeOnClick>
+            <span className="flex min-w-0 items-center gap-2">
+              <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
+              <span className="min-w-0 truncate">No project</span>
+            </span>
           </MenuRadioItem>
         ) : null}
         {choices.entries.map(({ group, targetProject }) => (
-          <MenuRadioItem
-            key={group.projectKey}
-            value={group.projectKey}
-            closeOnClick
-            className={ROW_CLASS_NAME}
-          >
-            <ProjectFavicon
-              project={targetProject}
-              className="me-2 size-4 shrink-0"
-              fallbackIcon={PickerFolderIcon}
-            />
-            <span className="min-w-0 truncate">{group.displayName}</span>
+          <MenuRadioItem key={group.projectKey} value={group.projectKey} closeOnClick>
+            <span className="flex min-w-0 items-center gap-2">
+              <ProjectFavicon
+                project={targetProject}
+                className="size-4 shrink-0"
+                fallbackIcon={PickerFolderIcon}
+              />
+              <span className="min-w-0 truncate">{group.displayName}</span>
+            </span>
           </MenuRadioItem>
         ))}
       </MenuRadioGroup>
