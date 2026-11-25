@@ -39,6 +39,7 @@ import { useProviderWorkspaceSnapshotRefresh } from "./useProviderWorkspaceSnaps
 import { rankModelPickerSearch } from "@t3tools/client-runtime/model-search";
 import { getDisplayModelName, ModelEsque } from "./providerIconUtils";
 import { MenuItem } from "../ui/menu";
+import { AnthropicIcon, OllamaIcon, OpenAI, OpenRouterIcon, type Icon } from "../Icons";
 import { Badge } from "../ui/badge";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { isCommandPaletteOpen } from "../../commandPaletteBus";
@@ -198,6 +199,14 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
 /** Every row shares one shape: 32px, 4px corners, 12px medium label. */
 const ROW_CLASS =
   "h-8 min-h-8 rounded-[4px] px-2 py-0 text-base font-normal sm:min-h-8 sm:text-base";
+
+/** Logos for the sub-providers a reseller (OpenCode, fx) routes through, keyed by lowercased name. */
+const SUB_PROVIDER_ICONS: Readonly<Record<string, Icon>> = {
+  anthropic: AnthropicIcon,
+  ollama: OllamaIcon,
+  openai: OpenAI,
+  openrouter: OpenRouterIcon,
+};
 
 /** Hidden at rest, shown while the row is hovered or keyboard-highlighted. */
 const HOVER_REVEAL_CLASS =
@@ -776,6 +785,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     const providerLabel = model.subProvider
       ? `${model.instanceDisplayName} · ${model.subProvider}`
       : model.instanceDisplayName;
+    const SubProviderIcon = model.subProvider
+      ? SUB_PROVIDER_ICONS[model.subProvider.toLowerCase()]
+      : undefined;
     const displayName = getDisplayModelName(model);
     // The row's provider icon, or the selected provider tab, names the provider already.
     const modelName = stripProviderName(displayName, {
@@ -792,6 +804,16 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         ) : null}
         <span className="min-w-0 truncate">{modelName}</span>
         {showProvider ? <span className="sr-only">, {providerLabel}</span> : null}
+        {/* The provider icon can't say which sub-provider a reseller routes through. */}
+        {showProvider && model.subProvider ? (
+          SubProviderIcon ? (
+            <SubProviderIcon className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+          ) : (
+            <span className="min-w-0 truncate font-normal text-muted-foreground/70" aria-hidden>
+              {model.subProvider}
+            </span>
+          )
+        ) : null}
         {model.isUnavailable ? (
           <Badge variant="outline" size="sm">
             <T context="badge on a model that cannot be selected">Unavailable</T>
