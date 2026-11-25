@@ -9583,10 +9583,11 @@
     custom/ and overrides/, plus the fork's three oxlint rules
     (no-hand-built-primitives, no-hand-built-status-marks,
     no-direct-icon-imports). Flat Glass, Basic Darker Neutral, Basic Light,
-    Inlet Black and Inlet Cream are enforced; Glass 3D is best effort. Report
-    only until the inventory reads zero: DESIGN_LINT_BLOCKING in
-    design-rules.mjs and the commented CI step switch on together, and the
-    guard fails if only one moves. No ratchet: when on, a rule passes or fails.
+    Inlet Black and Inlet Cream are enforced; Glass 3D is best effort.
+    Blocking: DESIGN_LINT_BLOCKING in design-rules.mjs and the CI --check step
+    are on together, and the guard fails if only one moves. No ratchet: a rule
+    passes or fails. DESIGN_LINT_PENDING (and B5's pending: groups) lists the
+    files that wait on a design call, each to be fixed and removed.
   tier: 4
   files:
     - .fork/DESIGN-RULES.md

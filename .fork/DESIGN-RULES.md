@@ -8,9 +8,9 @@ hold fork code to that. They cover fork-owned code only: `apps/web/src/custom/**
 Enforced themes: Flat Glass (primary), Basic Darker Neutral, Basic Light, Inlet Black and Inlet
 Cream. Glass 3D gets best effort: its findings show up in the report but never block.
 
-**Status: report only.** The rules don't block anything yet. They will once the inventory reads
-zero (see [Switching on](#switching-on)). There's no ratchet or baseline: a rule either passes or it
-fails.
+**Status: blocking.** CI runs `node .fork/design-lint.mjs --check` and `vp lint` carries the TSX
+rules. There's no ratchet or baseline: a rule either passes or it fails. A few files wait on a
+design call (see [Pending](#pending)).
 
 ## A. Values come only from tokens
 
@@ -53,11 +53,10 @@ Only when the rule really doesn't fit, and always with a reason.
 - **CSS:** `/* design-lint-disable-next-line A3 -- the Figma frame is 13px */` on the line above
   the declaration. On the line above a selector, it covers the whole rule. A suppression without
   a reason is reported (S1), and so is one with nothing to suppress (S2).
-- **TSX:** `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason`.
-  `t3code/require-suppression-reason` already requires the reason. While the rules are off, a TSX
-  directive for one of them reads as unused and fails normal lint. Until the switch, TSX
-  exceptions go in `design-rules.mjs` (the A5 allowlist, or an `excludeFiles` entry with a
-  comment).
+- **TSX:** `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason` (in JSX,
+  `{/* oxlint-disable-next-line … -- reason */}`). `t3code/require-suppression-reason` already
+  requires the reason. A value a token can't express goes in the A5 allowlist in
+  `design-rules.mjs`, with its reason.
 - **Whole selectors or components** (brand marks, B5 exceptions): an `ALLOWLIST` entry in
   `design-lint.mjs` with a `reason`. B5 lists components that are not atomic through `b5Exempt`,
   grouped by kind (route page, page layout, section, provider/host, backdrop, wrapper); the name
@@ -78,6 +77,13 @@ Only when the rule really doesn't fit, and always with a reason.
 
 ## Switching on
 
-When the report reads zero, make one change: set `DESIGN_LINT_BLOCKING = true` in
-`.fork/design-rules.mjs` and uncomment the `Check fork design rules` step in
-`.github/workflows/ci.yml`. `forkDesignLint.test.ts` fails if only one of the two moves.
+`DESIGN_LINT_BLOCKING` in `.fork/design-rules.mjs` and the `Check fork design rules` step in
+`.github/workflows/ci.yml` move together; `forkDesignLint.test.ts` fails if only one moves.
+
+## Pending
+
+`DESIGN_LINT_PENDING` in `design-rules.mjs` turns one rule off for the files listed under it,
+and B5's `pending:` groups in `design-lint.mjs` do the same for components. Each line waits on
+a design call (raw buttons that would take Button's press and hit area, Hugeicons drawn from raw
+data, components that need a `*View` split for a story). Settle it, fix the file, delete the
+line. New files never join these lists.

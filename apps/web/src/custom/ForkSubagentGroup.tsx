@@ -24,7 +24,7 @@ import {
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { SideThreadOpenIntent } from "@t3tools/client-runtime/side-thread";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
-import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "lucide-react";
+import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "./icons/lucide-hugeicons";
 import {
   type ComponentProps,
   type CSSProperties,

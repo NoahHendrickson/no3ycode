@@ -98,6 +98,7 @@ export function HugeGlyph({
         <>
           <defs>
             <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+              {/* oxlint-disable-next-line shadcn/no-raw-colors -- mask luminance: white keeps the glyph */}
               <rect width="24" height="24" fill="white" stroke="none" />
               {knockouts.map(draw)}
             </mask>

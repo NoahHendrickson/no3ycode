@@ -1,4 +1,4 @@
-import { PencilRulerIcon } from "lucide-react";
+import { PencilRulerIcon } from "../icons/lucide-hugeicons";
 
 import { ContextChipShell } from "~/components/contextChipParts";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

@@ -134,6 +134,8 @@ export const ALLOWLIST = [
     "forkTimelineRowMotion.tsx": ["ForkTimelineRowFrame"],
     "voice/ForkDictationHotkeyHost.tsx": ["ForkDictationHotkeyHost"],
     "designMode/ForkPreviewDesignMode.tsx": ["ForkPreviewDesignMode"],
+    // Renders whatever the picker's host passes for a model row.
+    "modelRowControl.tsx": ["RowControlSlot"],
   }),
   ...b5Exempt("screen backdrop: full-bleed art behind a screen", {
     "BasicNewAgentBackdrop.tsx": ["BasicNewAgentBackdrop"],
@@ -159,6 +161,22 @@ export const ALLOWLIST = [
   }),
   ...b5Exempt("wrapper around upstream's ThreadHoverCardPopup, which places it", {
     "SubagentRowHoverCardPopup.tsx": ["SubagentRowHoverCardPopup"],
+  }),
+  // Pending (Nov 25): these read live state (stores, queries, git status) and have no
+  // props-only view yet, so a story needs a *View split first. The split is a design call.
+  ...b5Exempt("pending: reads live state, needs a *View split for a story", {
+    "ComposerModelPicker.tsx": ["ComposerModelPicker"],
+    "ComposerNextStepPill.tsx": ["ComposerNextStepPill"],
+    "DraftMachineChip.tsx": ["DraftMachineChip"],
+    "DraftProjectPill.tsx": ["DraftProjectPill"],
+    "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
+    "bots/BotThreadsPanelToggle.tsx": ["BotThreadsPanelToggle"],
+  }),
+  // Pending (Nov 25): props-only, but their stories need fixtures not written yet (an open menu's
+  // project choices; a connected environment).
+  ...b5Exempt("pending: story not written yet", {
+    "DraftProjectMenuPopup.tsx": ["DraftProjectMenuPopup"],
+    "scheduled/scheduledPageChrome.tsx": ["EnvironmentLabel"],
   }),
 ];
 

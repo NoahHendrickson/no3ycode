@@ -1,5 +1,5 @@
 // oxlint-disable t3code/no-native-title-tooltip -- Vendored design-mode island (see .fork/customizations.yaml#fork-design-mode); native titles kept to stay close to the Forge source.
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon } from "../../icons/lucide-hugeicons";
 import { useCallback, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";

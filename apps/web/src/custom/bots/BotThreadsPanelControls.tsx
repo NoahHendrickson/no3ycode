@@ -4,7 +4,7 @@
  * buttons as the sidebar Threads header's sort and settings menus do (data-fork-tab-trigger /
  * data-fork-tab-menu="bot-threads", `.fork/customizations.yaml#fork-inlet-theme`).
  */
-import { ArrowUpDownIcon, ListFilterIcon, SearchIcon } from "lucide-react";
+import { ArrowUpDownIcon, ListFilterIcon, SearchIcon } from "../icons/lucide-hugeicons";
 
 import { Button } from "~/components/ui/button";
 import {

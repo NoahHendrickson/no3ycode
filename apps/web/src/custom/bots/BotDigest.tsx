@@ -13,7 +13,7 @@ import {
   MessageCircleQuestionIcon,
   ReplyIcon,
   XIcon,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import * as Schema from "effect/Schema";
 import { type ReactNode, useState } from "react";
 

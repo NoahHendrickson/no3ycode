@@ -1,4 +1,4 @@
-import { ChevronsDownUpIcon } from "lucide-react";
+import { ChevronsDownUpIcon } from "./icons/lucide-hugeicons";
 import { useSyncExternalStore, type RefObject } from "react";
 
 import type { ComposerBannerStackItem } from "~/components/chat/ComposerBannerStack";

@@ -2,7 +2,7 @@
  * The one-line live status — see `.fork/customizations.yaml#fork-working-row-last`.
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { useMessages } from "gt-react";
 import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import { use, type ReactNode } from "react";

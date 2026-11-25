@@ -10,7 +10,7 @@
  * never shows when the same thread is reached any other way.
  */
 import { useLocation, useRouter } from "@tanstack/react-router";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon } from "../icons/lucide-hugeicons";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

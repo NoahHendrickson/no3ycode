@@ -1,5 +1,5 @@
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { PaintbrushIcon, X } from "lucide-react";
+import { PaintbrushIcon, X } from "../icons/lucide-hugeicons";
 
 import type { DraftId } from "~/composerDraftStore";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

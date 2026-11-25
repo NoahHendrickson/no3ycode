@@ -8,7 +8,7 @@
  * without a refetch.
  */
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "../icons/lucide-hugeicons";
 import { useEffect, useRef, useState } from "react";
 import type {
   EnvironmentId,

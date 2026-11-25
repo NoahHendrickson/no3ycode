@@ -3,7 +3,7 @@
  * see `.fork/customizations.yaml#fork-bot-work-threads`.
  */
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { YarnIcon } from "lucide-react";
+import { YarnIcon } from "../icons/lucide-hugeicons";
 
 import { Toggle } from "~/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

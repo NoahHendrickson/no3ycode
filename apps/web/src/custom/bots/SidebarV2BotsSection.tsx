@@ -3,7 +3,7 @@
  * density, naming a new bot, and what folds it and the Threads list under it.
  */
 import * as Schema from "effect/Schema";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "../icons/lucide-hugeicons";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";

@@ -137,6 +137,7 @@ export function ScreenSizeMenu({
         }
         className={cn(
           triggerClassName,
+          // oxlint-disable-next-line shadcn/no-restyle -- design mode marks a picked screen size in its own accent, like its other active tools
           activeResolution && "bg-(--fork-design-accent-bg) text-(--fork-design-accent)",
         )}
       >

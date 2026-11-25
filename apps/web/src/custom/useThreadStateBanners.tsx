@@ -1,4 +1,4 @@
-import { AlarmClockIcon } from "lucide-react";
+import { AlarmClockIcon } from "./icons/lucide-hugeicons";
 import { useMemo } from "react";
 
 import type { ComposerBannerStackItem } from "~/components/chat/ComposerBannerStack";

@@ -35,7 +35,9 @@ function LayerFill(props: { readonly index: number }) {
       {cover ? (
         <defs>
           <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+            {/* oxlint-disable-next-line shadcn/no-raw-colors -- mask luminance: white keeps the layer */}
             <rect width="24" height="24" fill="white" />
+            {/* oxlint-disable-next-line shadcn/no-raw-colors -- mask luminance: black cuts the cover out */}
             <g fill="black">{cover}</g>
           </mask>
         </defs>

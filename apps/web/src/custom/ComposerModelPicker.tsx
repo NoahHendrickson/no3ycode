@@ -19,7 +19,7 @@ import {
   getProviderOptionCurrentValue,
   getProviderOptionDescriptors,
 } from "@t3tools/shared/model";
-import { ChevronsUpDownIcon } from "lucide-react";
+import { ChevronsUpDownIcon } from "./icons/lucide-hugeicons";
 import {
   type ComponentProps,
   Fragment,
@@ -173,7 +173,7 @@ function SelectSection(props: {
         {props.title}
       </div>
       {props.note}
-      {/* A 1px gap, so a hovered value never touches the checked one. */}
+      {/* oxlint-disable-next-line shadcn/no-restyle -- a 1px gap, so a hovered value never touches the checked one; the group draws nothing else */}
       <MenuRadioGroup className="grid gap-px" aria-label={props.title} value={props.value ?? null}>
         {props.descriptor.options.map((option) => (
           <MenuRadioItem

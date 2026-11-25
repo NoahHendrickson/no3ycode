@@ -11,7 +11,7 @@
  * DESIGN_LINT_ENV, so `vp lint` and CI stay as they are. Flip it to true once the inventory reads
  * zero, together with the `--check` step in .github/workflows/ci.yml.
  */
-export const DESIGN_LINT_BLOCKING = false;
+export const DESIGN_LINT_BLOCKING = true;
 
 /** `vp lint` turns the rules on when this is "1" (report mode sets it). */
 export const DESIGN_LINT_ENV = "T3CODE_FORK_DESIGN_LINT";
@@ -127,6 +127,53 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
   "text-[9px]",
 ];
 
+/**
+ * Files where one rule stays off until the maintainer makes a design call (Nov 25, 2026). Each
+ * entry is a decision, not an exception: settle it, fix the file, and delete the line. A new
+ * file never joins this list.
+ */
+export const DESIGN_LINT_PENDING = {
+  // B2: raw <button>s that would become Button. Button adds its press scale, the 44px coarse
+  // hit area and a ::before layer, so each swap changes how the control looks and feels.
+  "t3code/no-hand-built-primitives": [
+    "apps/web/src/custom/CollapsedThreadTabs.tsx", // 5
+    "apps/web/src/custom/ComposerModelPicker.tsx", // 2
+    "apps/web/src/custom/ComposerWorkspaceFooter.tsx", // 1
+    "apps/web/src/custom/DraftLaunchpad.tsx", // 5
+    "apps/web/src/custom/ForkLiveStatusLine.tsx", // 1
+    "apps/web/src/custom/ForkQueuedRunsBanner.tsx", // 1
+    "apps/web/src/custom/ForkSubagentGroup.tsx", // 1
+    "apps/web/src/custom/ForkSwatchPicker.tsx", // 1
+    "apps/web/src/custom/ForkThemePicker.tsx", // 1
+    "apps/web/src/custom/SidebarProviderUpdatesButton.tsx", // 1
+    "apps/web/src/custom/SidebarV2ProjectGroupHeader.tsx", // 1
+    "apps/web/src/custom/SidebarV2SectionLabel.tsx", // 1
+    "apps/web/src/custom/SidebarV2StatusSectionHeader.tsx", // 1
+    "apps/web/src/custom/bots/BotDigest.tsx", // 1
+    "apps/web/src/custom/bots/BotDigestItem.tsx", // 2
+    "apps/web/src/custom/bots/BotMascotDetailsSection.tsx", // 1
+    "apps/web/src/custom/bots/BotThreadsPanel.tsx", // 1
+    "apps/web/src/custom/bots/SidebarV2BotsSection.tsx", // 1
+    "apps/web/src/custom/designMode/ForkComposerDesignChanges.tsx", // 1
+    "apps/web/src/custom/designMode/panel/CanvasControls.tsx", // 5
+    "apps/web/src/custom/designMode/panel/DesignColorPicker.tsx", // 2
+    "apps/web/src/custom/designMode/panel/DesignPanelFields.tsx", // 5
+    "apps/web/src/custom/designMode/panel/DesignPanelLayoutControls.tsx", // 3
+    "apps/web/src/custom/designMode/panel/sections/section.tsx", // 1
+    "apps/web/src/custom/music/MusicStrip.tsx", // 3
+    "apps/web/src/custom/scheduled/ScheduledTaskDetail.tsx", // 1
+    "apps/web/src/custom/voice/ForkDictationControl.tsx", // 1
+  ],
+  // B4: Hugeicons drawn from the icon package's raw data through the shim's HugeGlyph (masked
+  // marks, design mode's icon sets). Moving them into the shim's table is the call.
+  "t3code/no-direct-icon-imports": [
+    "apps/web/src/custom/BackgroundWorkLayersMark.tsx",
+    "apps/web/src/custom/SidebarV2SubagentCount.tsx",
+    "apps/web/src/custom/designMode/panel/LayerTypeIcon.tsx",
+    "apps/web/src/custom/designMode/panel/PanelIcons.tsx",
+  ],
+};
+
 /** oxlint rule id → the rule in DESIGN-RULES.md it enforces. */
 export const DESIGN_OXLINT_RULE_IDS = {
   "shadcn/no-raw-colors": "A1",
@@ -178,4 +225,8 @@ export const DESIGN_LINT_OVERRIDES = [
     files: ["apps/web/src/custom/SidebarV2StatusIndicator.tsx"],
     rules: { "t3code/no-hand-built-status-marks": "off" },
   },
+  ...Object.entries(DESIGN_LINT_PENDING).map(([rule, files]) => ({
+    files,
+    rules: { [rule]: "off" },
+  })),
 ];

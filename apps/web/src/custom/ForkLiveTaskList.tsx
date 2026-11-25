@@ -4,7 +4,7 @@
  */
 import type { OrchestrationV2PlanStep } from "@t3tools/contracts";
 import { useGT } from "gt-react";
-import { CircleCheckIcon, CircleDotIcon, CircleIcon } from "lucide-react";
+import { CircleCheckIcon, CircleDotIcon, CircleIcon } from "./icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 
 export function ForkLiveTaskList({ steps }: { steps: ReadonlyArray<OrchestrationV2PlanStep> }) {

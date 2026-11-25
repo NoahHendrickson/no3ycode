@@ -35,7 +35,7 @@ import type {
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "./icons/lucide-hugeicons";
 // Fork-only glyphs (no lucide counterpart) come from the shim's own path: this
 // file is fork-owned, so there is no upstream import site to preserve.
 import {

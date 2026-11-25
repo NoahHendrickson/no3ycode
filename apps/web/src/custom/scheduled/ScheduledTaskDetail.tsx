@@ -15,7 +15,7 @@ import {
  */
 import { useAtomValue } from "@effect/atom-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, PlayIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, PlayIcon, Trash2Icon } from "../icons/lucide-hugeicons";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AuthOrchestrationOperateScope,

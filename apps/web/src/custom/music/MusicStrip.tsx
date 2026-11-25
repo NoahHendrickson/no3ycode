@@ -20,7 +20,7 @@ import {
   UserRoundIcon,
   Volume2,
   VolumeOff,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import { type CSSProperties, memo, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { Button } from "~/components/ui/button";

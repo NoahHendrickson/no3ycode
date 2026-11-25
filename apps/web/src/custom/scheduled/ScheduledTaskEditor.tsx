@@ -28,7 +28,7 @@ import {
   FolderGitIcon,
   FolderIcon,
   ZapIcon,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import {
   MAX_WEBHOOK_DELIVERY_AGE_MINUTES,

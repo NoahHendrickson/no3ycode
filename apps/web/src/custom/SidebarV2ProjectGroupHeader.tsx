@@ -63,7 +63,7 @@ import {
   FolderOpenIcon,
   PlusIcon,
   SettingsIcon,
-} from "lucide-react";
+} from "./icons/lucide-hugeicons";
 import { useState } from "react";
 import { type SortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

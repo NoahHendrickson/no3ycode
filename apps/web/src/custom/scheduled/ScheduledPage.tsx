@@ -24,7 +24,7 @@ import {
   Trash2Icon,
   XIcon,
   ZapIcon,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   AuthOrchestrationOperateScope,

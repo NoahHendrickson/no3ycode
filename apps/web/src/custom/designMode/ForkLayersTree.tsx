@@ -5,7 +5,7 @@ import {
   PanelLeftCloseIcon,
   SearchIcon,
   XIcon,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import {
   memo,
   useCallback,

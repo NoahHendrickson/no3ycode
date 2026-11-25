@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckIcon, MicIcon, XIcon } from "lucide-react";
+import { CheckIcon, MicIcon, XIcon } from "../icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
