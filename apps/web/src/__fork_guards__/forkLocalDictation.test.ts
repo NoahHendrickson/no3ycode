@@ -103,7 +103,9 @@ describe("fork local dictation", () => {
     expect(theme).toMatch(
       /\] \[data-fork-dictation-live\]\s*\{\s*color:\s*var\(--fork-black-85\);\s*\}/u,
     );
-    expect(theme).toMatch(/\[data-fork-dictation-fill\] \{[^}]*& > \* \{\s*background: var\(--fork-white\);/u);
+    expect(theme).toMatch(
+      /\[data-fork-dictation-fill\] \{[^}]*& > \* \{\s*background: var\(--fork-white\);/u,
+    );
     // The capsule takes the mic's pull toward the slot, keeping the check on the mic's spot.
     expect(theme).toMatch(
       /> \[data-fork-dictation-mic\]\[data-fork-dictation-live\]\s*\{\s*margin-inline-end:\s*calc\(var\(--spacing\) \* -1\.5\);/u,
