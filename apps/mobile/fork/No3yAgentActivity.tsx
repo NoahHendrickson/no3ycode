@@ -178,26 +178,11 @@ function No3yAgentActivity(
   const divided = (item: No3yLiveActivityRow | undefined) =>
     item ? <Divider modifiers={[padding({ leading: 22 })]} /> : null;
 
-  // Past three threads, two rows and a strip of tiles counting every thread not in a row.
-  const overflow = props.activeCount + props.failedCount + props.doneCount > 3;
+  // The builder already chose the rows (three, or two above tiles) and counted the rest.
   const r0 = rows[0];
   const r1 = rows[1];
-  const r2 = overflow ? undefined : rows[2];
-  const inRows = (test: (phase: Phase) => boolean) =>
-    props.rows.slice(0, 2).filter((item) => test(item.phase)).length;
-  const isWaiting = (phase: Phase) =>
-    phase === "waiting_for_approval" || phase === "waiting_for_input";
-  const isWorking = (phase: Phase) => phase === "running" || phase === "starting";
-  const counted: ReadonlyArray<{ readonly phase: Phase; readonly count: number }> = [
-    { phase: "waiting_for_input", count: props.waitingCount - inRows(isWaiting) },
-    {
-      phase: "running",
-      count: props.activeCount - props.waitingCount - inRows(isWorking),
-    },
-    { phase: "failed", count: props.failedCount - inRows((phase) => phase === "failed") },
-    { phase: "completed", count: props.doneCount - inRows((phase) => phase === "completed") },
-  ];
-  const tiles = counted.filter((item) => item.count > 0);
+  const r2 = rows[2];
+  const tiles = props.tiles;
   const tile = (item: (typeof tiles)[number] | undefined) =>
     item ? (
       <HStack
@@ -222,14 +207,15 @@ function No3yAgentActivity(
         </Text>
       </HStack>
     ) : null;
-  const strip = overflow ? (
-    <HStack spacing={6} modifiers={[padding({ top: 4 })]}>
-      {tile(tiles[0])}
-      {tile(tiles[1])}
-      {tile(tiles[2])}
-      {tile(tiles[3])}
-    </HStack>
-  ) : null;
+  const strip =
+    tiles.length > 0 ? (
+      <HStack spacing={6} modifiers={[padding({ top: 4 })]}>
+        {tile(tiles[0])}
+        {tile(tiles[1])}
+        {tile(tiles[2])}
+        {tile(tiles[3])}
+      </HStack>
+    ) : null;
 
   return {
     banner: (

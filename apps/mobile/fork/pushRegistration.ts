@@ -109,7 +109,7 @@ export function installNo3yPushRegistration(): () => void {
 
   return () => {
     disposed = true;
-    setNo3yLiveActivityArmOnSend(() => false);
+    setNo3yLiveActivityArmOnSend(null);
     tokenSubscription.remove();
     unsubscribeCatalog();
     appStateSubscription.remove();

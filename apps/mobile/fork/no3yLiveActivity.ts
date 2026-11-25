@@ -7,8 +7,9 @@ import type { AgentAwarenessPhase, AgentAwarenessState } from "@t3tools/shared/a
 
 /** ActivityKit content-state `name`; the app's factory stores its layout under it. */
 export const NO3Y_LIVE_ACTIVITY_NAME = "No3yAgentActivity";
-/** Three rows and the header fit the lock screen's 160pt limit. */
+/** Three rows and the header fit the lock screen's 160pt limit; past that, two rows and tiles. */
 export const NO3Y_LIVE_ACTIVITY_MAX_ROWS = 3;
+const OVERFLOW_ROWS = 2;
 /** Finished rows stay on the card this long, as the relay keeps them. */
 export const NO3Y_LIVE_ACTIVITY_TERMINAL_TTL_MS = 15 * 60 * 1_000;
 /** The card greys out in-flight rows past this unless the Mac re-pushes (it does every 4 min). */
@@ -26,6 +27,13 @@ export interface No3yLiveActivityRow {
   readonly deepLink: string;
 }
 
+/** Threads not shown as rows, by status; the widget draws one tile per entry. */
+export interface No3yLiveActivityTile {
+  /** `waiting_for_approval` stands for both waits, `running` for starting and running. */
+  readonly phase: "waiting_for_approval" | "running" | "failed" | "completed";
+  readonly count: number;
+}
+
 export interface No3yLiveActivityProps {
   /** Threads still starting, running or waiting; 0 means every one has finished. */
   readonly activeCount: number;
@@ -35,6 +43,7 @@ export interface No3yLiveActivityProps {
   readonly doneCount: number;
   readonly updatedAt: string;
   readonly rows: ReadonlyArray<No3yLiveActivityRow>;
+  readonly tiles: ReadonlyArray<No3yLiveActivityTile>;
 }
 
 export interface No3yLiveActivityInput {
@@ -57,8 +66,25 @@ function isTerminal(phase: AgentAwarenessPhase) {
   return phase === "completed" || phase === "failed";
 }
 
+export function isNo3yWaitingPhase(phase: AgentAwarenessPhase) {
+  return phase === "waiting_for_approval" || phase === "waiting_for_input";
+}
+
+function tilePhase(phase: AgentAwarenessPhase): No3yLiveActivityTile["phase"] {
+  if (isNo3yWaitingPhase(phase)) return "waiting_for_approval";
+  if (phase === "failed" || phase === "completed") return phase;
+  return "running";
+}
+
+const TILE_ORDER: ReadonlyArray<No3yLiveActivityTile["phase"]> = [
+  "waiting_for_approval",
+  "running",
+  "failed",
+  "completed",
+];
+
 function phaseRank(phase: AgentAwarenessPhase) {
-  if (phase === "waiting_for_approval" || phase === "waiting_for_input") return 0;
+  if (isNo3yWaitingPhase(phase)) return 0;
   if (phase === "failed") return 1;
   if (phase === "starting" || phase === "running") return 2;
   return 3;
@@ -99,15 +125,47 @@ export function aggregateNo3yLiveActivity(
     (latest, row) => (row.updatedAt > latest ? row.updatedAt : latest),
     rows[0]!.updatedAt,
   );
+  const shown = rows.length > NO3Y_LIVE_ACTIVITY_MAX_ROWS ? OVERFLOW_ROWS : rows.length;
+  const rest = rows.slice(shown);
   return {
     activeCount: count((phase) => !isTerminal(phase)),
-    waitingCount: count(
-      (phase) => phase === "waiting_for_approval" || phase === "waiting_for_input",
-    ),
+    waitingCount: count(isNo3yWaitingPhase),
     failedCount: count((phase) => phase === "failed"),
     doneCount: count((phase) => phase === "completed"),
     updatedAt,
-    rows: rows.slice(0, NO3Y_LIVE_ACTIVITY_MAX_ROWS),
+    rows: rows.slice(0, shown),
+    tiles: TILE_ORDER.map((phase) => ({
+      phase,
+      count: rest.filter((row) => tilePhase(row.phase) === phase).length,
+    })).filter((tile) => tile.count > 0),
+  };
+}
+
+/** The card a send starts before the Mac has seen the run: one starting row, no thread yet. */
+export function startingNo3yLiveActivity(
+  input: { readonly threadTitle: string; readonly projectTitle: string },
+  nowIso: string,
+): No3yLiveActivityProps {
+  return {
+    activeCount: 1,
+    waitingCount: 0,
+    failedCount: 0,
+    doneCount: 0,
+    updatedAt: nowIso,
+    rows: [
+      {
+        environmentId: "",
+        threadId: "",
+        threadTitle: clip(input.threadTitle),
+        projectTitle: clip(input.projectTitle),
+        // No thread yet, so no provider mark.
+        provider: "",
+        phase: "starting",
+        updatedAt: nowIso,
+        deepLink: "/",
+      },
+    ],
+    tiles: [],
   };
 }
 
@@ -126,5 +184,6 @@ export function no3yLiveActivitySignature(props: No3yLiveActivityProps | null): 
       row.provider,
       row.phase,
     ]),
+    props.tiles.map((tile) => [tile.phase, tile.count]),
   ]);
 }

@@ -41,9 +41,21 @@ describe("aggregateNo3yLiveActivity", () => {
       ],
       now,
     );
-    // Three rows fit the lock screen; the counts still cover the two that don't.
-    expect(card?.rows.map((row) => row.threadId)).toEqual(["approval", "input", "failed"]);
+    // Past three threads the card shows two rows; tiles count every thread not in a row.
+    expect(card?.rows.map((row) => row.threadId)).toEqual(["approval", "input"]);
+    expect(card?.tiles).toEqual([
+      { phase: "running", count: 1 },
+      { phase: "failed", count: 1 },
+      { phase: "completed", count: 1 },
+    ]);
     expect(card).toMatchObject({ activeCount: 3, waitingCount: 2, failedCount: 1, doneCount: 1 });
+    // Three threads fit as rows, with no tiles.
+    const three = aggregateNo3yLiveActivity(
+      [input("a", "running"), input("b", "running"), input("c", "waiting_for_input")],
+      now,
+    );
+    expect(three?.rows.map((row) => row.threadId)).toEqual(["c", "a", "b"]);
+    expect(three?.tiles).toEqual([]);
     expect(card?.updatedAt).toBe("2026-11-24T11:59:30.000Z");
   });
 

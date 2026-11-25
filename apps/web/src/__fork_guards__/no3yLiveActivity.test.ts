@@ -32,7 +32,7 @@ describe("fork guard: no3y-live-activity", () => {
   it("pushes content the app's factory renders", () => {
     // Both sides name the card through NO3Y_LIVE_ACTIVITY_NAME; a literal on either side drifts.
     const card = readRepoFile("apps/mobile/fork/No3yAgentActivity.tsx");
-    const service = readRepoFile("apps/mobile/fork/push-service/no3yPush.mts");
+    const service = readRepoFile("apps/mobile/fork/push-service/liveActivityPush.mts");
     expect(card).toMatch(/createLiveActivity<No3yLiveActivityProps>\(\s*NO3Y_LIVE_ACTIVITY_NAME,/u);
     expect(service).toMatch(/name: NO3Y_LIVE_ACTIVITY_NAME/u);
   });
