@@ -775,6 +775,9 @@ function uninstallLaunchAgent() {
   for (let tries = 0; tries < 250 && launchAgentLoaded(); tries += 1) {
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100);
   }
+  if (launchAgentLoaded()) {
+    throw new Error(`the old ${LAUNCH_AGENT_LABEL} agent did not exit; run install again`);
+  }
   NodeFS.rmSync(launchAgentPath(), { force: true });
 }
 
