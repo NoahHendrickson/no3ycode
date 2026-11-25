@@ -2,6 +2,7 @@
 // app typechecks include.
 export declare const DESIGN_LINT_BLOCKING: boolean;
 export declare const DESIGN_LINT_ENV: string;
+export declare const DESIGN_LINT_PENDING_ENV: string;
 export declare const DESIGN_LINT_TSX_SCOPE: string[];
 export declare const DESIGN_LINT_CUSTOM_ONLY_SCOPE: string[];
 export declare const DESIGN_ARBITRARY_VALUE_ALLOW: string[];

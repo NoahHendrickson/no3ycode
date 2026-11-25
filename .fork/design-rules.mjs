@@ -16,6 +16,9 @@ export const DESIGN_LINT_BLOCKING = true;
 /** `vp lint` turns the rules on when this is "1" (report mode sets it). */
 export const DESIGN_LINT_ENV = "T3CODE_FORK_DESIGN_LINT";
 
+/** `--stats` sets this to "1" so the pending files report what they still hold. */
+export const DESIGN_LINT_PENDING_ENV = "T3CODE_FORK_DESIGN_LINT_PENDING";
+
 /** Fork-owned TSX: new modules and the upstream modules the fork shadows. */
 export const DESIGN_LINT_TSX_SCOPE = ["apps/web/src/custom/**", "apps/web/src/overrides/**"];
 
@@ -225,8 +228,10 @@ export const DESIGN_LINT_OVERRIDES = [
     files: ["apps/web/src/custom/SidebarV2StatusIndicator.tsx"],
     rules: { "t3code/no-hand-built-status-marks": "off" },
   },
-  ...Object.entries(DESIGN_LINT_PENDING).map(([rule, files]) => ({
-    files,
-    rules: { [rule]: "off" },
-  })),
+  ...(process.env[DESIGN_LINT_PENDING_ENV] === "1"
+    ? []
+    : Object.entries(DESIGN_LINT_PENDING).map(([rule, files]) => ({
+        files,
+        rules: { [rule]: "off" },
+      }))),
 ];

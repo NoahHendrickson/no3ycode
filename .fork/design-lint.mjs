@@ -2,7 +2,8 @@
 /**
  * Fork design-system lint: the CSS and cross-file rules of .fork/DESIGN-RULES.md, plus the
  * oxlint TSX rules run with design-rules.mjs switched on. `--report [--json <file>]` never
- * fails; `--check` fails on any finding; `--no-oxlint` skips the TSX pass. Dependency-free.
+ * fails; `--check` fails on any finding; `--no-oxlint` skips the TSX pass; `--stats <baseline>`
+ * compares a saved inventory with now. Dependency-free.
  */
 
 import * as NodeChildProcess from "node:child_process";
@@ -11,7 +12,12 @@ import * as NodeModule from "node:module";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 
-import { DESIGN_LINT_ENV, DESIGN_OXLINT_RULE_IDS } from "./design-rules.mjs";
+import {
+  DESIGN_ARBITRARY_VALUE_ALLOW,
+  DESIGN_LINT_ENV,
+  DESIGN_LINT_PENDING_ENV,
+  DESIGN_OXLINT_RULE_IDS,
+} from "./design-rules.mjs";
 
 const FORK_DIR = NodePath.dirname(NodeURL.fileURLToPath(import.meta.url));
 const REPO_ROOT = NodePath.resolve(FORK_DIR, "..");
@@ -1233,7 +1239,7 @@ const parseReport = (stdout) => {
   }
 };
 
-function runOxlint(root) {
+function runOxlint(root, { pending = false } = {}) {
   const files = forkTsxFiles(root, ["custom", "overrides"]);
   const codes = new Map(
     Object.entries(DESIGN_OXLINT_RULE_IDS).map(([rule, id]) => [
@@ -1245,7 +1251,11 @@ function runOxlint(root) {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
-    env: { ...process.env, [DESIGN_LINT_ENV]: "1" },
+    env: {
+      ...process.env,
+      [DESIGN_LINT_ENV]: "1",
+      ...(pending ? { [DESIGN_LINT_PENDING_ENV]: "1" } : {}),
+    },
   });
   const report = result.error ? undefined : parseReport(result.stdout);
   if (report === undefined) {
@@ -1524,7 +1534,7 @@ export function classify(findings, definitions) {
   return findings;
 }
 
-export function collectFindings(root = REPO_ROOT, { oxlint = true } = {}) {
+export function collectFindings(root = REPO_ROOT, { oxlint = true, pending = false } = {}) {
   const forkSheets = forkCssFiles(root).map((path) => loadStylesheet(path, read(root, path)));
   const fencedSheets = FENCED_CSS_FILES.filter((path) =>
     NodeFS.existsSync(NodePath.join(root, path)),
@@ -1572,7 +1582,7 @@ export function collectFindings(root = REPO_ROOT, { oxlint = true } = {}) {
   findings = applySuppressions(findings, checked).filter((entry) => !allowlisted(entry));
   if (oxlint) {
     findings.push(
-      ...runOxlint(root).map((entry) => {
+      ...runOxlint(root, { pending }).map((entry) => {
         if (entry.rule !== "B4") return entry;
         const line = read(root, entry.file).split("\n")[entry.line - 1] ?? "";
         return { ...entry, source: /from\s+["']([^"']+)["']/u.exec(line)?.[1] ?? line };
@@ -1632,13 +1642,76 @@ function printReport(findings) {
   }
 }
 
+/** Written exceptions, each with its reason: what the zero is made of besides fixes. */
+function countExceptions(root) {
+  const fork = walk(root, WEB_SRC, (path) => /\.(?:css|tsx?)$/u.test(path) && !isTestFile(path));
+  const designRules = Object.keys(DESIGN_OXLINT_RULE_IDS).join("|");
+  const inline = new RegExp(`oxlint-disable-next-line (?:${designRules})\\b`, "gu");
+  let css = 0;
+  let tsx = 0;
+  for (const path of fork) {
+    const text = read(root, path);
+    if (path.endsWith(".css")) css += text.match(/design-lint-disable-next-line/gu)?.length ?? 0;
+    else tsx += text.match(inline)?.length ?? 0;
+  }
+  const pendingStories = ALLOWLIST.filter((entry) => entry.reason?.startsWith("pending")).length;
+  return {
+    "CSS suppressions": css,
+    "TSX suppressions": tsx,
+    "A5 allowlist values": DESIGN_ARBITRARY_VALUE_ALLOW.length,
+    "allowlisted selectors and non-atomic components": ALLOWLIST.length - pendingStories,
+    pendingStories,
+  };
+}
+
+/** `--stats <baseline inventory>`: then and now, per rule, for the readout. */
+function printStats(baselinePath) {
+  const baseline = JSON.parse(NodeFS.readFileSync(baselinePath, "utf8")).summary.byRule;
+  const now = summarize(collectFindings(REPO_ROOT).filter(isBlocking)).byRule;
+  const held = summarize(collectFindings(REPO_ROOT, { pending: true })).byRule;
+  const exceptions = countExceptions(REPO_ROOT);
+  const rows = Object.keys(RULE_TITLES).map((rule) => {
+    const before = baseline[rule]?.total ?? 0;
+    const blocking = now[rule]?.total ?? 0;
+    const pending =
+      (held[rule]?.total ?? 0) - blocking + (rule === "B5" ? exceptions.pendingStories : 0);
+    return { rule, title: RULE_TITLES[rule], before, pending, blocking };
+  });
+  const sum = (key) => rows.reduce((total, row) => total + row[key], 0);
+  console.log("rule  before  pending  blocking  what");
+  for (const row of rows.filter((entry) => entry.before + entry.pending + entry.blocking > 0)) {
+    console.log(
+      `${row.rule.padEnd(4)}  ${String(row.before).padStart(6)}  ${String(row.pending).padStart(7)}  ${String(row.blocking).padStart(8)}  ${row.title}`,
+    );
+  }
+  console.log(
+    `\nbefore ${sum("before")}, pending a design call ${sum("pending")}, blocking ${sum("blocking")}`,
+  );
+  console.log("written exceptions:");
+  for (const [kind, count] of Object.entries(exceptions)) {
+    if (kind !== "pendingStories") console.log(`  ${String(count).padStart(4)}  ${kind}`);
+  }
+  const statsIndex = process.argv.indexOf("--json");
+  if (statsIndex !== -1) {
+    NodeFS.writeFileSync(
+      NodePath.resolve(process.argv[statsIndex + 1]),
+      `${JSON.stringify({ rows, exceptions }, null, 2)}\n`,
+    );
+  }
+}
+
 function main() {
   const args = process.argv.slice(2);
+  const statsIndex = args.indexOf("--stats");
+  if (statsIndex !== -1) {
+    printStats(NodePath.resolve(args[statsIndex + 1] ?? ""));
+    return;
+  }
   const report = args.includes("--report");
   const check = args.includes("--check");
   if (report === check) {
     console.error(
-      "usage: node .fork/design-lint.mjs --report [--json <file>] | --check  [--no-oxlint]",
+      "usage: node .fork/design-lint.mjs --report [--json <file>] | --check  [--no-oxlint] | --stats <baseline.json> [--json <file>]",
     );
     process.exit(2);
   }
