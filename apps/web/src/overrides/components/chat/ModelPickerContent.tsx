@@ -815,7 +815,12 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         // renders below the list.
         closeOnClick={false}
         size="xs"
-        className={cn(ROW_CLASS, "group", disabledReason && "data-disabled:pointer-events-auto")}
+        className={cn(
+          ROW_CLASS,
+          // oxlint-disable-next-line shadcn/no-restyle -- the row stays lit while the effort menu its control opened is open (dark palettes: theme.custom.css)
+          "group has-[>*>[data-model-row-control]>[data-open]]:bg-accent",
+          disabledReason && "data-disabled:pointer-events-auto",
+        )}
         onClick={(event) => chooseModel(model, event.shiftKey)}
         // ArrowRight opens the row's control (the effort menu), as a submenu trigger would.
         onKeyDown={(event) => {

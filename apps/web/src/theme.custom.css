@@ -3198,16 +3198,11 @@
   ):is([data-highlighted], [data-popup-open], :hover),
 :root[data-fork="noahhendrickson-t3code"].dark [data-slot="list-item"]:is(:hover, :focus-visible),
 /* A model row stays lit while the menu its control opened is open, the pointer inside that menu
-   (fork-model-picker); dark palettes light rows with this wash, light ones with --accent (below). */
+   (fork-model-picker); dark palettes light rows with this wash over the row's own --accent. */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
   color: var(--foreground);
-}
-
-:root[data-fork="noahhendrickson-t3code"]:not(.dark)
-  [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
-  background-color: var(--accent);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark
