@@ -1,4 +1,4 @@
-import { defineRule } from "@oxlint/plugins";
+import { defineRule, type ESTree } from "@oxlint/plugins";
 
 const PRIMITIVE_FOR_ROLE: Record<string, string> = {
   menu: "Menu (components/ui/menu)",
@@ -7,6 +7,15 @@ const PRIMITIVE_FOR_ROLE: Record<string, string> = {
   alertdialog: "AlertDialog (components/ui/alert-dialog)",
   tooltip: "Tooltip (components/ui/tooltip)",
 };
+
+/** A role written as "x", {"x"} or {`x`}; null when it is computed. */
+function staticString(value: ESTree.JSXAttribute["value"]): string | null {
+  const node = value?.type === "JSXExpressionContainer" ? value.expression : value;
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node?.type === "TemplateLiteral" && node.expressions.length === 0)
+    return node.quasis[0]?.value.cooked ?? null;
+  return null;
+}
 
 export default defineRule({
   meta: {
@@ -30,12 +39,13 @@ export default defineRule({
                 "A styled raw <button> rebuilds Button. Use Button (components/ui/button) with a variant and size, ListItem (custom/ListItem) for a list row, or Base UI's Button, Toggle or Radio for a feature's own control.",
             });
           }
-          if (attribute.name.name !== "role" || attribute.value?.type !== "Literal") continue;
-          const primitive = PRIMITIVE_FOR_ROLE[String(attribute.value.value)];
+          if (attribute.name.name !== "role") continue;
+          const role = staticString(attribute.value);
+          const primitive = role === null ? undefined : PRIMITIVE_FOR_ROLE[role];
           if (primitive) {
             context.report({
               node: attribute,
-              message: `role="${String(attribute.value.value)}" on a host element rebuilds a primitive. Use ${primitive}.`,
+              message: `role="${role}" on a host element rebuilds a primitive. Use ${primitive}.`,
             });
           }
         }

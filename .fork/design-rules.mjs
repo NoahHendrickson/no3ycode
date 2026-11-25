@@ -6,11 +6,7 @@
  * `vp lint` in report mode.
  */
 
-/**
- * The switch. While false, the rules below run only when `.fork/design-lint.mjs --report` sets
- * DESIGN_LINT_ENV, so `vp lint` and CI stay as they are. Flip it to true once the inventory reads
- * zero, together with the `--check` step in .github/workflows/ci.yml.
- */
+/** On: `vp lint` applies the rules below, and CI runs `.fork/design-lint.mjs --check`. */
 export const DESIGN_LINT_BLOCKING = true;
 
 /** `vp lint` turns the rules on when this is "1" (report mode sets it). */

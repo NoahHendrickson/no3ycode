@@ -275,6 +275,10 @@ function Local() {}`;
 
     it("hides a finding the comment names and gives a reason for", () => {
       expect(rules(run(css(" -- the Figma gap")))).toEqual(["S2"]);
+      // Each id in a list must suppress something.
+      expect(run(css(", A1 -- the Figma gap")).map((finding) => finding.message)).toContain(
+        "nothing to suppress for A1",
+      );
     });
 
     it("reports a suppression without a reason", () => {

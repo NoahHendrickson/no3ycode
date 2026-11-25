@@ -30,9 +30,11 @@ function PopoverTrigger({
     <PopoverPrimitive.Trigger
       className={
         /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-        focusRing === "inset" && typeof className !== "function"
-          ? cn(FORK_TRIGGER_INSET_RING, className)
-          : className
+        focusRing !== "inset"
+          ? className
+          : typeof className === "function"
+            ? (state) => cn(FORK_TRIGGER_INSET_RING, className(state))
+            : cn(FORK_TRIGGER_INSET_RING, className)
         /* fork:end fork-design-row-variants */
       }
       data-slot="popover-trigger"

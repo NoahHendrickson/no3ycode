@@ -1207,7 +1207,7 @@ export function applySuppressions(findings, sheets) {
         target,
         rules: parsed[1].split(/\s*,\s*/u),
         reason: parsed[2]?.trim() ?? "",
-        used: false,
+        used: new Set(),
       });
     }
   }
@@ -1219,19 +1219,20 @@ export function applySuppressions(findings, sheets) {
         (candidate.target === entry.line || candidate.target === entry.ruleLine),
     );
     if (!directive) return true;
-    directive.used = true;
+    directive.used.add(entry.rule);
     return false;
   });
   for (const directive of directives) {
     if (!directive.reason)
       kept.push(finding("S1", directive.file, directive.line, "say why after `--`"));
-    if (!directive.used)
+    const unused = directive.rules.filter((rule) => !directive.used.has(rule));
+    if (unused.length > 0)
       kept.push(
         finding(
           "S2",
           directive.file,
           directive.line,
-          `nothing to suppress for ${directive.rules.join(", ")}`,
+          `nothing to suppress for ${unused.join(", ")}`,
         ),
       );
   }

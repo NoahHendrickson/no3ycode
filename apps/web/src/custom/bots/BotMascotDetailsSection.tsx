@@ -1,6 +1,4 @@
 /** A bot's mascot picker in the thread details card — see `.fork/customizations.yaml#fork-bots`. */
-import { Radio as RadioPrimitive } from "@base-ui/react/radio";
-import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
 import { AuthOrchestrationOperateScope, type ScopedThreadRef } from "@t3tools/contracts";
 
 import { ThreadDetailsSection } from "~/components/chat/ThreadDetailsSection";
@@ -26,16 +24,11 @@ export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThrea
   const current = botMascotShape(shell.source);
   return (
     <ThreadDetailsSection headingId="thread-details-bot-mascot-heading" title="Mascot">
-      <RadioGroupPrimitive
+      <div
+        role="radiogroup"
         aria-labelledby="thread-details-bot-mascot-heading"
         data-testid="thread-details-bot-mascot"
         className="grid grid-cols-7 gap-1 px-1"
-        value={current}
-        disabled={!canOperate}
-        onValueChange={(value) => {
-          const shape = BOT_MASCOT_SHAPES.find((candidate) => candidate === value);
-          if (shape && shape !== current) void setBotMascot(shell, shape);
-        }}
       >
         {BOT_MASCOT_SHAPES.map((shape) => {
           const selected = shape === current;
@@ -43,11 +36,18 @@ export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThrea
             <Tooltip key={shape}>
               <TooltipTrigger
                 render={
-                  <RadioPrimitive.Root
-                    value={shape}
+                  // oxlint-disable-next-line t3code/no-hand-built-primitives -- a RadioGroup checks on every arrow key, and each check here is a server write
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
                     aria-label={shape}
+                    disabled={!canOperate}
+                    onClick={() => {
+                      if (!selected) void setBotMascot(shell, shape);
+                    }}
                     className={cn(
-                      "flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-lg ring-inset focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-disabled:cursor-default data-disabled:opacity-60",
+                      "flex aspect-square min-w-0 cursor-pointer items-center justify-center rounded-lg ring-inset focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default disabled:opacity-60",
                       selected
                         ? "bg-foreground/10 ring-1 ring-foreground/25"
                         : "hover:bg-foreground/[0.06]",
@@ -61,7 +61,7 @@ export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThrea
             </Tooltip>
           );
         })}
-      </RadioGroupPrimitive>
+      </div>
     </ThreadDetailsSection>
   );
 }

@@ -32,6 +32,10 @@ describe("t3code/no-hand-built-primitives", () => {
   rule.invalid("reports a hand-built listbox", `const a = <ul role="listbox" />;`);
 
   rule.invalid("reports a hand-built dialog", `const a = <div role="dialog" aria-modal />;`);
+  rule.invalid(
+    "reads a role in braces",
+    'const a = <div role={"dialog"} />; const b = <div role={`menu`} />;',
+  );
 
   rule.invalid("reports a hand-built tooltip", `const a = <span role="tooltip">Hint</span>;`);
 });
