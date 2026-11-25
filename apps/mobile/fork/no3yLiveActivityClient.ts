@@ -50,7 +50,8 @@ function register(card: Card) {
   if (listening.has(id)) return;
   listening.add(id);
   card.addPushTokenListener((event) => {
-    if (event.pushToken) postToken(event.pushToken);
+    const token = event.pushToken;
+    if (token) void allowed().then((ok) => ok && postToken(token));
   });
 }
 
@@ -100,7 +101,12 @@ async function readMacCard(): Promise<No3yLiveActivityProps | null> {
 /** On foreground: keep the one card registered, or start it when the Mac has work running. */
 export async function refreshNo3yLiveActivity(origins: ReadonlyArray<string>): Promise<void> {
   routes = origins;
-  if (origins.length === 0 || !(await allowed())) return;
+  if (!(await allowed())) {
+    // Switched off since the card started: take it down rather than let the Mac keep it going.
+    for (const card of getNo3yLiveActivities()) void card.end("immediate").catch(() => {});
+    return;
+  }
+  if (origins.length === 0) return;
   try {
     dismissEndedNo3yLiveActivities();
     const [card, ...extras] = getNo3yLiveActivities();

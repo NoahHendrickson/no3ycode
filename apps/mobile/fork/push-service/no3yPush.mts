@@ -243,6 +243,8 @@ export interface Tracker {
   readonly notify: (notification: ApnsNotification, run: AlertRun) => void;
   /** Called after every applied shell item; the Live Activity card is derived from the threads. */
   readonly onChange: () => void;
+  /** Threads the card has shown, which keep their finish even if it predates this service. */
+  readonly shownOnCard: Set<string>;
   readonly projectTitles: Map<string, string>;
   /** The latest shell of every thread, so a subagent's wait can re-evaluate its top-level thread. */
   readonly threads: Map<string, ObservedThread>;
@@ -264,6 +266,7 @@ export function makeTracker(
     startedAt: Date.now(),
     notify,
     onChange,
+    shownOnCard: new Set(),
     projectTitles: new Map(),
     threads: new Map(),
     waitingSubagents: new Set(),
@@ -442,6 +445,7 @@ function forgetThread(tracker: Tracker, threadId: string) {
   tracker.threads.delete(threadId);
   tracker.waitingSubagents.delete(threadId);
   tracker.lastKeys.delete(threadId);
+  tracker.shownOnCard.delete(threadId);
 }
 
 /** The Live Activity card, built from the threads as they stand: each listed thread's awareness. */
@@ -454,9 +458,11 @@ export function no3yLiveActivityCard(
     if (!isListedThreadLineage(thread.lineage) || isHiddenAutomationRun(thread)) continue;
     const state = awareness(tracker, thread, pendingSubagentRequest(tracker, thread.id));
     if (state === null) continue;
-    // Work that ended before this service started is not news on the card.
+    // Work that ended before this service started is not news, unless the card already showed it.
     const finished = state.phase === "completed" || state.phase === "failed";
-    if (finished && !finishedSince(thread, tracker.startedAt)) continue;
+    const news = !finished || finishedSince(thread, tracker.startedAt);
+    if (!news && !tracker.shownOnCard.has(thread.id)) continue;
+    tracker.shownOnCard.add(thread.id);
     inputs.push({ state, provider: thread.modelSelection.instanceId });
   }
   return aggregateNo3yLiveActivity(inputs, nowMs);

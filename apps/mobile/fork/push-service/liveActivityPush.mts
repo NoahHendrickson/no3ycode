@@ -76,6 +76,15 @@ export function makeLiveActivityService(input: {
   ) => {
     if (tokens.length === 0) return;
     queue = queue.then(async () => {
+      // An end waits behind slower pushes; by its turn the stream may be down or work back.
+      if (event === "end") {
+        const live = input.read();
+        if (paused) return;
+        if (live !== null && live.activeCount > 0) {
+          changed();
+          return;
+        }
+      }
       for (const token of tokens) {
         const request: ApnsRequest = {
           pushType: "liveactivity",
@@ -131,6 +140,9 @@ export function makeLiveActivityService(input: {
     register: (token) => {
       input.store.update((all) => [...all.filter((t) => t.token !== token.token), token]);
       sent.delete(token.token);
+      // A card armed on send gets the full hold for its run to show, not what is left of one.
+      clearTimeout(ending);
+      ending = undefined;
       input.log(`registered live activity ${token.token.slice(0, 8)}… for ${token.topic}`);
       changed();
     },

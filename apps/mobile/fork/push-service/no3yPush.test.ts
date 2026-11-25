@@ -187,6 +187,16 @@ describe("live activity card", () => {
     expect(card(t)).toEqual([]);
   });
 
+  it("keeps showing a finish that predates the service once the card has shown the thread", () => {
+    const t = tracker();
+    observeThread(t, thread({}), true);
+    expect(card(t)).toEqual([["thread-1", "running", "codex"]]);
+    // Background work held the thread running; its run had finished before the service started.
+    const before = DateTime.makeUnsafe(t.startedAt - 1_000);
+    observeThread(t, thread({ status: "completed", latestRunCompletedAt: before }), false);
+    expect(card(t)).toEqual([["thread-1", "completed", "codex"]]);
+  });
+
   it("leaves off hidden automation runs and work that finished before the service started", () => {
     const t = tracker();
     const run = { scheduledTaskId: ScheduledTaskId.make("scheduled-task:review") };

@@ -40,6 +40,7 @@ function harness(initial: ReadonlyArray<string> = ["a"]) {
   let tokens = initial.map(token);
   let current: No3yLiveActivityProps | null = props("running");
   let outcome: Delivery = "sent";
+  let stall: Promise<void> | null = null;
   const pushed: string[] = [];
   const service = makeLiveActivityService({
     store: {
@@ -52,6 +53,9 @@ function harness(initial: ReadonlyArray<string> = ["a"]) {
     deliver: async (to, request) => {
       const { event } = (request.payload as { aps: { event: string } }).aps;
       pushed.push(`${event}:${to.token[0]}`);
+      const wait = stall;
+      stall = null;
+      if (wait) await wait;
       return outcome;
     },
     holdMs: 5_000,
@@ -66,6 +70,14 @@ function harness(initial: ReadonlyArray<string> = ["a"]) {
     },
     deliverAs: (next: Delivery) => {
       outcome = next;
+    },
+    /** The next delivery hangs until the returned function is called. */
+    stallNext: () => {
+      let release = () => {};
+      stall = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return () => release();
     },
   };
 }
@@ -140,6 +152,35 @@ describe("live activity pushes", () => {
     await vi.advanceTimersByTimeAsync(5_500);
     expect(h.pushed).toEqual(["update:a", "end:a"]);
     expect(h.tokens()).toEqual([]);
+  });
+
+  it("drops a queued end when work is back by the time its turn comes", async () => {
+    using _timers = fakeTimers();
+    const h = harness();
+    const release = h.stallNext();
+    h.service.resume();
+    await vi.advanceTimersByTimeAsync(500);
+    h.show(props("completed", 0));
+    h.service.changed();
+    await vi.advanceTimersByTimeAsync(5_500);
+    h.show(props("running"));
+    release();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(h.pushed).toEqual(["update:a"]);
+    expect(h.tokens()).toEqual(["a"]);
+  });
+
+  it("gives a card registered during a hold the whole hold for its run to show", async () => {
+    using _timers = fakeTimers();
+    const h = harness();
+    h.show(null);
+    h.service.resume();
+    await vi.advanceTimersByTimeAsync(4_750);
+    h.service.register(token("b"));
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(h.pushed).toEqual([]);
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(h.pushed).toEqual(["end:a", "end:b"]);
   });
 
   it("keeps a token whose end failed and ends it on the next change", async () => {
