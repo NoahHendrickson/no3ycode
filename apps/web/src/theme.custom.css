@@ -3088,11 +3088,8 @@
 }
 
 /* ── Dictation session (fork-local-dictation) ──────────────────────────────
-   A live session is one pure-white capsule holding the level meter and the
-   done-blue check, in every mode; the meter's bars paint in its `color`.
-   Light mode haloes the fill so it holds its edge on a pale composer. Named
-   colours, not hexes: this white is the capsule's own, not a dark surface
-   leaking into light mode (fork-surface-palette's guard). */
+   Named colours, not hexes: the capsule's white is its own in every mode, not
+   a dark surface leaking into light mode (fork-surface-palette's guard). */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-live] {
   color: rgb(0 0 0 / 0.85);
 }
@@ -3113,11 +3110,8 @@
   filter: drop-shadow(0 0 0.5px rgb(0 0 0 / 0.35));
 }
 
-/* The capsule grows out of the check, which appears where the mic was: the
-   start cap slides out from under the end cap while the body stretches behind
-   it, the meter following the edge in. Transforms only, so it stays smooth
-   while the session spins up; the prompt beside it reflows once, not per
-   frame. Reduced motion fades it in instead. */
+/* Transforms only, so the grow stays smooth while the session spins up and the
+   prompt beside it reflows once, not per frame. */
 @media (prefers-reduced-motion: no-preference) {
   :root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-live] {
     & [data-fork-dictation-fill-start] {

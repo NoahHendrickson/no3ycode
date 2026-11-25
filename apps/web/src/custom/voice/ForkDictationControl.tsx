@@ -53,7 +53,8 @@ function VoiceLevelMeter(props: { level: number }) {
   const barsRef = useRef<Array<HTMLSpanElement | null>>([]);
   const weightsRef = useRef<number[]>([]);
   const heightsRef = useRef<number[]>([]);
-  const lastLevelRef = useRef(0);
+  // Seeded with the level at mount, so a meter mounting mid-session doesn't spike.
+  const lastLevelRef = useRef(level);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- writes each meter sample to the bars' native transforms
   useEffect(() => {
     const weights = weightsRef.current;

@@ -67,9 +67,8 @@ describe("fork local dictation", () => {
       "pendingAction={dictationOwnsPrimaryAction ? null : pendingPrimaryAction}",
     );
     expect(composer).toContain("forkDictation={dictationOwnsPrimaryAction ? dictation : null}");
-    // Since the orchestrator-V2 sync upstream renders stop alone (no send
-    // beside it); the fork keeps the mic to stop's left on that branch and
-    // otherwise hands the whole slot to the dictation button, bare.
+    // The slot holds only the cancel X. On upstream's stop-alone branch the X
+    // leads the capsule (stop keeps the right edge); elsewhere it takes send's place.
     expect(primary).toMatch(
       /const forkDictationButton = forkDictation \? \(\s*<ForkDictationCancelButton/u,
     );
