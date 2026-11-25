@@ -17,6 +17,8 @@ export interface ForkRootSetting<T> {
   readonly initialize: () => void;
   /** The setting's value and its setter, which keeps one identity. */
   readonly useValue: () => [T, (value: T) => void];
+  /** Stores and paints a value outside React. */
+  readonly set: (value: T) => void;
 }
 
 /** What the setting writes on <html>; a null value removes it. */
@@ -97,5 +99,6 @@ export function createForkRootSetting<T extends string | number | boolean, E>(
       });
     },
     useValue: () => [useSyncExternalStore(subscribe, read, () => defaultValue), setValue],
+    set: setValue,
   };
 }
