@@ -8,6 +8,7 @@ import {
   liveWorkEntryLabel,
   type MessagesTimelineRow,
 } from "~/components/chat/MessagesTimeline.logic";
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import type { MessageResolver } from "~/i18n/messages";
 
 type WorkingRow = Extract<MessagesTimelineRow, { kind: "working" }>;
@@ -118,12 +119,19 @@ export function isForkStatusLine(row: WorkingRow): row is ForkStatusLineRow {
   return "forkLive" in row;
 }
 
-/**
- * One-line text for the status line; upstream's richer previews stay in the open group.
- * A running tool reads as its live row would ("Running vp"); reasoning and a settled tool
- * return null, the thinking slot, which shows forkThinkingWord.
- */
-export function forkStatusLineLabel(
+/** What the status line can say; ForkLiveStatusLine rotates between them. */
+export interface ForkStatusLineVoices {
+  /** Holds the line alone: a provider startup, or waiting on subagents. */
+  readonly pinned: string | null;
+  /** The running tool as its live row would read it ("Running vp"). */
+  readonly tool: { readonly key: string; readonly label: string } | null;
+  /** Zen's preview: the heading or first sentence of the latest reply or thinking trace. */
+  readonly thought: string | null;
+}
+
+export type ForkStatusVoice = "thought" | "tool" | "word";
+
+export function forkStatusLineVoices(
   live: ForkLiveRow | null,
   activity: {
     readonly providerStartingLabel: string | null;
@@ -131,12 +139,102 @@ export function forkStatusLineLabel(
   },
   workspaceRoot: string | undefined,
   resolve?: MessageResolver,
-): string | null {
-  const label = live?.kind === "thinking" ? live.label : undefined;
-  if (live?.kind === "work-live") {
-    return live.active && live.entry.itemType !== "reasoning"
-      ? liveWorkEntryLabel(live.entry, workspaceRoot, true, resolve)
+): ForkStatusLineVoices {
+  const runningTool =
+    live?.kind === "work-live" && live.active && live.entry.itemType !== "reasoning"
+      ? live.entry
       : null;
+  return {
+    pinned:
+      activity.providerStartingLabel ?? (live?.kind === "thinking" ? live.label : null) ?? null,
+    tool:
+      runningTool === null
+        ? null
+        : {
+            key: runningTool.id,
+            label: liveWorkEntryLabel(runningTool, workspaceRoot, true, resolve),
+          },
+    // A status, not a sentence: drop one closing period, keep an ellipsis, ? and !.
+    thought: activity.liveAnswerPreview?.replace(/(?<![.])[.。]$/u, "") || null,
+  };
+}
+
+const VOICE_ORDER: ReadonlyArray<ForkStatusVoice> = ["thought", "tool", "word"];
+
+/** Which voice holds the line, and what it last saw of the others. */
+export interface ForkStatusLineState {
+  readonly toolKey: string | null;
+  readonly thought: string | null;
+  readonly voice: ForkStatusVoice;
+  /** Bumped whenever a voice takes the line between beats; it restarts the beat. */
+  readonly arrival: number;
+  /** Counts the word's turns, so each turn shows a fresh word. */
+  readonly lap: number;
+}
+
+function speaks(line: ForkStatusLineState, voice: ForkStatusVoice): boolean {
+  return voice === "word" || (voice === "tool" ? line.toolKey !== null : line.thought !== null);
+}
+
+/** One beat: the next voice after the one showing that has something to say. */
+export function forkStatusLineAdvance(line: ForkStatusLineState): ForkStatusLineState {
+  const from = VOICE_ORDER.indexOf(line.voice);
+  for (let step = 1; step <= VOICE_ORDER.length; step += 1) {
+    const voice = VOICE_ORDER[(from + step) % VOICE_ORDER.length]!;
+    if (speaks(line, voice)) {
+      return { ...line, voice, lap: voice === "word" ? line.lap + 1 : line.lap };
+    }
   }
-  return activity.providerStartingLabel ?? label ?? activity.liveAnswerPreview ?? null;
+  return line;
+}
+
+export function forkStatusLineStart(voices: ForkStatusLineVoices): ForkStatusLineState {
+  return {
+    toolKey: voices.tool?.key ?? null,
+    thought: voices.thought,
+    voice: voices.tool !== null ? "tool" : voices.thought !== null ? "thought" : "word",
+    arrival: 0,
+    lap: 0,
+  };
+}
+
+/**
+ * Brings the line up to date in render. A new tool or thought takes it at once; the voice
+ * showing going quiet hands over. Either starts a fresh beat. Returns `line` if unchanged.
+ */
+export function forkStatusLineReconcile(
+  line: ForkStatusLineState,
+  voices: ForkStatusLineVoices,
+): ForkStatusLineState {
+  const toolKey = voices.tool?.key ?? null;
+  if (toolKey === line.toolKey && voices.thought === line.thought) return line;
+  const seen = { ...line, toolKey, thought: voices.thought };
+  // A thought still streaming only grows; it is the same arrival, not a new one per token.
+  const grew = line.thought !== null && voices.thought?.startsWith(line.thought) === true;
+  const arrived: ForkStatusVoice | null =
+    toolKey !== null && toolKey !== line.toolKey
+      ? "tool"
+      : voices.thought !== null && voices.thought !== line.thought && !grew
+        ? "thought"
+        : null;
+  if (arrived !== null) return { ...seen, voice: arrived, arrival: line.arrival + 1 };
+  if (speaks(seen, seen.voice)) return seen;
+  return { ...forkStatusLineAdvance(seen), arrival: line.arrival + 1 };
+}
+
+/** Whether the line needs a beat: nothing pins it and it has more than the word to say. */
+export function forkStatusLineRotates(voices: ForkStatusLineVoices): boolean {
+  return voices.pinned === null && (voices.tool !== null || voices.thought !== null);
+}
+
+/** What the line says: a pinned label, else the voice showing; each lap gets a fresh word. */
+export function forkStatusLineText(
+  voices: ForkStatusLineVoices,
+  line: ForkStatusLineState,
+  wordSeed: string,
+): string {
+  if (voices.pinned !== null) return voices.pinned;
+  if (line.voice === "tool" && voices.tool !== null) return voices.tool.label;
+  if (line.voice === "thought" && voices.thought !== null) return voices.thought;
+  return forkThinkingWord(line.lap === 0 ? wordSeed : `${wordSeed}:${line.lap}`);
 }

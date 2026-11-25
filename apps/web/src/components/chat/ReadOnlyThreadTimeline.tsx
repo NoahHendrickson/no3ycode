@@ -54,6 +54,9 @@ export function ReadOnlyThreadTimeline(props: {
   readonly renderFooter?: (items: ReadonlyArray<OrchestrationV2ProjectedTurnItem>) => ReactNode;
   /** What stands below the timeline, where the composer would. */
   readonly children: (controls: { readonly scrollToEnd: () => void }) => ReactNode;
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  readonly forkStreamLiveReplies?: boolean;
+  /* fork:end fork-quiet-live-turn */
 }) {
   const { threadKey, projection } = props;
   const listRef = useRef<LegendListRef | null>(null);
@@ -130,6 +133,9 @@ export function ReadOnlyThreadTimeline(props: {
             onViewportAttach={follow.attachTimelineViewport}
             onFooterGrow={follow.onTimelineFooterGrowStable}
             footer={props.renderFooter?.(items) ?? null}
+            /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+            forkStreamLiveReplies={props.forkStreamLiveReplies === true}
+            /* fork:end fork-quiet-live-turn */
           />
         </SideThreadsOpenContext>
         {follow.showScrollToBottom ? (

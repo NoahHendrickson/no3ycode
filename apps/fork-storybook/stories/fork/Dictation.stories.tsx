@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import {
+  ForkDictationCancelButton,
   ForkDictationGhostMic,
   ForkDictationNotices,
   ForkDictationPreview,
-  ForkDictationPrimaryButton,
 } from "~/custom/voice/ForkDictationControl";
 import type { ForkDictation } from "~/custom/voice/forkDictation";
 
-import { Row, Stack } from "../Specimen.tsx";
+import { Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
 
 type Phase = ForkDictation["state"]["phase"];
@@ -32,18 +32,14 @@ const dictation = (phase: Phase, error: string | null = null): ForkDictation => 
   settleWithoutControls: noop,
 });
 
-// ComposerPrimaryActions' send button class, which dictation wears in the send slot.
-const SEND_BUTTON =
-  "relative isolate flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-message-action text-message-action-foreground shadow-xs transition-all duration-150 enabled:cursor-pointer enabled:inset-shadow-control-highlight enabled:shadow-message-action/24 hover:scale-105 hover:bg-message-action-hover active:inset-shadow-control-pressed active:shadow-none disabled:pointer-events-none disabled:opacity-64 disabled:shadow-none disabled:hover:scale-100 sm:h-8 sm:w-8 [&_svg]:pointer-events-none";
-
-/** The composer's controls for one dictation phase: the ghost mic (or the level timeline while
-    live) and the send slot it takes over. */
+/** The composer's right-hand actions for one dictation phase: the mic, which a live session swaps
+    for the white capsule (its level and the check), and the X that cancels it. */
 function Controls({ phase }: { phase: Phase }) {
   const value = dictation(phase);
   return (
-    <div className="flex items-center gap-2">
+    <div data-chat-composer-actions="right" className="flex items-center gap-1">
       <ForkDictationGhostMic dictation={value} disabled={false} />
-      <ForkDictationPrimaryButton dictation={value} disabled={false} className={SEND_BUTTON} />
+      {value.blocksSubmission ? <ForkDictationCancelButton dictation={value} /> : null}
     </div>
   );
 }
@@ -71,8 +67,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Dictation in the composer: the mic beside attach; a live session shows its level and turns
-    send into the check, with an X to cancel. */
+/** Dictation in the composer: the mic beside send; a live session grows a white capsule with its
+    level and a check where the mic was, and an X to cancel. */
 export const Playground: Story = {};
 
 /** Every phase: at rest, preparing, recording, and transcribing (the check spins). */
@@ -81,11 +77,23 @@ export const Phases: Story = {
   render: () => (
     <Stack gap={3}>
       {PHASES.map((phase) => (
-        <Row key={phase} label={phase}>
+        <div key={phase}>
+          <span className="font-mono text-[11px] text-muted-foreground">{phase}</span>
           <InComposer phase={phase} />
-        </Row>
+        </div>
       ))}
     </Stack>
+  ),
+};
+
+/** A live session's cancel X, trailing the capsule, and leading it beside stop. */
+export const CancelButton: Story = {
+  name: "Cancel button",
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <div data-chat-composer-actions="right" className="flex items-center gap-1">
+      <ForkDictationCancelButton dictation={dictation("recording")} />
+    </div>
   ),
 };
 

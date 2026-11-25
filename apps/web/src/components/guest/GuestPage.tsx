@@ -435,6 +435,9 @@ function GuestThread({
         <ReadOnlyThreadTimeline
           // No ":" so the timeline finds no environment thread behind the key.
           threadKey={`guest-${shareId}`}
+          /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+          forkStreamLiveReplies
+          /* fork:end fork-quiet-live-turn */
           projection={projection}
           historyControls={historyControls}
           turnItemSource={turnItemSource}

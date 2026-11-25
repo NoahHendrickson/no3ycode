@@ -1,7 +1,8 @@
 /**
  * The Mac fork's "Queued · N" banner on the no3y iPhone composer (`.fork/customizations.yaml#fork-queued-runs-banner`):
  * a collapsible glass card right above the composer card with one line per queued message, Send
- * now / Steer, Edit and Remove on each, and Move up / Move down in its long-press menu.
+ * now / Steer, Edit and Remove on each, a leading grip to drag a row to a new place, and Move up /
+ * Move down in its long-press menu.
  */
 import ArrowDown01Icon from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import ArrowUp01Icon from "@hugeicons/core-free-icons/ArrowUp01Icon";
@@ -22,7 +23,7 @@ import type { EnvironmentId, RunId, ThreadId } from "@t3tools/contracts";
 import { Atom } from "effect/reactivity";
 import * as Haptics from "expo-haptics";
 import { useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Animated from "react-native-reanimated";
 
 import { AppText as Text } from "../src/components/ui/AppText";
@@ -42,15 +43,16 @@ import { HugeIcon, type HugeIconData } from "./HugeIcon";
 import { NO3Y_PANEL_MARGIN, No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_FADE_IN, NO3Y_FADE_OUT, NO3Y_GLASS_RISE_IN, NO3Y_LAYOUT } from "./no3yMotion";
 import { no3yPromptStash, stashPromptText } from "./No3yPromptStashSheet";
-import { no3yQueuedSender, no3yQueueMove } from "./no3yQueuedRuns";
+import { QueueGrip, type QueueDrag, useNo3yQueueDrag, useNo3yQueueRow } from "./No3yQueueDrag";
+import { no3yQueueDrop, no3yQueuedSender, no3yQueueShownRuns } from "./no3yQueuedRuns";
 
 const RADIUS = 22;
 
 type RowAction = "steer" | "edit" | "remove" | "up" | "down" | "stash";
+type QueueAction = Exclude<RowAction, "up" | "down">;
 
 // Four and a half 44pt rows, so a cut-off row shows there is more.
 const QUEUE_ROWS_MAX_HEIGHT = 44 * 4.5;
-
 export function No3yQueuedRunsBanner(props: {
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
@@ -77,13 +79,22 @@ export function No3yQueuedRunsBanner(props: {
   const [busyRunId, setBusyRunId] = useState<RunId | null>(null);
   const [resuming, setResuming] = useState(false);
   const busyRef = useRef(false);
-  const queuedRuns = workflow?.queuedRuns ?? [];
-  if (queuedRuns.length === 0) return null;
+  const [dropped, setDropped] = useState<{
+    readonly order: ReadonlyArray<RunId>;
+    readonly base: ReadonlyArray<RunId>;
+  } | null>(null);
+  const serverRuns = workflow?.queuedRuns ?? [];
+  const serverIds = serverRuns.map(({ run }) => run.id);
+  const shownRuns = no3yQueueShownRuns(serverRuns, ({ run }) => run.id, dropped);
+  if (dropped !== null && shownRuns === null) setDropped(null);
+  const queuedRuns = shownRuns ?? serverRuns;
   const runIds = queuedRuns.map(({ run }) => run.id);
+  const { drag, listRef, onListLayout, release } = useNo3yQueueDrag(runIds);
+  if (queuedRuns.length === 0) return null;
   const canSend = workflow?.canPromoteToSteer === true || workflow?.canSendNow === true;
   const sendLabel = workflow?.canSendNow ? "Send now" : "Steer";
 
-  const act = async (runId: RunId, action: RowAction) => {
+  const act = async (runId: RunId, action: QueueAction) => {
     if (busyRef.current) return;
     const entry = queuedRuns.find(({ run }) => run.id === runId);
     if (entry === undefined) return;
@@ -120,9 +131,6 @@ export function No3yQueuedRunsBanner(props: {
       const id = stashPromptText(entry.text, null);
       const result = await cancel(buildCancelQueuedRunCommand({ ...target, runId }));
       if (result._tag === "Failure") no3yPromptStash.remove(id);
-    } else if (action === "up" || action === "down") {
-      const move = no3yQueueMove(runIds, runId, action);
-      if (move !== null) await reorder({ ...target, input: { threadId: props.threadId, ...move } });
     } else if (workflow?.canSendNow) {
       // Starts a held queue with this message when the thread is idle.
       await resume({ ...target, input: { threadId: props.threadId, runId } });
@@ -136,6 +144,27 @@ export function No3yQueuedRunsBanner(props: {
         },
       });
     }
+    busyRef.current = false;
+    setBusyRunId(null);
+  };
+
+  // Every reorder (a drag, Move up / Move down, VoiceOver) lands here, at `version` of the order.
+  const drop = async (from: number, to: number, version: number) => {
+    // The queue changed since; these slots belong to the old order.
+    if (version !== drag.version.get()) return;
+    const result = busyRef.current ? null : no3yQueueDrop(runIds, from, to);
+    if (result === null) {
+      release();
+      return;
+    }
+    busyRef.current = true;
+    setBusyRunId(result.move.runId);
+    setDropped({ order: result.order, base: serverIds });
+    const outcome = await reorder({
+      ...target,
+      input: { threadId: props.threadId, ...result.move },
+    });
+    if (outcome._tag === "Failure") setDropped(null);
     busyRef.current = false;
     setBusyRunId(null);
   };
@@ -165,7 +194,11 @@ export function No3yQueuedRunsBanner(props: {
           accessibilityRole="button"
           accessibilityLabel={`${queuedRuns.length} queued message${queuedRuns.length === 1 ? "" : "s"}`}
           accessibilityState={{ expanded }}
-          onPress={() => setExpanded((value) => !value)}
+          onPress={() => {
+            // Collapsing unmounts the grips, which may never see a held drag end.
+            if (expanded) release();
+            setExpanded(!expanded);
+          }}
           style={({ pressed }) => ({
             flex: 1,
             minHeight: 44,
@@ -211,10 +244,12 @@ export function No3yQueuedRunsBanner(props: {
       {expanded ? (
         <Animated.View entering={NO3Y_FADE_IN} exiting={NO3Y_FADE_OUT}>
           {/* A long queue scrolls under its header, which stays reachable above the keyboard. */}
-          <ScrollView
+          <Animated.ScrollView
+            ref={listRef}
             style={{ maxHeight: QUEUE_ROWS_MAX_HEIGHT }}
             bounces={false}
             keyboardShouldPersistTaps="handled"
+            onLayout={onListLayout}
           >
             {queuedRuns.map(({ run, text, attachments, context, message }, index) => {
               const controls = resolveThreadQueueRowControls({
@@ -257,11 +292,19 @@ export function No3yQueuedRunsBanner(props: {
                     text.trim().length > 0
                   }
                   canReorder={busyRunId === null}
-                  onAction={(action) => void act(run.id, action)}
+                  drag={drag}
+                  onDrop={(from, to, version) => void drop(from, to, version)}
+                  onAction={(action) => {
+                    if (action === "up" || action === "down") {
+                      void Haptics.selectionAsync();
+                      const to = action === "up" ? index - 1 : index + 1;
+                      void drop(index, to, drag.version.get());
+                    } else void act(run.id, action);
+                  }}
                 />
               );
             })}
-          </ScrollView>
+          </Animated.ScrollView>
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -284,21 +327,38 @@ function QueuedRow(props: {
   readonly canRemove: boolean;
   readonly canStash: boolean;
   readonly canReorder: boolean;
+  readonly drag: QueueDrag;
+  readonly onDrop: (from: number, to: number, version: number) => void;
   readonly onAction: (action: RowAction) => void;
 }) {
-  const { palette } = props;
-  const position = `queued message ${props.index + 1}`;
+  const { palette, drag, index } = props;
+  const position = `queued message ${index + 1}`;
+  const row = useNo3yQueueRow(drag, index, palette.panelFallback);
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        minHeight: 44,
-        paddingRight: 8,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: palette.hairline,
-      }}
+    <Animated.View
+      onLayout={row.onLayout}
+      style={[
+        {
+          flexDirection: "row",
+          alignItems: "center",
+          minHeight: 44,
+          paddingRight: 8,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: palette.hairline,
+        },
+        row.style,
+      ]}
     >
+      <QueueGrip
+        palette={palette}
+        position={position}
+        index={index}
+        count={props.count}
+        enabled={props.canReorder}
+        drag={drag}
+        onDrop={props.onDrop}
+        onStep={(direction) => props.onAction(direction)}
+      />
       <Menu
         accessibilityLabel={`Actions for ${position}`}
         shouldOpenOnLongPress
@@ -358,7 +418,6 @@ function QueuedRow(props: {
             flexDirection: "row",
             alignItems: "center",
             gap: 6,
-            paddingLeft: 16,
             opacity: pressed ? 0.6 : 1,
           })}
         >
@@ -412,7 +471,7 @@ function QueuedRow(props: {
         disabled={!props.canRemove}
         onPress={() => props.onAction("remove")}
       />
-    </View>
+    </Animated.View>
   );
 }
 

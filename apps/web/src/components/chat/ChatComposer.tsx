@@ -2089,17 +2089,17 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   });
   const { blocksSubmission: voiceInputActive, submitAfterDictation } = speechInput;
   /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation
-     The fork's mic, send-slot check and X and right Command tap draw upstream's session. */
+     The fork's mic, its check capsule, the send-slot X and right Command tap draw upstream's session. */
   const dictation = forkDictationFromSpeech(speechInput);
   useForkDictationHotkeyTarget(dictation, forkDictationStartBlocked, composerFormRef);
   // In a split, the pane without window input binds mod+shift+d only while its form has focus.
   const ownsGlobalInput = useOwnsGlobalInput();
-  // Mirrors where ComposerPrimaryActions renders the send slot: when the check and X unmount
+  // Mirrors where ComposerPrimaryActions renders the send slot: when the controls unmount
   // (an approval or a choice-only question takes it), a live recording is
   // transcribed rather than left running with nothing on screen to end it.
   const dictationControlsVisible =
     activePendingApproval === null && (pendingUserInputs.length === 0 || dictationAnswersQuestion);
-  // The mic lives in the control row; a live session takes the send slot for its whole length.
+  // A live session's X takes the send slot for its whole length.
   const dictationOwnsPrimaryAction = dictation.isAvailable && dictation.blocksSubmission;
   const { settleWithoutControls: settleDictationWithoutControls } = dictation;
   const dictationLive = dictation.blocksSubmission;
@@ -3948,9 +3948,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         onSubmitMessage={handleSubmitMessageStable}
         onResume={onResume}
         /* fork:begin fork-local-dictation — see .fork/customizations.yaml#fork-local-dictation */
-        forkDictation={
-          dictationOwnsPrimaryAction ? { dictation, disabled: forkDictationStartBlocked } : null
-        }
+        forkDictation={dictationOwnsPrimaryAction ? dictation : null}
         /* fork:end fork-local-dictation */
         /* fork:begin fork-pending-user-input — see .fork/customizations.yaml#fork-pending-user-input
            Previous lives in the question card (onPrevious below). */

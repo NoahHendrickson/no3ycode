@@ -5,15 +5,48 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { useMessages } from "gt-react";
-import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
-import { use, type ReactNode } from "react";
+import { use, useEffect, useState, type ReactNode } from "react";
 import { ActivityShimmerOverlay } from "~/components/chat/TimelineRowParts";
 import { TimelineRowActivityCtx, TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { observeVisibleAnimation } from "~/lib/visibleAnimation";
 import { SidebarV2WorkingMark } from "./SidebarV2StatusIndicator";
 import { ForkLiveTaskList } from "./ForkLiveTaskList";
 import { ForkLiveTasksCtx } from "./forkLiveTasks";
-import { forkStatusLineLabel, type ForkStatusLineRow } from "./forkWorkingRowLast";
+import {
+  forkStatusLineAdvance,
+  forkStatusLineReconcile,
+  forkStatusLineRotates,
+  forkStatusLineStart,
+  forkStatusLineText,
+  forkStatusLineVoices,
+  type ForkStatusLineRow,
+  type ForkStatusLineVoices,
+} from "./forkWorkingRowLast";
+
+const BEAT_MS = 4000;
+
+/** The rotation's state; forkWorkingRowLast holds the rules, this hook only the clock. */
+function useStatusLineState(voices: ForkStatusLineVoices) {
+  const [line, setLine] = useState(() => forkStatusLineStart(voices));
+  const next = forkStatusLineReconcile(line, voices);
+  if (next !== line) setLine(next);
+  const rotates = forkStatusLineRotates(voices);
+  const { arrival } = next;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a wall-clock beat, restarted when a voice takes the line
+  useEffect(() => {
+    if (!rotates) return;
+    // A beat queued before a newer arrival is dropped.
+    const id = window.setInterval(
+      () =>
+        setLine((current) =>
+          current.arrival === arrival ? forkStatusLineAdvance(current) : current,
+        ),
+      BEAT_MS,
+    );
+    return () => window.clearInterval(id);
+  }, [rotates, arrival]);
+  return next;
+}
 
 export function ForkLiveStatusLine({
   row,
@@ -28,9 +61,9 @@ export function ForkLiveStatusLine({
   const m = useMessages();
   const live = row.forkLive;
   const groupId = live?.groupId;
-  const label =
-    forkStatusLineLabel(live, use(TimelineRowActivityCtx), ctx.workspaceRoot, m) ??
-    forkThinkingWord(row.forkWordSeed);
+  const voices = forkStatusLineVoices(live, use(TimelineRowActivityCtx), ctx.workspaceRoot, m);
+  const rotation = useStatusLineState(voices);
+  const label = forkStatusLineText(voices, rotation, row.forkWordSeed);
   const text = (
     <>
       <span className="min-w-0 truncate">{label}</span>

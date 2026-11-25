@@ -127,8 +127,9 @@ describe("fork guard: fork-model-picker", () => {
         expect(rule.body, rule.selector).not.toMatch(/display:\s*none/u);
       }
     }
-    // Rows: the selected tab or the inline provider label names it.
+    // Rows: the selected tab or the row's provider icon names it.
     expect(content).toContain("const modelName = stripProviderName(displayName, {");
+    expect(content).toContain('<span className="sr-only">, {providerLabel}</span>');
     // Gemini and GPT models keep their family names in the web model picker trigger.
     const displayName = readSibling("../custom/modelPickerDisplayName.ts");
     expect(displayName).toContain('"Gemini "');

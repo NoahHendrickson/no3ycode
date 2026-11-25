@@ -58,33 +58,40 @@
     left running when its pane loses input or the plan follow-up's
     Implement takes the slot settles on the spot. In a split, the pane
     without window input binds upstream's mod+shift+d only while its form
-    has focus. A live session keeps stop beside the check while a turn runs.
-    The mic is a filled-glyph ghost in the composer's control row, after
-    attach and before the mode controls (Full access), at the row's 20px
-    ghost size; the send slot always shows send while idle. Dictation is off
+    has focus.
+    The mic is a filled-glyph ghost just left of the send slot; the send
+    slot always shows send while idle. Dictation is off
     while a send is in flight, Implement/Refine holds the slot, the draft is
     locked to a project pick, or a question has no slot for the controls (a
     choice-only question, or any question on a compact viewport, where
     Next/Submit sit in a strip below the editor). A typed-answer question is
     dictated into like the prompt and a live session holds its Next/Submit
-    slot as it holds send's. A live session borrows the send button: it
-    becomes the check with a ghost cancel X beside it, and the check spins
-    while transcribing or cleaning up; the control-row mic stays in place,
-    lit (full ink, pure white in dark), and while recording a click on it finishes the session as the check does. The level timeline is a small fixed canvas right after the mic,
-    pushing the mode controls along for the session so the prompt row stays
-    the text's: a 2px dot per 50 ms sample, newest at the right, so silence is
-    dots and speech is bars scrolling left, on a -50…-10 dB scale, painted in
-    the mic's colour. Mic and timeline share one
-    rounded rectangle on the control row's 4% fill. The X sits 4px from the
-    check and its margins cancel its own footprint, so a one-button send slot
-    does not widen and the prompt beside it does not reflow.
+    slot as it holds send's. A live session swaps the mic for one fully
+    rounded, pure-white capsule (in every mode) holding the level meter
+    and a check circle in the done-status blue at its right end, the check
+    exactly where the mic was so finishing needs no pointer travel. The
+    capsule morphs open leftward out of the check on transforms alone: its
+    white fill is two round caps and a body, the start cap sliding out while
+    the body stretches behind it and the meter follows the edge in, so the
+    ends never distort and the prompt beside it reflows once rather than
+    every frame (a fade under reduced motion). The X fades in.
+    The check spins while transcribing or cleaning up. The send slot shows
+    only a ghost cancel X, in send's box, to the capsule's right. The level
+    meter is a row of 2px bars that react in place to the current level, each
+    on its own slowly drifting weight with a lean to the middle, so speech
+    reads uneven rather than as one shape (dots in silence), on a -56…-20 dB
+    scale, painted in the capsule's dark ink; it never scrolls a history. It
+    undoes upstream's worklet level easing (speech/pcmWorklet.ts, 75 ms up,
+    200 ms down) so the bars drop the moment speech stops; that inversion is
+    an accepted trade-off for leaving upstream's worklet untouched.
     Attach stays in the control row, disabled rather than hidden for the
     session. ChatComposer decides when dictation owns the slot
     and ComposerPrimaryActions hands it over on every path that renders send,
-    including while a turn runs, where it sits to stop's left so stop keeps
-    the right edge. The check wears the send button's own class list and fork
-    tone attribute; the X is a ghost in send's box in pure white, from
-    theme.custom.css. Nothing animates. The error popover renders beside the
+    including while a turn runs. Where stop was the only idle action it keeps
+    the right edge beside the capsule and the X moves to the capsule's left,
+    so the check still sits where the mic was and a second click in place
+    never cancels. The X is a ghost in send's box in pure white, from
+    theme.custom.css. The error popover renders beside the
     slot whatever it shows, with Open voice settings for a microphone
     permission error. The microphone tooltip is the word Dictate, on the popup
     frost every glass tooltip shares (fork-popup-surface), a step larger than
@@ -102,6 +109,7 @@
     - apps/web/src/components/chat/ComposerFooterControls.tsx
     - apps/web/src/routes/__root.tsx
     - apps/web/src/speech/useEnvironmentSpeechInput.ts
+    - apps/web/src/speech/pcmWorklet.ts
     - scripts/build-desktop-artifact.ts
     - scripts/build-desktop-artifact.test.ts
     - docs/user/composer.md
@@ -803,7 +811,8 @@
     surface reads the same Done/Idle predicate as its title (`cardRecedes`);
     upstream's shouldRecede survives for the slim shelves only, where
     brightness still encodes unread-ness — the card delegates unread to the
-    Done dot.
+    Done dot. Settled slim titles stay Regular even when unread; upstream
+    lifts them to Medium, which made a few settled rows read as bold.
 
     Status text labels ("Working", "Approval", "Monitoring") are replaced by a
     single mark in a fixed box on the trailing end of the title line (10px
@@ -2654,7 +2663,7 @@
     left side. On Black the bot panel's two (data-fork-tab-menu="bot-threads") and
     their open buttons are the sidebar's #141414 ink, since they open over the
     cream panel, and the sidebar headers' menus (data-fork-tab-menu="sidebar") are the
-    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and upstream callers' sideOffset, their nub-less standoff, stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. A live dictation session sits the mic and level timeline in one rounded pill of the menus' shell, which fades in and grows out to the right as the session starts. On close the timeline outlives the session (custom/voice/ForkDictationControl's TIMELINE_CLOSE_MS, data-fork-dictation-closing, kept only on Inlet with motion allowed by inletMenuMorph's useInletMorphPresence) to retract into the mic as the pill closes and fades with it. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
+    panel cream, a hovered or chosen row black at 8% (#e4e0c7). Popups restate --background as their fill. Tooltips grow a nub toward their trigger (concave corners into a tapering, round-tipped neck): Base UI's tooltip arrow, added hidden in components/ui/tooltip.tsx (fenced) and drawn as a mask in the tooltip's fill, the tooltip standing off by exactly the nub's depth (a fenced sideOffset there, read from custom/forkActivePalette.ts, the one "is Inlet on?" store the icon weight, morph, tab switch and anchored menu share) and growing out of it on open; the row hover card opts out through ThreadHoverCard's fenced forkNub={false}, and upstream callers' sideOffset, their nub-less standoff, stays ignored under Inlet; Black's are its sidebar's ink over the cream panel and cream over its dark-ink surfaces, each tooltip taking the --fork-inlet-tooltip pair its trigger's surface declares (read from the trigger in the fenced onOpenChange of components/ui/tooltip.tsx, since the tooltip is portaled). Inlet draws filled icons, as every fork palette does (phosphor-duotone-icons), and here the hand-drawn worktree mark's wash goes solid too. The composer's mode menu (keyed on the permissions section it holds) hangs from the mode chip the same way, its tab on whichever side it opens, with its content straight on the shell. The composer's usage readout (custom/ComposerUsageLimitsReadout) hangs from the usage bar the same way, in the model menu's shell (12px corners) with each provider's section an inset 8px-cornered panel. The composer's
     model menu (overrides ProviderModelPicker) hangs from its button the other
     way up, without a drop shadow (it would fall on the button), and is drawn open and closed by the one-shape morph (below; static under reduced motion); it is drawn in the composer's materials: a shell a step off the vessel (which the button's fill matches), the model list set 4px into it as a panel in the prompt's fill, so the
     provider rail is the shell and its chosen tab runs into the list through
@@ -5246,7 +5255,11 @@
     shared packages or mobile. The strip is a per-provider
     list of family words, not the provider's display name: Grok's "Grok Build"
     keeps its name because "Build" alone is nothing. Picker rows drop the name
-    too, since the selected provider tab or the row's provider label names it.
+    too, since the selected provider tab or the row's provider icon names it
+    (screen readers still get the provider name from a visually hidden label).
+    Flat rows (search, Pinned) from a reseller like OpenCode add the
+    sub-provider's logo (OpenRouter, Anthropic, OpenAI, Ollama) after the
+    name, or its muted name when there is no logo.
     The menu is a vertical rail of provider icon tabs on the left, beside a
     search field over the chosen scope's models. The rail comes after the
     list in the DOM (the row is reversed to show it on the left), so ArrowDown
@@ -5282,8 +5295,8 @@
     the search field (capture-phase redirect, ahead of the menu's type-ahead,
     also on the popup itself, where the menu parks focus after a swap),
     and any query swaps the list for one flat,
-    provider-agnostic list of every matching model — glyph and instance name
-    inline, ranked like upstream's search, locked provider still respected;
+    provider-agnostic list of every matching model — glyph and sub-provider
+    inline, instance name visually hidden, ranked like upstream's search, locked provider still respected;
     Enter picks the first result and Escape clears the query before it
     closes the menu. Rows reveal a pin at their far right on hover (Pin /
     Unpin); it toggles without choosing the row, and never moves a row:
@@ -6565,11 +6578,20 @@
     live-tool-shine. When an approval, an answer, compaction or worktree
     setup owns the tail, MessagesTimeline passes `lineYields` and nothing
     folds: upstream's rows keep their order above "Working for …". Upstream's
-    failed-tool shape (a `thinking` row with a groupId) never folds. Labels
-    are one rule in forkStatusLineLabel. The thinking word comes from
-    @t3tools/shared/forkThinkingWords, seeded by what last landed (the row
-    above the line or the live step), so it holds until something new lands;
-    the no3y iOS line uses the same module (no3y-mobile-redesign). Neither
+    failed-tool shape (a `thinking` row with a groupId) never folds. The
+    line rotates three voices; the rules and the text are pure functions in
+    forkWorkingRowLast.ts, and ForkLiveStatusLine only runs the 4s clock:
+    the agent's latest thought (Zen's liveAnswerPreview, see
+    fork-quiet-live-turn), the running tool, and the thinking word. A new
+    tool or thought takes the line at once; otherwise it turns every 4s,
+    skipping voices with nothing to say, and the word changes each lap. A
+    provider startup or "Waiting on N subagents" holds the line alone and
+    stops the clock. The thinking word comes from
+    @t3tools/shared/forkThinkingWords: the seed is what last landed (the row
+    above the line or the live step) and picks the first word, and each lap
+    of the rotation moves on to the next; with nothing else to say the line
+    has no laps, so the word holds until something new lands. The no3y iOS
+    line uses the same module (no3y-mobile-redesign). Neither
     the working row nor the finished turn's "Worked for …" row has a divider
     (theme.custom.css).
   tier: 4
@@ -6604,6 +6626,47 @@
     - apps/web/src/custom/forkWorkingRowLast.test.ts
     - packages/shared/src/forkThinkingWords.test.ts
 
+- id: fork-quiet-live-turn
+  intent: >
+    A running turn reads as one status line in every tool-call mode, the way
+    Zen reads. Outside Zen upstream streams each reply as it lands, so a
+    turn grew a column of command, reply, command rows that the turn fold
+    swallowed into "Worked for …" the moment it ended. The fork holds a
+    running turn's replies (Zen's rule: everything after the response
+    boundary, except a revealed message, a steer's answer and a final-answer
+    reply) until the turn ends, so its steps join one stretch that folds into
+    the status line (fork-working-row-last), and the line reads Zen's
+    preview of them. MessagesTimeline opts in with forkHoldLiveReplies,
+    except while Find is open, which searches reply text, and the guest share
+    page opts out (forkStreamLiveReplies), so a guest still watches replies
+    stream as upstream shows them. While the turn waits on the user (an
+    approval or a question), the latest held reply shows, since it usually
+    explains the request (forkShowLatestHeldReply); unlike Zen. The hold runs
+    after settleSupersededReasoning, so a thought followed only by a held
+    reply still reads settled. Upstream's logic
+    tests derive without the flag and keep upstream's shapes. The guard runs
+    one fixture through Zen and through the hold and requires the same
+    replies, so a sync that adds a Zen exemption fails it. The no3y iOS app
+    is unchanged.
+  tier: 3
+  files:
+    - apps/web/src/__fork_guards__/forkQuietLiveTurn.test.ts
+  shadows: []
+  watch:
+    # Fenced: the forkHoldLiveReplies input, forkHeldLiveReplyIds and the
+    # filter in timelineRowEntries after the visibility filters.
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    # Fenced: passes forkHoldLiveReplies, the forkStreamLiveReplies prop, and
+    # reads liveAnswerPreview in every mode (upstream gates it to Zen).
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    # Fenced: passes forkStreamLiveReplies through to MessagesTimeline.
+    - apps/web/src/components/chat/ReadOnlyThreadTimeline.tsx
+    # Fenced: the guest page sets forkStreamLiveReplies.
+    - apps/web/src/components/guest/GuestPage.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkQuietLiveTurn.test.ts
+    - apps/web/src/custom/forkWorkingRowLast.test.ts
+
 - id: fork-trail-summary
   intent: >
     A finished stretch of steps between two messages reads as one summary
@@ -6620,9 +6683,14 @@
     Rows read like Claude Code: a summary row carries a chevron that turns
     when it opens, every work-log row sizes its label to its text so its
     chevron hugs it (WorkLogLine; the hover timestamp, tagged
-    data-row-timestamp in TimelineRowParts, still sits at the far end), and an opened group hangs under its summary on a quiet left rail
-    without the scrollbar or its gutter (theme.custom.css,
-    `[data-tool-group-scroll]`), still height-capped and virtualized.
+    data-row-timestamp in TimelineRowParts, still sits at the far end), and an
+    opened group hangs under its summary on a rail without the scrollbar or its
+    gutter (theme.custom.css, `[data-tool-group-scroll]`), still height-capped
+    and virtualized. The rail is one 2px line with rounded ends, drawn as the
+    list's own background (a bar between two round caps), so it stays put
+    while the list scrolls and needs no :has() or wrapper. It is centred under
+    the summary icon and spans the steps' icons. A thought-only group keeps the
+    plain 1px rail.
   tier: 3
   files:
     - apps/web/src/custom/forkTrailSummary.ts
@@ -7220,8 +7288,11 @@
     ThreadDetailScreen's composer panels so it sits right above the composer
     card at its width, and stays while a question hides the composer) the
     same banner is a collapsible glass card: one line per message with the
-    sender for non-owners, Send now / Steer, Edit and Remove buttons, and
-    Move up / Move down plus the same actions in each row's long-press menu,
+    sender for non-owners, Send now / Steer, Edit and Remove buttons, a
+    leading grip that drags a row to a new place (the row follows the finger
+    on the UI thread, a long queue scrolls when the row presses into an edge,
+    and the order shows dropped until the server's changes),
+    and Move up / Move down plus the same actions in each row's long-press menu,
     on the same mobile queue commands; a held queue offers Resume. Its
     long-press menu's Move to stash puts a text-only, owner-written message in
     the iOS prompt stash (no3y-prompt-stash) and takes it back if removing the
@@ -7235,6 +7306,7 @@
     - apps/web/src/custom/stashQueuedRun.test.ts
     - docs/user/composer.md
     - apps/mobile/fork/No3yQueuedRunsBanner.tsx
+    - apps/mobile/fork/No3yQueueDrag.tsx
     - apps/mobile/fork/no3yQueuedRuns.ts
     - apps/mobile/fork/no3yQueuedRuns.test.ts
   shadows: []
@@ -7518,15 +7590,26 @@
     round update icon becomes a fully rounded pill reading "Update": pure
     white with black text in dark mode (a fixed white, not --primary, which
     palettes recolour), inverted foreground/background in light mode where
-    white would vanish on the sidebar. Checking, downloading (with its
-    progress ring), idle, and download/install errors (whose aria-label does
-    not contain "Update") keep upstream's icon button. Only the look changes: the click,
-    tooltip, aria-label, and release-notes popover stay upstream's.
+    white would vanish on the sidebar. While the update downloads the pill
+    stays, with a small progress ring inside it before the label, instead of
+    turning into upstream's download-icon ring. Checking, idle, and download/install
+    errors (whose aria-label does not contain "Update") keep upstream's icon
+    button. The click, tooltip, aria-label, and release-notes popover stay
+    upstream's. Installing a downloaded update (from the pill or Settings >
+    About) asks in a compact "Restart to update" dialog instead of the generic
+    confirm, whose long question title, wordy body and Cancel/Confirm footer
+    band read badly; it resolves the same yes/no, so the install path is
+    unchanged. That left upstream's confirmation-message helper unused, hence
+    its knip ignore.
   tier: 4
-  files: []
+  files:
+    - apps/web/src/custom/ForkSidebarUpdate.tsx
   shadows: []
   watch:
     - apps/web/src/components/sidebar/SidebarUpdatePill.tsx
+    - apps/web/src/components/settings/SettingsPanels.tsx
+    - apps/web/src/components/sidebar/DesktopUpdateStatusIcon.tsx
+    - knip.jsonc
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
 
