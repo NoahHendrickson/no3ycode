@@ -180,10 +180,6 @@ export const ALLOWLIST = [
   }),
   // Pending (Nov 25): props-only, but their stories need fixtures not written yet (an open menu's
   // project choices; a connected environment).
-  ...b5Exempt("pending: story not written yet", {
-    "DraftProjectMenuPopup.tsx": ["DraftProjectMenuPopup"],
-    "scheduled/scheduledPageChrome.tsx": ["EnvironmentLabel"],
-  }),
 ];
 
 /** B5 entries for components that are not atomic: one per name, which must match exactly. */

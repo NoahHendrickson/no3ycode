@@ -44,7 +44,7 @@ export function useConnectedEnvironments(): ReadonlyArray<EnvironmentPresentatio
 }
 
 export function EnvironmentLabel(props: {
-  readonly environment: EnvironmentPresentation;
+  readonly environment: Pick<EnvironmentPresentation, "label" | "serverConfig">;
   readonly className?: string;
 }) {
   return (
