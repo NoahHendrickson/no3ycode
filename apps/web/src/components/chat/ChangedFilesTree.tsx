@@ -73,13 +73,15 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
     groups,
     allDirectoriesExpanded,
     resolvedTheme,
+    onToggleAllDirectories,
     onOpenTurnDiff,
     onFileContextMenu,
   } = props;
   const gt = useGT();
   const syncTimelineLayout = useSyncLayout();
   /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
-  const [forkOpen, setForkOpen] = useState(false);
+  // The persisted per-run "all folders" flag opens the card: unset, it starts folded.
+  const forkOpen = allDirectoriesExpanded;
   /* fork:end fork-changed-files-fold */
   const listedFiles = groups ? groups.flatMap((group) => group.files) : files;
   const hiddenFileCount = totals.count - listedFiles.length;
@@ -95,17 +97,19 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
     >
       <div
         data-changed-files-header=""
-        className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-secondary px-3 py-2 dark:bg-background dark:bg-linear-to-b dark:from-input/20 dark:to-input/20"
+        /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
+        className="sticky top-2 z-10 flex items-center justify-between gap-2 rounded-t-lg bg-secondary dark:bg-background dark:bg-linear-to-b dark:from-input/20 dark:to-input/20"
+        /* fork:end fork-changed-files-fold */
       >
         {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
-        {/* The whole strip folds the card, edge to edge; files open the diff. */}
+        {/* The whole strip folds the card; files open the diff. */}
         <button
           type="button"
           data-scroll-anchor-ignore
           aria-expanded={forkOpen}
-          className="-mx-3 -my-2 flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-[inherit] px-3 py-2 text-left text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-[inherit] px-3 py-2 text-left text-base text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           onClick={() => {
-            setForkOpen(!forkOpen);
+            onToggleAllDirectories();
             syncTimelineLayout();
           }}
         >
@@ -132,49 +136,53 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
         {/* fork:end fork-changed-files-fold */}
       </div>
       {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
-      <div className="p-2" hidden={!forkOpen}>
-        {/* fork:end fork-changed-files-fold */}
-        {groups ? (
-          groups.map((group) => (
-            <ChangedFilesGroupSection
-              key={group.key}
-              runId={runId}
-              group={group}
-              allDirectoriesExpanded={allDirectoriesExpanded}
-              resolvedTheme={resolvedTheme}
-              onOpenTurnDiff={onOpenTurnDiff}
-              onFileContextMenu={onFileContextMenu}
-            />
-          ))
-        ) : (
-          <ChangedFilesTree
-            key={`${runId}:${allDirectoriesExpanded}`}
-            runId={runId}
-            files={files}
-            allDirectoriesExpanded={allDirectoriesExpanded}
-            resolvedTheme={resolvedTheme}
-            onOpenTurnDiff={onOpenTurnDiff}
-            onFileContextMenu={onFileContextMenu}
-          />
-        )}
-      </div>
-      {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
-      {hiddenFileCount > 0 && forkOpen && (
-        /* fork:end fork-changed-files-fold */
-        <div className="px-3 pb-2">
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost-muted"
-            onClick={() => onOpenTurnDiff(runId, firstFilePath)}
-          >
-            {gt(
-              "{count, plural, one {{formattedCount} more file in the full diff} other {{formattedCount} more files in the full diff}}",
-              { count: hiddenFileCount, formattedCount: hiddenFileCount.toLocaleString() },
+      {forkOpen && (
+        <>
+          {/* fork:end fork-changed-files-fold */}
+          <div className="p-2">
+            {groups ? (
+              groups.map((group) => (
+                <ChangedFilesGroupSection
+                  key={group.key}
+                  runId={runId}
+                  group={group}
+                  allDirectoriesExpanded={allDirectoriesExpanded}
+                  resolvedTheme={resolvedTheme}
+                  onOpenTurnDiff={onOpenTurnDiff}
+                  onFileContextMenu={onFileContextMenu}
+                />
+              ))
+            ) : (
+              <ChangedFilesTree
+                key={`${runId}:${allDirectoriesExpanded}`}
+                runId={runId}
+                files={files}
+                allDirectoriesExpanded={allDirectoriesExpanded}
+                resolvedTheme={resolvedTheme}
+                onOpenTurnDiff={onOpenTurnDiff}
+                onFileContextMenu={onFileContextMenu}
+              />
             )}
-          </Button>
-        </div>
+          </div>
+          {hiddenFileCount > 0 && (
+            <div className="px-3 pb-2">
+              <Button
+                type="button"
+                size="xs"
+                variant="ghost-muted"
+                onClick={() => onOpenTurnDiff(runId, firstFilePath)}
+              >
+                {gt(
+                  "{count, plural, one {{formattedCount} more file in the full diff} other {{formattedCount} more files in the full diff}}",
+                  { count: hiddenFileCount, formattedCount: hiddenFileCount.toLocaleString() },
+                )}
+              </Button>
+            </div>
+          )}
+          {/* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */}
+        </>
       )}
+      {/* fork:end fork-changed-files-fold */}
     </div>
   );
 });

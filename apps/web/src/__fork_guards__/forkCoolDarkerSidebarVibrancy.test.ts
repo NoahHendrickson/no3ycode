@@ -203,10 +203,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
       (rule) =>
         rule.selector.includes("[data-changed-files-state]") && rule.body.includes("background"),
     );
-    // fork-message-bubble-shape names the attribute only to opt out of it.
-    const bubble = glassRules.find(
-      (rule) => rule.selector.includes(".bg-message") && !rule.selector.includes(":not("),
-    );
+    const bubble = glassRules.find((rule) => rule.selector.includes(".bg-message"));
     expect(changedFiles?.body).toMatch(/background:\s*rgb\(255 255 255 \/ 5%\)/u);
     expect(bubble?.body, "the bubble must match the changed-files card's wash").toMatch(
       /background-color:\s*rgb\(255 255 255 \/ 5%\)/u,

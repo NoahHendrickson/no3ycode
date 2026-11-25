@@ -3,8 +3,8 @@
  * Fork guard — see `.fork/customizations.yaml#fork-message-bubble-shape` and
  * `#fork-changed-files-fold`.
  *
- * The bubble rules key on the classes and attribute upstream's sent bubble carries; a sync that
- * renames any of them silently brings back the 16px corners, p-3 and the card fill.
+ * The bubble's shape lives in fenced classes, its lift in one per-theme token; the card's fold
+ * reuses the persisted per-run folders flag and unmounts its tree while folded.
  */
 
 import * as NodeFS from "node:fs";
@@ -19,55 +19,45 @@ function readSibling(relativePath: string): string {
 }
 
 const MARKER = `:root[${FORK_MARKER_ATTRIBUTE}="${FORK_MARKER_VALUE}"]`;
-const BUBBLE = "[data-user-message-bubble]";
+const rules = cssRules(readSibling("../theme.custom.css"));
 
 describe("fork guard: fork-message-bubble-shape", () => {
-  const rules = cssRules(readSibling("../theme.custom.css"));
-
-  it("rounds, pads and lightens the sent bubble", () => {
-    expect(ruleBodyFor(rules, [MARKER, BUBBLE])).toContain("border-radius: var(--radius-xl)");
-    expect(ruleBodyFor(rules, [MARKER, `${BUBBLE}.rounded-tr-md`])).toContain(
-      "border-top-right-radius: var(--radius-md)",
-    );
-    expect(ruleBodyFor(rules, [MARKER, `${BUBBLE}.rounded-br-md`])).toContain(
-      "border-bottom-right-radius: var(--radius-md)",
-    );
-    expect(ruleBodyFor(rules, [MARKER, `${BUBBLE}.p-3`])).toContain("padding: 8px 16px");
-    const wash = rules.find((rule) => rule.selector.includes(`${BUBBLE}.bg-message`));
-    expect(wash?.selector.startsWith(MARKER)).toBe(true);
-    // Dark Flat Glass (not the whole-window vibrancy wash) and dark Basic only.
-    const scope = wash?.selector.replace(/\s+/gu, "") ?? "";
-    expect(scope).toContain(
-      '[data-fork-glass-3d="off"][data-fork-theme="cool-darker"]:not([data-fork-sidebar-vibrancy="true"])',
-    );
-    expect(scope).toContain('[data-fork-theme="basic"]');
-    expect(scope).toContain(").dark[data-user-message-bubble]");
-    expect(wash?.body).toContain("color-mix(in srgb, #ffffff 3%, var(--card))");
+  it("rounds and pads the sent bubble in its classes", () => {
+    const row = readSibling("../components/chat/TimelineUserMessageRow.tsx");
+    expect(row).toContain('"relative min-w-0 max-w-[80%] rounded-xl text-message-foreground"');
+    expect(row).toContain('"min-w-0 max-w-[80%] rounded-xl bg-message text-message-foreground"');
+    expect(row).toContain('&& "px-4 py-2"');
   });
 
-  it("still finds the classes upstream's bubble carries", () => {
-    const row = readSibling("../components/chat/TimelineUserMessageRow.tsx");
-    expect(row).toContain('data-user-message-bubble=""');
-    expect(row).toContain('"relative min-w-0 max-w-[80%] rounded-2xl text-message-foreground"');
-    expect(row).toContain('&& "rounded-tr-md"');
-    expect(row).toContain('&& "rounded-br-md"');
-    expect(row).toContain('&& "p-3"');
-    expect(row).toContain('"bg-message"');
+  it("lifts the bubble 3% on Flat Glass and dark Basic", () => {
+    const lift = rules.find((rule) => rule.body.includes("--fork-message-bubble-lift:"));
+    const scope = lift?.selector.replace(/\s+/gu, " ") ?? "";
+    expect(scope).toContain(
+      `${MARKER}[data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]`,
+    );
+    expect(scope).toContain(`${MARKER}[data-fork-theme="basic"].dark`);
+    expect(lift?.body).toMatch(/--fork-message-bubble-lift:\s*3%/u);
   });
 });
 
 describe("fork guard: fork-changed-files-fold", () => {
-  it("folds the card until its title is clicked", () => {
+  it("opens from the persisted folders flag and unmounts the tree while folded", () => {
     const card = readSibling("../components/chat/ChangedFilesTree.tsx");
-    expect(card).toContain("const [forkOpen, setForkOpen] = useState(false);");
-    expect(card).toContain("aria-expanded={forkOpen}");
+    expect(card).toContain("const forkOpen = allDirectoriesExpanded;");
+    expect(card).toContain("onToggleAllDirectories();");
+    expect(card).toMatch(/\{forkOpen && \(\s*<>/u);
   });
 
-  it("draws one fill on Flat Glass", () => {
-    const rules = cssRules(readSibling("../theme.custom.css"));
-    const flat = `${MARKER}[data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]`;
-    expect(ruleBodyFor(rules, [flat, "[data-changed-files-header]", "+ div"])).toContain(
-      "box-shadow: none",
+  it("rounds the folded header and draws one fill on Flat Glass", () => {
+    const scope = `${MARKER}:is(.dark, [data-fork-theme="basic"])`;
+    expect(ruleBodyFor(rules, [scope, "[data-changed-files-header]:last-child"])).toContain(
+      "border-radius: calc(var(--fork-card-radius) - 1px)",
+    );
+    const hairline = rules.find((rule) =>
+      rule.selector.replace(/\s+/gu, " ").endsWith("[data-changed-files-header] + div"),
+    );
+    expect(hairline?.selector.replace(/\s+/gu, "")).toContain(
+      ':not([data-fork-glass-3d="off"][data-fork-theme="cool-darker"])',
     );
   });
 });

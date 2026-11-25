@@ -2293,7 +2293,8 @@ function ChangedFilesTimeline() {
 
 describe("ChangedFilesCard", () => {
   /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
-  it.each(["folder", "card"])(
+  // The header strip is the card fold; it replaces upstream's all-folders button.
+  it.each(["folder"])(
     /* fork:end fork-changed-files-fold */
     "measures %s collapse and expansion in the same commit",
     async (toggle) => {
@@ -2304,30 +2305,13 @@ describe("ChangedFilesCard", () => {
         screen.container.querySelector("[data-changed-files-state]")!.getBoundingClientRect()
           .bottom;
       await vi.waitFor(() => expect(after()).toBe(cardBottom()));
-      /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
-      // The card starts folded to its header strip; open it before measuring the tree.
-      const header = () =>
-        screen.container.querySelector<HTMLButtonElement>("[data-changed-files-header] > button")!;
-      await act(() => {
-        flushSync(() => header().click());
-      });
-      await vi.waitFor(() => expect(after()).toBe(cardBottom()));
       const topBefore = after();
-      if (toggle === "card") {
-        await act(() => {
-          flushSync(() => header().click());
-          expect(after()).toBe(cardBottom());
-          expect(after()).toBeLessThan(topBefore);
-        });
-        await act(() => {
-          flushSync(() => header().click());
-          expect(after()).toBe(topBefore);
-        });
-        return;
-      }
       const button = () =>
-        screen.container.querySelector<HTMLButtonElement>('[data-changed-file-row="src"] button')!;
-      /* fork:end fork-changed-files-fold */
+        screen.container.querySelector<HTMLButtonElement>(
+          toggle === "folder"
+            ? '[data-changed-file-row="src"] button'
+            : 'button[aria-label$="all folders"]',
+        )!;
       await act(() => {
         flushSync(() => button().click());
         expect(screen.container.textContent).not.toContain("a.ts");
@@ -2340,6 +2324,31 @@ describe("ChangedFilesCard", () => {
       });
     },
   );
+
+  /* fork:begin fork-changed-files-fold — see .fork/customizations.yaml#fork-changed-files-fold */
+  it("measures the card fold and reopen in the same commit", async () => {
+    await using screen = await render(<ChangedFilesTimeline />);
+    const after = () =>
+      screen.container.querySelector('[data-testid="after"]')!.getBoundingClientRect().top;
+    const cardBottom = () =>
+      screen.container.querySelector("[data-changed-files-state]")!.getBoundingClientRect().bottom;
+    await vi.waitFor(() => expect(after()).toBe(cardBottom()));
+    const topBefore = after();
+    const header = () =>
+      screen.container.querySelector<HTMLButtonElement>("[data-changed-files-header] > button")!;
+    await act(() => {
+      flushSync(() => header().click());
+      expect(screen.container.textContent).not.toContain("a.ts");
+      expect(after()).toBe(cardBottom());
+      expect(after()).toBeLessThan(topBefore);
+    });
+    await act(() => {
+      flushSync(() => header().click());
+      expect(screen.container.textContent).toContain("a.ts");
+      expect(after()).toBe(topBefore);
+    });
+  });
+  /* fork:end fork-changed-files-fold */
 });
 
 it("keeps concurrent approvals actionable outside collapsed work and restores settled rows", async () => {

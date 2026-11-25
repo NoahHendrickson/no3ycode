@@ -5391,23 +5391,23 @@
     dark palette --input is the border grey (Westworld's is #33343a), so
     that wash smears a border tint over the stage instead of landing on the
     opaque card fill; under the fork marker the card and sticky header
-    paint var(--card) with --fork-card-radius corners and a 1px border
-    (fork-changed-files-fold sets the subagent card's 12px corners and
-    var(--border) line). The
+    paint var(--card) in a subagent card's shape: --fork-card-radius set to
+    12px and a 1px var(--border) line. The
     header and the file tree and "N more files" footer under it (the header's
     following sibling divs) share the card's fill, parted by a hairline on the
     tree's top only (the card border is the line elsewhere). The corner rules
     read --fork-card-radius; the tree rounds its top corners too, so its hairline curves into the
-    card's sides. On Flat Glass the card is one solid fill: no wash under the
-    header and no hairline (fork-changed-files-fold).
+    card's sides. On Flat Glass the card is one solid fill: the hairline rule
+    skips it. Folded, the header is the card's last child and rounds all
+    four corners.
     Basic fills the tree with --basic-raised (Figma kit, theme.custom.basic.css). Path
     labels outside the header lift to --foreground (not the Show/Hide hint).
     Nothing in the header takes the --fork-outline-border recipe. Every button in the card hovers as the same 4% white
     lift (--fork-outline-hover-bg) instead of upstream's accent/60 fill,
     which lands darker than the card. The user's sent chat bubble
-    (bg-message → --message-surface, upstream's --accent) is painted
-    background-color var(--card) on the element under the dark marker so it
-    shares the card's fill — on the element, not via the token, because
+    (bg-message → --message-surface, upstream's --accent) is painted from
+    var(--card) on the element under the dark marker, lifted by
+    fork-message-bubble-shape's --fork-message-bubble-lift — on the element, not via the token, because
     --color-message is declared on :root and would compute --card there
     rather than under the v2 shell's rescoped value. Keys off
     data-changed-files-state / -header and the bg-message class.
@@ -9475,15 +9475,14 @@
 
 - id: fork-message-bubble-shape
   intent: >
-    Sent bubbles take 12px corners (--radius-xl) instead of upstream's
-    rounded-2xl, grouped corners keep rounded-md, and an unfolded text bubble
-    pads 8px top and bottom and 16px either side instead of p-3's 12px. On Flat Glass
-    (without the whole-window vibrancy wash) and dark Basic the fill is a 3%
-    white wash over the card, a step lighter
-    than the changed-files card; Basic light keeps its shade. Keyed on
-    upstream's data-user-message-bubble and its rounded-tr-md, rounded-br-md,
-    p-3 and bg-message classes.
-  tier: 3
+    Sent bubbles are rounded-xl (12px) instead of upstream's rounded-2xl,
+    grouped corners keep rounded-md, and an unfolded text bubble pads px-4 py-2
+    instead of p-3: fenced class edits in TimelineUserMessageRow (the sent
+    bubble and the automation bubble). On Flat Glass and dark Basic the fill
+    is a 3% white lift over the card: --fork-message-bubble-lift, read by
+    fork-changed-files-card's single bg-message rule, so the glass vibrancy
+    wash still outranks it. Basic light keeps its shade.
+  tier: 4
   files:
     - apps/web/src/theme.custom.css
   shadows: []
@@ -9491,30 +9490,28 @@
     - apps/web/src/components/chat/TimelineUserMessageRow.tsx
   verify:
     - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts
-    # Its bubble lookup skips this rule, which names the vibrancy attribute only in :not().
-    - apps/web/src/__fork_guards__/forkCoolDarkerSidebarVibrancy.test.ts
+    - apps/web/src/__fork_guards__/forkChangedFilesCard.test.ts
 
 - id: fork-changed-files-fold
   intent: >
-    The chat-column changed-files card is drawn like a subagent card and
-    starts folded to one strip: "N changed files" and the diff stats at the
-    interface text size (text-base), with the expand chevron at the far
-    right. The whole strip is the fold button. Upstream's header actions
-    (collapse-all-folders and Open diff) are removed, along with their
-    Tooltip, T and icon imports and the hasDirectories helper; a file row
-    still opens the diff at that file, and the "N more files" footer opens
-    the full diff while the card is open. The card takes the subagent
-    card's 12px corners and var(--border) line on the --card fill. The fold
-    is local state, so a card scrolled out and back in starts folded again.
-    On Flat Glass the card is one solid fill (no hairline under the header);
-    Basic keeps its raised well.
+    The chat-column changed-files card folds to one strip: "N changed files"
+    and the diff stats at the interface text size (text-base), with the
+    expand chevron at the far right, and the whole strip is the fold button.
+    Its open state is upstream's persisted per-run all-folders flag
+    (threadChangedFilesExpandedById via allDirectoriesExpanded and
+    onToggleAllDirectories), so a card starts folded, stays as left across
+    scrolling and reloads, and opens with every folder expanded. Upstream's
+    header actions (collapse all folders, Open diff) are removed with their
+    Tooltip, T and icon imports and the hasDirectories helper. The header's
+    padding moves onto the button. The tree and the "N more files" footer
+    unmount while folded; file rows still open the diff at a file and the
+    footer opens the full diff.
   tier: 4
-  files:
-    - apps/web/src/theme.custom.css
+  files: []
   shadows: []
   watch:
     - apps/web/src/components/chat/ChangedFilesTree.tsx
-    # Fenced: the card tests open the folded card first and test the card fold, not all-folders.
+    # Fenced: the all-folders case is gone; a separate test folds and reopens the card.
     - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
   verify:
     - apps/web/src/__fork_guards__/forkMessageBubbleAndChangedFiles.test.ts

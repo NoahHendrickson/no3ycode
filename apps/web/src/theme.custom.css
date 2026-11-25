@@ -3110,16 +3110,15 @@
    fork dark palette --input is the border grey, so that wash lands the card
    on a smeared border tint over the stage instead of the palette's own card
    step (--secondary is the chip step, not a card). Freeze the card to
-   --card so each palette's stage tokens actually show.
+   --card so each palette's stage tokens actually show, in a subagent card's
+   shape: 12px corners on the stage border.
 
-   The header and the file tree under it share the card's fill, parted by the
-   prompt's hairline, which the whole card takes too. A lighter well under the
-   header sat so close to that hairline's tone that the card's sides vanished
-   beside it. The tree strokes only its top: the card border is the line on its
-   other three sides. Basic paints its own raised well (theme.custom.basic.css). */
+   The header and the file tree under it share the card's fill, parted by a
+   hairline on the tree's top: the card border is the line on its other three
+   sides. Flat Glass draws one fill with no hairline. Basic paints its own
+   raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
-  /* A subagent card's shape and fill: 12px corners on the stage border (fork-changed-files-fold). */
   --fork-card-radius: 12px;
   background: var(--card);
   border: 1px solid var(--border);
@@ -3132,16 +3131,17 @@
   border-radius: calc(var(--fork-card-radius) - 1px) calc(var(--fork-card-radius) - 1px) 0 0;
 }
 
-/* Folded, the header is the whole card: round its foot too, or its square corners poke past
-   the card's. Its fold button fills the strip so hover and focus paint the full row
-   (fork-changed-files-fold). */
+/* Folded, the header is the card's only child: round its foot too, or its square corners poke
+   past the card's (fork-changed-files-fold). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-changed-files-header]:has(> button[aria-expanded="false"]) {
+  [data-changed-files-header]:last-child {
   border-radius: calc(var(--fork-card-radius) - 1px);
 }
 
 /* Rounded at the top too, so the hairline curves down into the card's sides. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]):not(
+    [data-fork-glass-3d="off"][data-fork-theme="cool-darker"]
+  )
   [data-changed-files-header]
   + div {
   box-shadow: inset 0 1px 0 var(--fork-composer-border);
@@ -3156,59 +3156,25 @@
   border-bottom-right-radius: calc(var(--fork-card-radius) - 1px);
 }
 
-/* On Flat Glass the card is one solid fill: no lifted well under the header and no hairline
-   between them (fork-changed-files-fold). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-changed-files-header]
-  + div {
-  box-shadow: none;
-}
-
-/* The user's sent bubble takes the same fill as the card above it. Upstream
-   paints `bg-message` → --message-surface → --accent; on every fork palette
-   that is the secondary/hover step (cool #353a3d, neutral dark #42403d), one rung
-   brighter than the changed-files card, so the two surfaces in the same
-   column disagreed.
+/* The user's sent bubble is painted from the card's fill. Upstream paints
+   `bg-message` → --message-surface → --accent; on every fork palette that is
+   the secondary/hover step, one rung brighter than the changed-files card.
 
    Painted on the element rather than by retargeting the surface token.
    Tailwind declares --color-message on :root, so a var(--card) inside it
    computes at the root — but the chat column sits under [data-sidebar-version="v2"],
-   which rescopes --card (above), and the changed-files card reads that
-   scoped value. Only an element-level var(--card) lands on the same rung.
-   Keyed on the utility class: the bubble carries no data attribute, and the
-   guard pins `bg-message` on MessagesTimeline's bubble. bg-message has that
-   one consumer; the send button's message-action tokens are untouched. */
+   which rescopes --card (above). Only an element-level var(--card) lands on the
+   card's rung. Themes lift the bubble off that rung with --fork-message-bubble-lift,
+   a white share, and the glass vibrancy wash (theme.custom.palettes.css) still
+   outranks this rule. The send button's message-action tokens are untouched. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]) .bg-message {
-  background-color: var(--card);
+  background-color: color-mix(in srgb, #ffffff var(--fork-message-bubble-lift, 0%), var(--card));
 }
 
-/* Sent bubbles: 12px corners instead of rounded-2xl's 16px (grouped corners keep
-   their small radius) and 8px by 16px padding instead of p-3's 12px. On Flat Glass and dark Basic
-   the fill sits a 3% white wash above the card, so it reads lighter. */
-:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble] {
-  border-radius: var(--radius-xl);
-}
-
-:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble].rounded-tr-md {
-  border-top-right-radius: var(--radius-md);
-}
-
-:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble].rounded-br-md {
-  border-bottom-right-radius: var(--radius-md);
-}
-
-:root[data-fork="noahhendrickson-t3code"] [data-user-message-bubble].p-3 {
-  padding: 8px 16px;
-}
-
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d="off"][data-fork-theme="cool-darker"]:not(
-        [data-fork-sidebar-vibrancy="true"]
-      ),
-    [data-fork-theme="basic"]
-  ).dark
-  [data-user-message-bubble].bg-message {
-  background-color: color-mix(in srgb, #ffffff 3%, var(--card));
+/* Flat Glass and dark Basic lift the sent bubble 3% white off the card (fork-message-bubble-shape). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"].dark {
+  --fork-message-bubble-lift: 3%;
 }
 
 /* Hover fills inside the card. Upstream's `hover:bg-accent/60` is 60% of an

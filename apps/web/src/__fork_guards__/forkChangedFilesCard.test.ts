@@ -42,7 +42,7 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.selector).toContain(".dark");
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
     expect(card?.body).toMatch(/border-radius:\s*var\(--fork-card-radius\)/u);
-    // A subagent card's corners and border (fork-changed-files-fold).
+    // A subagent card's corners and border.
     expect(card?.body).toMatch(/--fork-card-radius:\s*12px/u);
     expect(card?.body).toMatch(/border:\s*1px solid var\(--border\)/u);
   });
@@ -50,13 +50,11 @@ describe("fork guard: fork-changed-files-card", () => {
   it("draws the file tree under a loose header, parted by a rounded hairline", () => {
     // The rules hang off the header's following sibling divs: the p-2 wrapper around the tree
     // or its repository groups (a fragment or another tag would drop the well) and the
-    // "N more files" footer, both hidden while fork-changed-files-fold has the card folded.
+    // "N more files" footer, both unmounted while fork-changed-files-fold has the card folded.
     expect(changedFiles).toMatch(
-      /<div className="p-2" hidden=\{!forkOpen\}>\s*\{\/\* fork:end fork-changed-files-fold \*\/\}\s*\{groups \?/u,
+      /\{\/\* fork:end fork-changed-files-fold \*\/\}\s*<div className="p-2">\s*\{groups \?/u,
     );
-    expect(changedFiles).toMatch(
-      /hiddenFileCount > 0 && forkOpen && \(\s*\/\* fork:end fork-changed-files-fold \*\/\s*<div /u,
-    );
+    expect(changedFiles).toMatch(/hiddenFileCount > 0 && \(\s*<div /u);
     const rules = cssRules(theme).map((rule) => ({
       ...rule,
       selector: rule.selector.replace(/\s+/gu, " "),
@@ -97,7 +95,10 @@ describe("fork guard: fork-changed-files-card", () => {
     const bubble = cssRules(theme).find(
       (rule) => rule.selector === `${MARKER}:is(.dark, [data-fork-theme="basic"]) .bg-message`,
     );
-    expect(bubble?.body).toMatch(/background-color:\s*var\(--card\)/u);
+    // fork-message-bubble-shape lifts it off that rung by a per-theme white share.
+    expect(bubble?.body).toMatch(
+      /background-color:\s*color-mix\(\s*in srgb,\s*#ffffff var\(--fork-message-bubble-lift, 0%\),\s*var\(--card\)\s*\)/u,
+    );
     expect(theme).not.toMatch(/--message-surface:/u);
     expect(readSibling("../components/chat/TimelineUserMessageRow.tsx")).toContain("bg-message ");
   });
