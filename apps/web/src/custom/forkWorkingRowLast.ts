@@ -8,6 +8,7 @@ import {
   liveWorkEntryLabel,
   type MessagesTimelineRow,
 } from "~/components/chat/MessagesTimeline.logic";
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import type { MessageResolver } from "~/i18n/messages";
 
 type WorkingRow = Extract<MessagesTimelineRow, { kind: "working" }>;
@@ -160,84 +161,78 @@ export function forkStatusLineVoices(
 
 const VOICE_ORDER: ReadonlyArray<ForkStatusVoice> = ["thought", "tool", "word"];
 
-/** The voices with something to say, in rotation order; the word always has something. */
-function voiceCycle(voices: ForkStatusLineVoices): ReadonlyArray<ForkStatusVoice> {
-  return VOICE_ORDER.filter((voice) => voice === "word" || voices[voice] !== null);
-}
-
-/** The voice after `voice` in rotation order, among those with something to say. */
-function nextVoice(cycle: ReadonlyArray<ForkStatusVoice>, voice: ForkStatusVoice): ForkStatusVoice {
-  const from = VOICE_ORDER.indexOf(voice);
-  for (let step = 1; step <= VOICE_ORDER.length; step += 1) {
-    const next = VOICE_ORDER[(from + step) % VOICE_ORDER.length]!;
-    if (cycle.includes(next)) return next;
-  }
-  return "word";
-}
-
-/** Which voice holds the line, and since which arrival and beat. */
+/** Which voice holds the line, and what it last saw of the others. */
 export interface ForkStatusLineState {
   readonly toolKey: string | null;
   readonly thought: string | null;
   readonly voice: ForkStatusVoice;
-  /** Bumped when a new tool or thought takes the line; it restarts the beat. */
+  /** Bumped whenever a voice takes the line between beats; it restarts the beat. */
   readonly arrival: number;
-  readonly beat: number;
   /** Counts the word's turns, so each turn shows a fresh word. */
   readonly lap: number;
 }
 
+function speaks(line: ForkStatusLineState, voice: ForkStatusVoice): boolean {
+  return voice === "word" || (voice === "tool" ? line.toolKey !== null : line.thought !== null);
+}
+
+/** One beat: the next voice after the one showing that has something to say. */
+export function forkStatusLineAdvance(line: ForkStatusLineState): ForkStatusLineState {
+  const from = VOICE_ORDER.indexOf(line.voice);
+  for (let step = 1; step <= VOICE_ORDER.length; step += 1) {
+    const voice = VOICE_ORDER[(from + step) % VOICE_ORDER.length]!;
+    if (speaks(line, voice)) {
+      return { ...line, voice, lap: voice === "word" ? line.lap + 1 : line.lap };
+    }
+  }
+  return line;
+}
+
 export function forkStatusLineStart(voices: ForkStatusLineVoices): ForkStatusLineState {
-  const toolKey = voices.tool?.key ?? null;
   return {
-    toolKey,
+    toolKey: voices.tool?.key ?? null,
     thought: voices.thought,
     voice: voices.tool !== null ? "tool" : voices.thought !== null ? "thought" : "word",
     arrival: 0,
-    beat: 0,
     lap: 0,
   };
 }
 
 /**
- * The next state for this render. A new tool or thought takes the line at once; a beat of the
- * current arrival moves on one voice; a voice going quiet hands over only if it was showing.
- * Returns `line` itself when nothing changed.
+ * Brings the line up to date in render. A new tool or thought takes it at once; the voice
+ * showing going quiet hands over. Either starts a fresh beat. Returns `line` if unchanged.
  */
-export function forkStatusLineStep(
+export function forkStatusLineReconcile(
   line: ForkStatusLineState,
   voices: ForkStatusLineVoices,
-  beat: { readonly arrival: number; readonly count: number },
 ): ForkStatusLineState {
-  const cycle = voiceCycle(voices);
-  let next = line;
   const toolKey = voices.tool?.key ?? null;
-  if (toolKey !== line.toolKey || voices.thought !== line.thought) {
-    const arrived =
-      toolKey !== null && toolKey !== line.toolKey
-        ? "tool"
-        : voices.thought !== null && voices.thought !== line.thought
-          ? "thought"
-          : null;
-    next = { ...next, toolKey, thought: voices.thought };
-    if (arrived !== null) next = { ...next, voice: arrived, arrival: next.arrival + 1 };
-  }
-  const moved = beat.arrival === next.arrival && beat.count !== next.beat;
-  if (moved || !cycle.includes(next.voice)) {
-    const voice = nextVoice(cycle, next.voice);
-    next = {
-      ...next,
-      voice,
-      beat: moved ? beat.count : next.beat,
-      // A voice taking over between beats gets a full beat of its own.
-      arrival: moved ? next.arrival : next.arrival + 1,
-      lap: voice === "word" ? next.lap + 1 : next.lap,
-    };
-  }
-  return next;
+  if (toolKey === line.toolKey && voices.thought === line.thought) return line;
+  const seen = { ...line, toolKey, thought: voices.thought };
+  const arrived: ForkStatusVoice | null =
+    toolKey !== null && toolKey !== line.toolKey
+      ? "tool"
+      : voices.thought !== null && voices.thought !== line.thought
+        ? "thought"
+        : null;
+  if (arrived !== null) return { ...seen, voice: arrived, arrival: line.arrival + 1 };
+  if (speaks(seen, seen.voice)) return seen;
+  return { ...forkStatusLineAdvance(seen), arrival: line.arrival + 1 };
 }
 
 /** Whether the line needs a beat: nothing pins it and it has more than the word to say. */
 export function forkStatusLineRotates(voices: ForkStatusLineVoices): boolean {
-  return voices.pinned === null && voiceCycle(voices).length > 1;
+  return voices.pinned === null && (voices.tool !== null || voices.thought !== null);
+}
+
+/** What the line says: a pinned label, else the voice showing; each lap gets a fresh word. */
+export function forkStatusLineText(
+  voices: ForkStatusLineVoices,
+  line: ForkStatusLineState,
+  wordSeed: string,
+): string {
+  if (voices.pinned !== null) return voices.pinned;
+  if (line.voice === "tool" && voices.tool !== null) return voices.tool.label;
+  if (line.voice === "thought" && voices.thought !== null) return voices.thought;
+  return forkThinkingWord(line.lap === 0 ? wordSeed : `${wordSeed}:${line.lap}`);
 }

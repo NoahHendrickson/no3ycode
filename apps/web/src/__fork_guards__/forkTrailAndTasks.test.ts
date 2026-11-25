@@ -45,10 +45,9 @@ describe("fork guard: fork-trail-summary", () => {
 
   it("hangs an opened group on a 2px rounded rail, without a scrollbar", () => {
     const css = readSibling("../theme.custom.css");
-    expect(css).toMatch(/\[data-tool-group-scroll\] \{[^}]*scrollbar-width: none;/u);
-    expect(css).toContain("--fork-rail-width: 2px;");
+    // The rail is the list's own background: a 2px bar between two 2px round caps.
     expect(css).toMatch(
-      /\[data-timeline-row-kind="work"\]:has\(\[data-tool-group-scroll\]\) \{[^}]*&::before \{[^}]*border-radius: 9999px;/u,
+      /\[data-tool-group-scroll\] \{[^}]*--fork-rail-cap: radial-gradient\([^}]*background:[^}]*\/ 2px 2px no-repeat,[^}]*\/ 2px[^}]*scrollbar-width: none;/u,
     );
     expect(css).toMatch(
       /\[data-fork-trace-group\] > \* \{[^}]*border-inline-start[^}]*scrollbar-width: none;/u,

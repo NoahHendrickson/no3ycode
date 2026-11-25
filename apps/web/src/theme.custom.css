@@ -3732,35 +3732,20 @@
    An opened group hangs under its summary on a quiet rail instead of in a boxed scroller;
    the list still caps its height and virtualizes, and its fades still mark overflow. */
 :root[data-fork="noahhendrickson-t3code"] [data-tool-group-scroll] {
+  /* The rail: a 2px line with rounded ends, centred under the summary icon and spanning the
+     steps' icons. It is the list's own background, which stays put while the list scrolls
+     and fades with its scroll fades, so it needs no :has() and no wrapper. */
+  --fork-rail-line: color-mix(in srgb, var(--muted-foreground) 40%, var(--background));
+  --fork-rail-cap: radial-gradient(circle closest-side, var(--fork-rail-line) 96%, transparent);
   margin-inline-start: 0.75rem;
   padding-inline-start: 0.625rem;
+  background:
+    var(--fork-rail-cap) 0 0.25rem / 2px 2px no-repeat,
+    var(--fork-rail-cap) 0 calc(100% - 0.25rem) / 2px 2px no-repeat,
+    linear-gradient(var(--fork-rail-line), var(--fork-rail-line)) 0 calc(0.25rem + 1px) / 2px
+      calc(100% - 0.5rem - 2px) no-repeat;
   scrollbar-gutter: auto;
   scrollbar-width: none;
-}
-/* The rail: one 2px line with rounded ends, centred under the opened summary's icon and
-   running down beside the steps, on the steps' own row. */
-:root[data-fork="noahhendrickson-t3code"] {
-  --fork-rail-line: color-mix(in srgb, var(--muted-foreground) 40%, var(--background));
-  --fork-rail-width: 2px;
-  /* Centred under the summary icon, which sits 14px into the row. */
-  --fork-rail-x: calc(0.875rem - var(--fork-rail-width) / 2);
-}
-:root[data-fork="noahhendrickson-t3code"]
-  [data-timeline-row-kind="work"]:has([data-tool-group-scroll]) {
-  position: relative;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset-inline-start: var(--fork-rail-x);
-    /* Spans the steps' icons: level with the first one's top, down to the last one's bottom. */
-    top: 0.25rem;
-    bottom: 0.5rem;
-    width: var(--fork-rail-width);
-    border-radius: 9999px;
-    background: var(--fork-rail-line);
-    pointer-events: none;
-  }
 }
 /* A thought-only group opens as upstream's trace view; it takes the same rail. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-trace-group] > * {

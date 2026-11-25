@@ -6566,12 +6566,14 @@
     setup owns the tail, MessagesTimeline passes `lineYields` and nothing
     folds: upstream's rows keep their order above "Working for …". Upstream's
     failed-tool shape (a `thinking` row with a groupId) never folds. The
-    line rotates three voices (forkStatusLineVoices, useStatusLineVoice):
+    line rotates three voices; the rules and the text are pure functions in
+    forkWorkingRowLast.ts, and ForkLiveStatusLine only runs the 4s clock:
     the agent's latest thought (Zen's liveAnswerPreview, see
     fork-quiet-live-turn), the running tool, and the thinking word. A new
     tool or thought takes the line at once; otherwise it turns every 4s,
     skipping voices with nothing to say, and the word changes each lap. A
-    provider startup or "Waiting on N subagents" holds the line alone. The
+    provider startup or "Waiting on N subagents" holds the line alone and
+    stops the clock. The
     thinking word comes from
     @t3tools/shared/forkThinkingWords, seeded by what last landed (the row
     above the line or the live step), so it holds until something new lands;
@@ -6622,8 +6624,10 @@
     the status line (fork-working-row-last), and the line reads Zen's
     preview of them. MessagesTimeline opts in with forkHoldLiveReplies,
     except while Find is open, which searches reply text. Upstream's logic
-    tests derive without the flag and keep upstream's shapes. The
-    no3y iOS app is unchanged.
+    tests derive without the flag and keep upstream's shapes. The guard runs
+    one fixture through Zen and through the hold and requires the same
+    replies, so a sync that adds a Zen exemption fails it. The no3y iOS app
+    is unchanged.
   tier: 3
   files:
     - apps/web/src/__fork_guards__/forkQuietLiveTurn.test.ts
@@ -6658,10 +6662,11 @@
     data-row-timestamp in TimelineRowParts, still sits at the far end), and an
     opened group hangs under its summary on a rail without the scrollbar or its
     gutter (theme.custom.css, `[data-tool-group-scroll]`), still height-capped
-    and virtualized. The rail is one 2px line with rounded ends on the group's
-    own row, centred under the summary icon and starting just below it (a stub
-    on the summary row left a seam at the fractional row edge). A thought-only
-    group keeps the plain 1px rail.
+    and virtualized. The rail is one 2px line with rounded ends, drawn as the
+    list's own background (a bar between two round caps), so it stays put
+    while the list scrolls and needs no :has() or wrapper. It is centred under
+    the summary icon and spans the steps' icons. A thought-only group keeps the
+    plain 1px rail.
   tier: 3
   files:
     - apps/web/src/custom/forkTrailSummary.ts

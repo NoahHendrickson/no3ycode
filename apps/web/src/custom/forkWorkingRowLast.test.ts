@@ -1,3 +1,4 @@
+import { forkThinkingWord } from "@t3tools/shared/forkThinkingWords";
 import { describe, expect, it } from "vite-plus/test";
 import {
   deriveMessagesTimelineRows,
@@ -5,9 +6,11 @@ import {
 } from "~/components/chat/MessagesTimeline.logic";
 import {
   forkLiveStatusRows,
+  forkStatusLineAdvance,
+  forkStatusLineReconcile,
   forkStatusLineRotates,
   forkStatusLineStart,
-  forkStatusLineStep,
+  forkStatusLineText,
   forkStatusLineVoices,
   isForkStatusLine,
   type ForkLiveRow,
@@ -288,61 +291,62 @@ describe("forkStatusLineVoices", () => {
 describe("the status line rotation", () => {
   const voices = (tool: string | null, thought: string | null) => ({
     pinned: null,
-    tool: tool === null ? null : { key: tool, label: tool },
+    tool: tool === null ? null : { key: tool, label: `run ${tool}` },
     thought,
   });
-
-  const start = (tool: string | null, thought: string | null) => {
-    const line = forkStatusLineStart(voices(tool, thought));
-    return { line, beat: { arrival: line.arrival, count: line.beat } };
-  };
-  const tick = (beat: { arrival: number; count: number }) => ({ ...beat, count: beat.count + 1 });
+  const advance = forkStatusLineAdvance;
 
   it("moves through thought, tool and word one beat at a time, skipping the silent", () => {
-    const { line, beat } = start("vp", "Checking tests");
+    const line = forkStatusLineStart(voices("vp", "checking"));
     expect(line.voice).toBe("tool");
-    const all = voices("vp", "Checking tests");
-    const word = forkStatusLineStep(line, all, tick(beat));
-    expect(word.voice).toBe("word");
-    expect(forkStatusLineStep(word, all, tick(tick(beat))).voice).toBe("thought");
-    const quiet = start(null, "Checking tests");
-    expect(
-      forkStatusLineStep(quiet.line, voices(null, "Checking tests"), tick(quiet.beat)).voice,
-    ).toBe("word");
+    expect(advance(line).voice).toBe("word");
+    expect(advance(advance(line)).voice).toBe("thought");
+    expect(advance(forkStatusLineStart(voices(null, "checking"))).voice).toBe("word");
     expect(forkStatusLineRotates(voices(null, null))).toBe(false);
-    expect(forkStatusLineRotates({ ...voices("vp", "Checking tests"), pinned: "waiting" })).toBe(
-      false,
-    );
+    expect(forkStatusLineRotates({ ...voices("vp", "checking"), pinned: "waiting" })).toBe(false);
   });
 
-  it("keeps the word on the line, and its beat, when a tool it is not showing settles", () => {
-    const { line, beat } = start("vp", "Old");
-    const word = forkStatusLineStep(line, voices("vp", "Old"), tick(beat));
-    const settled = forkStatusLineStep(word, voices(null, "Old"), tick(beat));
+  it("keeps the word and its beat when a tool it is not showing settles", () => {
+    const word = advance(forkStatusLineStart(voices("vp", "old")));
+    const settled = forkStatusLineReconcile(word, voices(null, "old"));
     expect(settled.voice).toBe("word");
     expect(settled.arrival).toBe(word.arrival);
   });
 
   it("moves on once when the tool showing settles on a beat", () => {
-    const { line, beat } = start("vp", "Old");
-    expect(forkStatusLineStep(line, voices(null, "Old"), tick(beat)).voice).toBe("word");
+    // The beat lands on the stored line first; the render then finds the word still speaking.
+    const beat = advance(forkStatusLineStart(voices("vp", "old")));
+    expect(forkStatusLineReconcile(beat, voices(null, "old")).voice).toBe("word");
   });
 
-  it("gives the voice that takes over between beats a full beat", () => {
-    const { line, beat } = start("vp", "Old");
-    const settled = forkStatusLineStep(line, voices(null, "Old"), beat);
+  it("gives a voice that takes over between beats a full beat", () => {
+    const line = forkStatusLineStart(voices("vp", "old"));
+    const settled = forkStatusLineReconcile(line, voices(null, "old"));
     expect(settled.voice).toBe("word");
     expect(settled.arrival).toBe(line.arrival + 1);
   });
 
   it("hands the line to a new tool or a new thought at once", () => {
-    const { line } = start("a", "Old");
-    expect(forkStatusLineStep(line, voices("b", "Old"), { arrival: 0, count: 0 }).voice).toBe(
-      "tool",
-    );
-    const thought = forkStatusLineStep(line, voices("a", "New"), { arrival: 0, count: 0 });
+    const line = forkStatusLineStart(voices("a", "old"));
+    expect(forkStatusLineReconcile(line, voices("b", "old")).voice).toBe("tool");
+    const thought = forkStatusLineReconcile(line, voices("a", "new"));
     expect(thought.voice).toBe("thought");
     expect(thought.arrival).toBe(line.arrival + 1);
+    expect(forkStatusLineReconcile(line, voices("a", "old"))).toBe(line);
+  });
+
+  it("says the pinned label, else the voice showing, with a fresh word each lap", () => {
+    const all = voices("vp", "checking");
+    const line = forkStatusLineStart(all);
+    expect(forkStatusLineText({ ...all, pinned: "waiting" }, line, "seed")).toBe("waiting");
+    expect(forkStatusLineText(all, line, "seed")).toBe("run vp");
+    const word = advance(line);
+    expect(forkStatusLineText(all, advance(word), "seed")).toBe("checking");
+    const laps = [word, advance(advance(advance(word)))].map((at) => at.lap);
+    expect(laps[1]).toBe(laps[0]! + 1);
+    expect(
+      forkStatusLineText(voices(null, null), forkStatusLineStart(voices(null, null)), "seed"),
+    ).toBe(forkThinkingWord("seed"));
   });
 });
 

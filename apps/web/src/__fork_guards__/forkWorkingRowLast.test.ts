@@ -31,9 +31,12 @@ describe("fork guard: fork-working-row-last", () => {
   });
 
   it("rotates a word where upstream says Thinking with the thought and the running tool", () => {
-    const line = readSibling("../custom/ForkLiveStatusLine.tsx");
-    expect(line).toMatch(/\?\?\s*forkThinkingWord\(lap === 0 \? row\.forkWordSeed/u);
-    expect(line).toContain("useStatusLineVoice(voices)");
+    expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toContain(
+      "forkStatusLineText(voices, rotation, row.forkWordSeed)",
+    );
+    expect(readSibling("../custom/forkWorkingRowLast.ts")).toMatch(
+      /return forkThinkingWord\(line\.lap === 0 \? wordSeed/u,
+    );
   });
 
   it("stills the shine on a running tool's transcript row", () => {

@@ -1520,13 +1520,21 @@ export function liveAnswerPreview(entries: ReadonlyArray<TimelineEntry>): string
 }
 
 /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-   The replies Zen holds back while answering, narrowed to the run still going. */
+   The replies Zen holds back while answering, narrowed to the run still going;
+   a guard (forkQuietLiveTurn) pins it to Zen's rule. */
 function forkHeldLiveReplyIds(
-  entries: ReadonlyArray<TimelineEntry>,
-  answeringRunId: RunId,
-  revealedMessageId: string | null | undefined,
+  input: Pick<
+    MessagesTimelineRowsInput,
+    "timelineEntries" | "isWorking" | "latestRun" | "runningRunId" | "revealedMessageId"
+  >,
 ): ReadonlySet<string> {
   const held = new Set<string>();
+  const answeringRunId =
+    input.isWorking && input.latestRun?.turnEnded !== true
+      ? deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null)
+      : null;
+  if (answeringRunId === null) return held;
+  const entries = input.timelineEntries;
   const steerAnswerIds = deriveInFlightSteerAnswerIds(entries);
   const retainedReplyIds = retainedAssistantReplyEntryIds(entries);
   for (let index = lastResponseBoundaryIndex(entries) + 1; index < entries.length; index += 1) {
@@ -1535,7 +1543,7 @@ function forkHeldLiveReplyIds(
       entry.kind === "message" &&
       entry.message.role === "assistant" &&
       entry.message.runId === answeringRunId &&
-      entry.message.id !== revealedMessageId &&
+      entry.message.id !== input.revealedMessageId &&
       !steerAnswerIds.has(entry.message.id) &&
       !retainedReplyIds.has(entry.id)
     ) {
@@ -1612,21 +1620,9 @@ function timelineRowEntries(
   }
   /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
      Zen's rule in every mode: a running turn's replies wait for it to end; the status line reads them. */
-  if (
-    input.forkHoldLiveReplies === true &&
-    visibility !== "zen" &&
-    input.isWorking &&
-    input.latestRun?.turnEnded !== true
-  ) {
-    const answeringRunId = deriveUnsettledRunId(
-      input.latestRun ?? null,
-      input.runningRunId ?? null,
-    );
-    const held =
-      answeringRunId === null
-        ? null
-        : forkHeldLiveReplyIds(entries, answeringRunId, input.revealedMessageId);
-    if (held !== null && held.size > 0) shown = shown.filter((entry) => !held.has(entry.id));
+  if (input.forkHoldLiveReplies === true) {
+    const held = forkHeldLiveReplyIds(input);
+    if (held.size > 0) shown = shown.filter((entry) => !held.has(entry.id));
   }
   /* fork:end fork-quiet-live-turn */
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
