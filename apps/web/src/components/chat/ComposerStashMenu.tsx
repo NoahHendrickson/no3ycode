@@ -1,5 +1,7 @@
 import { msg, T, useGT, useMessages, Var } from "gt-react";
-import { BookmarkIcon, FileIcon, FileTextIcon } from "lucide-react";
+/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+import { FileIcon, FileTextIcon, InboxIcon } from "lucide-react";
+/* fork:end fork-composer-shell */
 import { memo, useEffect, useEffectEvent, useRef, useState, type RefObject } from "react";
 import { assistantCitationsToPlainText } from "@t3tools/shared/assistantCitations";
 import { replaceComposerContextReferences } from "@t3tools/shared/composerContextReferences";
@@ -173,7 +175,9 @@ export const ComposerStashMenu = memo(function ComposerStashMenu(props: {
         onClick={onClose}
       >
         <ComposerBanner.Icon>
-          <BookmarkIcon />
+          {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */}
+          <InboxIcon />
+          {/* fork:end fork-composer-shell */}
         </ComposerBanner.Icon>
         {/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
             The queue card's header: the count rides the label. */}

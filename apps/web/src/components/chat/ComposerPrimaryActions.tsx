@@ -7,15 +7,15 @@ import {
   type ReactNode,
 } from "react";
 import { msg, useGT, useMessages } from "gt-react";
+/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
 import {
   ArrowRightIcon,
   CheckIcon,
   Minimize2Icon,
   PlayIcon,
   CornerUpRightIcon,
-  ListPlusIcon,
 } from "lucide-react";
-/* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+import { ListEndIcon } from "~/custom/icons/lucide-hugeicons";
 import { StopSquareIcon } from "~/custom/StopSquareIcon";
 import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
 /* fork:end fork-composer-shell */
@@ -511,7 +511,7 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
       isEditingQueuedMessage ? (
         <CheckIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
       ) : isRunning && isQueuing ? (
-        <ListPlusIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
+        <ListEndIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
       ) : isRunning ? (
         <CornerUpRightIcon className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
       ) : (
