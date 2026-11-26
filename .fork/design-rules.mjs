@@ -152,10 +152,7 @@ export const DESIGN_LINT_ALLOWLIST = [
   ...b5Exempt("wrapper around upstream's ThreadHoverCardPopup, which places it", {
     "SubagentRowHoverCardPopup.tsx": ["SubagentRowHoverCardPopup"],
   }),
-  // Pending (Nov 25): each draws an upstream control that reads live state itself
-  // (ProviderModelPicker, BranchToolbarEnvironmentSelector), so a props-only view would still
-  // not render on its own. Exempt them as wrappers, or story their own parts: a design call.
-  ...b5Exempt("pending: wraps an upstream control that reads live state", {
+  ...b5Exempt("wrapper around an upstream control that reads live state itself", {
     "ComposerModelPicker.tsx": ["ComposerModelPicker"],
     "DraftMachineChip.tsx": ["DraftMachineChip"],
   }),

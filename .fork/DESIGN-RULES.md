@@ -9,8 +9,7 @@ Enforced themes: Flat Glass (primary), Basic Darker Neutral, Basic Light, Inlet 
 Cream. Glass 3D gets best effort: a finding only it can see is printed but never blocks.
 
 CI runs `node .fork/design-lint.mjs --check` and `vp lint` carries the TSX rules. There's no
-ratchet or baseline: a rule either passes or it fails. A few files wait on a design call (see
-[Pending](#pending)).
+ratchet or baseline: a rule either passes or it fails.
 
 ## A. Values come only from tokens
 
@@ -72,9 +71,3 @@ Only when the rule really doesn't fit, and always with a reason.
   `t3code/no-hand-built-status-marks` and `t3code/no-direct-icon-imports`. `design-rules.mjs`
   configures them for fork files and `vite.config.ts` applies them, so `vp lint` reports them.
   A1 also covers raw palette classes in TSX (`shadcn/no-raw-colors`).
-
-## Pending
-
-The B5 `pending:` group in `DESIGN_LINT_ALLOWLIST` (`design-rules.mjs`) exempts components that
-wait on a design call: each draws an upstream control that reads live state itself. Settle it, fix
-the file, delete the line. New files never join this list.
