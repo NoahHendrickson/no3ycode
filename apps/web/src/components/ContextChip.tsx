@@ -44,7 +44,7 @@ const contextChipVariants = cva(
         /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
         capsule:
           // oxlint-disable-next-line shadcn/no-arbitrary-values -- the reply's inline code chip (theme.custom.css#fork-inline-code-chip) in the --fork-chip-* tone, else neutral
-          "gap-[0.3em] rounded-[5px] bg-[color-mix(in_srgb,var(--fork-chip-hue,var(--foreground))_12%,transparent)] px-1.5 leading-[1.3] font-[weight:inherit] no-underline [font-size:0.95em] [--context-chip-ink:var(--fork-chip-ink-light,var(--foreground))] dark:bg-[color-mix(in_srgb,var(--fork-chip-hue,var(--foreground))_16%,transparent)] dark:[--context-chip-ink:var(--fork-chip-ink-dark,var(--foreground))]",
+          "gap-[0.3em] rounded-[5px] bg-[color-mix(in_srgb,var(--fork-chip-hue,var(--foreground))_12%,transparent)] px-1.5 leading-[1.3] font-[weight:inherit] no-underline [font-size:0.95em] [--context-chip-ink:var(--fork-chip-ink-light,var(--foreground))] dark:bg-[color-mix(in_srgb,var(--fork-chip-hue,var(--foreground))_16%,transparent)] dark:not-data-[state=invalid]:[--context-chip-ink:var(--fork-chip-ink-dark,var(--foreground))]",
         /* fork:end no3y-subagent-link-chip */
       },
       state: {

@@ -13,8 +13,8 @@ import {
 import { selectEnvironmentQueryData } from "@t3tools/client-runtime/state/runtime";
 import {
   isLiveSubagentShell,
-  ProviderDriverKind,
   type EnvironmentId,
+  type ProviderDriverKind,
   type ScopedThreadRef,
   type ThreadId,
 } from "@t3tools/contracts";
@@ -89,7 +89,33 @@ const NO_HREFS_ATOM = Atom.make(NO_HREFS).pipe(Atom.withLabel("fork-subagent-lin
 const NO_LINK_ATOM = Atom.make<SubagentLink | null>(null).pipe(
   Atom.withLabel("fork-subagent-link:none"),
 );
-const NO_PROVIDERS_ATOM = Atom.make(null).pipe(Atom.withLabel("fork-subagent-link-providers:none"));
+
+interface SubagentLinkProvider {
+  readonly driver: ProviderDriverKind;
+  readonly displayName: string;
+  readonly iconUrl: string | undefined;
+}
+
+const NO_PROVIDER_ATOM = Atom.make<SubagentLinkProvider | null>(null).pipe(
+  Atom.withLabel("fork-subagent-link-provider:none"),
+);
+
+// Structural equality, so a provider status push re-renders no chip.
+const subagentLinkProviderAtom = Atom.family((key: string) => {
+  const [environmentId, instanceId] = JSON.parse(key) as [EnvironmentId, string];
+  return Atom.make((get): SubagentLinkProvider | null => {
+    const match = get(serverEnvironment.providersValueAtom(environmentId))?.find(
+      (candidate) => candidate.instanceId === instanceId,
+    );
+    return match
+      ? {
+          driver: match.driver,
+          displayName: resolveProviderInstanceDisplayName(match),
+          iconUrl: match.iconUrl,
+        }
+      : null;
+  }).pipe(Atom.withEquality(Equal.equals), Atom.withLabel(`fork-subagent-link-provider:${key}`));
+});
 // A stale read is refreshed once per row snapshot, so a server that disagrees cannot loop.
 const refreshedFamilies = new Set<string>();
 
@@ -248,16 +274,12 @@ export function ForkSubagentLinkChip(props: {
   const instanceId = link
     ? (link.shell.runtime?.providerInstanceId ?? link.shell.modelSelection.instanceId)
     : null;
-  // Selected down to strings, so a provider status push re-renders no chip.
   const provider = useAtomValue(
-    instanceId === null ? NO_PROVIDERS_ATOM : serverEnvironment.providersValueAtom(environmentId),
-    (providers) => {
-      const match = providers?.find((candidate) => candidate.instanceId === instanceId);
-      return match ? `${match.driver}\n${resolveProviderInstanceDisplayName(match)}` : null;
-    },
+    instanceId === null
+      ? NO_PROVIDER_ATOM
+      : subagentLinkProviderAtom(JSON.stringify([environmentId, instanceId])),
   );
   if (link === null) return props.children;
-  const [driver, providerName] = provider?.split("\n") ?? [];
   const status = statusLabel(link.kind, gt);
   const title = link.shell.title.trim() || props.title;
   return (
@@ -276,12 +298,13 @@ export function ForkSubagentLinkChip(props: {
             data-markdown-copy={props.copyMarkdown}
             data-fork-subagent-link=""
             shape="capsule"
-            style={forkSubagentLinkToneStyle(driver)}
+            style={forkSubagentLinkToneStyle(provider?.driver)}
           >
-            {driver ? (
+            {provider ? (
               <ProviderInstanceIcon
-                driverKind={ProviderDriverKind.make(driver)}
-                displayName={providerName ?? driver}
+                driverKind={provider.driver}
+                displayName={provider.displayName}
+                acpRegistryIconUrl={provider.iconUrl}
                 className="z-auto [zoom:0.8]"
                 iconClassName="size-[1em]"
               />
