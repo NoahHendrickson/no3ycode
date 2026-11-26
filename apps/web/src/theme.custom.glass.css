@@ -346,7 +346,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
-      [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
+      [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     ) {
@@ -376,7 +376,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
-      [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
+      [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     ):is(:focus-visible, :has(:focus-visible:not([data-testid="composer-editor"]))) {
@@ -389,7 +389,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
-      [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
+      [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     )::before {
@@ -426,7 +426,7 @@
     ).dark[data-fork-theme="cool-darker"]
     [data-chat-column-maximized-away][data-fork-draft-hero]
     [data-fork-composer-stack="true"]
-    [data-fork-composer-status-chip] {
+    [data-fork-composer-status-chip="stash"] {
     --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
     --fork-glass-frost-radius: var(--radius-lg);
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
@@ -437,7 +437,7 @@
     ).dark[data-fork-theme="cool-darker"]
     [data-chat-column-maximized-away][data-fork-draft-hero]
     [data-fork-composer-stack="true"]
-    [data-fork-composer-status-chip]:is(a, button):hover {
+    [data-fork-composer-status-chip="stash"]:hover {
     --fork-glass-frost-wash: var(--fork-context-chip-bg-hover);
   }
 
@@ -536,7 +536,7 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
-    [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
+    [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
     [data-fork-draft-launchpad-card],
     [data-chat-header] [data-fork-pill]
   ),

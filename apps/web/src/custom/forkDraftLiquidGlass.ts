@@ -191,7 +191,7 @@ function readDraftCardElements(chatView: Element): HTMLElement[] {
   const selectors = [
     "[data-fork-composer-vessel]",
     "[data-fork-draft-launchpad-card]",
-    "[data-fork-composer-status-chip]",
+    '[data-fork-composer-status-chip="stash"]',
   ];
   const elements: HTMLElement[] = [];
   for (const selector of selectors) {
