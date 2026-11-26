@@ -5,8 +5,11 @@ import {
   FileIcon,
   FolderIcon,
   GlobeIcon,
+  Grid2x2Icon,
   Notification01Icon,
   PenLineIcon,
+  ServerIcon,
+  SunIcon,
   ZapIcon,
 } from "@hugeicons/core-free-icons";
 import { describe, expect, it } from "vite-plus/test";
@@ -14,25 +17,65 @@ import { describe, expect, it } from "vite-plus/test";
 import { canFill, GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
 
 const counts = (icon: IconSvgElement) => {
-  const { bodies, knockouts, plain } = glyphDrawing(icon, true);
-  return { bodies: bodies.length, knockouts: knockouts.length, plain: plain.length };
+  const { bodies, knockouts, holes, plain } = glyphDrawing(icon, true);
+  const rims = holes.filter(([, attrs]) => attrs["stroke"] === "white").length;
+  return {
+    bodies: bodies.length,
+    knockouts: knockouts.length,
+    holes: holes.length - rims,
+    rims,
+    plain: plain.length,
+  };
 };
 
 describe("glyphDrawing", () => {
-  it("fills the enclosing shape and cuts the detail inside it out", () => {
-    expect(counts(CheckmarkCircle02Icon)).toEqual({ bodies: 1, knockouts: 1, plain: 0 });
+  it("fills the enclosing shape, unstroked, and cuts the detail inside it out within a rim", () => {
+    expect(counts(CheckmarkCircle02Icon)).toEqual({
+      bodies: 1,
+      knockouts: 0,
+      holes: 1,
+      rims: 1,
+      plain: 0,
+    });
+    expect(glyphDrawing(CheckmarkCircle02Icon, true).bodies[0]?.[1]).toMatchObject({
+      fill: "currentColor",
+      stroke: "none",
+    });
   });
 
   it("fills a closed contour that shares its path with an open one", () => {
-    // The page closes; the fold corner in the same path does not, and is cut out of the page.
-    expect(counts(FileIcon)).toMatchObject({ bodies: 1, plain: 0 });
-    expect(counts(FileIcon).knockouts).toBeGreaterThan(0);
+    // The page closes; the fold corner in the same path does not, and is cut out of the page
+    // without opening its edge.
+    expect(counts(FileIcon)).toMatchObject({ bodies: 1, plain: 0, rims: 1 });
+    expect(counts(FileIcon).holes).toBeGreaterThan(0);
+  });
+
+  it("cuts through the edge only where a detail runs to it", () => {
+    // The grid's lines meet its frame, so they divide the body rather than sit inside it.
+    expect(counts(Grid2x2Icon)).toMatchObject({ bodies: 1, holes: 0, rims: 0 });
+    expect(counts(Grid2x2Icon).knockouts).toBeGreaterThan(0);
+  });
+
+  it("parts bodies whose outlines meet with a seam", () => {
+    expect(counts(ServerIcon)).toMatchObject({ bodies: 2, knockouts: 1 });
+  });
+
+  it("keeps a closed part too small to fill as a stroke", () => {
+    // The sun's rays end in dots; filled, a dot is erased by its own ray.
+    const { bodies, plain } = counts(SunIcon);
+    expect(bodies).toBe(1);
+    expect(plain).toBeGreaterThan(8);
   });
 
   it("keeps a part outside the body stroked, even inside the body's bounds", () => {
     // The bell's clapper hangs below its body; the pen's baseline runs beside it.
-    expect(counts(Notification01Icon)).toEqual({ bodies: 1, knockouts: 0, plain: 1 });
-    expect(counts(PenLineIcon)).toEqual({ bodies: 1, knockouts: 0, plain: 1 });
+    expect(counts(Notification01Icon)).toMatchObject({
+      bodies: 1,
+      knockouts: 0,
+      holes: 0,
+      plain: 1,
+    });
+    expect(counts(PenLineIcon)).toMatchObject({ bodies: 1, knockouts: 0, holes: 0, plain: 1 });
   });
 
   it("measures a part where its transform puts it", () => {
@@ -48,7 +91,7 @@ describe("glyphDrawing", () => {
   });
 
   it("draws no knockouts when nothing sits inside the body", () => {
-    expect(counts(FolderIcon)).toEqual({ bodies: 1, knockouts: 0, plain: 0 });
+    expect(counts(FolderIcon)).toMatchObject({ bodies: 1, knockouts: 0, holes: 0, plain: 0 });
   });
 
   it("stops on malformed path data instead of looping", () => {
