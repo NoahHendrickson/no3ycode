@@ -9,3 +9,11 @@ export declare const DESIGN_LINT_OVERRIDES: Array<{
   excludeFiles?: string[];
   rules: Record<string, "error" | "off" | ["error", ...unknown[]]>;
 }>;
+export declare const DESIGN_LINT_ALLOWLIST: Array<{
+  rule: string;
+  file?: string;
+  match?: string;
+  name?: string;
+  reason: string;
+}>;
+export declare const RUNTIME_TOKEN_PREFIXES: string[];

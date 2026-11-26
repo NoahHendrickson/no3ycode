@@ -9686,6 +9686,15 @@
     - .fork/design-lint.mjs
     - .fork/design-lint/css.mjs
     - .fork/design-lint/css.d.mts
+    - .fork/design-lint/sources.mjs
+    - .fork/design-lint/suppressions.mjs
+    - .fork/design-lint/themes.mjs
+    - .fork/design-lint/rules/attributes.mjs
+    - .fork/design-lint/rules/contract.mjs
+    - .fork/design-lint/rules/primitives.mjs
+    - .fork/design-lint/rules/restated.mjs
+    - .fork/design-lint/rules/stories.mjs
+    - .fork/design-lint/rules/values.mjs
     - .fork/design-rules.mjs
     - .fork/design-rules.d.mts
     - oxlint-plugin-t3code/rules/no-direct-icon-imports.ts

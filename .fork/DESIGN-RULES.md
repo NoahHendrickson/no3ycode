@@ -30,7 +30,7 @@ ratchet or baseline: a rule either passes or it fails. A few files wait on a des
 | B2  | No hand-built interactive primitives: a styled raw `<button>`, or `role="menu"`, `listbox`, `dialog`, `alertdialog` or `tooltip` on a host element | They miss the primitives' focus, keyboard and theme work | `Button`, `Menu`, `Select`/`Combobox`, `Dialog`/`Sheet`/`Popover`, `Tooltip`; `custom/ListItem` for a list row on screen; Base UI's `Button`, `Toggle` or `Radio` for a feature's own control |
 | B3  | Status marks come only from `custom/SidebarV2StatusIndicator.tsx`: no `CircleHalfIcon`, no hand-drawn status dots                                  | One status language across sidebar, tabs and chips       | `SidebarV2StatusMark` and its siblings                                                                                                                                                        |
 | B4  | Icons come only from the Hugeicons shim, never an icon package directly                                                                            | The shim owns each glyph's stroke and fill policy        | `~/custom/icons/lucide-hugeicons`                                                                                                                                                             |
-| B5  | Every exported **atomic** component in `custom/` (a button, chip, mark, row, card, menu, picker, indicator) has a Storybook story                  | The story is where Figma and code are compared           | A story in `apps/fork-storybook/stories`; a page, layout, section, provider or wrapper gets a `b5Exempt` entry in `design-lint.mjs` with its kind as the reason                               |
+| B5  | Every exported **atomic** component in `custom/` (a button, chip, mark, row, card, menu, picker, indicator) has a Storybook story                  | The story is where Figma and code are compared           | A story in `apps/fork-storybook/stories`; a page, layout, section, provider or wrapper gets a `b5Exempt` entry in `design-rules.mjs` with its kind as the reason                              |
 
 B4 applies to `custom/` only. Upstream files (and their copies in `overrides/`) keep
 `from "lucide-react"`, which the build aliases to the shim.
@@ -57,15 +57,16 @@ Only when the rule really doesn't fit, and always with a reason.
   `{/* oxlint-disable-next-line … -- reason */}`). `t3code/require-suppression-reason` already
   requires the reason. A value a token can't express goes in the A5 allowlist in
   `design-rules.mjs`, with its reason.
-- **Whole selectors or components** (brand marks, B5 exceptions): an `ALLOWLIST` entry in
-  `design-lint.mjs` with a `reason`. B5 lists components that are not atomic through `b5Exempt`,
+- **Whole selectors or components** (brand marks, B5 exceptions): a `DESIGN_LINT_ALLOWLIST`
+  entry in `design-rules.mjs` with a `reason`. B5 lists components that are not atomic through `b5Exempt`,
   grouped by kind (route page, page layout, section, provider/host, backdrop, wrapper); the name
   must match exactly. Blocks and templates get their own stories later.
 
 ## How the checks run
 
 - `node .fork/design-lint.mjs --check` runs the CSS rules and the cross-file checks (B5, C3,
-  C5) and fails on any finding.
+  C5) and fails on any finding. The engine is in `.fork/design-lint/` (one module per rule
+  group); every exemption it reads is in `design-rules.mjs`.
 - A5 and B1–B4 are oxlint rules: the shadcn rules, plus `t3code/no-hand-built-primitives`,
   `t3code/no-hand-built-status-marks` and `t3code/no-direct-icon-imports`. `design-rules.mjs`
   configures them for fork files and `vite.config.ts` applies them, so `vp lint` reports them.
@@ -74,6 +75,6 @@ Only when the rule really doesn't fit, and always with a reason.
 ## Pending
 
 `DESIGN_LINT_PENDING` in `design-rules.mjs` turns one rule off for the files listed under it,
-and B5's `pending:` groups in `design-lint.mjs` do the same for components. Each line waits on
-a design call (Hugeicons drawn from raw data, components that need a `*View` split for a story). Settle it, fix the file, delete the
-line. New files never join these lists.
+and the B5 `pending:` group in `DESIGN_LINT_ALLOWLIST` does the same for components. Each line
+waits on a design call (Hugeicons drawn from raw data, components that need a `*View` split for a
+story). Settle it, fix the file, delete the line. New files never join these lists.
