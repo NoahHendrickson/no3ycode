@@ -9650,10 +9650,11 @@
     menu, select, combobox and autocomplete rows from --fork-menu-row-radius;
     tooltips take --fork-tooltip-radius, -font-size, -line-height and
     -padding-inline / -block. Every read falls back to upstream's own class
-    value, so a theme that sets none draws what upstream draws. MenuItem
-    takes tone "muted"; custom/ListItem, a row for lists that stay on screen
-    (the new agent launchpad, the music strip, the Petal threads panel), is
-    drawn as MenuItem's row. Variants several fork features pick: Button "ghost-tint" (the
+    value, so a theme that sets none draws what upstream draws. menu.tsx
+    exports MenuItem's row (menuRowClassName) and its tones (menuRowToneClassName,
+    "muted"), and custom/ListItem, a row for lists that stay on screen (the new
+    agent launchpad, the music strip, the Petal threads panel), is built from
+    the same string, so the two cannot drift. Variants several fork features pick: Button "ghost-tint" (the
     sidebar's icon buttons), RadioGroup density "compact", TableRow
     interactive={false}, TableCell tone and truncate. Every default is
     upstream's look, unchanged. A look only one feature draws lives in that

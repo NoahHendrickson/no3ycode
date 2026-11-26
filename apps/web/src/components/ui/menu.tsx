@@ -134,8 +134,11 @@ function MenuGroup(props: MenuPrimitive.Group.Props) {
 }
 
 /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
+// MenuItem's row, shared with custom/ListItem so a list on screen cannot drift from a menu row.
+export const menuRowClassName =
+  "[&>svg]:-mx-0.5 flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-(--fork-menu-row-radius,var(--radius-sm)) px-2 py-1 text-base text-foreground outline-none data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&>svg:not([class*='opacity-'])]:opacity-80 [&>svg:not([class*='size-'])]:size-4.5 sm:[&>svg:not([class*='size-'])]:size-4 [&>svg:not([class*='text-'])]:text-muted-foreground [&>svg]:pointer-events-none [&>svg]:shrink-0";
 // A muted label (the model picker's legacy toggle, ListItem's muted rows).
-const forkMenuRowToneClassName = { default: "", muted: "text-muted-foreground" } as const;
+export const menuRowToneClassName = { default: "", muted: "text-muted-foreground" } as const;
 /* fork:end fork-design-primitives */
 
 function MenuItem({
@@ -152,14 +155,15 @@ function MenuItem({
   density?: "default" | "touch";
   variant?: "default" | "destructive" | "ghost";
   /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
-  tone?: keyof typeof forkMenuRowToneClassName;
+  tone?: keyof typeof menuRowToneClassName;
   /* fork:end fork-design-primitives */
 }) {
   return (
     <MenuPrimitive.Item
       className={cn(
         /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
-        "[&>svg]:-mx-0.5 flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-(--fork-menu-row-radius,var(--radius-sm)) px-2 py-1 text-base text-foreground outline-none data-disabled:pointer-events-none data-disabled:cursor-not-allowed data-highlighted:bg-accent data-inset:ps-8 data-[variant=destructive]:text-destructive-foreground data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&>svg:not([class*='opacity-'])]:opacity-80 [&>svg:not([class*='size-'])]:size-4.5 sm:[&>svg:not([class*='size-'])]:size-4 [&>svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:[&>svg:not([class*='text-'])]:text-current [&>svg]:pointer-events-none [&>svg]:shrink-0",
+        menuRowClassName,
+        "data-highlighted:bg-accent data-inset:ps-8 data-[variant=destructive]:text-destructive-foreground data-highlighted:text-accent-foreground data-[variant=destructive]:[&>svg:not([class*='text-'])]:text-current",
         /* fork:end fork-design-primitives */
         variant === "ghost" &&
           buttonVariants({
@@ -169,7 +173,7 @@ function MenuItem({
           }),
         density === "touch" && "min-h-10 sm:min-h-10",
         /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
-        forkMenuRowToneClassName[tone],
+        menuRowToneClassName[tone],
         /* fork:end fork-design-primitives */
         className,
       )}
