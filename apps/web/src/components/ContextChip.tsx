@@ -43,8 +43,8 @@ const contextChipVariants = cva(
         bubble: "w-64 gap-2 rounded-2xl bg-message px-3 py-2 text-sm text-message-foreground",
         /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
         capsule:
-          // oxlint-disable-next-line shadcn/no-arbitrary-values -- em insets scale the capsule with the prose it sits in
-          "gap-[0.3em] rounded-full border border-foreground/12 bg-foreground/6 py-px ps-[0.3em] pe-[0.55em] font-[weight:inherit] text-foreground no-underline [--context-chip-ink:currentColor]",
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the reply's inline code chip (theme.custom.css#fork-inline-code-chip) in the --fork-chip-* tone, else neutral
+          "gap-[0.3em] rounded-[5px] bg-[color-mix(in_srgb,var(--fork-chip-hue,var(--foreground))_12%,transparent)] px-1.5 leading-[1.3] font-[weight:inherit] no-underline [font-size:0.95em] [--context-chip-ink:var(--fork-chip-ink-light,var(--foreground))] dark:bg-[color-mix(in_srgb,var(--fork-chip-hue,var(--foreground))_16%,transparent)] dark:not-data-[state=invalid]:[--context-chip-ink:var(--fork-chip-ink-dark,var(--foreground))]",
         /* fork:end no3y-subagent-link-chip */
       },
       state: {

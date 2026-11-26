@@ -30,7 +30,8 @@
   box-shadow: inset 0 0 0 1px var(--fork-composer-border, var(--border));
   font-size: var(--fork-composer-chip-text);
   font-weight: 400;
-  line-height: calc(var(--fork-composer-chip-text) + 1px);
+  /* The composer chips' line: a tighter one clips descenders under `truncate`. */
+  line-height: calc(var(--fork-composer-chip-text) + 6px);
   color: var(--foreground);
 }
 
