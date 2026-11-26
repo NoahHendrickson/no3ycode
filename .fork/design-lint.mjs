@@ -1,16 +1,13 @@
 #!/usr/bin/env node
 /**
- * Fork design-system lint: the CSS and cross-file rules of .fork/DESIGN-RULES.md, plus the
- * oxlint TSX rules. `--check` fails on any finding.
+ * Fork design-system lint: the CSS and cross-file rules of .fork/DESIGN-RULES.md, the ones
+ * oxlint cannot see (`vp lint` carries the TSX rules). `--check` fails on any finding.
  */
 
-import * as NodeChildProcess from "node:child_process";
 import * as NodeFS from "node:fs";
 import * as NodeModule from "node:module";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
-
-import { DESIGN_OXLINT_RULE_IDS } from "./design-rules.mjs";
 
 const FORK_DIR = NodePath.dirname(NodeURL.fileURLToPath(import.meta.url));
 const REPO_ROOT = NodePath.resolve(FORK_DIR, "..");
@@ -1146,61 +1143,6 @@ const allowlisted = (entry) =>
         : entry.component === allowed.name),
   );
 
-const parseReport = (stdout) => {
-  const start = stdout.indexOf("{");
-  if (start === -1) return undefined;
-  try {
-    return JSON.parse(stdout.slice(start));
-  } catch {
-    return undefined;
-  }
-};
-
-function runOxlint(root) {
-  const files = forkTsxFiles(root, ["custom", "overrides"]);
-  const codes = new Map(
-    Object.entries(DESIGN_OXLINT_RULE_IDS).map(([rule, id]) => [
-      rule.replace(/^([^/]+)\/(.+)$/u, "$1($2)"),
-      id,
-    ]),
-  );
-  const result = NodeChildProcess.spawnSync("vp", ["lint", ...files, "--format", "json"], {
-    cwd: root,
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  const report = result.error ? undefined : parseReport(result.stdout);
-  if (report === undefined) {
-    throw new Error(`could not read vp lint output: ${result.error?.message ?? result.stderr}`);
-  }
-  if (report.number_of_files !== files.length) {
-    throw new Error(
-      `expected to lint ${files.length} fork TSX files, oxlint reported ${report.number_of_files}`,
-    );
-  }
-  // shadcn reports a class once per branch of a cn() it appears in; count each class once per line.
-  const seen = new Set();
-  return (report.diagnostics ?? [])
-    .filter((diagnostic) => codes.has(diagnostic.code))
-    .filter((diagnostic) => {
-      const key = `${diagnostic.filename}:${diagnostic.labels?.[0]?.span?.line}:${diagnostic.message}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((diagnostic) =>
-      finding(
-        codes.get(diagnostic.code),
-        diagnostic.filename,
-        diagnostic.labels?.[0]?.span?.line ?? 0,
-        diagnostic.message,
-        {
-          oxlint: diagnostic.code,
-        },
-      ),
-    );
-}
-
 export function collectFindings(root = REPO_ROOT) {
   const forkSheets = forkCssFiles(root).map((path) => loadStylesheet(path, read(root, path)));
   const fencedSheets = FENCED_CSS_FILES.filter((path) =>
@@ -1239,15 +1181,14 @@ export function collectFindings(root = REPO_ROOT) {
     .join("\n");
 
   const slots = primitiveSlots(root);
-  let findings = [
+  const findings = [
     ...checked.flatMap((sheet) => checkStylesheet(sheet, slots)),
     ...checkDuplicatedThemeBlocks(checked),
     ...checkThemeContract([...checked.flatMap(cssConsumers), ...tsxConsumers], definitions),
     ...checkDeadForkAttributes(checked, sourceText),
     ...checkStories(root),
   ];
-  findings = applySuppressions(findings, checked).filter((entry) => !allowlisted(entry));
-  return [...findings, ...runOxlint(root)];
+  return applySuppressions(findings, checked).filter((entry) => !allowlisted(entry));
 }
 
 /** Glass 3D is best effort: a finding only it can see is reported, never blocking. */

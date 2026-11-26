@@ -132,16 +132,6 @@ export const DESIGN_LINT_PENDING = {
   ],
 };
 
-/** oxlint rule id → the rule in DESIGN-RULES.md it enforces. */
-export const DESIGN_OXLINT_RULE_IDS = {
-  "shadcn/no-raw-colors": "A1",
-  "shadcn/no-arbitrary-values": "A5",
-  "shadcn/no-restyle": "B1",
-  "t3code/no-hand-built-primitives": "B2",
-  "t3code/no-hand-built-status-marks": "B3",
-  "t3code/no-direct-icon-imports": "B4",
-};
-
 /** The overrides vite.config.ts appends to `lint.overrides`, after the block that turns shadcn off. */
 export const DESIGN_LINT_OVERRIDES = [
   {
