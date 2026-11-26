@@ -1,11 +1,11 @@
-Cinnabar Sans
+Cinnabar Interface
 
-Copyright (c) 2026 The Cinnabar Sans Project Authors
-Cinnabar Sans is a Modified Version of:
+Copyright (c) 2026 The Cinnabar Interface Project Authors
+Cinnabar Interface is a Modified Version of:
   Geist - Copyright (c) 2023 Vercel, in collaboration with basement.studio
   Inter - Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
 
-Cinnabar Sans is not affiliated with or endorsed by the authors of Geist or Inter.
+Cinnabar Interface is not affiliated with or endorsed by the authors of Geist or Inter.
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
 http://scripts.sil.org/OFL

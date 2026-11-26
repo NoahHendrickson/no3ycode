@@ -2,8 +2,8 @@
 /**
  * Fork guard — see `.fork/customizations.yaml#no3y-mobile-interface-font`.
  *
- * The iPhone can draw Cinnabar Sans: the faces are bundled, the pick persists, and every surface
- * that names a font family follows it.
+ * The iPhone can draw Cinnabar Interface: the faces are bundled, the pick persists, and every
+ * surface that names a font family follows it.
  */
 
 import * as NodeFS from "node:fs";

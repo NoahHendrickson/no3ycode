@@ -56,7 +56,7 @@ describe("fork guard: geist-typography", () => {
   it("declares the Geist Mono stack inside the marker-scoped block", () => {
     // Bounded to the block: a declaration that lost its scoping and moved to a
     // bare `:root { }` has to fail here, which is the point of the test. The
-    // sans stack is cinnabar-sans-typeface's to guard.
+    // sans stack is cinnabar-interface-typeface's to guard.
     const block = markerBlock(readSibling("../theme.custom.css"));
     expect(block).toContain("--fork-font-mono:");
     expect(block).toContain('"Geist Mono Variable"');

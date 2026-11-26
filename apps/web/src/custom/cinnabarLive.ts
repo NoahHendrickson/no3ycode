@@ -4,8 +4,9 @@
  * Dev builds only, and only when the dev server is started with VITE_CINNABAR_LIVE set (a Studio
  * URL, or "1" for http://127.0.0.1:8765). The Studio (the font's editor, in the cinnabar-sans repo)
  * recompiles a preview of the font after every edit and announces each version over server-sent
- * events. Each time, this fetches the new upright and italic files and swaps the "Cinnabar Sans"
- * faces in place, so the whole app re-renders in the edited font with no reload.
+ * events. Each time, this fetches the new upright and italic files and swaps the
+ * "Cinnabar Interface" faces in place, so the whole app re-renders in the edited font with no
+ * reload.
  *
  * The bytes are fetched and handed to FontFace as an ArrayBuffer rather than loaded by URL: the
  * desktop renderer's CSP allows http: in connect-src but not in font-src, and a FontFace built from
@@ -14,10 +15,10 @@
  */
 
 const DEFAULT_STUDIO_URL = "http://127.0.0.1:8765";
-const FAMILY = "Cinnabar Sans";
+const FAMILY = "Cinnabar Interface";
 const FILES = [
-  { file: "CinnabarSans.ttf", style: "normal" },
-  { file: "CinnabarSans-Italic.ttf", style: "italic" },
+  { file: "CinnabarInterface.ttf", style: "normal" },
+  { file: "CinnabarInterface-Italic.ttf", style: "italic" },
 ] as const;
 
 export function cinnabarLiveStudioUrl(flag: string | undefined): string | null {
