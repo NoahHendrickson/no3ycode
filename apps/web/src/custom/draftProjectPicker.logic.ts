@@ -1,52 +1,45 @@
-/** How the draft's project picker lists its rows — see
+/** How the draft's project picker orders its rows — see
     `.fork/customizations.yaml#fork-new-agent-draft`. */
 
-export type DraftProjectSort = "recent" | "name";
+export const DRAFT_PROJECT_SORTS = ["recent", "name"] as const;
+export type DraftProjectSort = (typeof DRAFT_PROJECT_SORTS)[number];
 
 interface PickerEntry {
-  readonly group: { readonly projectKey: string; readonly displayName: string };
+  readonly group: {
+    readonly projectKey: string;
+    readonly displayName: string;
+    readonly pinned: boolean;
+  };
 }
 
-/** The rows a query leaves, pinned ones first, each part in the chosen order. `recentKeys` is
-    every project key, most recently used first. */
-export function arrangeDraftProjectEntries<TEntry extends PickerEntry>(input: {
-  readonly entries: readonly TEntry[];
-  readonly query: string;
-  readonly sort: DraftProjectSort;
-  readonly pinnedKeys: readonly string[];
-  readonly recentKeys: readonly string[];
-}): { readonly pinned: TEntry[]; readonly rest: TEntry[] } {
-  const matching = input.entries.filter((entry) =>
-    matchesDraftProjectQuery(entry.group.displayName, input.query),
-  );
-  const recentRank = new Map(input.recentKeys.map((key, index) => [key, index] as const));
+/** Pinned projects first, each part in the chosen order. `recentKeys` ranks the projects with
+    recent activity; the rest follow in their given order. */
+export function orderDraftProjectEntries<TEntry extends PickerEntry>(
+  entries: readonly TEntry[],
+  sort: DraftProjectSort,
+  recentKeys: readonly string[],
+): TEntry[] {
+  const recentRank = new Map(recentKeys.map((key, index) => [key, index] as const));
   const sorted =
-    input.sort === "name"
-      ? matching.toSorted((left, right) =>
+    sort === "name"
+      ? entries.toSorted((left, right) =>
           left.group.displayName.localeCompare(right.group.displayName, undefined, {
             numeric: true,
             sensitivity: "base",
           }),
         )
-      : matching.toSorted(
+      : entries.toSorted(
           (left, right) =>
             (recentRank.get(left.group.projectKey) ?? Infinity) -
             (recentRank.get(right.group.projectKey) ?? Infinity),
         );
-  const pinnedKeys = new Set(input.pinnedKeys);
-  return {
-    pinned: sorted.filter((entry) => pinnedKeys.has(entry.group.projectKey)),
-    rest: sorted.filter((entry) => !pinnedKeys.has(entry.group.projectKey)),
-  };
+  return [
+    ...sorted.filter((entry) => entry.group.pinned),
+    ...sorted.filter((entry) => !entry.group.pinned),
+  ];
 }
 
 export function matchesDraftProjectQuery(label: string, query: string): boolean {
   const needle = query.trim().toLocaleLowerCase();
   return needle === "" || label.toLocaleLowerCase().includes(needle);
-}
-
-export function toggleDraftProjectPin(pinnedKeys: readonly string[], key: string): string[] {
-  return pinnedKeys.includes(key)
-    ? pinnedKeys.filter((pinned) => pinned !== key)
-    : [...pinnedKeys, key];
 }

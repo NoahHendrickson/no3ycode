@@ -6,7 +6,7 @@ import { type ReactNode, type Ref, useLayoutEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { ComboboxTrigger } from "~/components/ui/combobox";
 import type { DraftId } from "~/composerDraftStore";
-import { DraftProjectPicker } from "./DraftProjectMenuPopup";
+import { DraftProjectPicker } from "./DraftProjectPicker";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
 import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/lucide-hugeicons";
 import {

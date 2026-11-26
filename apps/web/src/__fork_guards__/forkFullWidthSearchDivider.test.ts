@@ -16,6 +16,11 @@ const combobox = NodeFS.readFileSync(
   "utf8",
 );
 
+const menu = NodeFS.readFileSync(
+  NodeURL.fileURLToPath(new URL("../components/ui/menu.tsx", import.meta.url)),
+  "utf8",
+);
+
 describe("fork guard: fork-full-width-search-divider", () => {
   it("pads the search field inside its underline", () => {
     expect(combobox).toContain('<label className="block min-w-0 shrink-0 cursor-text pt-2.5">');
@@ -28,5 +33,6 @@ describe("fork guard: fork-full-width-search-divider", () => {
       /border-b border-border\/70 px-3 pb-1\.5[^"]*focus-within:border-ring/u,
     );
     expect(combobox).toContain("endAddon?: React.ReactNode;");
+    expect(menu).toContain('"relative -translate-y-px border-b border-border/70 pb-1.5",');
   });
 });

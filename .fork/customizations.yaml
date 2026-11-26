@@ -5960,11 +5960,13 @@
     project (upstream's projectless home, created by the server on first use)
     and assigns the draft to it like any other pick, so a New agent draft can
     become a projectless chat. New agent never picks it for the user: the
-    draft opens on "Choose a project" (a draft left on No project by the old
-    default goes back to asking when New agent reopens it). The menu searches
-    projects by name, lists pinned projects first (a pin button on each row,
-    kept in localStorage on this device), and sorts by recent use or name from
-    a sort menu at the search row's far end (custom/draftProjectPicker.logic). The scratch folder itself is never
+    draft opens on "Choose a project". The menu searches projects by name,
+    lists pinned projects first (upstream's server-backed project pins and
+    ProjectPinButton, shared with the sidebar
+    and palette; the thread-pin shortcut pins the highlighted row), holds its
+    order while open (upstream's useOrderWhileOpen), and sorts by recent
+    activity (the launchpad's ranking) or name from a sort menu at the search
+    row's far end (custom/draftProjectPicker.logic). The scratch folder itself is never
     listed as a project. With two or more machines connected, an unassigned draft also gets a
     machine chip (custom/DraftMachineChip, upstream's
     BranchToolbarEnvironmentSelector) after the project chip: it moves the
@@ -6069,7 +6071,7 @@
     - apps/web/src/custom/useNewAgentDraft.ts
     # The chip, its menu, and the choices and pick dispatcher both share.
     - apps/web/src/custom/DraftProjectPill.tsx
-    - apps/web/src/custom/DraftProjectMenuPopup.tsx
+    - apps/web/src/custom/DraftProjectPicker.tsx
     - apps/web/src/custom/useDraftProjectChoices.ts
     - apps/web/src/custom/draftProjectPicker.logic.ts
     - apps/web/src/custom/draftProjectPicker.logic.test.ts
@@ -7688,13 +7690,14 @@
     fork moves the padding inside the underlined box and offsets the search
     icon by the same 12px, so the field sits where it did. The underline stays
     the divider colour while the field has focus (upstream lights it with the
-    ring colour), and an optional endAddon puts a control at the row's far
-    end (the draft project picker's sort menu).
+    ring colour), as does MenuSearchInput's, and an optional endAddon puts a
+    control at the row's far end (the draft project picker's sort menu).
   tier: 4
   files: []
   shadows: []
   watch:
     - apps/web/src/components/ui/combobox.tsx
+    - apps/web/src/components/ui/menu.tsx
   verify:
     - apps/web/src/__fork_guards__/forkFullWidthSearchDivider.test.ts
 

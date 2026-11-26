@@ -1,8 +1,10 @@
 /** The draft's project picker, opened from the project chip: search, pinned projects first,
     sorted by recent use or name — see `.fork/customizations.yaml#fork-new-agent-draft`. */
+import { useAtomValue } from "@effect/atom-react";
 import * as Schema from "effect/Schema";
 import { type ReactNode, type RefObject, useRef, useState } from "react";
 
+import { isProjectPinShortcut, ProjectPinButton } from "~/components/ProjectPinButton";
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { Button } from "~/components/ui/button";
 import {
@@ -17,19 +19,21 @@ import { Menu, MenuPopup, MenuRadioGroup, MenuRadioItem, MenuTrigger } from "~/c
 import { Separator } from "~/components/ui/separator";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
+import { useOrderWhileOpen } from "~/hooks/useOrderWhileOpen";
+import { shortcutLabelForCommand } from "~/keybindings";
 import { cn } from "~/lib/utils";
+import { primaryServerKeybindingsAtom } from "~/state/server";
 import {
-  arrangeDraftProjectEntries,
+  DRAFT_PROJECT_SORTS,
   type DraftProjectSort,
   matchesDraftProjectQuery,
-  toggleDraftProjectPin,
+  orderDraftProjectEntries,
 } from "./draftProjectPicker.logic";
 import {
   ArrowUpDownIcon,
   FolderIcon,
   FolderPlusIcon,
   MessageSquareDashedIcon,
-  PinIcon,
 } from "./icons/lucide-hugeicons";
 import {
   NO_PROJECT_VALUE,
@@ -39,11 +43,16 @@ import {
 
 // Device-local, like the sidebar's grouping switches: a contracts field would put a
 // fork-shaped key in a schema upstream owns.
-const PINS_STORAGE_KEY = "t3code:fork:draft-project-pins:v1";
 const SORT_STORAGE_KEY = "t3code:fork:draft-project-sort:v1";
-const PinsSchema = Schema.Array(Schema.String);
-const SortSchema = Schema.Literals(["recent", "name"]);
-const NO_PINS: readonly string[] = [];
+const SortSchema = Schema.Literals(DRAFT_PROJECT_SORTS);
+const isDraftProjectSort = Schema.is(SortSchema);
+const SORT_LABELS: Record<DraftProjectSort, string> = { recent: "Recent", name: "Name" };
+const DEFAULT_SORT: DraftProjectSort = "recent";
+
+type PickerEntry = DraftProjectMenuChoices["entries"][number];
+type PickerRow =
+  | { readonly value: typeof NO_PROJECT_VALUE; readonly label: string; readonly entry: null }
+  | { readonly value: string; readonly label: string; readonly entry: PickerEntry };
 
 /** A favicon-less project's folder: white at low opacity tints with the dark
     glass popup; the light popup keeps upstream's muted token. */
@@ -61,38 +70,32 @@ export function DraftProjectPicker(props: {
   const [open, setOpen] = useState(props.defaultOpen ?? false);
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
-  const [pinnedKeys, setPinnedKeys] = useLocalStorage(PINS_STORAGE_KEY, NO_PINS, PinsSchema);
-  const [sort, setSort] = useLocalStorage<DraftProjectSort, DraftProjectSort>(
-    SORT_STORAGE_KEY,
-    "recent",
-    SortSchema,
-  );
-  const { pinned, rest } = arrangeDraftProjectEntries({
-    entries: choices.entries,
-    query,
-    sort,
-    pinnedKeys,
-    recentKeys: choices.recentKeys,
-  });
-  const showNoProject =
-    choices.noProjectEnvironmentId !== null && matchesDraftProjectQuery("No project", query);
-  const items = [
-    ...(showNoProject ? [NO_PROJECT_VALUE] : []),
-    ...pinned.map((entry) => entry.group.projectKey),
-    ...rest.map((entry) => entry.group.projectKey),
-  ];
-  const indexOf = (value: string) => items.indexOf(value);
-  const projectRow = (entry: (typeof choices.entries)[number]) => (
-    <DraftProjectRow
-      key={entry.group.projectKey}
-      entry={entry}
-      index={indexOf(entry.group.projectKey)}
-      pinned={pinnedKeys.includes(entry.group.projectKey)}
-      onTogglePin={() =>
-        setPinnedKeys((keys) => toggleDraftProjectPin(keys, entry.group.projectKey))
-      }
-    />
-  );
+  const highlightedRef = useRef<string | null>(null);
+  const keybindings = useAtomValue(primaryServerKeybindingsAtom);
+  const [sort, setSort] = useLocalStorage(SORT_STORAGE_KEY, DEFAULT_SORT, SortSchema);
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
+  // Rows hold the order they opened with, so a pin or new activity never moves a row under
+  // the highlight; keying by sort lets a new sort reorder the open list at once.
+  const rows = useOrderWhileOpen<PickerRow>(
+    [
+      ...(choices.noProjectEnvironmentId !== null
+        ? [{ value: NO_PROJECT_VALUE, label: "No project", entry: null } as const]
+        : []),
+      ...orderDraftProjectEntries(choices.entries, sort, choices.recentKeys).map((entry) => ({
+        value: entry.group.projectKey,
+        label: entry.group.displayName,
+        entry,
+      })),
+    ],
+    (row) => `${sort}:${row.value}`,
+    open,
+  ).filter((row) => matchesDraftProjectQuery(row.label, query));
+  const items = rows.map((row) => row.value);
+  const entryByValue = new Map(rows.flatMap((row) => (row.entry ? [[row.value, row.entry]] : [])));
 
   return (
     <Combobox
@@ -104,11 +107,11 @@ export function DraftProjectPicker(props: {
       onValueChange={(value) => {
         if (typeof value === "string") choices.pick(value);
       }}
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
-        if (!nextOpen) setQuery("");
+      onItemHighlighted={(value) => {
+        highlightedRef.current = typeof value === "string" ? value : null;
       }}
+      open={open}
+      onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : close())}
     >
       {props.children}
       <ComboboxPopup
@@ -117,6 +120,8 @@ export function DraftProjectPicker(props: {
         data-fork-glass-rim
         data-fork-chip-menu=""
         className="w-72"
+        // On touch, focusing the search raises the on-screen keyboard over the list.
+        initialFocus={(openType) => openType !== "touch"}
       >
         <ComboboxSearchInput
           aria-label="Search projects"
@@ -124,24 +129,42 @@ export function DraftProjectPicker(props: {
           value={query}
           ref={searchRef}
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            const entry = highlightedRef.current ? entryByValue.get(highlightedRef.current) : null;
+            if (!entry || !choices.canPin(entry.group)) return;
+            if (!isProjectPinShortcut(event, keybindings)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            choices.togglePin(entry.group);
+          }}
           endAddon={
             <DraftProjectSortMenu sort={sort} onSortChange={setSort} returnFocusTo={searchRef} />
           }
         />
         <ComboboxEmpty>No projects found.</ComboboxEmpty>
         <ComboboxList className="max-h-80">
-          {showNoProject ? (
-            <ComboboxItem hideIndicator index={0} value={NO_PROJECT_VALUE}>
-              <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
-              <span className="min-w-0 truncate">No project</span>
+          {rows.map((row, index) => (
+            <ComboboxItem key={row.value} hideIndicator index={index} value={row.value}>
+              {row.entry === null ? (
+                <MessageSquareDashedIcon className="size-4 shrink-0 dark:text-white/40" />
+              ) : (
+                <ProjectFavicon
+                  project={row.entry.targetProject}
+                  className="size-4 shrink-0"
+                  fallbackIcon={PickerFolderIcon}
+                />
+              )}
+              <span className="min-w-0 flex-1 truncate">{row.label}</span>
+              {row.entry !== null && choices.canPin(row.entry.group) ? (
+                <ProjectPinButton
+                  name={row.label}
+                  pinned={row.entry.group.pinned}
+                  shortcutLabel={shortcutLabelForCommand(keybindings, "thread.pin")}
+                  onToggle={() => row.entry && choices.togglePin(row.entry.group)}
+                />
+              ) : null}
             </ComboboxItem>
-          ) : null}
-          {pinned.map(projectRow)}
-          {pinned.length > 0 && rest.length > 0 ? (
-            // Full width: the list pads its rows by 4px a side.
-            <Separator className="-mx-1 my-1 w-auto" />
-          ) : null}
-          {rest.map(projectRow)}
+          ))}
         </ComboboxList>
         <Separator />
         <div className="p-1">
@@ -150,8 +173,7 @@ export function DraftProjectPicker(props: {
             size="xs"
             variant="ghost-muted"
             onClick={() => {
-              setOpen(false);
-              setQuery("");
+              close();
               openAddProject();
             }}
           >
@@ -163,8 +185,6 @@ export function DraftProjectPicker(props: {
     </Combobox>
   );
 }
-
-const SORT_LABELS: Record<DraftProjectSort, string> = { recent: "Recent", name: "Name" };
 
 function DraftProjectSortMenu(props: {
   readonly sort: DraftProjectSort;
@@ -198,10 +218,10 @@ function DraftProjectSortMenu(props: {
         <MenuRadioGroup
           value={props.sort}
           onValueChange={(value) => {
-            if (value === "recent" || value === "name") props.onSortChange(value);
+            if (isDraftProjectSort(value)) props.onSortChange(value);
           }}
         >
-          {(["recent", "name"] as const).map((sort) => (
+          {DRAFT_PROJECT_SORTS.map((sort) => (
             <MenuRadioItem key={sort} value={sort} closeOnClick>
               {SORT_LABELS[sort]}
             </MenuRadioItem>
@@ -209,60 +229,5 @@ function DraftProjectSortMenu(props: {
         </MenuRadioGroup>
       </MenuPopup>
     </Menu>
-  );
-}
-
-function DraftProjectRow(props: {
-  readonly entry: DraftProjectMenuChoices["entries"][number];
-  readonly index: number;
-  readonly pinned: boolean;
-  readonly onTogglePin: () => void;
-}) {
-  const { entry, pinned } = props;
-  const label = pinned ? "Unpin project" : "Pin project";
-  return (
-    <ComboboxItem
-      hideIndicator
-      index={props.index}
-      value={entry.group.projectKey}
-      className="group"
-    >
-      <ProjectFavicon
-        project={entry.targetProject}
-        className="size-4 shrink-0"
-        fallbackIcon={PickerFolderIcon}
-      />
-      <span className="min-w-0 flex-1 truncate">{entry.group.displayName}</span>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost-muted"
-              aria-label={label}
-              aria-pressed={pinned}
-              // The row would take the click as a pick.
-              onClick={(event) => {
-                event.stopPropagation();
-                props.onTogglePin();
-              }}
-              onMouseDown={(event) => event.preventDefault()}
-              onKeyDown={(event) => event.stopPropagation()}
-            >
-              <PinIcon
-                weight={pinned ? "fill" : "stroke"}
-                className={cn(
-                  "size-3.5",
-                  !pinned &&
-                    "opacity-0 group-hover:opacity-100 group-data-highlighted:opacity-100 in-focus-visible:opacity-100 pointer-coarse:opacity-100",
-                )}
-              />
-            </Button>
-          }
-        />
-        <TooltipPopup side="top">{label}</TooltipPopup>
-      </Tooltip>
-    </ComboboxItem>
   );
 }

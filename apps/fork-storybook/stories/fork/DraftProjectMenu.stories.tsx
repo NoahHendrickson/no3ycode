@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
 import { ComboboxTrigger } from "~/components/ui/combobox";
-import { DraftProjectPicker } from "~/custom/DraftProjectMenuPopup";
+import { DraftProjectPicker } from "~/custom/DraftProjectPicker";
 import { FolderIcon } from "~/custom/icons/lucide-hugeicons";
 import { type DraftProjectMenuChoices, NO_PROJECT_VALUE } from "~/custom/useDraftProjectChoices";
 
@@ -19,7 +19,12 @@ const ENTRIES: DraftProjectMenuChoices["entries"] = (
     ["thinking-states", "sky"],
   ] as const
 ).map(([title, color]) => ({
-  group: { projectKey: title, displayName: title },
+  group: {
+    projectKey: title,
+    displayName: title,
+    pinned: title === "dither-studio",
+    memberProjects: [],
+  },
   targetProject: {
     environmentId,
     workspaceRoot: `/Users/story/${title}`,
@@ -38,6 +43,8 @@ function OpenMenu(props: { readonly noProject: boolean }) {
     pick: setValue,
     noProjectEnvironmentId: props.noProject ? environmentId : null,
     recentKeys: ENTRIES.map((entry) => entry.group.projectKey),
+    canPin: () => true,
+    togglePin: () => {},
   };
   const label = ENTRIES.find((entry) => entry.group.projectKey === value)?.group.displayName;
   return (

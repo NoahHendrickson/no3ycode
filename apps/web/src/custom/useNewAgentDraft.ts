@@ -44,7 +44,6 @@ import { resolveThreadRouteTarget } from "../threadRoutes";
 import {
   isUnassignedDraft,
   NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
-  NEW_AGENT_DRAFT_PROJECT_ID,
   newAgentDraftProjectRef,
 } from "./newAgentDraft";
 
@@ -93,15 +92,6 @@ export async function startNewAgentDraft(
         readThreadShell({ environmentId: existing.environmentId, threadId: existing.threadId }) ===
           null
       ) {
-        // Drafts used to start on No project under this key; they go back to asking.
-        if (existing.projectId !== NEW_AGENT_DRAFT_PROJECT_ID) {
-          setLogicalProjectDraftThreadId(
-            NEW_AGENT_DRAFT_LOGICAL_PROJECT_KEY,
-            newAgentDraftProjectRef(existing.environmentId),
-            existing.draftId,
-            {},
-          );
-        }
         await navigateTo(existing.draftId);
         return existing.draftId;
       }
