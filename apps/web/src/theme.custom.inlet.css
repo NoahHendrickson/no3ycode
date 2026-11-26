@@ -833,6 +833,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
   [data-fork-chrome-row][data-active="true"] {
+  --contrast-foreground: var(--fork-inlet-panel-foreground);
   color: var(--fork-inlet-panel-foreground);
 }
 

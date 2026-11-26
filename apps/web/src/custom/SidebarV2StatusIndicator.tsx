@@ -202,6 +202,8 @@ function FilmStrip(props: {
   readonly startSeconds: number;
   readonly column?: { readonly left: number; readonly width: number };
   readonly still?: boolean | undefined;
+  /** The moving film's fill; the status working hue unless a form picks its own. */
+  readonly ink?: string | undefined;
 }) {
   const period = props.frames / FILM_FPS;
   // The outer modulo only catches floating-point error at the top of the range.
@@ -218,7 +220,10 @@ function FilmStrip(props: {
       className={
         props.still
           ? "absolute inset-x-0 top-0 bg-current"
-          : "absolute inset-x-0 top-0 bg-sidebar-v2-status-working animate-[sidebar-v2-film_linear_infinite] motion-reduce:animate-none"
+          : cn(
+              "absolute inset-x-0 top-0 animate-[sidebar-v2-film_linear_infinite] motion-reduce:animate-none",
+              props.ink ?? "bg-sidebar-v2-status-working",
+            )
       }
       style={{
         height: `${props.frames * 100}%`,
@@ -364,7 +369,11 @@ const beadRingFilm = once(() => bakeBeadRingFilm(BEAD_RING_FRAMES, 45));
 
 /** One film strip, as the helix: the ring is 12px across, a step past the 10px status dots, in
     a 15px box held to the 12x14 slot. */
-function SidebarV2WorkingBeadRing({ seed, still }: WorkingMarkProps) {
+function SidebarV2WorkingBeadRing({
+  seed,
+  still,
+  ink,
+}: WorkingMarkProps & { readonly ink?: string }) {
   return (
     <span
       aria-hidden
@@ -376,9 +385,15 @@ function SidebarV2WorkingBeadRing({ seed, still }: WorkingMarkProps) {
         frames={BEAD_RING_FRAMES}
         startSeconds={workingMarkOffsetSeconds(seed)}
         still={still}
+        ink={ink}
       />
     </span>
   );
+}
+
+/** The bead ring in the surface's text ink: white on dark surfaces, dark where white would vanish. */
+function SidebarV2WorkingWhiteBeadRing(props: WorkingMarkProps) {
+  return <SidebarV2WorkingBeadRing {...props} ink="bg-foreground" />;
 }
 
 /** @public — every working form by name; Storybook's Fork/Status mark story maps over it. */
@@ -387,6 +402,7 @@ export const SIDEBAR_V2_WORKING_MARK_FORMS: Record<
   (props: WorkingMarkProps) => JSX.Element
 > = {
   bead: SidebarV2WorkingBeadRing,
+  "bead-white": SidebarV2WorkingWhiteBeadRing,
   helix: SidebarV2WorkingHelix,
   rain: SidebarV2WorkingRain,
 };
