@@ -6607,7 +6607,10 @@
     live-tool-shine. When an approval, an answer, compaction or worktree
     setup owns the tail, MessagesTimeline passes `lineYields` and nothing
     folds: upstream's rows keep their order above "Working for …". Upstream's
-    failed-tool shape (a `thinking` row with a groupId) never folds. The
+    failed-tool shape (a `thinking` row with a groupId) folds like any live
+    row, its chevron opening the failed group: a non-zero exit (a grep with no
+    match) otherwise popped a row out between the summary and the line until
+    the next step folded it back. The
     line rotates three voices; the rules and the text are pure functions in
     forkWorkingRowLast.ts, and ForkLiveStatusLine only runs the 4s clock:
     the agent's latest thought (Zen's liveAnswerPreview, see
@@ -6688,7 +6691,10 @@
     guest still watches replies stream as upstream shows them. While the turn
     waits on the user (an approval or a question), the newest reply shows,
     since it usually explains the request (forkShowLatestHeldReply); unlike
-    Zen. The hold runs after settleSupersededReasoning, so a thought followed
+    Zen. The hold ends when the provider turn does, but the run stays open
+    until the server settles it, and upstream folds only settled runs, so the
+    ended run folds at once; otherwise every step flashed open in between. The
+    hold runs after settleSupersededReasoning, so a thought followed
     only by a held reply still reads settled. Upstream's logic tests derive
     without the flag and keep upstream's shapes. The guard runs one fixture
     through Zen and through the hold and requires the same replies, so a sync
@@ -6701,7 +6707,8 @@
     # Fenced: the forkHoldLiveReplies input, forkLiveReplyIds, the filter in
     # timelineRowEntries after the visibility filters (and its
     # forkLiveReplies parameter), the skipped row for the newest reply in
-    # deriveMessagesTimelineRows, and the live group's run-named id.
+    # deriveMessagesTimelineRows, the live group's run-named id, and the
+    # ended run dropped from the fold's unfolded runs.
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
     # Fenced: passes forkHoldLiveReplies, the forkStreamLiveReplies prop, and
     # reads liveAnswerPreview in every mode (upstream gates it to Zen).

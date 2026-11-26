@@ -1780,6 +1780,17 @@ export function deriveMessagesTimelineRows(
     isWorking: input.isWorking,
   });
   const runlessWorkActive = input.isWorking && input.runlessWorkActive === true;
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+     Upstream unfolds every active run. Held replies drop when the provider turn ends, while the
+     run stays open until it settles; folding then keeps its steps from flashing open between. */
+  const forkEndedRunId =
+    input.forkHoldLiveReplies === true && input.latestRun?.turnEnded === true
+      ? input.latestRun.runId
+      : null;
+  const forkUnfoldedRunIds = [...activeVisualResponseRunIds].filter(
+    (runId) => runId !== forkEndedRunId,
+  );
+  /* fork:end fork-quiet-live-turn */
   const foldsByAnchorEntryId =
     input.toolCallVisibility === "zen"
       ? new Map<string, TurnFold>()
@@ -1787,7 +1798,7 @@ export function deriveMessagesTimelineRows(
           timelineEntries: timelineEntries,
           terminalAssistantMessageIds,
           latestRun: input.latestRun ?? null,
-          unfoldedRunIds: new Set([...activeVisualResponseRunIds, ...failedRunIds]),
+          unfoldedRunIds: new Set([...forkUnfoldedRunIds, ...failedRunIds]),
           runlessWorkActive,
           liveSubagentEntryIds,
           retainedAssistantReplyEntryIds: retainedAssistantReplyIds,

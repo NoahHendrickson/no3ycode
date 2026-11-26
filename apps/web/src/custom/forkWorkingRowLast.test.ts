@@ -175,15 +175,16 @@ describe("forkLiveStatusRows", () => {
     expect(statusLine(result)?.kind).toBe("work-live");
   });
 
-  it("leaves a failed tool's grouped thinking row on its own line", () => {
-    const rows = derive([command("first", 5, "failed")]);
+  it("folds a failed tool's grouped thinking row into the line, which opens the group", () => {
+    const rows = derive([reasoning(4), command("first", 5, "failed")]);
     expect(rows.some((row) => row.kind === "thinking" && row.groupId !== undefined)).toBe(true);
     const result = forkLiveStatusRows(rows);
-    expect(result.at(-2)?.kind).toBe("thinking");
-    expect(statusLine(result)).toBeUndefined();
+    expect(kinds(result)).toEqual(["working"]);
+    const live = statusLine(result);
+    expect(live?.kind === "thinking" && live.groupId).toBeTruthy();
   });
 
-  it("adds no second Thinking line when a failed group follows a tool still running", () => {
+  it("folds a failed group into the one line while an earlier tool still runs", () => {
     const rows = derive([
       command("first", 5, "inProgress"),
       commentary(6),
@@ -192,8 +193,8 @@ describe("forkLiveStatusRows", () => {
     expect(rows.some((row) => row.kind === "work-live" && row.active)).toBe(true);
     expect(rows.some((row) => row.kind === "thinking" && row.groupId !== undefined)).toBe(true);
     const result = forkLiveStatusRows(rows);
-    expect(result.filter((row) => row.kind === "thinking")).toHaveLength(1);
-    expect(statusLine(result)).toBeUndefined();
+    expect(result.some((row) => row.kind === "thinking")).toBe(false);
+    expect(statusLine(result)?.kind).toBe("thinking");
   });
 
   it("keeps row identity while the stable rows are unchanged", () => {
