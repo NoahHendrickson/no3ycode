@@ -222,6 +222,7 @@ import { COLLAPSED_SIDEBAR_TITLEBAR_INSET_CLASS } from "~/workspaceTitlebar";
 /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
 import { useOwnsGlobalInput, useSplitPane } from "~/custom/splitThreads/splitPaneContext";
 import { SplitAgentToggle, splitAgentToggleShown } from "~/custom/splitThreads/SplitAgentToggle";
+import { SplitDraftStarters } from "~/custom/splitThreads/SplitDraftStarters";
 import { SplitPaneHeaderControls } from "~/custom/splitThreads/SplitPaneHeaderControls";
 /* fork:end fork-split-threads */
 import { toastManager } from "./ui/toast";
@@ -1801,14 +1802,39 @@ export default function ChatView(props: ChatViewProps) {
   const [dockedDraftHeroThreadKey, setDockedDraftHeroThreadKey] = useState<string | null>(null);
   const draftHeroDockRequested =
     activeThreadKey !== null && dockedDraftHeroThreadKey === activeThreadKey;
-  const isDraftHeroState = resolveDraftHeroState({
-    isLocalDraftThread,
-    hasTimelineEntries: !timelineEmpty,
-    isWorking,
-    draftHeroDockRequested,
-    backgroundSubmissionPending,
-    hasWorktreeSetupCard: worktreeSetup !== null,
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+     A draft in a split is a plain empty thread, composer docked at the bottom. One with no
+     project yet (New agent beside a docked thread) keeps the hero: it holds the project picker. */
+  const splitDraftAsThread = splitPane.split && activeProject !== null;
+  /* fork:end fork-split-threads */
+  const isDraftHeroState =
+    /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+    !splitDraftAsThread &&
+    /* fork:end fork-split-threads */
+    resolveDraftHeroState({
+      isLocalDraftThread,
+      hasTimelineEntries: !timelineEmpty,
+      isWorking,
+      draftHeroDockRequested,
+      backgroundSubmissionPending,
+      hasWorktreeSetupCard: worktreeSetup !== null,
+    });
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+     An empty split draft offers starters in place of upstream's empty-thread line. */
+  const splitDraftStartersShown =
+    splitDraftAsThread &&
+    isLocalDraftThread &&
+    draftId !== null &&
+    !activeProjectIsScratch &&
+    !isForkChatThread &&
+    timelineEmpty &&
+    !isWorking &&
+    worktreeSetup === null &&
+    !threadDetailLoading;
+  const insertSplitDraftStarterStable = useStableCallback((prompt: string) => {
+    composerRef.current?.insertTextAtEnd(prompt, { ensureLeadingBoundary: true });
   });
+  /* fork:end fork-split-threads */
   const {
     transitionGroupRef: draftHeroTransitionGroupRef,
     composerAnchorRef: draftHeroComposerAnchorRef,
@@ -2001,7 +2027,12 @@ export default function ChatView(props: ChatViewProps) {
   const showComposerContextStrip =
     !embedded &&
     shouldShowComposerContextStrip({
-      isDraftHeroState,
+      isDraftHeroState:
+        isDraftHeroState ||
+        /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+           A split draft skips the hero but is still a new thread: it shows its workspace. */
+        (splitDraftAsThread && isLocalDraftThread),
+      /* fork:end fork-split-threads */
       persistInActiveThreads: settings.persistComposerContextStrip,
       hasActiveProject: activeProject !== null && !showProviderSubagentBar,
       isGitRepo: isGitRepo || activeThreadWorktreePath !== null,
@@ -4011,8 +4042,9 @@ export default function ChatView(props: ChatViewProps) {
            fork-bots: a bot's conversation is the composer alone too. */
         data-fork-chat-thread={isForkChatThread || isForkBotThread ? "" : undefined}
         /* fork:end fork-chat-mode */
-        /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme */
-        data-fork-thread-started={isLocalDraftThread ? undefined : ""}
+        /* fork:begin fork-basic-theme — see .fork/customizations.yaml#fork-basic-theme
+           fork-split-threads: a split draft is laid out as a thread, header rule included. */
+        data-fork-thread-started={isLocalDraftThread && !splitDraftAsThread ? undefined : ""}
         /* fork:end fork-basic-theme */
         inert={rightPanelMaximized}
         onMouseUp={preventMiddleClickPasteOutsideEditable}
@@ -4231,7 +4263,13 @@ export default function ChatView(props: ChatViewProps) {
                   onIsAtEndChange={onIsAtEndChangeStable}
                   onViewportAttach={attachTimelineViewport}
                   onFooterGrow={onTimelineFooterGrowStable}
-                  hideEmptyPlaceholder={isDraftHeroState || threadDetailLoading}
+                  hideEmptyPlaceholder={
+                    isDraftHeroState ||
+                    threadDetailLoading ||
+                    /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+                    splitDraftStartersShown
+                    /* fork:end fork-split-threads */
+                  }
                   emptyPlaceholderInset={composerReservedHeight}
                   topFadeEnabled={!hasTimelineTopBanner}
                   {...(threadHistoryControls === undefined
@@ -4239,6 +4277,16 @@ export default function ChatView(props: ChatViewProps) {
                     : { historyControls: threadHistoryControls })}
                 />
               </WorkspaceMutationIdContext>
+              {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
+              {splitDraftStartersShown && draftId ? (
+                <SplitDraftStarters
+                  draftId={draftId}
+                  bottomInset={composerReservedHeight}
+                  onInsert={insertSplitDraftStarterStable}
+                  onFocus={focusComposerStable}
+                />
+              ) : null}
+              {/* fork:end fork-split-threads */}
 
               {showScrollToBottom && !isThreadFindActive && (
                 <ScrollToEndButton
