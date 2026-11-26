@@ -11,7 +11,10 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import { deriveMessagesTimelineRows } from "../components/chat/MessagesTimeline.logic";
+import {
+  deriveMessagesTimelineRows,
+  timelineTurnFoldRunIdsByEntryId,
+} from "../components/chat/MessagesTimeline.logic";
 
 function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -101,11 +104,11 @@ describe("fork guard: fork-quiet-live-turn", () => {
       command("cmd-2", 4),
       message("final", "assistant", 5),
     ] as unknown as Entries;
-    const rows = deriveMessagesTimelineRows({
+    const input = {
       timelineEntries: entries,
       latestRun: {
         runId: "turn-1" as never,
-        status: "running",
+        status: "running" as const,
         startedAt: at(0),
         completedAt: null,
         turnEnded: true,
@@ -115,8 +118,13 @@ describe("fork guard: fork-quiet-live-turn", () => {
       turnDiffSummaries: [],
       supportsConversationRollback: false,
       forkHoldLiveReplies: true,
-    }).flatMap((row) => (row.kind === "working" ? [] : [row.id]));
+    };
+    const rows = deriveMessagesTimelineRows(input).flatMap((row) =>
+      row.kind === "working" ? [] : [row.id],
+    );
     expect(rows).toEqual(["ask", "turn-fold:turn-1", "final"]);
+    // Citations open the fold the rows draw.
+    expect(timelineTurnFoldRunIdsByEntryId(input).get("step")).toBe("turn-1");
   });
 
   it("asks from the transcript, except while Find is open or a guest watches", () => {

@@ -1656,6 +1656,21 @@ function timelineRowEntries(
   /* fork:end fork-quiet-live-turn */
 }
 
+/* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+   Upstream unfolds every active run. Held replies drop when the provider turn ends, while the
+   run stays open until it settles; folding then keeps its steps from flashing open between. */
+function forkFoldableActiveRunIds(
+  activeRunIds: ReadonlySet<RunId>,
+  input: Pick<MessagesTimelineRowsInput, "latestRun" | "forkHoldLiveReplies">,
+): ReadonlyArray<RunId> {
+  const endedRunId =
+    input.forkHoldLiveReplies === true && input.latestRun?.turnEnded === true
+      ? input.latestRun.runId
+      : null;
+  return [...activeRunIds].filter((runId) => runId !== endedRunId);
+}
+/* fork:end fork-quiet-live-turn */
+
 function deriveTimelineTurnFolds(
   input: Pick<
     MessagesTimelineRowsInput,
@@ -1666,6 +1681,9 @@ function deriveTimelineTurnFolds(
     | "runningRunId"
     | "toolCallVisibility"
     | "revealedMessageId"
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    | "forkHoldLiveReplies"
+    /* fork:end fork-quiet-live-turn */
   >,
 ) {
   if (input.toolCallVisibility === "zen") return new Map<string, TurnFold>();
@@ -1681,7 +1699,13 @@ function deriveTimelineTurnFolds(
     timelineEntries,
     terminalAssistantMessageIds: deriveTerminalAssistantMessageIds(timelineEntries),
     latestRun: input.latestRun ?? null,
-    unfoldedRunIds: new Set([...activeVisualResponseRunIds, ...failedRunIds]),
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+       Upstream: activeVisualResponseRunIds, as the rows below. */
+    unfoldedRunIds: new Set([
+      ...forkFoldableActiveRunIds(activeVisualResponseRunIds, input),
+      ...failedRunIds,
+    ]),
+    /* fork:end fork-quiet-live-turn */
     runlessWorkActive: input.isWorking && input.runlessWorkActive === true,
     liveSubagentEntryIds: liveSubagentCardEntryIds(timelineEntries),
     retainedAssistantReplyEntryIds: retainedAssistantReplyEntryIds(timelineEntries),
@@ -1780,17 +1804,6 @@ export function deriveMessagesTimelineRows(
     isWorking: input.isWorking,
   });
   const runlessWorkActive = input.isWorking && input.runlessWorkActive === true;
-  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-     Upstream unfolds every active run. Held replies drop when the provider turn ends, while the
-     run stays open until it settles; folding then keeps its steps from flashing open between. */
-  const forkEndedRunId =
-    input.forkHoldLiveReplies === true && input.latestRun?.turnEnded === true
-      ? input.latestRun.runId
-      : null;
-  const forkUnfoldedRunIds = [...activeVisualResponseRunIds].filter(
-    (runId) => runId !== forkEndedRunId,
-  );
-  /* fork:end fork-quiet-live-turn */
   const foldsByAnchorEntryId =
     input.toolCallVisibility === "zen"
       ? new Map<string, TurnFold>()
@@ -1798,7 +1811,13 @@ export function deriveMessagesTimelineRows(
           timelineEntries: timelineEntries,
           terminalAssistantMessageIds,
           latestRun: input.latestRun ?? null,
-          unfoldedRunIds: new Set([...forkUnfoldedRunIds, ...failedRunIds]),
+          /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+             Upstream: activeVisualResponseRunIds. */
+          unfoldedRunIds: new Set([
+            ...forkFoldableActiveRunIds(activeVisualResponseRunIds, input),
+            ...failedRunIds,
+          ]),
+          /* fork:end fork-quiet-live-turn */
           runlessWorkActive,
           liveSubagentEntryIds,
           retainedAssistantReplyEntryIds: retainedAssistantReplyIds,
@@ -2688,6 +2707,9 @@ export function timelineTurnFoldRunIdsByEntryId(
     | "runningRunId"
     | "toolCallVisibility"
     | "revealedMessageId"
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    | "forkHoldLiveReplies"
+    /* fork:end fork-quiet-live-turn */
   >,
 ): ReadonlyMap<string, RunId> {
   const byEntryId = new Map<string, RunId>();

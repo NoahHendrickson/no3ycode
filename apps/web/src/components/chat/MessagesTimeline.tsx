@@ -741,6 +741,10 @@ const ConversationTimeline = memo(function ConversationTimeline({
         runlessWorkActive,
         toolCallVisibility,
         revealedMessageId,
+        /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+           Find is closed here, so the rows hold replies unless a guest watches. */
+        forkHoldLiveReplies: !forkStreamLiveReplies,
+        /* fork:end fork-quiet-live-turn */
       })
     ).get(citedEntry.id);
     setCitationExpandedFor(citationRequest.key);

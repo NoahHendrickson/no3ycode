@@ -6707,10 +6707,12 @@
     # Fenced: the forkHoldLiveReplies input, forkLiveReplyIds, the filter in
     # timelineRowEntries after the visibility filters (and its
     # forkLiveReplies parameter), the skipped row for the newest reply in
-    # deriveMessagesTimelineRows, the live group's run-named id, and the
-    # ended run dropped from the fold's unfolded runs.
+    # deriveMessagesTimelineRows, the live group's run-named id, and
+    # forkFoldableActiveRunIds, which drops the ended run from both fold
+    # derivations (the rows and the citation lookup).
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
-    # Fenced: passes forkHoldLiveReplies, the forkStreamLiveReplies prop, and
+    # Fenced: passes forkHoldLiveReplies (to the rows and the citation fold
+    # lookup), the forkStreamLiveReplies prop, and
     # reads liveAnswerPreview in every mode (upstream gates it to Zen).
     - apps/web/src/components/chat/MessagesTimeline.tsx
     # Fenced: passes forkStreamLiveReplies through to MessagesTimeline.
