@@ -442,17 +442,29 @@ describe("MessagesTimeline work rows", () => {
         { onOpenThread },
       );
       if (source === "delegated") {
-        expect(screen.text()).toContain("Final implementation report");
-        expect(screen.text()).toContain("Follow-up explanation");
-        expect(screen.text()).not.toContain("Old interrupted progress");
         // fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
-        // A settled notice is the fork's subagent card; its arrow button opens the thread.
+        // A settled notice is one line naming the task it reported; the line opens the thread.
+        const noticed = [...document.querySelectorAll("[data-fork-subagent-notice]")].map((line) =>
+          line.getAttribute("data-fork-subagent-notice"),
+        );
+        expect(noticed).toEqual(["continued", "follow-up"]);
+        const notice = document.querySelector("[data-fork-subagent-notice] button");
+        expect(notice?.textContent).toMatch(/^Simplify delivery\s*finished/u);
+        // The outcome reaches screen readers too, not only the eye.
+        expect(notice?.getAttribute("aria-description")).toBe("finished");
         await click(screen.buttons("Open Simplify delivery thread")[0]!);
         // fork:end fork-subagent-spawn-card
         // A subagent's card says how it was clicked, so it opens beside the thread or in its place.
         expect(onOpenThread).toHaveBeenCalledWith(childThreadId, undefined, "primary");
       } else if (source === "legacy") {
-        expect(screen.text()).toContain("Old interrupted progress");
+        // fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
+        // A legacy notice names the child's first task; its line carries no result.
+        expect(
+          document
+            .querySelector("[data-fork-subagent-notice]")
+            ?.getAttribute("data-fork-subagent-notice"),
+        ).toBe("original");
+        // fork:end fork-subagent-spawn-card
       } else {
         expect(screen.text()).toContain("Notification fallback");
         expect(screen.text()).not.toContain("Old interrupted progress");

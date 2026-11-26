@@ -67,7 +67,7 @@ describe("fork guard: fork-transcript-spacing", () => {
     const sent = assistant.slice(assistant.indexOf("export function SentMessageTimelineRow"));
     expect(sent).toContain('<div className="min-w-0 px-1 py-0.5">');
     expect(readSibling("../custom/ForkSubagentGroup.tsx")).toContain(
-      "flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5",
+      "flex w-full min-w-0 flex-col items-start gap-1 py-0.5 text-sm leading-5",
     );
     expect(readSibling("../custom/ForkLiveStatusLine.tsx")).toContain(
       '"flex min-w-0 items-center gap-2 pb-2 pt-1"',

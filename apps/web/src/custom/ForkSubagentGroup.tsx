@@ -1,15 +1,13 @@
 /**
- * The transcript's subagents as cards (Basic UI kit, Figma 89:704) — see
+ * The transcript's subagents as one-line start rows — see
  * `.fork/customizations.yaml#fork-subagent-spawn-card`.
  *
  * Every subagent, alone or in a batch, renders here in place of upstream's
  * lifecycle row and `V2SubagentGroup`. A batch keeps its list-tree lead line
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
- * above one card per member. A card is a header (the provider's mark in a tile
- * with the status mark in its corner, the title over the model and effort, the
- * elapsed time, a chevron, an open-thread arrow) and a well underneath: the task it was given, what
- * it is doing now or what it found. The well starts folded; the header strip, chevron included,
- * opens and folds it, and the arrow opens the thread.
+ * above one line per member. A line reads "Started <title> on <model> · <effort> · 1m 41s ›",
+ * led by the provider's mark with the status mark in its corner, and opens the subagent's thread;
+ * its completion notice is the same line, "<title> finished · 1m 41s ›".
  *
  * Status comes from the thread's live subagent roster where the projection
  * keeps it current, falling back to the item's own fields for settled
@@ -24,21 +22,11 @@ import {
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { SideThreadOpenIntent } from "@t3tools/client-runtime/side-thread";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
-import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "./icons/lucide-hugeicons";
-import {
-  type ComponentProps,
-  type CSSProperties,
-  Fragment,
-  memo,
-  type ReactNode,
-  use,
-  useId,
-  useState,
-} from "react";
+import { ChevronRightIcon, ListTreeIcon } from "./icons/lucide-hugeicons";
+import { type ComponentProps, type CSSProperties, memo, type ReactNode, use, useId } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
-import { TimelineRowCtx, WorkGroupViewCtx } from "~/components/chat/timelineRowContext";
 import { SideThreadsOpenContext, useSideThreadTrigger } from "~/hooks/useSideThreadTrigger";
 import { useLinkedThreadOpener } from "~/state/linkedThreadView";
 import {
@@ -47,9 +35,6 @@ import {
 } from "~/components/chat/V2LifecycleRow";
 import { subagentResumedSince } from "~/components/chat/V2LifecycleRow.logic";
 import { WorkLogBlock } from "~/components/chat/WorkLog";
-import { Button } from "~/components/ui/button";
-import { MiddleTruncate } from "~/components/ui/middle-truncate";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 import { serverEnvironment } from "~/state/server";
 import { useQuietThreadShell } from "~/state/entities";
@@ -75,7 +60,7 @@ type OpenThread = (
   intent?: SideThreadOpenIntent,
 ) => void;
 
-/** Every subagent of the row renders as a card in one keyed list, so a lone card that gains a
+/** Every subagent of the row renders as a line in one keyed list, so a lone line that gains a
     neighbour stays mounted (and keeps focus) as the batch's lead line appears above it. */
 export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
   readonly row: EventRow;
@@ -95,17 +80,16 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
         data-subagent-group
         role="group"
         aria-labelledby={leadId}
-        className="flex w-full min-w-0 flex-col items-start gap-2 py-1 text-sm leading-5"
+        className="flex w-full min-w-0 flex-col items-start gap-1 py-0.5 text-sm leading-5"
       >
         {batch ? (
           <SubagentBatchLead id={leadId} members={members} environmentId={environmentId} />
         ) : null}
         {members.map((item) => (
-          <LiveSubagentCard
+          <LiveSubagentLine
             key={item.id}
             item={item}
             titleId={batch ? undefined : leadId}
-            anchorKey={row.id}
             environmentId={environmentId}
             onOpenThread={onOpenThread}
           />
@@ -115,55 +99,103 @@ export const ForkSubagentGroup = memo(function ForkSubagentGroup(props: {
   );
 });
 
-/** One card. It selects only its own agent, so another subagent's progress does not re-render it. */
-const LiveSubagentCard = memo(function LiveSubagentCard(props: {
+/** One line. It selects only its own agent, so another subagent's progress does not re-render it. */
+const LiveSubagentLine = memo(function LiveSubagentLine(props: {
   readonly item: ForkSubagentItem;
-  /** A lone card's visible title names its group. */
+  /** A lone line's visible title names its group. */
   readonly titleId?: string | undefined;
-  readonly anchorKey: string;
   readonly environmentId: EnvironmentId;
   readonly onOpenThread: OpenThread;
 }) {
-  const { item, titleId, anchorKey, environmentId, onOpenThread } = props;
+  const { item, titleId, environmentId, onOpenThread } = props;
   const live = useAtomValue(
     environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
   );
-  // The chevron's choice lives in the thread's timeline view state, so it survives the row
-  // scrolling out of the virtualised list or its turn folding.
-  const ctx = use(TimelineRowCtx);
   const [member] = resolveForkSubagentTree([item], live ? [live] : null).rows;
   if (member === undefined) return null;
-  const chosen = ctx.workGroupViewState.expandedEntries;
-  const openKey = `subagent-card:open:${member.id}`;
   return (
-    <ForkSubagentCard
+    <ForkSubagentStartLine
       member={member}
       titleId={titleId}
       environmentId={environmentId}
       parentRef={scopeThreadRef(environmentId, item.threadId)}
       onOpenThread={onOpenThread}
-      disclosure={{
-        open: chosen.has(openKey),
-        remember: (open) => (open ? chosen.add(openKey) : chosen.delete(openKey)),
-        // The card is the reveal target, not the whole batch row (MessagesTimeline's data-work-entry-id).
-        report: (collapsed) => ctx.onToggleWorkEntry(anchorKey, collapsed, member.id),
-        ready: () => ctx.onWorkEntryContentReady?.(anchorKey, member.id),
-      }}
     />
   );
 });
 
-/** A subagent's completion notice drawn as its card, folded, with the result it reported. A
-    question or progress notice, or one whose agent has resumed since, keeps upstream's row. */
-export function ForkSubagentNotice(
-  props: ComponentProps<typeof SubagentNotificationLink> & {
-    readonly entryId: string;
-    readonly onToggleEntry?: ((collapsed: boolean) => void) | undefined;
-    readonly onContentReady?: (() => void) | undefined;
-  },
-) {
-  const { entryId, onToggleEntry, onContentReady, ...notice } = props;
+function ForkSubagentStartLine(props: {
+  readonly member: ForkSubagentTreeRow;
+  readonly titleId?: string | undefined;
+  readonly environmentId: EnvironmentId;
+  /** The thread the subagent runs under; a linked environment's task opens through it. */
+  readonly parentRef: ScopedThreadRef;
+  readonly onOpenThread: OpenThread;
+}) {
+  const { member, titleId, environmentId, parentRef, onOpenThread } = props;
+  const opener = useOpenSubagentThread(member, parentRef, onOpenThread);
+  const title = useForkSubagentTitle(member, environmentId);
+  const effort = useForkSubagentEffort(member, environmentId);
+  return (
+    <ForkSubagentStartLineView
+      member={title === member.title ? member : { ...member, title }}
+      effort={effort}
+      titleId={titleId}
+      environmentId={environmentId}
+      openThread={opener.open}
+      openInPanel={opener.panel}
+    />
+  );
+}
+
+/** @public — the start line as drawn, without the timeline's state; Storybook renders it on its own. */
+export function ForkSubagentStartLineView(props: {
+  readonly member: ForkSubagentTreeRow;
+  /** The reasoning effort it runs at, in the picker's words; null when none is reported. */
+  readonly effort?: string | null | undefined;
+  readonly titleId?: string | undefined;
+  readonly environmentId: EnvironmentId;
+  /** Null when the subagent has no thread to open. */
+  readonly openThread: ((intent: SideThreadOpenIntent) => void) | null;
+  /** False when the thread can only open in the main view. */
+  readonly openInPanel?: boolean | undefined;
+}) {
+  const { member } = props;
+  const remote = member.remote;
+  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
+  return (
+    <ForkSubagentLine
+      root={{ "data-fork-subagent-start": member.id }}
+      member={member}
+      environmentId={props.environmentId}
+      withStatus
+      description={
+        remote === undefined ? member.statusLabel : `${member.statusLabel} · on ${remote.label}`
+      }
+      open={props.openThread}
+      panel={props.openInPanel ?? true}
+    >
+      <span className="shrink-0">{"Started"}</span>
+      {/* A long title gives way before the model and effort do. */}
+      <span id={props.titleId} className="min-w-0 truncate text-foreground">
+        {member.title}
+      </span>
+      {spec || remote !== undefined ? (
+        <span className="shrink-0">
+          {[spec ? `on ${spec}` : null, remote === undefined ? null : `on ${remote.label}`]
+            .filter(Boolean)
+            .join(" · ")}
+        </span>
+      ) : null}
+    </ForkSubagentLine>
+  );
+}
+
+/** A subagent's completion notice as one line, "<title> finished · 1m 41s ›", that opens its
+    thread; the start line stays in the turn that launched it. A question or progress notice, or one
+    whose agent has resumed since, keeps upstream's row. */
+export function ForkSubagentNotice(notice: ComponentProps<typeof SubagentNotificationLink>) {
   const { parentRef, childThreadId, taskIds, outcome } = notice;
   // Follow-up tasks share a child conversation; the notice reports one task's result.
   const agent = useAtomValue(
@@ -175,30 +207,150 @@ export function ForkSubagentNotice(
           : taskIds.includes(candidate.id),
       ) ?? null,
   );
-  const ctx = use(TimelineRowCtx);
-  // Inside an expanded tool-call group the entry reports to the group, as upstream's rows do.
-  const groupView = use(WorkGroupViewCtx);
   if (agent === null) return notice.fallback;
   const settled = outcome === "completed" || outcome === "failed" || outcome === "cancelled";
   if (!settled || subagentResumedSince(agent, notice.createdAt)) {
     return <SubagentNotificationLink {...notice} />;
   }
-  const chosen = groupView?.state.expandedEntries ?? ctx.workGroupViewState.expandedEntries;
   return (
-    <ForkSubagentCard
+    <ForkSubagentNoticeLine
       member={forkSubagentRowFromAgent(agent)}
-      environmentId={parentRef.environmentId}
+      outcome={outcome}
       parentRef={parentRef}
       onOpenThread={notice.onOpenThread}
-      disclosure={{
-        open: chosen.has(entryId),
-        remember: (open) => (open ? chosen.add(entryId) : chosen.delete(entryId)),
-        report: (collapsed) =>
-          groupView ? groupView.onToggleEntry(collapsed, entryId) : onToggleEntry?.(collapsed),
-        ready: () => (groupView ? groupView.onContentReady?.(entryId) : onContentReady?.()),
-      }}
     />
   );
+}
+
+function ForkSubagentNoticeLine(props: {
+  readonly member: ForkSubagentTreeRow;
+  readonly outcome: "completed" | "failed" | "cancelled";
+  readonly parentRef: ScopedThreadRef;
+  readonly onOpenThread: OpenThread;
+}) {
+  const { member, outcome, parentRef, onOpenThread } = props;
+  const opener = useOpenSubagentThread(member, parentRef, onOpenThread);
+  const title = useForkSubagentTitle(member, parentRef.environmentId);
+  const verb = outcome === "completed" ? "finished" : outcome === "failed" ? "failed" : "stopped";
+  return (
+    <ForkSubagentLine
+      root={{ "data-fork-subagent-notice": member.id }}
+      member={{ ...member, title }}
+      environmentId={parentRef.environmentId}
+      description={verb}
+      open={opener.open}
+      panel={opener.panel}
+    >
+      <span className="min-w-0 truncate">{title}</span>
+      <span className="shrink-0">{verb}</span>
+    </ForkSubagentLine>
+  );
+}
+
+/** A subagent as one muted line, led by its provider's mark and ending in its elapsed time; it
+    opens the subagent's thread when there is one. The start line and the completion notice both. */
+function ForkSubagentLine(props: {
+  readonly root: Readonly<Record<`data-${string}`, string>>;
+  readonly member: ForkSubagentTreeRow;
+  readonly environmentId: EnvironmentId;
+  /** Draws the status mark in the provider mark's corner. */
+  readonly withStatus?: boolean | undefined;
+  readonly description?: string | undefined;
+  readonly open: ((intent: SideThreadOpenIntent) => void) | null;
+  readonly panel: boolean;
+  readonly children: ReactNode;
+}) {
+  const { member, open } = props;
+  const trigger = useSideThreadTrigger();
+  const content = (
+    <>
+      <ForkSubagentLineMark
+        member={member}
+        environmentId={props.environmentId}
+        withStatus={props.withStatus === true}
+      />
+      {props.children}
+      {member.startedAt ? (
+        <span className="shrink-0 tabular-nums">
+          {"· "}
+          <AgentElapsed agent={member} />
+        </span>
+      ) : null}
+    </>
+  );
+  const line = "flex min-w-0 items-center gap-1 rounded-md px-1 text-sm leading-relaxed";
+  return (
+    <div {...props.root} className="flex min-w-0 max-w-full text-muted-foreground">
+      {open === null ? (
+        <span className={line}>{content}</span>
+      ) : (
+        <button
+          type="button"
+          // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+          aria-label={`Open ${member.title} thread`}
+          aria-description={props.description}
+          {...trigger(open, { panel: props.panel })}
+          className={cn(
+            line,
+            "cursor-pointer transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70",
+          )}
+        >
+          {content}
+          <ChevronRightIcon aria-hidden className="size-3.5 shrink-0" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** The line's provider logo: the fork's own mark where it draws one (Claude's mascot, Codex's
+    cloud), else the avatar; a start line badges it with the status mark. */
+function ForkSubagentLineMark(props: {
+  readonly member: ForkSubagentTreeRow;
+  readonly environmentId: EnvironmentId;
+  readonly withStatus: boolean;
+}) {
+  const { member } = props;
+  return (
+    <span
+      aria-hidden
+      className="relative me-0.5 flex size-4 shrink-0 items-center justify-center"
+      style={LINE_MARK_SIZE}
+    >
+      {member.remote === undefined && hasForkProviderMark(member.driver) ? (
+        <ForkProviderMark driver={member.driver} />
+      ) : (
+        <EnvironmentSubagentAvatar
+          environmentId={props.environmentId}
+          providerInstanceId={member.providerInstanceId}
+          driver={member.driver}
+          remote={member.remote}
+          className="size-4 rounded-none border-0 bg-transparent ring-0"
+          iconClassName="size-4"
+        />
+      )}
+      {props.withStatus ? (
+        <span className="absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full bg-background">
+          <span className="flex scale-75 items-center justify-center">
+            <SidebarV2StatusMark status={markStatus(member.mark)} seed={member.id} idle="dot" />
+          </span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+const LINE_MARK_SIZE = { "--fork-mark-size": "1rem" } as CSSProperties;
+
+/** An untitled subagent (a completion notice's record often is) takes its child thread's title,
+    which is generated from the ask; the model falls back to the ask itself. */
+function useForkSubagentTitle(member: ForkSubagentTreeRow, environmentId: EnvironmentId): string {
+  const childTitle = useQuietThreadShell(
+    !member.titled && member.childThreadId !== null
+      ? scopeThreadRef(environmentId, member.childThreadId)
+      : null,
+  )?.source.title;
+  return childTitle ? formatSubagentDisplayTitle(childTitle) : member.title;
 }
 
 /** A batch's lead line: "Kicked off N subagents", the status summary and the batch's span,
@@ -259,58 +411,6 @@ function useOpenSubagentThread(
   return { open: remoteOpener?.open ?? null, panel };
 }
 
-/** Where a card keeps whether it is open and tells the timeline it opened or folded. */
-interface ForkSubagentCardDisclosure {
-  /** Open before a remount; a card starts folded. */
-  readonly open: boolean;
-  readonly remember: (open: boolean) => void;
-  /** Keeps the timeline's scroll position while the card opens or folds. */
-  readonly report: (collapsed: boolean) => void;
-  /** Its details are already in hand, so opening is ready at once; that retires the reveal
-      instead of re-running it on every later list resize. */
-  readonly ready: () => void;
-}
-
-function ForkSubagentCard(props: {
-  readonly member: ForkSubagentTreeRow;
-  readonly titleId?: string | undefined;
-  readonly environmentId: EnvironmentId;
-  /** The thread the subagent runs under; a linked environment's task opens through it. */
-  readonly parentRef: ScopedThreadRef;
-  readonly onOpenThread: OpenThread;
-  readonly disclosure: ForkSubagentCardDisclosure;
-}) {
-  const { member, titleId, environmentId, parentRef, onOpenThread, disclosure } = props;
-  const [open, setOpen] = useState(disclosure.open);
-  const toggle = () => {
-    disclosure.report(open);
-    if (!open) disclosure.ready();
-    disclosure.remember(!open);
-    setOpen(!open);
-  };
-  const opener = useOpenSubagentThread(member, parentRef, onOpenThread);
-  // An untitled subagent (a completion notice's record often is) takes its child thread's title,
-  // which is generated from the ask; the model falls back to the ask itself.
-  const childTitle = useQuietThreadShell(
-    !member.titled && member.childThreadId !== null
-      ? scopeThreadRef(environmentId, member.childThreadId)
-      : null,
-  )?.source.title;
-  const effort = useForkSubagentEffort(member, environmentId);
-  return (
-    <ForkSubagentCardView
-      member={childTitle ? { ...member, title: formatSubagentDisplayTitle(childTitle) } : member}
-      effort={effort}
-      titleId={titleId}
-      environmentId={environmentId}
-      open={open}
-      onToggle={toggle}
-      openThread={opener.open}
-      openInPanel={opener.panel}
-    />
-  );
-}
-
 /** The reasoning effort a subagent runs at, in the picker's words; null when none is reported.
     Selected down to the label, so a provider update re-renders only the cards whose effort changed. */
 export function useForkSubagentEffort(
@@ -328,138 +428,6 @@ export function useForkSubagentEffort(
     });
     return formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider });
   });
-}
-
-/** @public — the card as drawn, without the timeline's state; Storybook renders it on its own. */
-export function ForkSubagentCardView(props: {
-  readonly member: ForkSubagentTreeRow;
-  /** The reasoning effort it runs at, in the picker's words; null when none is reported. */
-  readonly effort?: string | null | undefined;
-  readonly titleId?: string | undefined;
-  readonly environmentId: EnvironmentId;
-  readonly open: boolean;
-  readonly onToggle: () => void;
-  /** Null when the subagent has no thread to open. */
-  readonly openThread: ((intent: SideThreadOpenIntent) => void) | null;
-  /** False when the thread can only open in the main view. */
-  readonly openInPanel?: boolean | undefined;
-}) {
-  const { member, titleId, environmentId, open, onToggle, openThread } = props;
-  const wellId = useId();
-  const trigger = useSideThreadTrigger();
-  const remote = member.remote;
-  const failed = member.mark === "failed";
-  // One list of rows: a subagent that has only just started can have none yet, and then the card
-  // offers no chevron and no well.
-  const details: Array<{ readonly term: string; readonly detail: ReactNode }> = [];
-  if (member.prompt) {
-    details.push({
-      term: "Task",
-      detail: <dd className="line-clamp-2 text-foreground">{member.prompt}</dd>,
-    });
-  }
-  if (member.activity) {
-    details.push({
-      term: member.activity.label,
-      detail: (
-        <dd className={cn("min-w-0", failed ? "text-sidebar-v2-status-failed" : "text-foreground")}>
-          {member.activity.shape === "path" ? (
-            <MiddleTruncate value={member.activity.text} showTitle={false} className="flex" />
-          ) : (
-            <span className="line-clamp-3">{member.activity.text}</span>
-          )}
-        </dd>
-      ),
-    });
-  }
-  const identity = (
-    <ForkSubagentIdentity
-      member={member}
-      effort={props.effort}
-      titleId={titleId}
-      environmentId={environmentId}
-    />
-  );
-  const elapsed = member.startedAt ? (
-    <span className="shrink-0 text-xs font-medium text-foreground tabular-nums">
-      <AgentElapsed agent={member} />
-    </span>
-  ) : null;
-  return (
-    <div
-      data-fork-subagent-card=""
-      data-work-entry-id={member.id}
-      className="w-full min-w-0 overflow-clip rounded-xl border border-border bg-card"
-    >
-      <div className="flex min-h-14 items-center gap-2 px-3 py-2">
-        {details.length === 0 ? (
-          <span className="flex min-w-0 flex-1 items-center gap-2">
-            {identity}
-            {elapsed}
-          </span>
-        ) : (
-          // The strip opens and folds the well, ending in the chevron that says so.
-          <button
-            type="button"
-            data-fork-subagent-toggle=""
-            aria-expanded={open}
-            aria-controls={wellId}
-            aria-label={open ? `Hide ${member.title} details` : `Show ${member.title} details`}
-            aria-description={
-              remote !== undefined
-                ? `${member.statusLabel} · on ${remote.label}`
-                : member.statusLabel
-            }
-            onClick={onToggle}
-            className="-m-1 flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
-          >
-            {identity}
-            {elapsed}
-            <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
-              {/* The sidebar shelves' trailing chevron: down while folded, up while open. */}
-              <ChevronDownIcon
-                className={cn("size-3 transition-transform", open && "rotate-180")}
-              />
-            </span>
-          </button>
-        )}
-        {openThread === null ? null : (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  data-fork-subagent-open=""
-                  aria-label={`Open ${member.title} thread`}
-                  {...trigger(openThread, { panel: props.openInPanel ?? true })}
-                />
-              }
-            >
-              <ArrowUpRightIcon aria-hidden className="size-3.5 text-foreground" />
-            </TooltipTrigger>
-            <TooltipPopup side="top">Open thread</TooltipPopup>
-          </Tooltip>
-        )}
-      </div>
-      {details.length === 0 ? null : (
-        <dl
-          id={wellId}
-          hidden={!open}
-          data-fork-subagent-well=""
-          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the well's top corners nest inside the card's 12px corner and 1px rim
-          className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[11px] bg-(--fork-composer-bg) px-3 py-2 text-xs leading-4.5 shadow-[inset_0_1px_0_var(--color-border)]"
-        >
-          {details.map(({ term, detail }) => (
-            <Fragment key={term}>
-              <dt className="text-muted-foreground">{term}</dt>
-              {detail}
-            </Fragment>
-          ))}
-        </dl>
-      )}
-    </div>
-  );
 }
 
 /** A card's header identity: the provider's mark in a tile with the status mark in its corner,

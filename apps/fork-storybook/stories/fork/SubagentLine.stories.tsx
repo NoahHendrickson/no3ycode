@@ -1,14 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { EnvironmentId, ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";
-import { useArgs } from "storybook/preview-api";
-import { type ComponentProps, useState } from "react";
 
-import { ForkSubagentCardView, ForkSubagentIdentity } from "~/custom/ForkSubagentGroup";
+import { ForkSubagentIdentity, ForkSubagentStartLineView } from "~/custom/ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "~/custom/forkSubagentTree";
 
 import { Stack } from "../Specimen.tsx";
-
-type CardProps = ComponentProps<typeof ForkSubagentCardView>;
 
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
 
@@ -94,78 +90,44 @@ const MEMBERS = {
 const environmentId = EnvironmentId.make("story");
 const noop = () => {};
 
-function Card({ member, initialOpen }: { member: ForkSubagentTreeRow; initialOpen: boolean }) {
-  const [open, setOpen] = useState(initialOpen);
-  return (
-    <ForkSubagentCardView
-      member={member}
-      effort="High"
-      environmentId={environmentId}
-      open={open}
-      onToggle={() => setOpen(!open)}
-      openThread={noop}
-    />
-  );
-}
-
 const meta = {
-  title: "Fork/Subagent card",
-  component: ForkSubagentCardView,
+  title: "Fork/Subagent line",
+  component: ForkSubagentStartLineView,
   tags: ["autodocs"],
-  args: {
-    member: BASE,
-    effort: "High",
-    environmentId,
-    open: true,
-    onToggle: noop,
-    openThread: noop,
-  },
-  argTypes: { open: { control: "boolean" } },
+  args: { member: BASE, effort: "High", environmentId, openThread: noop },
   decorators: [(Story) => <div className="w-[736px] min-w-0">{Story()}</div>],
-  // The header strip moves the `open` control, so the two stay in step.
-  render: function Render(args) {
-    const [, updateArgs] = useArgs<CardProps>();
-    return <ForkSubagentCardView {...args} onToggle={() => updateArgs({ open: !args.open })} />;
-  },
-} satisfies Meta<typeof ForkSubagentCardView>;
+} satisfies Meta<typeof ForkSubagentStartLineView>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Playground: Story = {};
 
-/** Each status, folded and open. The well starts folded. */
+/** Each status: the mark in the provider logo's corner says it. */
 export const Statuses: Story = {
   render: () => (
-    <Stack gap={3}>
+    <Stack gap={1}>
       {Object.entries(MEMBERS).map(([name, member]) => (
-        <Stack key={name} gap={2}>
-          <Card member={member} initialOpen={false} />
-          <Card member={member} initialOpen />
-        </Stack>
+        <ForkSubagentStartLineView
+          key={name}
+          member={member}
+          effort="High"
+          environmentId={environmentId}
+          openThread={noop}
+        />
       ))}
     </Stack>
   ),
 };
 
-/** Without a thread of its own there is nothing to open, so the arrow is not drawn. */
+/** Without a thread of its own there is nothing to open, so the line is not a button. */
 export const WithoutThread: Story = {
   name: "Without a thread",
-  args: { open: false },
-  render: function Render(args) {
-    const [, updateArgs] = useArgs<CardProps>();
-    return (
-      <ForkSubagentCardView
-        {...args}
-        openThread={null}
-        onToggle={() => updateArgs({ open: !args.open })}
-      />
-    );
-  },
+  render: (args) => <ForkSubagentStartLineView {...args} openThread={null} />,
 };
 
-/** The card's header identity alone, as the composer's background-work list draws it: the
-    provider's mark with the status in its corner, then the title over the model and effort. */
+/** The composer's background-work identity: the provider's mark with the status in its corner,
+    then the title over the model and effort. */
 export const Identity: Story = {
   parameters: { controls: { disable: true } },
   render: () => (

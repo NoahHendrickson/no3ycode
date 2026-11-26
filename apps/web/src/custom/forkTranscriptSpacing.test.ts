@@ -10,6 +10,12 @@ const sent = row({ kind: "sent-message", id: "sent" });
 const tool = (continuesWorkLog = false) => row({ kind: "work-live", id: "tool", continuesWorkLog });
 const images = row({ kind: "viewed-images", id: "images" });
 const live = row({ kind: "working", id: "working" });
+const subagent = row({
+  kind: "event",
+  id: "subagent",
+  projectedItem: { item: { type: "subagent" } },
+  continuesWorkLog: false,
+});
 
 const gaps = (rows: MessagesTimelineRow[]) =>
   forkSpaceTranscript(rows).map((row) => forkTranscriptGapStyle(row)?.paddingTop ?? 0);
@@ -19,6 +25,8 @@ describe("forkSpaceTranscript gaps", () => {
     ["a tool row under reply text", [reply(), tool()], [0, 12]],
     ["reply text under a tool row", [tool(), reply()], [0, 12]],
     ["a sent message under a tool row", [tool(), sent], [0, 12]],
+    ["a subagent's start line under reply text", [reply(), subagent], [0, 12]],
+    ["reply text under a subagent's start line", [subagent, reply()], [0, 12]],
     ["a tool row under a reply that already shows its meta", [reply(true), tool()], [0, 4]],
     ["the live line under a tool row", [tool(), live], [0, 10]],
     ["the live line under a tool row that continued", [tool(true), live], [0, 18]],

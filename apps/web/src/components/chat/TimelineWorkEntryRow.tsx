@@ -248,9 +248,6 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
       createdAt={props.workEntry.createdAt}
       timestampFormat={ctx.timestampFormat}
       onOpenThread={ctx.onOpenThread}
-      entryId={props.workEntry.id}
-      onToggleEntry={props.onToggleEntry}
-      onContentReady={props.onContentReady}
       fallback={<WorkEntryLogRow {...props} />}
     />
     /* fork:end fork-subagent-spawn-card */

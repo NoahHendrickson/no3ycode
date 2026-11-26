@@ -609,6 +609,9 @@ type MessagesTimelineRowContent =
       runId: RunId;
       label: string;
       expanded: boolean;
+      /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+      turnDiffSummary?: TurnDiffSummary;
+      /* fork:end fork-inline-turn-diff */
     }
   | {
       kind: "attempt-fold";
@@ -1217,6 +1220,10 @@ function deriveTurnFolds(input: {
         entry.id === visibleCompactionId ||
         timelineEntryIsPersistentResourceCard(entry) ||
         input.liveSubagentEntryIds.has(entry.id) ||
+        /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
+        // A subagent's card stays where it was launched once it settles; its notice is one line.
+        (entry.kind === "event" && entry.projectedItem.item.type === "subagent") ||
+        /* fork:end fork-subagent-spawn-card */
         input.retainedAssistantReplyEntryIds.has(entry.id)
       ) {
         continue;
@@ -1742,6 +1749,15 @@ export function deriveMessagesTimelineRows(
       turnDiffSummaryByAssistantMessageId.set(summary.assistantMessageId, summary);
     }
   }
+  /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+  // A turn's diff rides its "Worked for" row; the reply then drops its changed-files card.
+  const turnDiffSummaryByRunId = new Map(
+    input.turnDiffSummaries.map((summary) => [summary.runId, summary] as const),
+  );
+  const foldDiffRunIds = new Set<RunId>();
+  const withoutFoldDiff = (summary: TurnDiffSummary | undefined) =>
+    summary && foldDiffRunIds.has(summary.runId) ? undefined : summary;
+  /* fork:end fork-inline-turn-diff */
   const unsettledRunId = deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null);
   const revertTurnCountByUserMessageId = input.supportsConversationRollback
     ? deriveRevertTurnCountByUserMessageId({
@@ -2062,6 +2078,10 @@ export function deriveMessagesTimelineRows(
           ? [String(entry.entry.projectedItem.sourceItemId)]
           : [];
       });
+      /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+      const turnFoldDiff = turnDiffSummaryByRunId.get(turnFold.runId);
+      if (turnFoldDiff) foldDiffRunIds.add(turnFold.runId);
+      /* fork:end fork-inline-turn-diff */
       nextRows.push({
         kind: "turn-fold",
         id: `turn-fold:${turnFold.runId}`,
@@ -2070,6 +2090,9 @@ export function deriveMessagesTimelineRows(
         runId: turnFold.runId,
         label: turnFold.label,
         expanded: input.expandedRunIds?.has(turnFold.runId) ?? false,
+        /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+        ...(turnFoldDiff ? { turnDiffSummary: turnFoldDiff } : {}),
+        /* fork:end fork-inline-turn-diff */
       });
     }
 
@@ -2439,8 +2462,10 @@ export function deriveMessagesTimelineRows(
       assistantCopyStreaming: timelineEntry.message.streaming || assistantResponseStillInProgress,
       assistantTurnDiffSummary:
         timelineEntry.message.role === "assistant"
-          ? turnDiffSummaryByAssistantMessageId.get(timelineEntry.message.id)
-          : undefined,
+          ? /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+            withoutFoldDiff(turnDiffSummaryByAssistantMessageId.get(timelineEntry.message.id))
+          : /* fork:end fork-inline-turn-diff */
+            undefined,
       revertTurnCount:
         timelineEntry.message.role === "user"
           ? revertTurnCountByUserMessageId.get(timelineEntry.message.id)
@@ -2919,6 +2944,11 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
         a.createdAt === bf.createdAt &&
         a.label === bf.label &&
         a.expanded === bf.expanded &&
+        /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+        (a.kind !== "turn-fold" ||
+          bf.kind !== "turn-fold" ||
+          a.turnDiffSummary === bf.turnDiffSummary) &&
+        /* fork:end fork-inline-turn-diff */
         anchors.length === nextAnchors.length &&
         anchors.every((id, index) => id === nextAnchors[index])
       );

@@ -3073,15 +3073,6 @@
   border-color: var(--fork-composer-border);
 }
 
-/* ── Subagent spawn tree (fork-subagent-spawn-card) ─────────────────────────
-   A card's buttons take the same 4% lift every outline action does, in the
-   spawn tree and on a completion notice, which sits outside any tree. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-subagent-card]
-  :is(button[data-fork-subagent-toggle], button[data-fork-subagent-open]):hover {
-  background-color: var(--fork-outline-hover-bg);
-}
-
 /* ── Sidebar sweep badge (sidebar-v2-row-action-hit-area) ───────────────────
    Upstream's sweep-to-settle badge is a --primary tint with a --primary/40
    hairline: on the fork palettes --primary is the white action tone, so the

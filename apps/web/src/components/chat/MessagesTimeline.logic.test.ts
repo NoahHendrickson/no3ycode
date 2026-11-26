@@ -4197,15 +4197,11 @@ describe("linked timeline resources", () => {
       ],
       expandedRunIds: new Set([runId, RunId.make("other-run")]),
     });
-    expect(rows.map((row) => row.id)).toEqual([
-      "turn-fold:resource-run",
-      "a",
-      "c",
-      "d",
-      "turn-fold:other-run",
-      "e",
-    ]);
-    expect(rows[1]).toMatchObject({ subagents: [{ item: { id: "a" } }, { item: { id: "b" } }] });
+    // fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
+    // Settled subagent cards stay visible, so runs of nothing else have no work to fold.
+    expect(rows.map((row) => row.id)).toEqual(["a", "c", "d", "e"]);
+    expect(rows[0]).toMatchObject({ subagents: [{ item: { id: "a" } }, { item: { id: "b" } }] });
+    // fork:end fork-subagent-spawn-card
   });
 
   it.each([
@@ -5159,6 +5155,10 @@ describe("subagent continued by a later turn", () => {
     expect(rows.map((row) => row.id)).toEqual([
       "prompt-1",
       `turn-fold:${run1}`,
+      // fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card
+      // The resumed subagent's card stays in the turn that launched it.
+      "subagent",
+      // fork:end fork-subagent-spawn-card
       "answer-1",
       "prompt-2",
       `turn-fold:${run2}`,
