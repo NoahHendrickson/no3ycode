@@ -11,11 +11,15 @@ import {
 import { selectEnvironmentQueryData } from "@t3tools/client-runtime/state/runtime";
 import { isLiveSubagentShell, type EnvironmentId, type ThreadId } from "@t3tools/contracts";
 import { hasThreadLinks, parseThreadLinkHref } from "@t3tools/shared/threadLinks";
+import * as Equal from "effect/Equal";
 import { Atom } from "effect/reactivity";
 import { useEffect } from "react";
 import type { ImageSourcePropType } from "react-native";
 
 import type { MarkdownLinkCustomization } from "../src/native/SelectableMarkdownText.types";
+import { modelChipIcon } from "../src/lib/contextChipIconSource";
+import { CONTEXT_CHIP_ICON_SOURCES } from "../src/lib/contextChipIcons.generated";
+import { serverEnvironment } from "../src/state/server";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { appAtomRegistry } from "../src/state/atom-registry";
 import { resolveThreadLink } from "../src/state/entities";
@@ -24,20 +28,29 @@ import {
   shellThreadRemovedSequenceAtom,
   threadFamilies,
 } from "../src/state/threads";
-import { flatGlassPalette, flatGlassStatusColor } from "./flatGlassTheme";
+import { flatGlassPalette, flatGlassStatusColor, type FlatGlassPalette } from "./flatGlassTheme";
 import {
   dropPeriodAfterSubagentChips,
   isNo3ySubagentChipThread,
   no3ySubagentChipHrefs,
   no3ySubagentChipKind,
   no3ySubagentChipLabel,
+  no3ySubagentChipTone,
   type No3ySubagentChipKind,
+  type No3ySubagentChipTone,
 } from "./no3ySubagentLinkChip";
+
+interface SubagentLinkProvider {
+  readonly driver: string;
+  readonly iconUrl: string | undefined;
+}
 
 interface SubagentLinkChip {
   readonly kind: No3ySubagentChipKind | null;
   /** Unset for an empty title, so the pill keeps the link's text. */
   readonly label: string | undefined;
+  /** Null while the child's environment config is unknown. */
+  readonly provider: SubagentLinkProvider | null;
 }
 
 interface SubagentLinkChips {
@@ -65,6 +78,36 @@ function markIcon(kind: No3ySubagentChipKind | null): ImageSourcePropType {
   if (kind === "approval" || kind === "input") return MARK_ICONS.half;
   return kind === null ? MARK_ICONS.idle : MARK_ICONS.dot;
 }
+
+/** The native pill has one icon: the provider's logo when it has one, else the status mark. */
+function chipIcon(
+  chip: SubagentLinkChip,
+  tone: No3ySubagentChipTone | null,
+  palette: FlatGlassPalette,
+): { readonly icon: ImageSourcePropType; readonly tint: string | undefined } {
+  const logo = chip.provider ? modelChipIcon(chip.provider) : null;
+  if (logo && logo.source !== CONTEXT_CHIP_ICON_SOURCES.bot) {
+    return {
+      icon: logo.source,
+      tint: logo.tintsIcon ? (tone?.ink ?? palette.foreground) : undefined,
+    };
+  }
+  return {
+    icon: markIcon(chip.kind),
+    tint: chip.kind === null ? palette.statusIdleBorder : flatGlassStatusColor(chip.kind, palette),
+  };
+}
+
+// Structural equality, so a provider status push does not rebuild the chips.
+const chipProviderAtom = Atom.family((key: string) => {
+  const [environmentId, instanceId] = JSON.parse(key) as [EnvironmentId, string];
+  return Atom.make((get): SubagentLinkProvider | null => {
+    const provider = get(serverEnvironment.providersValueAtom(environmentId))?.find(
+      (candidate) => candidate.instanceId === instanceId,
+    );
+    return provider ? { driver: provider.driver, iconUrl: provider.iconUrl } : null;
+  }).pipe(Atom.withEquality(Equal.equals), Atom.withLabel(`no3y-subagent-link-provider:${key}`));
+});
 
 const subagentLinkChipsAtom = Atom.family((key: string) => {
   const [environmentId, familyThreadId, hrefs] = JSON.parse(key) as [
@@ -105,6 +148,14 @@ const subagentLinkChipsAtom = Atom.family((key: string) => {
       chips.set(href, {
         kind: staleRow ? null : no3ySubagentChipKind(shell),
         label: shell.title.trim() ? no3ySubagentChipLabel(shell.title) : undefined,
+        provider: get(
+          chipProviderAtom(
+            JSON.stringify([
+              ref.environmentId,
+              shell.runtime?.providerInstanceId ?? shell.modelSelection.instanceId,
+            ]),
+          ),
+        ),
       });
     }
     return chips.size === 0 && staleKey === null ? NO_CHIPS : { chips, staleKey };
@@ -142,12 +193,13 @@ export function useNo3ySubagentLinkChips(
     customization: (href) => {
       const chip = chips.get(href);
       if (!chip) return undefined;
+      const tone = no3ySubagentChipTone(chip.provider?.driver, themeAppearance);
+      const { icon, tint } = chipIcon(chip, tone, palette);
       return {
         label: chip.label,
-        icon: markIcon(chip.kind),
-        iconTintColor:
-          chip.kind === null ? palette.statusIdleBorder : flatGlassStatusColor(chip.kind, palette),
-        capsule: { surface: palette.controlSurface, border: palette.controlBorder },
+        icon,
+        iconTintColor: tint,
+        capsule: { surface: tone?.wash ?? palette.controlSurface, ink: tone?.ink },
       };
     },
   };

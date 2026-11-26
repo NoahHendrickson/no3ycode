@@ -1,6 +1,6 @@
 /**
- * A subagent thread link in an assistant message as a neutral capsule with the sidebar's status
- * mark — see `.fork/customizations.yaml#no3y-subagent-link-chip`. A live child is always in the
+ * A subagent thread link in an assistant message as a code-style chip in its provider's colour, with
+ * the provider's logo and the sidebar's status mark — see `.fork/customizations.yaml#no3y-subagent-link-chip`. A live child is always in the
  * shell; an idle one is left out of it, so its row comes from one read of the message's thread
  * family.
  */
@@ -14,6 +14,7 @@ import { selectEnvironmentQueryData } from "@t3tools/client-runtime/state/runtim
 import {
   isLiveSubagentShell,
   type EnvironmentId,
+  type ProviderDriverKind,
   type ScopedThreadRef,
   type ThreadId,
 } from "@t3tools/contracts";
@@ -26,18 +27,22 @@ import { Link } from "@tanstack/react-router";
 import * as Equal from "effect/Equal";
 import { Atom } from "effect/reactivity";
 import { useGT } from "gt-react";
-import { createContext, use, useEffect, type ReactNode } from "react";
+import { createContext, use, useEffect, type CSSProperties, type ReactNode } from "react";
+import { resolveProviderInstanceDisplayName } from "@t3tools/client-runtime/state/provider-instance-display";
 
 import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
 import { ThreadChipHoverCard } from "~/components/ThreadChipHoverCard";
+import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { ThreadHoverCardPopup } from "~/components/ThreadHoverCard";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { useProject } from "~/state/entities";
+import { serverEnvironment } from "~/state/server";
 import { environmentShell } from "~/state/shell";
 import { environmentThreadShells, threadFamilies } from "~/state/threads";
 import {
   dropPeriodAfterSubagentLinks,
+  FORK_SUBAGENT_LINK_TONES,
   forkSubagentLinkHrefs,
   forkSubagentLinkKind,
   forkSubagentLinkLabel,
@@ -84,6 +89,33 @@ const NO_HREFS_ATOM = Atom.make(NO_HREFS).pipe(Atom.withLabel("fork-subagent-lin
 const NO_LINK_ATOM = Atom.make<SubagentLink | null>(null).pipe(
   Atom.withLabel("fork-subagent-link:none"),
 );
+
+interface SubagentLinkProvider {
+  readonly driver: ProviderDriverKind;
+  readonly displayName: string;
+  readonly iconUrl: string | undefined;
+}
+
+const NO_PROVIDER_ATOM = Atom.make<SubagentLinkProvider | null>(null).pipe(
+  Atom.withLabel("fork-subagent-link-provider:none"),
+);
+
+// Structural equality, so a provider status push re-renders no chip.
+const subagentLinkProviderAtom = Atom.family((key: string) => {
+  const [environmentId, instanceId] = JSON.parse(key) as [EnvironmentId, string];
+  return Atom.make((get): SubagentLinkProvider | null => {
+    const match = get(serverEnvironment.providersValueAtom(environmentId))?.find(
+      (candidate) => candidate.instanceId === instanceId,
+    );
+    return match
+      ? {
+          driver: match.driver,
+          displayName: resolveProviderInstanceDisplayName(match),
+          iconUrl: match.iconUrl,
+        }
+      : null;
+  }).pipe(Atom.withEquality(Equal.equals), Atom.withLabel(`fork-subagent-link-provider:${key}`));
+});
 // A stale read is refreshed once per row snapshot, so a server that disagrees cannot loop.
 const refreshedFamilies = new Set<string>();
 
@@ -181,7 +213,8 @@ export function SubagentLinkMark(props: {
   readonly seed: string;
 }) {
   return (
-    <span aria-hidden className="inline-flex shrink-0">
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- the sidebar marks at 80%, so they sit in a chip line
+    <span aria-hidden className="inline-flex shrink-0 [zoom:0.8]">
       {props.kind === "working" ? (
         <SidebarV2StillWorkingMark />
       ) : props.kind === "waiting" ? (
@@ -196,6 +229,19 @@ export function SubagentLinkMark(props: {
       )}
     </span>
   );
+}
+
+/** The capsule's tone for the child's provider driver; undefined keeps it neutral.
+    @public — Storybook draws it. */
+export function forkSubagentLinkToneStyle(driver: string | undefined): CSSProperties | undefined {
+  const tone = driver ? FORK_SUBAGENT_LINK_TONES[driver] : undefined;
+  return tone
+    ? ({
+        "--fork-chip-hue": tone.hue,
+        "--fork-chip-ink-dark": tone.inkDark,
+        "--fork-chip-ink-light": tone.inkLight,
+      } as CSSProperties)
+    : undefined;
 }
 
 /** The capsule inside an assistant message, where every thread link takes it; else upstream's chip. */
@@ -226,6 +272,14 @@ export function ForkSubagentLinkChip(props: {
   }, [staleKey, familyRef]);
   const projectId = link?.shell.projectId ?? null;
   const project = useProject(projectId ? scopeProjectRef(environmentId, projectId) : null);
+  const instanceId = link
+    ? (link.shell.runtime?.providerInstanceId ?? link.shell.modelSelection.instanceId)
+    : null;
+  const provider = useAtomValue(
+    instanceId === null
+      ? NO_PROVIDER_ATOM
+      : subagentLinkProviderAtom(JSON.stringify([environmentId, instanceId])),
+  );
   if (link === null) return props.children;
   const status = statusLabel(link.kind, gt);
   const title = link.shell.title.trim() || props.title;
@@ -245,9 +299,21 @@ export function ForkSubagentLinkChip(props: {
             data-markdown-copy={props.copyMarkdown}
             data-fork-subagent-link=""
             shape="capsule"
+            style={forkSubagentLinkToneStyle(provider?.driver)}
           >
-            <SubagentLinkMark kind={link.kind} seed={key} />
+            {provider ? (
+              <ProviderInstanceIcon
+                driverKind={provider.driver}
+                displayName={provider.displayName}
+                acpRegistryIconUrl={provider.iconUrl}
+                // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo at the mark's 80% zoom
+                className="z-auto [zoom:0.8]"
+                // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo follows the chip's font size
+                iconClassName="size-[1em]"
+              />
+            ) : null}
             <ContextChipLabel>{link.label || props.title}</ContextChipLabel>
+            <SubagentLinkMark kind={link.kind} seed={key} />
           </ContextChip>
         }
       />

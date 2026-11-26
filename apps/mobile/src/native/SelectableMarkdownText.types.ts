@@ -91,8 +91,8 @@ export interface MarkdownLinkCustomization {
   readonly fileReference?: true;
   /* fork:end no3y-mobile-redesign */
   /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
-  /** A neutral capsule in body ink: fill and hairline. */
-  readonly capsule?: { readonly surface: string; readonly border: string };
+  /** Inline code's chip in its own wash, and ink (else the body's). */
+  readonly capsule?: { readonly surface: string; readonly ink: string | undefined };
   /* fork:end no3y-subagent-link-chip */
 }
 

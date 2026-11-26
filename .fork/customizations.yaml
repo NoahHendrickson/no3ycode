@@ -9445,10 +9445,12 @@
 - id: no3y-subagent-link-chip
   intent: >
     On mobile and desktop/web, a link in an assistant message to a subagent thread (a
-    delegated task or subagent child) reads as a neutral capsule instead of the thread
-    chip: a faint fill with a hairline (mobile: controlSurface/controlBorder; its label at
-    0.05 under the code chip's scale, pill.fontScale, where replies draw one, padded by
-    fork/no3yChipHeight.ts to stand as tall as an inline code chip), body ink,
+    delegated task or subagent child) reads as the reply's inline code chip instead of the
+    thread chip: code's 5px corners, 6px sides, 0.95 scale and height, no border, the body font
+    (mobile: sized as a file chip by fork/no3yChipHeight.ts), toned by the child's provider
+    (Claude orange, Codex violet, Antigravity teal: a 12% light / 16% dark wash of the hue with a
+    darker / lighter ink; other providers a neutral wash in body ink). It leads with the
+    provider's logo (web ProviderInstanceIcon, mobile modelChipIcon), then
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
     sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
@@ -9457,8 +9459,10 @@
     celebrate={false} for the rest (dot for done or failed, half circle for needs-you, idle ring
     for stopped or unknown). The label inherits the surrounding text's weight. Status follows the
     sidebar's rules: a request from the child's own child reads as needs-you, and blocked on
-    another thread or parked on background work reads as waiting. On mobile the marks are still white PNGs drawn from
-    No3yStatusMark so the native pill can tint them; web draws the sidebar's marks itself,
+    another thread or parked on background work reads as waiting. Web draws the status mark after
+    the title. Mobile's native pill has one icon slot, so it shows the logo and no status once the
+    provider is known, and the status mark (still white PNGs drawn from No3yStatusMark, tinted by
+    the pill) only until then; web draws the sidebar's marks itself,
     aria-hidden, with the status in the link's accessible name, and keeps the thread hover
     card. A period that closes the line right after the chip is dropped from the rendered
     text only; mid-line periods, code spans and fenced code stay, and while a reply streams

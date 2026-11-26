@@ -105,3 +105,36 @@ export function dropPeriodAfterSubagentChips(
   }
   return next;
 }
+
+export interface No3ySubagentChipTone {
+  readonly ink: string;
+  readonly wash: string;
+}
+
+// Web keeps the same tones in apps/web/src/custom/forkSubagentLinkLogic.ts.
+const PROVIDER_TONES: Readonly<
+  Record<string, { readonly dark: No3ySubagentChipTone; readonly light: No3ySubagentChipTone }>
+> = {
+  claudeAgent: {
+    dark: { ink: "#EBA58B", wash: "rgba(217, 119, 87, 0.16)" },
+    light: { ink: "#9E4424", wash: "rgba(217, 119, 87, 0.12)" },
+  },
+  // Tailwind violet-300 / 700 on violet-500.
+  codex: {
+    dark: { ink: "#C4B4FF", wash: "rgba(142, 81, 255, 0.16)" },
+    light: { ink: "#7008E7", wash: "rgba(142, 81, 255, 0.12)" },
+  },
+  // Tailwind teal-300 / 700 on teal-500.
+  antigravity: {
+    dark: { ink: "#5EEAD4", wash: "rgba(20, 184, 166, 0.16)" },
+    light: { ink: "#0F766E", wash: "rgba(20, 184, 166, 0.12)" },
+  },
+};
+
+/** The chip's wash and ink for the child's provider driver; null keeps it neutral. */
+export function no3ySubagentChipTone(
+  driver: string | undefined,
+  appearance: "dark" | "light",
+): No3ySubagentChipTone | null {
+  return (driver && PROVIDER_TONES[driver]?.[appearance]) || null;
+}
