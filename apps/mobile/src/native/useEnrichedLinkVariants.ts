@@ -5,9 +5,6 @@ import {
   parseAssistantCitationHref,
 } from "@t3tools/shared/assistantCitations";
 import { Image } from "react-native";
-/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
-import { StyleSheet } from "react-native";
-/* fork:end no3y-subagent-link-chip */
 /* fork:begin fork-file-link-ink — see .fork/customizations.yaml#fork-file-link-ink */
 import { parseThreadLinkHref } from "@t3tools/shared/threadLinks";
 /* fork:end fork-file-link-ink */
@@ -36,6 +33,9 @@ import { formatProviderSkillDisplayName } from "@t3tools/shared/inlineSkills";
 /* fork:begin no3y-mobile-redesign — see .fork/customizations.yaml#no3y-mobile-redesign */
 import type { No3yChipSizes } from "../../fork/no3yChipHeight";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
+import { NO3Y_INLINE_CODE_CHIP } from "../../fork/no3yTranscriptSpacing";
+/* fork:end no3y-subagent-link-chip */
 
 function chipCustomization(
   chip: ReturnType<typeof enrichedContextLinkPresentation>,
@@ -180,17 +180,18 @@ export function useEnrichedLinkVariants(
             return [
               enrichedLinkVariantPattern(url),
               {
-                // Where the reply draws code as a chip, the capsule takes its height (no3yChipSizes).
+                // Inline code's chip; where the reply draws one, a file chip's size matches its height.
                 pill: {
-                  borderColor: link.capsule.border,
-                  borderWidth: StyleSheet.hairlineWidth,
-                  borderRadius: 999,
-                  paddingHorizontal: 6,
+                  borderColor: "transparent",
+                  borderWidth: 0,
+                  borderRadius: NO3Y_INLINE_CODE_CHIP.radius,
+                  paddingHorizontal: NO3Y_INLINE_CODE_CHIP.paddingHorizontal,
                   paddingVertical: 0,
-                  ...chipSizes?.capsule,
+                  fontScale: NO3Y_INLINE_CODE_CHIP.fontScale,
+                  ...chipSizes?.file,
                 },
-                fontFamily: FONT_FAMILIES.medium,
-                color: textStyle.color,
+                fontFamily: textStyle.fontFamily,
+                color: link.capsule.ink ?? textStyle.color,
                 underline: false,
                 backgroundColor: link.capsule.surface,
               },

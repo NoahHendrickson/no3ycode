@@ -100,3 +100,15 @@ export function dropPeriodAfterSubagentLinks(
   }
   return next;
 }
+
+/** A subagent chip's hue (its wash) and ink per provider driver; other providers stay neutral.
+    Mobile keeps the same tones in no3ySubagentLinkChip.ts. */
+export const FORK_SUBAGENT_LINK_TONES: Readonly<
+  Record<string, { readonly hue: string; readonly inkDark: string; readonly inkLight: string }>
+> = {
+  claudeAgent: { hue: "#D97757", inkDark: "#EBA58B", inkLight: "#9E4424" },
+  // Tailwind violet-500 / 300 / 700.
+  codex: { hue: "#8E51FF", inkDark: "#C4B4FF", inkLight: "#7008E7" },
+  // Tailwind teal-500 / 300 / 700.
+  antigravity: { hue: "#14B8A6", inkDark: "#5EEAD4", inkLight: "#0F766E" },
+};

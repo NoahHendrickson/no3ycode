@@ -1,12 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import { EnvironmentId, ProviderDriverKind, ThreadId } from "@t3tools/contracts";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
+import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { ThreadContextChip } from "~/components/ThreadContextChip";
 import type { ForkSubagentLinkKind } from "~/custom/forkSubagentLinkLogic";
-import { SubagentLinkMark } from "~/custom/ForkSubagentLinkChip";
+import { forkSubagentLinkToneStyle, SubagentLinkMark } from "~/custom/ForkSubagentLinkChip";
 
 import { Row, Stack } from "../Specimen.tsx";
 
@@ -24,9 +25,20 @@ const STATUSES: ReadonlyArray<Status> = [
   "idle",
 ];
 
+const PROVIDERS = ["claudeAgent", "codex", "antigravity", "cursor"] as const;
+type Provider = (typeof PROVIDERS)[number];
+
 /** ForkSubagentLinkChip's capsule from its own parts: the chip reads the child from the
     environment's thread shells, which a story has no server to fill. Idle has no status. */
-function SubagentLink({ status, title }: { status: Status; title: string }) {
+function SubagentLink({
+  status,
+  title,
+  provider,
+}: {
+  status: Status;
+  title: string;
+  provider: Provider;
+}) {
   const threadId = ThreadId.make(`thread-subagent-${status}`);
   return (
     <ContextChip
@@ -40,9 +52,15 @@ function SubagentLink({ status, title }: { status: Status; title: string }) {
       aria-label={`Thread, ${title}, ${status}`}
       data-fork-subagent-link=""
       shape="capsule"
+      style={forkSubagentLinkToneStyle(provider)}
     >
-      <SubagentLinkMark kind={status === "idle" ? null : status} seed={threadId} />
+      <ProviderInstanceIcon
+        driverKind={ProviderDriverKind.make(provider)}
+        displayName={provider}
+        className="z-auto [zoom:0.8]"
+      />
       <ContextChipLabel>{title}</ContextChipLabel>
+      <SubagentLinkMark kind={status === "idle" ? null : status} seed={threadId} />
     </ContextChip>
   );
 }
@@ -67,11 +85,11 @@ function Prose({ children }: { children: ReactNode }) {
   );
 }
 
-function Sentence({ status }: { status: Status }) {
+function Sentence({ status, provider }: { status: Status; provider: Provider }) {
   return (
     <Prose>
-      I asked <SubagentLink status={status} title="Audit the composer cards" /> to diff the computed
-      styles before and after the refactor.
+      I asked <SubagentLink status={status} provider={provider} title="Audit the composer cards" />{" "}
+      to diff the computed styles before and after the refactor.
     </Prose>
   );
 }
@@ -81,28 +99,37 @@ const meta = {
   component: Sentence,
   tags: ["autodocs"],
   parameters: { surface: "stage", router: true },
-  args: { status: "working" },
-  argTypes: { status: { control: "select", options: STATUSES } },
+  args: { status: "working", provider: "claudeAgent" },
+  argTypes: {
+    status: { control: "select", options: STATUSES },
+    provider: { control: "select", options: PROVIDERS },
+  },
   decorators: [(Story) => <div className="w-[780px] max-w-full">{Story()}</div>],
 } satisfies Meta<typeof Sentence>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A subagent named in an assistant message is a capsule with the sidebar's status mark, drawn
-    still: working is a full green ring, waiting a muted dot, and done does not celebrate. The
-    label keeps the prose's weight. */
+/** A subagent named in an assistant message is an inline-code-shaped chip in its provider's colour
+    (Claude orange, Codex violet, Antigravity teal, others neutral), led by the provider's logo and
+    closed by the sidebar's status mark, drawn still: working is a full green ring, waiting a muted
+    dot, and done does not celebrate. The label keeps the prose's weight. */
 export const Playground: Story = {};
 
-/** Every status, then an ordinary thread link, which takes the same capsule with its project's
-    icon, or the thread icon without a project. */
+/** Every status, every provider tone, then an ordinary thread link, which takes the same neutral
+    chip with its project's icon, or the thread icon without a project. */
 export const Statuses: Story = {
   parameters: { controls: { disable: true } },
   render: () => (
     <Stack gap={2}>
       {STATUSES.map((status) => (
         <Row key={status} label={status}>
-          <Sentence status={status} />
+          <Sentence status={status} provider="claudeAgent" />
+        </Row>
+      ))}
+      {PROVIDERS.map((provider) => (
+        <Row key={provider} label={provider}>
+          <Sentence status="done" provider={provider} />
         </Row>
       ))}
       <Row label="thread">
