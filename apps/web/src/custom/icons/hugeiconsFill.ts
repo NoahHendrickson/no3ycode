@@ -405,7 +405,8 @@ function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
   }
   const filledBodies = [...bodies].map((body): Element => {
     const [tag, attrs] = hoisted(body.element);
-    return [tag, { ...attrs, fill: "currentColor" }];
+    // Unstroked: a stroke would grow the solid shape half a stroke past the drawn outline.
+    return [tag, { ...attrs, fill: "currentColor", stroke: "none" }];
   });
   return { bodies: filledBodies, knockouts, plain };
 }
