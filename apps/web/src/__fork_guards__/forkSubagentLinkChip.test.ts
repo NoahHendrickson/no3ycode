@@ -129,7 +129,7 @@ describe("fork guard: no3y-subagent-link-chip wiring", () => {
     const chip = readRepoFile("apps/web/src/custom/ForkSubagentLinkChip.tsx");
     expect(chip).toContain("<SubagentLinkProviderIcon");
     expect(chip).toMatch(
-      /if \(hasForkProviderMark\(props\.driver\)\) \{[\s\S]*?<ForkProviderMark/u,
+      /<ForkProviderMarkOr\s+driver=\{props\.driver\}[\s\S]*?fallback=\{\s*<ProviderInstanceIcon/u,
     );
   });
 

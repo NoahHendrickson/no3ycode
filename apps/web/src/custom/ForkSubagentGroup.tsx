@@ -23,7 +23,7 @@ import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execu
 import type { SideThreadOpenIntent } from "@t3tools/client-runtime/side-thread";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 import { ChevronRightIcon, ListTreeIcon } from "./icons/lucide-hugeicons";
-import { type ComponentProps, type CSSProperties, memo, type ReactNode, use, useId } from "react";
+import { type ComponentProps, memo, type ReactNode, use, useId } from "react";
 
 import { AgentElapsed } from "~/components/chat/AgentElapsed";
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
@@ -40,11 +40,12 @@ import { serverEnvironment } from "~/state/server";
 import { useQuietThreadShell } from "~/state/entities";
 import { environmentThreadDetails } from "~/state/threads";
 
-import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
+import { ForkProviderMarkOr } from "./icons/ModelPickerProviderGlyph";
 import {
   forkSubagentMembers,
   forkSubagentRowFromAgent,
   formatForkSubagentModel,
+  resolveForkSubagentRow,
   resolveForkSubagentTree,
   type ForkSubagentItem,
   type ForkSubagentMark,
@@ -108,32 +109,12 @@ const LiveSubagentLine = memo(function LiveSubagentLine(props: {
   readonly onOpenThread: OpenThread;
 }) {
   const { item, titleId, environmentId, onOpenThread } = props;
+  const parentRef = scopeThreadRef(environmentId, item.threadId);
   const live = useAtomValue(
-    environmentThreadDetails.threadAtom(scopeThreadRef(environmentId, item.threadId)),
+    environmentThreadDetails.threadAtom(parentRef),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === item.subagentId) ?? null,
   );
-  const [member] = resolveForkSubagentTree([item], live ? [live] : null).rows;
-  if (member === undefined) return null;
-  return (
-    <ForkSubagentStartLine
-      member={member}
-      titleId={titleId}
-      environmentId={environmentId}
-      parentRef={scopeThreadRef(environmentId, item.threadId)}
-      onOpenThread={onOpenThread}
-    />
-  );
-});
-
-function ForkSubagentStartLine(props: {
-  readonly member: ForkSubagentTreeRow;
-  readonly titleId?: string | undefined;
-  readonly environmentId: EnvironmentId;
-  /** The thread the subagent runs under; a linked environment's task opens through it. */
-  readonly parentRef: ScopedThreadRef;
-  readonly onOpenThread: OpenThread;
-}) {
-  const { member, titleId, environmentId, parentRef, onOpenThread } = props;
+  const member = resolveForkSubagentRow(item, live);
   const opener = useOpenSubagentThread(member, parentRef, onOpenThread);
   const title = useForkSubagentTitle(member, environmentId);
   const effort = useForkSubagentEffort(member, environmentId);
@@ -147,7 +128,7 @@ function ForkSubagentStartLine(props: {
       openInPanel={opener.panel}
     />
   );
-}
+});
 
 /** @public — the start line as drawn, without the timeline's state; Storybook renders it on its own. */
 export function ForkSubagentStartLineView(props: {
@@ -312,35 +293,35 @@ function ForkSubagentLineMark(props: {
 }) {
   const { member } = props;
   return (
-    <span
-      aria-hidden
-      className="relative me-0.5 flex size-4 shrink-0 items-center justify-center"
-      style={LINE_MARK_SIZE}
-    >
-      {member.remote === undefined && hasForkProviderMark(member.driver) ? (
-        <ForkProviderMark driver={member.driver} />
-      ) : (
-        <EnvironmentSubagentAvatar
-          environmentId={props.environmentId}
-          providerInstanceId={member.providerInstanceId}
-          driver={member.driver}
-          remote={member.remote}
-          className="size-4 rounded-none border-0 bg-transparent ring-0"
-          iconClassName="size-4"
-        />
-      )}
+    <span aria-hidden className="relative me-0.5 flex size-4 shrink-0 items-center justify-center">
+      <ForkProviderMarkOr
+        driver={forkSubagentMarkDriver(member)}
+        size="1rem"
+        fallback={
+          <EnvironmentSubagentAvatar
+            environmentId={props.environmentId}
+            providerInstanceId={member.providerInstanceId}
+            driver={member.driver}
+            remote={member.remote}
+            className="size-4 rounded-none border-0 bg-transparent ring-0"
+            iconClassName="size-4"
+          />
+        }
+      />
       {props.withStatus ? (
         <span className="absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full bg-background">
           <span className="flex scale-75 items-center justify-center">
-            <SidebarV2StatusMark status={markStatus(member.mark)} seed={member.id} idle="dot" />
+            <SidebarV2StatusMark
+              status={forkSubagentStatusMark(member.mark)}
+              seed={member.id}
+              idle="dot"
+            />
           </span>
         </span>
       ) : null}
     </span>
   );
 }
-
-const LINE_MARK_SIZE = { "--fork-mark-size": "1rem" } as CSSProperties;
 
 /** An untitled subagent (a completion notice's record often is) takes its child thread's title,
     which is generated from the ask; the model falls back to the ask itself. */
@@ -390,7 +371,7 @@ function SubagentBatchLead(props: {
 
 /** Opens a subagent's thread: its child thread here, or the thread a linked environment runs it
     in when this client is connected there; null when there is nowhere to go. Mirrors upstream's
-    SubagentLifecycleRow (V2LifecycleRow.tsx), which the card replaces. */
+    SubagentLifecycleRow (V2LifecycleRow.tsx), which the line replaces. */
 function useOpenSubagentThread(
   member: Pick<ForkSubagentTreeRow, "childThreadId" | "remote" | "title">,
   parentRef: ScopedThreadRef,
@@ -412,7 +393,7 @@ function useOpenSubagentThread(
 }
 
 /** The reasoning effort a subagent runs at, in the picker's words; null when none is reported.
-    Selected down to the label, so a provider update re-renders only the cards whose effort changed. */
+    Selected down to the label, so a provider update re-renders only the rows whose effort changed. */
 export function useForkSubagentEffort(
   member: Pick<ForkSubagentTreeRow, "model" | "modelSelection" | "providerInstanceId">,
   environmentId: EnvironmentId,
@@ -430,86 +411,17 @@ export function useForkSubagentEffort(
   });
 }
 
-/** A card's header identity: the provider's mark in a tile with the status mark in its corner,
-    the title over the model and effort. The composer's background-work list draws it too. */
-export function ForkSubagentIdentity(props: {
-  readonly member: ForkSubagentTreeRow;
-  readonly effort?: string | null | undefined;
-  readonly titleId?: string | undefined;
-  readonly environmentId: EnvironmentId;
-}) {
-  const { member, titleId, environmentId } = props;
-  const remote = member.remote;
-  const failed = member.mark === "failed";
-  // The status is the tile's badge; the line under the title says what it runs on.
-  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
-  return (
-    <>
-      <span
-        aria-hidden
-        data-fork-task-tile
-        className="relative flex size-8 shrink-0 items-center justify-center"
-      >
-        {/* A linked environment's task names its driver only as a label; the avatar resolves the
-            provider that really runs it there. */}
-        {remote === undefined && hasForkProviderMark(member.driver) ? (
-          <>
-            <span className="flex" style={MARK_SIZE}>
-              <ForkProviderMark driver={member.driver} />
-            </span>
-            {/* As the model picker does: the resolved avatar over the mark, glyph hidden, draws
-                the instance badge alone when shouldShowInstanceBadge asks for one, in the corner
-                the status mark leaves free. */}
-            <EnvironmentSubagentAvatar
-              environmentId={environmentId}
-              providerInstanceId={member.providerInstanceId}
-              driver={member.driver}
-              className="absolute inset-0 size-auto rounded-none border-0 bg-transparent ring-0"
-              providerIconClassName="absolute inset-0"
-              iconClassName="hidden"
-              badgeClassName="-top-1.25 -right-1.25 bottom-auto h-3 min-w-3 px-0.5 text-5xs"
-            />
-          </>
-        ) : (
-          <EnvironmentSubagentAvatar
-            environmentId={environmentId}
-            providerInstanceId={member.providerInstanceId}
-            driver={member.driver}
-            remote={remote}
-            className="size-5 rounded-none border-0 bg-transparent ring-0"
-            iconClassName="size-5"
-          />
-        )}
-        <span className="absolute -right-0.5 -bottom-0.5 flex size-3.5 items-center justify-center rounded-full bg-card">
-          <span className="flex scale-75 items-center justify-center">
-            <SidebarV2StatusMark status={markStatus(member.mark)} seed={member.id} idle="dot" />
-          </span>
-        </span>
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-        <span id={titleId} className="w-full min-w-0 truncate text-sm leading-5 text-foreground">
-          {member.title}
-        </span>
-        <span
-          className={cn(
-            "w-full min-w-0 truncate text-xs leading-4",
-            failed && !spec ? "text-sidebar-v2-status-failed" : "text-muted-foreground",
-          )}
-        >
-          {spec || member.statusLabel}
-          {remote !== undefined ? ` · on ${remote.label}` : null}
-        </span>
-      </span>
-    </>
-  );
+/** The driver whose fork mark a subagent shows: none for a linked environment's task, which names
+    its driver only as a label, so the avatar resolves the provider that really runs it there. */
+export function forkSubagentMarkDriver(
+  member: Pick<ForkSubagentTreeRow, "driver" | "remote">,
+): ForkSubagentTreeRow["driver"] | null {
+  return member.remote === undefined ? member.driver : null;
 }
 
-/** The tile's provider mark, as the model picker draws Codex's and Claude's (Figma 89:704). */
-const MARK_SIZE = { "--fork-mark-size": "1.25rem" } as CSSProperties;
-
-/** The sidebar's mark set by the card's vocabulary. Idle and stopped both
+/** The sidebar's mark set by a subagent's status. Idle and stopped both
     settle on the hollow idle circle: nothing pending, nothing to report. */
-function markStatus(mark: ForkSubagentMark): SidebarV2TopStatusMark | null {
+export function forkSubagentStatusMark(mark: ForkSubagentMark): SidebarV2TopStatusMark | null {
   switch (mark) {
     case "working":
       return { label: "Working", mark: "working" };

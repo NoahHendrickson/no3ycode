@@ -2002,20 +2002,18 @@ function TurnFoldTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "turn-
         </button>
         {/* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */}
         {/* The diff stat holds the far right; the hover timestamp shows beside it. */}
-        {row.turnDiffSummary && ctx.onOpenTurnDiff ? (
-          <span className="ms-auto flex items-center">
-            <TimelineRowTimestamp createdAt={row.createdAt} timestampFormat={ctx.timestampFormat} />
-            <ForkTurnDiffStat summary={row.turnDiffSummary} onOpenTurnDiff={ctx.onOpenTurnDiff} />
-          </span>
-        ) : (
-          /* fork:end fork-inline-turn-diff */
+        <span className="ms-auto flex items-center">
+          {/* fork:end fork-inline-turn-diff */}
           <TimelineRowTimestamp
             createdAt={row.createdAt}
             timestampFormat={ctx.timestampFormat}
             className="ms-auto"
           />
-          /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
-        )}
+          {/* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */}
+          {row.turnDiffSummary && ctx.onOpenTurnDiff ? (
+            <ForkTurnDiffStat summary={row.turnDiffSummary} onOpenTurnDiff={ctx.onOpenTurnDiff} />
+          ) : null}
+        </span>
         {/* fork:end fork-inline-turn-diff */}
       </div>
       {loading ? <WorkHistorySkeleton /> : null}

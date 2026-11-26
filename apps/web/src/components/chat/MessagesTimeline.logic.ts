@@ -1749,15 +1749,6 @@ export function deriveMessagesTimelineRows(
       turnDiffSummaryByAssistantMessageId.set(summary.assistantMessageId, summary);
     }
   }
-  /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
-  // A turn's diff rides its "Worked for" row; the reply then drops its changed-files card.
-  const turnDiffSummaryByRunId = new Map(
-    input.turnDiffSummaries.map((summary) => [summary.runId, summary] as const),
-  );
-  const foldDiffRunIds = new Set<RunId>();
-  const withoutFoldDiff = (summary: TurnDiffSummary | undefined) =>
-    summary && foldDiffRunIds.has(summary.runId) ? undefined : summary;
-  /* fork:end fork-inline-turn-diff */
   const unsettledRunId = deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null);
   const revertTurnCountByUserMessageId = input.supportsConversationRollback
     ? deriveRevertTurnCountByUserMessageId({
@@ -1802,6 +1793,23 @@ export function deriveMessagesTimelineRows(
           retainedAssistantReplyEntryIds: retainedAssistantReplyIds,
           resolve,
         });
+  /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+  // A turn's diff rides its "Worked for" row; the reply then drops its changed-files card.
+  const turnDiffSummaryByRunId = new Map(
+    input.turnDiffSummaries.map((summary) => [summary.runId, summary] as const),
+  );
+  const foldDiffRunIds = new Set(
+    [...foldsByAnchorEntryId.values()]
+      .map((fold) => fold.runId)
+      .filter((runId) => turnDiffSummaryByRunId.has(runId)),
+  );
+  const foldDiff = (runId: RunId) => {
+    const summary = turnDiffSummaryByRunId.get(runId);
+    return summary ? { turnDiffSummary: summary } : {};
+  };
+  const withoutFoldDiff = (summary: TurnDiffSummary | undefined) =>
+    summary && foldDiffRunIds.has(summary.runId) ? undefined : summary;
+  /* fork:end fork-inline-turn-diff */
   const timelineEntryById = new Map(timelineEntries.map((entry) => [entry.id, entry]));
   const collapsedEntryIds = new Set<string>();
   const collapsedFoldMemberIds = new Set<string>();
@@ -2078,10 +2086,6 @@ export function deriveMessagesTimelineRows(
           ? [String(entry.entry.projectedItem.sourceItemId)]
           : [];
       });
-      /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
-      const turnFoldDiff = turnDiffSummaryByRunId.get(turnFold.runId);
-      if (turnFoldDiff) foldDiffRunIds.add(turnFold.runId);
-      /* fork:end fork-inline-turn-diff */
       nextRows.push({
         kind: "turn-fold",
         id: `turn-fold:${turnFold.runId}`,
@@ -2091,7 +2095,7 @@ export function deriveMessagesTimelineRows(
         label: turnFold.label,
         expanded: input.expandedRunIds?.has(turnFold.runId) ?? false,
         /* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
-        ...(turnFoldDiff ? { turnDiffSummary: turnFoldDiff } : {}),
+        ...foldDiff(turnFold.runId),
         /* fork:end fork-inline-turn-diff */
       });
     }

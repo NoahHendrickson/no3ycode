@@ -59,9 +59,9 @@ describe("fork guard: fork-subagent-spawn-card", () => {
       "formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider })",
     );
     // The provider's mark leads, badged with the sidebar's status mark on the start line.
-    expect(group).toContain("<ForkProviderMark driver={member.driver} />");
+    expect(group).toContain("driver={forkSubagentMarkDriver(member)}");
     expect(group).toContain("<EnvironmentSubagentAvatar");
-    expect(group).toContain("<SidebarV2StatusMark status={markStatus(member.mark)}");
+    expect(group).toContain("status={forkSubagentStatusMark(member.mark)}");
     // No card or well comes back.
     expect(group).not.toContain("data-fork-subagent-card");
     expect(group).not.toContain("data-fork-subagent-well");

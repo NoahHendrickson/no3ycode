@@ -5886,7 +5886,9 @@
     item; a lone line selects only its own agent. A batch keeps its list-tree
     lead line ("Kicked off N subagents", the status summary, the batch's
     elapsed span) above one line per member. The composer's background-work
-    list keeps the old card header's identity (ForkSubagentIdentity).
+    list draws the same identity as a tile over two lines (ForkSubagentIdentity,
+    in ComposerBackgroundWork.tsx). Every subagent mark picks its logo through
+    ForkProviderMarkOr (the model picker's marks, else the avatar or icon).
 
     A subagent's start line stays where it was launched once it settles: the turn
     fold never hides a subagent item (fenced in MessagesTimeline.logic.ts), so

@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { EnvironmentId, ProviderDriverKind, ProviderInstanceId } from "@t3tools/contracts";
 
-import { ForkSubagentIdentity, ForkSubagentStartLineView } from "~/custom/ForkSubagentGroup";
+import { ForkSubagentIdentity } from "~/custom/ComposerBackgroundWork";
+import { ForkSubagentStartLineView } from "~/custom/ForkSubagentGroup";
 import type { ForkSubagentTreeRow } from "~/custom/forkSubagentTree";
 
 import { Stack } from "../Specimen.tsx";
@@ -23,9 +24,6 @@ const BASE: ForkSubagentTreeRow = {
   driver: ProviderDriverKind.make("codex"),
   providerInstanceId: ProviderInstanceId.make("codex"),
   statusLabel: "Running",
-  prompt:
-    "Review the tab strips under Basic against the Storybook Tabs. Do not edit, commit or push; reply with a verdict and findings.",
-  activity: { label: "Now", text: "apps/web/src/theme.custom.basic.css", shape: "path" },
 };
 
 const MEMBERS = {
@@ -42,13 +40,6 @@ const MEMBERS = {
     model: "claude-opus-5-5",
     startedAt: minutesAgo(10),
     completedAt: minutesAgo(7),
-    prompt:
-      "Compare the changed-files card in the app with the Basic kit's card and list every difference.",
-    activity: {
-      label: "Result",
-      text: "The well's top corners are square under Basic; everything else matches the kit.",
-      shape: "prose",
-    },
   },
   Failed: {
     ...BASE,
@@ -57,11 +48,6 @@ const MEMBERS = {
     mark: "failed",
     statusLabel: "Failed",
     completedAt: minutesAgo(0.5),
-    activity: {
-      label: "Result",
-      text: "Codex exited before it replied: rate limited",
-      shape: "prose",
-    },
   },
   Idle: {
     ...BASE,
@@ -70,11 +56,6 @@ const MEMBERS = {
     mark: "idle",
     statusLabel: "Idle · resumable",
     completedAt: minutesAgo(1.5),
-    activity: {
-      label: "Result",
-      text: "Found two strips that still use the old track; waiting to be resumed.",
-      shape: "prose",
-    },
   },
   Stopped: {
     ...BASE,
@@ -83,7 +64,6 @@ const MEMBERS = {
     mark: "stopped",
     statusLabel: "Stopped",
     completedAt: minutesAgo(1),
-    activity: null,
   },
 } satisfies Record<string, ForkSubagentTreeRow>;
 

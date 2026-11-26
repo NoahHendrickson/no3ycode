@@ -49,7 +49,7 @@ import {
   isForkSubagentLinkThread,
   type ForkSubagentLinkKind,
 } from "./forkSubagentLinkLogic";
-import { ForkProviderMark, hasForkProviderMark } from "./icons/ModelPickerProviderGlyph";
+import { ForkProviderMarkOr } from "./icons/ModelPickerProviderGlyph";
 import { sidebarV2CardTopStatus } from "./sidebarV2CardStatus";
 import {
   SidebarV2StatusMark,
@@ -240,27 +240,25 @@ export function SubagentLinkProviderIcon(props: {
   readonly displayName: string;
   readonly iconUrl?: string | undefined;
 }) {
-  if (hasForkProviderMark(props.driver)) {
-    return (
-      <span aria-hidden className="inline-flex shrink-0 items-center" style={LINK_MARK_SIZE}>
-        <ForkProviderMark driver={props.driver} />
-      </span>
-    );
-  }
   return (
-    <ProviderInstanceIcon
-      driverKind={props.driver}
-      displayName={props.displayName}
-      acpRegistryIconUrl={props.iconUrl}
-      // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo at the mark's 80% zoom
-      className="z-auto [zoom:0.8]"
-      // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo follows the chip's font size
-      iconClassName="size-[1em]"
+    <ForkProviderMarkOr
+      driver={props.driver}
+      size="1em"
+      className="inline-flex"
+      fallback={
+        <ProviderInstanceIcon
+          driverKind={props.driver}
+          displayName={props.displayName}
+          acpRegistryIconUrl={props.iconUrl}
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo at the mark's 80% zoom
+          className="z-auto [zoom:0.8]"
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo follows the chip's font size
+          iconClassName="size-[1em]"
+        />
+      }
     />
   );
 }
-
-const LINK_MARK_SIZE = { "--fork-mark-size": "1em" } as CSSProperties;
 
 /** The capsule's tone for the child's provider driver; undefined keeps it neutral.
     @public — Storybook draws it. */

@@ -44,7 +44,7 @@ describe("resolveForkSubagentTree", () => {
     expect(settled.active).toBe(false);
   });
 
-  it("prefers the live roster over the item for status, activity, model, timing and thread", () => {
+  it("prefers the live roster over the item for status, model, timing and thread", () => {
     const tree = resolveForkSubagentTree(
       [item({ progress: "Reading files" })],
       [
@@ -64,11 +64,6 @@ describe("resolveForkSubagentTree", () => {
     const row = tree.rows[0]!;
     expect(row.status).toBe("completed");
     expect(row.mark).toBe("done");
-    expect(row.activity).toEqual({
-      label: "Result",
-      text: "Found three leads in src",
-      shape: "prose",
-    });
     expect(row.model).toBe("claude-opus-5-5");
     expect(row.childThreadId).toBe("thread-child");
     expect(
@@ -84,18 +79,18 @@ describe("resolveForkSubagentTree", () => {
         ],
       ).rows[0]!.model,
     ).toBe("claude-sonnet-5-5");
-    // A deduped live record carries an empty prompt; the item's own task still shows.
+    // A deduped live record carries an empty prompt; the item's own task still names it.
     expect(
       resolveForkSubagentTree(
-        [item({ prompt: "Check the tabs" })],
+        [item({ title: null, prompt: "Check the tabs" })],
         [{ id: "node-1", status: "running", prompt: "", promptOmitted: true } as never],
-      ).rows[0]!.prompt,
+      ).rows[0]!.title,
     ).toBe("Check the tabs");
     expect(row.startedAt).toBe("2026-10-05T12:00:00.000Z");
     expect(row.completedAt).toBe("2026-10-05T12:00:30.000Z");
   });
 
-  it("builds a completion notice's card from the live record alone", () => {
+  it("builds a completion notice's row from the live record alone", () => {
     const row = forkSubagentRowFromAgent({
       id: "node-9",
       status: "completed",
@@ -113,59 +108,26 @@ describe("resolveForkSubagentTree", () => {
       id: "node-9",
       mark: "done",
       statusLabel: "Completed",
-      prompt: "Research lionfish",
       childThreadId: "thread-child",
-      activity: { label: "Result", text: "Lionfish brief What they are.", shape: "prose" },
     });
     // Emphasis is stripped at word edges outside code; dunders, globs and code spans keep theirs.
     expect(
       forkSubagentRowFromAgent({
         id: "node-9",
         status: "completed",
+        title: null,
         prompt: "Fix `__init__` and `src/*.ts`, then check __tests__ and lib/*.js",
-        result: "*Done*: kept `**kwargs`",
-      } as never),
-    ).toMatchObject({
-      prompt: "Fix __init__ and src/*.ts, then check __tests__ and lib/*.js",
-      activity: { text: "Done: kept **kwargs" },
-    });
+      } as never).title,
+    ).toBe("Fix __init__ and src/*.ts, then check __tests__ and lib/*.js");
   });
 
-  it("gives each card its status word, its task, and what it is doing or what it found", () => {
-    const working = resolveForkSubagentTree(
-      [item({ progress: "Running tests", prompt: "Check the [tabs](https://x)\n- under `Basic`" })],
-      null,
-    ).rows[0]!;
+  it("gives each row its status mark and word", () => {
+    const working = resolveForkSubagentTree([item({ progress: "Running tests" })], null).rows[0]!;
     expect(working.mark).toBe("working");
     expect(working.statusLabel).toBe("Running");
-    expect(working.prompt).toBe("Check the tabs under Basic");
-    expect(working.activity).toEqual({ label: "Now", text: "Running tests", shape: "prose" });
-    expect(
-      resolveForkSubagentTree([item({ progress: "Reading apps/web/src/theme.css" })], null).rows[0]!
-        .activity?.shape,
-    ).toBe("prose");
-    expect(
-      resolveForkSubagentTree([item({ progress: "apps/web/src/theme.custom.basic.css" })], null)
-        .rows[0]!.activity?.shape,
-    ).toBe("path");
-    expect(resolveForkSubagentTree([item()], null).rows[0]!.activity).toBeNull();
-    const failed = resolveForkSubagentTree(
-      [item({ status: "failed", result: "Child task ended with status failed" })],
-      null,
-    ).rows[0]!;
+    const failed = resolveForkSubagentTree([item({ status: "failed" })], null).rows[0]!;
     expect(failed.mark).toBe("failed");
     expect(failed.statusLabel).toBe("Failed");
-    expect(failed.activity).toBeNull();
-    // Never one field standing in for the other.
-    const settledNoResult = resolveForkSubagentTree(
-      [item({ status: "completed", progress: "Reading files", result: null })],
-      null,
-    ).rows[0]!;
-    expect(settledNoResult.activity).toBeNull();
-    expect(
-      resolveForkSubagentTree([item({ progress: undefined, result: "An earlier answer" })], null)
-        .rows[0]!.activity,
-    ).toBeNull();
     expect(resolveForkSubagentTree([item({ status: "idle" })], null).rows[0]!.statusLabel).toBe(
       "Idle · resumable",
     );
