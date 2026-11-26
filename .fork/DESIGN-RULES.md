@@ -75,7 +75,6 @@ Only when the rule really doesn't fit, and always with a reason.
 
 ## Pending
 
-`DESIGN_LINT_PENDING` in `design-rules.mjs` turns one rule off for the files listed under it,
-and the B5 `pending:` group in `DESIGN_LINT_ALLOWLIST` does the same for components. Each line
-waits on a design call (Hugeicons drawn from raw data, components that need a `*View` split for a
-story). Settle it, fix the file, delete the line. New files never join these lists.
+The B5 `pending:` group in `DESIGN_LINT_ALLOWLIST` (`design-rules.mjs`) exempts components that
+wait on a design call: each draws an upstream control that reads live state itself. Settle it, fix
+the file, delete the line. New files never join this list.

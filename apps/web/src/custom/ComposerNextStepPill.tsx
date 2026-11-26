@@ -1,5 +1,6 @@
 /** The thread's next step, ruled or learned, as a pill above the composer; a click sends it. See
     `.fork/customizations.yaml#fork-composer-next-step`. */
+import type { HabitSuggestion } from "@t3tools/client-runtime/fork-composer-habits";
 import type { ThreadStructure } from "@t3tools/client-runtime/state/shell";
 import type { EnvironmentId, ThreadPullRequestLink } from "@t3tools/contracts";
 import { memo } from "react";
@@ -70,6 +71,19 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
     habit,
   });
   if (step === null) return null;
+  return (
+    <ComposerNextStepPillView step={step} onSend={props.onSend} onForget={forgetComposerHabit} />
+  );
+});
+
+/** @public — the pill as drawn, for a picked step; Storybook renders it on its own. */
+export function ComposerNextStepPillView(props: {
+  readonly step: PickedComposerNextStep;
+  readonly onSend: (prompt: string) => void;
+  /** Stops suggesting a learned step. */
+  readonly onForget: (habit: HabitSuggestion) => void;
+}) {
+  const { step } = props;
   const Icon = KIND_ICON[step.kind];
   const { habit: learned } = step;
   if (learned === null) {
@@ -105,10 +119,10 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
         data-fork-status-chip-stop=""
         aria-label="Stop suggesting this"
         title="Stop suggesting this"
-        onClick={() => forgetComposerHabit(learned)}
+        onClick={() => props.onForget(learned)}
       >
         <XIcon aria-hidden />
       </ComposerControl>
     </span>
   );
-});
+}

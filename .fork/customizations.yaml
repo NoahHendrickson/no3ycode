@@ -9699,8 +9699,8 @@
     Glass 3D is best effort. No ratchet: a rule passes or fails. Sheets are
     read by design-lint/css.mjs, which the guards' cssRules.ts reads through
     too, so the two never disagree about a sheet.
-    DESIGN_LINT_PENDING (and B5's pending: groups) lists the files that wait
-    on a design call, each to be fixed and removed.
+    B5's pending: group lists the components that wait on a design call,
+    each to be fixed and removed.
   tier: 4
   files:
     - .fork/DESIGN-RULES.md

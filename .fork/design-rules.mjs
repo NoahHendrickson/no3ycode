@@ -134,6 +134,14 @@ export const DESIGN_LINT_ALLOWLIST = [
     "SidebarProviderUpdatesButton.tsx": ["SidebarProviderUpdatesButton"],
     // MusicStripCardView, Fork/Music strip.
     "music/MusicStrip.tsx": ["SidebarMusicStrip"],
+    // ComposerNextStepPillView, Fork/Composer next step.
+    "ComposerNextStepPill.tsx": ["ComposerNextStepPill"],
+    // DraftProjectPillView, Fork/Draft project pill.
+    "DraftProjectPill.tsx": ["DraftProjectPill"],
+    // SidebarV2AutomationsHoverCardView and SidebarV2AutomationsRunView, Fork/Automations hover card.
+    "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
+    // BotThreadsPanelToggleView, Fork/Petal threads toggle.
+    "bots/BotThreadsPanelToggle.tsx": ["BotThreadsPanelToggle"],
   }),
   ...b5Exempt("wrapper: the sidebar chrome's look on a primitive (Fork/Sidebar controls)", {
     "SidebarChromeButton.tsx": ["SidebarChromeGroup", "SidebarChromeRadioItem"],
@@ -144,15 +152,12 @@ export const DESIGN_LINT_ALLOWLIST = [
   ...b5Exempt("wrapper around upstream's ThreadHoverCardPopup, which places it", {
     "SubagentRowHoverCardPopup.tsx": ["SubagentRowHoverCardPopup"],
   }),
-  // Pending (Nov 25): these read live state (stores, queries, git status) and have no
-  // props-only view yet, so a story needs a *View split first. The split is a design call.
-  ...b5Exempt("pending: reads live state, needs a *View split for a story", {
+  // Pending (Nov 25): each draws an upstream control that reads live state itself
+  // (ProviderModelPicker, BranchToolbarEnvironmentSelector), so a props-only view would still
+  // not render on its own. Exempt them as wrappers, or story their own parts: a design call.
+  ...b5Exempt("pending: wraps an upstream control that reads live state", {
     "ComposerModelPicker.tsx": ["ComposerModelPicker"],
-    "ComposerNextStepPill.tsx": ["ComposerNextStepPill"],
     "DraftMachineChip.tsx": ["DraftMachineChip"],
-    "DraftProjectPill.tsx": ["DraftProjectPill"],
-    "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
-    "bots/BotThreadsPanelToggle.tsx": ["BotThreadsPanelToggle"],
   }),
 ];
 
