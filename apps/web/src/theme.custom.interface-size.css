@@ -19,6 +19,9 @@
   --text-7xl: calc(4.5rem * var(--fork-interface-text-scale, 1));
   --text-8xl: calc(6rem * var(--fork-interface-text-scale, 1));
   --text-9xl: calc(8rem * var(--fork-interface-text-scale, 1));
+  /* The dense steps' utilities bake their rem (below), but text-(length:--text-2xs) reads these. */
+  --text-2xs: calc(0.6875rem * var(--fork-interface-text-scale, 1));
+  --text-3xs: calc(0.625rem * var(--fork-interface-text-scale, 1));
 }
 
 :root[data-fork="noahhendrickson-t3code"] body {

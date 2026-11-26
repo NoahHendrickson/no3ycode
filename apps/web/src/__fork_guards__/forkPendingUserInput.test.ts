@@ -86,7 +86,7 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain('role={multiSelect ? "group" : "radiogroup"}');
     expect(override).toContain('multiSelect ? "Select one or more" : "Select one"');
     expect(override).toContain("border-foreground/50");
-    expect(override).toContain('multiSelect ? "rounded-[4px]" : "rounded-full"');
+    expect(override).toContain('multiSelect ? "rounded-sm" : "rounded-full"');
   });
 
   it("keeps Previous in the card and only the advance arrow in the composer", () => {
@@ -101,7 +101,9 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(begin.length).toBeGreaterThan(0);
     expect(end.length).toBe(begin.length);
 
-    expect(theme).toMatch(/\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*28px/u);
+    expect(theme).toMatch(
+      /\[data-fork-pending-user-input-action\][\s\S]{0,200}height:\s*calc\(var\(--spacing\) \* 7\)/u,
+    );
     expect(theme).not.toContain('[data-fork-pending-user-input-action="previous"]');
   });
 

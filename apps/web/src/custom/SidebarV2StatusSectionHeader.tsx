@@ -40,7 +40,7 @@ export function SidebarV2StatusSectionHeader(props: {
       data-thread-selection-safe
       data-fork-status-section-header=""
       className={cn(
-        "group/status-header flex min-h-8 w-full list-none items-center gap-1.5 rounded-[10px] hover:bg-sidebar-row-hover",
+        "group/status-header flex min-h-8 w-full list-none items-center gap-1.5 rounded-(--radius-sidebar-row) hover:bg-sidebar-row-hover",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
         // At the default size the row is 32px (8px above the 16px label), so mt-2 on top
         // of the 2px list gap puts 18px from the previous card's bottom edge to the label.
@@ -54,7 +54,7 @@ export function SidebarV2StatusSectionHeader(props: {
         aria-expanded={!props.collapsed}
         data-testid="sidebar-v2-status-section-toggle"
         data-status={props.section}
-        className="-ms-3 inline-flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 self-stretch ps-3 text-left text-sidebar-label font-normal text-muted-foreground group-hover/status-header:text-sidebar-foreground focus-visible:rounded-[10px] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
+        className="-ms-3 inline-flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 self-stretch ps-3 text-left text-sidebar-label font-normal text-muted-foreground group-hover/status-header:text-sidebar-foreground focus-visible:rounded-(--radius-sidebar-row) focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset focus-visible:outline-none"
       >
         <span className="truncate">{SIDEBAR_V2_STATUS_SECTION_LABELS[props.section]}</span>
         <SidebarV2SectionCaret
@@ -69,7 +69,7 @@ export function SidebarV2StatusSectionHeader(props: {
           data-fork-menu-open={menuOpen ? "" : undefined}
           className={cn(
             // 28px squares, inset 2px inside the header's 32px hover fill, corners concentric with it.
-            "flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px] [&_button:hover]:bg-foreground/10",
+            "flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-lg [&_button:hover]:bg-foreground/10",
             SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
           )}
         >

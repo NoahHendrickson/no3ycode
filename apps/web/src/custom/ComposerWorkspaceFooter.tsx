@@ -117,7 +117,8 @@ export function ComposerWorkspaceFooter(props: {
       className="flex flex-col gap-0.5 border-t border-border/60 p-1"
       onKeyDown={keepRadioKeysInFooter}
     >
-      <div className="px-2 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground">
+      {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the footer's 11px caption times the Interface font size's text scale */}
+      <div className="px-2 pt-1 pb-0.5 text-[length:calc(0.6875rem*var(--fork-interface-text-scale,1))] font-medium text-muted-foreground">
         Workspace
       </div>
       <RadioGroup
@@ -128,7 +129,8 @@ export function ComposerWorkspaceFooter(props: {
             onEnvModeChange(value);
           }
         }}
-        className="flex flex-col gap-0.5"
+        density="compact"
+        className="flex flex-col"
       >
         <RadioPrimitive.Root
           value="local"

@@ -180,6 +180,9 @@
 :root[data-fork="noahhendrickson-t3code"] {
   /* One drawn px at the current Sidebar font size (the thread title, 14px by default). */
   --fork-sidebar-px: calc(var(--fork-sidebar-font-size, 14px) / 14);
+  /* The sidebar rows' corner (chrome rows, headers, their icon buttons): between rounded-lg and
+     rounded-xl, and fixed like the rows' other px metrics. */
+  --radius-sidebar-row: 10px;
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-sidebar-version="v2"] {
@@ -211,6 +214,10 @@
    size, which is in px and outside these. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
   --text-xs: calc(0.75rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
+  --text-2xs: calc(
+    0.6875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+  );
+  --text-3xs: calc(0.625rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
   --text-sm: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
   --text-base: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
   --text-lg: calc(1.125rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
@@ -235,14 +242,10 @@
    heading sits below it. */
 :root[data-fork="noahhendrickson-t3code"] [data-timeline-root] {
   .text-2xs {
-    font-size: calc(
-      0.6875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
-    );
+    font-size: var(--text-2xs);
   }
   .text-3xs {
-    font-size: calc(
-      0.625rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
-    );
+    font-size: var(--text-3xs);
   }
   .chat-markdown {
     h1 {
@@ -258,9 +261,7 @@
       font-size: var(--text-sm);
     }
     table {
-      font-size: calc(
-        0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
-      );
+      font-size: var(--fork-chat-text-sm);
     }
   }
 }
@@ -273,6 +274,7 @@
    standing 8px off the side. The bottom takes the side's inset so the icons
    hold the same gap on both edges. Covers the main and settings sidebars,
    which share the primitive. */
+/* design-lint-disable-next-line C1 -- SidebarFooter has no bottom-inset token; the fork evens its bottom gap with its side inset */
 :root[data-fork="noahhendrickson-t3code"] [data-slot="sidebar-footer"] {
   padding-bottom: var(--sidebar-content-inset);
 }
@@ -299,13 +301,13 @@
    `data-slot="tooltip-trigger"` / `"menu-trigger"`. Two of the three pills are
    built that way, so a slot-based selector silently matches nothing. */
 :root[data-fork="noahhendrickson-t3code"] :is(button[data-fork-pill], [data-fork-pill] > button) {
-  height: 28px;
-  min-height: 28px;
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
   border-color: var(--fork-pill-border);
   background: transparent;
   color: var(--fork-pill-fg);
   box-shadow: none;
-  gap: 6px;
+  gap: calc(var(--spacing) * 1.5);
 }
 
 /* The `::before` overlay carries the variant's inset highlight and its own
@@ -331,7 +333,7 @@
   border-start-start-radius: var(--fork-pill-radius);
   border-end-start-radius: var(--fork-pill-radius);
   /* 10px in the design, less the 1px border the box already spends. */
-  padding-inline: 9px;
+  padding-inline: calc(var(--spacing) * 2.25);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -344,7 +346,7 @@
    square that `size="icon-xs"` would keep after the height lift. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pill] > button:last-child:not(:first-child) {
   width: auto;
-  padding-inline: 7px;
+  padding-inline: calc(var(--spacing) * 1.75);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pill] > [data-slot="separator"] {
@@ -454,20 +456,20 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"]
   [data-chat-composer-body="true"] {
-  padding: 8px;
+  padding: calc(var(--spacing) * 2);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-chat-composer-body="true"] {
-  padding: 10px 12px 12px;
+  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3) calc(var(--spacing) * 3);
 }
 
 /* Attach and send sit 2px either side of the prompt on the compact row. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"]
   [data-fork-composer-prompt-row] {
-  column-gap: 2px;
+  column-gap: calc(var(--spacing) * 0.5);
 }
 
 /* Prompt on top, + on the bottom-left and mic + send on the bottom-right. */
@@ -490,7 +492,7 @@
   [data-chat-composer-overlay="true"]
   [data-fork-composer-prompt] {
   --fork-composer-prompt-pad-block: calc(
-    (var(--fork-composer-action-slot) - var(--fork-composer-prompt-line)) / 2 + 4px
+    (var(--fork-composer-action-slot) - var(--fork-composer-prompt-line)) / 2 + var(--spacing)
   );
   padding-block: var(--fork-composer-prompt-pad-block);
 }
@@ -502,9 +504,9 @@
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-fork-composer-prompt] {
-  --fork-composer-prompt-pad-block: 4px;
+  --fork-composer-prompt-pad-block: calc(var(--spacing) * 1);
   grid-area: prompt;
-  min-height: 54px;
+  min-height: calc(var(--spacing) * 13.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -555,8 +557,8 @@
    desktop scrollport below turns that into a horizontal scrollbar thumb
    under the prompt and a 4px vertical one beside it. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
-  margin: -4px;
-  padding: 4px;
+  margin: calc(var(--spacing) * -1);
+  padding: calc(var(--spacing) * 1);
 }
 
 /* The draft composer is narrower than the docked one: Figma 418:11501 draws
@@ -780,8 +782,32 @@
    cutoff. Any future attempt at a blur ramp here has to solve the double
    composite first; the graduated-opacity tail below is doing that job instead. */
 
+/* Menu corners: rows inside a menu, and the menu itself. Under a fork palette only: an
+   imported theme has none, so its menus keep the primitives' own corners. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme] {
+  --fork-menu-row-radius: 0.5rem;
+  --fork-menu-radius: 0.75rem;
+}
+
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-composer-radius: 16px;
+  /* 13px, between text-xs and text-sm: notice and approval actions, the Dictate tooltip. */
+  --fork-text-chip: calc(0.8125rem * var(--fork-interface-text-scale, 1));
+  /* The chat stream's sizes, for its cards outside the timeline. */
+  --fork-chat-text-sm: calc(
+    0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+  );
+  --fork-chat-text-base: calc(
+    1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
+  );
+  --fork-inline-code-size: 0.95em;
+  /* Geist Mono's ascent + descent, which sizes inline code's background, so a file link
+     (one line box tall) matches it under any interface font. */
+  --fork-inline-code-leading: 1.3;
+  /* Segmented tab labels: 12px wherever the strip sits, the sidebar's remapped text-xs included. */
+  --fork-segmented-tab-font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));
+  --fork-inline-code-radius: 0.3125rem;
+  --fork-pill-radius: 9999px;
   /* Cards that sit beside the composer (thread details, changed files). */
   --fork-card-radius: 8px;
   --fork-composer-bg: var(--card);
@@ -789,7 +815,48 @@
   --fork-composer-border-focus: var(--ring);
 }
 
+/* White and black at fixed opacities: the washes, rims and shadows the palettes lay over
+   whatever is beneath, named by their alpha as the Figma kit names them. */
+:root[data-fork="noahhendrickson-t3code"] {
+  --fork-white: #ffffff;
+  --fork-white-0: rgb(255 255 255 / 0%);
+  --fork-white-3: rgb(255 255 255 / 3%);
+  --fork-white-4: rgb(255 255 255 / 4%);
+  --fork-white-5: rgb(255 255 255 / 5%);
+  --fork-white-6: rgb(255 255 255 / 6%);
+  --fork-white-7: rgb(255 255 255 / 7%);
+  --fork-white-8: rgb(255 255 255 / 8%);
+  --fork-white-10: rgb(255 255 255 / 10%);
+  --fork-white-12: rgb(255 255 255 / 12%);
+  --fork-white-14: rgb(255 255 255 / 14%);
+  --fork-white-16: rgb(255 255 255 / 16%);
+  --fork-white-18: rgb(255 255 255 / 18%);
+  --fork-white-20: rgb(255 255 255 / 20%);
+  --fork-white-22: rgb(255 255 255 / 22%);
+  --fork-white-25: rgb(255 255 255 / 25%);
+  --fork-white-28: rgb(255 255 255 / 28%);
+  --fork-white-32: rgb(255 255 255 / 32%);
+  --fork-white-40: rgb(255 255 255 / 40%);
+  --fork-white-50: rgb(255 255 255 / 50%);
+  --fork-white-65: rgb(255 255 255 / 65%);
+  --fork-white-70: rgb(255 255 255 / 70%);
+  --fork-black: #000000;
+  --fork-black-8: rgb(0 0 0 / 8%);
+  --fork-black-16: rgb(0 0 0 / 16%);
+  --fork-black-18: rgb(0 0 0 / 18%);
+  --fork-black-20: rgb(0 0 0 / 20%);
+  --fork-black-25: rgb(0 0 0 / 25%);
+  --fork-black-28: rgb(0 0 0 / 28%);
+  --fork-black-30: rgb(0 0 0 / 30%);
+  --fork-black-32: rgb(0 0 0 / 32%);
+  --fork-black-35: rgb(0 0 0 / 35%);
+  --fork-black-45: rgb(0 0 0 / 45%);
+  --fork-black-85: rgb(0 0 0 / 85%);
+}
+
 :root[data-fork="noahhendrickson-t3code"].dark {
+  /* The control ink's 65% white flattened onto black, where a palette sets none. */
+  --fork-composer-control-ink-flat: #a6a6a6;
   /* Vessel is the outer floor under the control row; the prompt surface sits
      a step lighter on top with its own hairline. Both resolve through the
      fork palette — not the Figma hexes. */
@@ -840,7 +907,7 @@
 /* Mobile's collapsed tap target remains a distinct functional state. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-mobile-collapsed="true"][data-fork-composer-surface] {
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
 }
 
 /* Selected by name, not by position. This used to be `[data-fork-composer-box]
@@ -951,7 +1018,7 @@
     /* The prompt size (16px by default, appearanceFonts.ts) on a 1.5 line. The 32px action
        slot sets the 48px compact row (8 + 32 + 8); the one-line prompt sits centred beside it,
        and each wrapped line adds one more. Below sm the type stays 16px so iOS does not zoom. */
-    font-size: var(--font-size-prompt, 1rem);
+    font-size: var(--font-size-prompt, var(--text-base));
     line-height: var(--fork-composer-prompt-line);
   }
 
@@ -1007,12 +1074,12 @@
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
   height: var(--fork-composer-control-height);
   min-height: var(--fork-composer-control-height);
-  gap: 5px;
-  padding-inline: 8px;
-  border-radius: 6px;
+  gap: calc(var(--spacing) * 1.25);
+  padding-inline: calc(var(--spacing) * 2);
+  border-radius: var(--radius-md);
   font-size: var(--fork-composer-chip-text);
   font-weight: 400;
-  line-height: calc(var(--fork-composer-chip-text) + 6px);
+  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1026,8 +1093,8 @@
   [data-fork-composer-control-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]):not([data-fork-composer-usage-limits])
   svg {
-  width: 12px;
-  height: 12px;
+  width: calc(var(--spacing) * 3);
+  height: calc(var(--spacing) * 3);
   opacity: 1;
 }
 
@@ -1035,7 +1102,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-control-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: var(--fork-composer-control-ink, #a6a6a6);
+  color: var(--fork-composer-control-ink, var(--fork-composer-control-ink-flat));
 }
 
 /* Icon-only: upstream's label stays for screen readers, and the icon reads in the chip's ink
@@ -1120,12 +1187,12 @@
   width: var(--fork-composer-action-slot);
   height: var(--fork-composer-action-slot);
   min-height: var(--fork-composer-action-slot);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action] svg {
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* A Petals grid tile's jump hint sits in its top-left corner, off the mascot (fork-bots). */
@@ -1151,7 +1218,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-model-controls]
   [data-chat-provider-model-picker-label] {
-  color: #ffffff;
+  color: var(--fork-white);
 }
 
 /* Attach, send and stop are 28px, centred in the 32px slot so the prompt row's bottom line
@@ -1162,10 +1229,10 @@
     [data-fork-composer-action="send"],
     [data-fork-composer-action="stop"]
   ) {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  margin: 2px;
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  margin: calc(var(--spacing) * 0.5);
 }
 
 /* Attach (+) and dictate (mic) sit inside the prompt row as ghost squares
@@ -1178,7 +1245,7 @@
 
 :root[data-fork="noahhendrickson-t3code"].dark
   :is([data-fork-composer-action="attach"], [data-fork-composer-action="dictate"]) {
-  color: var(--fork-composer-control-ink, #a6a6a6);
+  color: var(--fork-composer-control-ink, var(--fork-composer-control-ink-flat));
 }
 
 /* Beside send, the mic is attach's mirror: 28px in its slot, pulled in from the cluster's 8px.
@@ -1186,10 +1253,10 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate"] {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  margin: 2px;
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  margin: calc(var(--spacing) * 0.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
@@ -1198,7 +1265,7 @@
     + [data-fork-composer-action="stop"],
     + span > [data-fork-composer-action="send"]
   ) {
-  margin-inline-end: -6px;
+  margin-inline-end: calc(var(--spacing) * -1.5);
 }
 
 /* A live session's capsule takes the mic's pull toward the send slot, where its X now sits,
@@ -1206,17 +1273,17 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   > [data-fork-dictation-mic][data-fork-dictation-live] {
-  margin-inline-end: -6px;
+  margin-inline-end: calc(var(--spacing) * -1.5);
 }
 
 /* The X is 28px in send's 32px slot, as send is. */
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-composer-action="dictate-cancel"] {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  margin: 2px;
+  width: calc(var(--spacing) * 7);
+  height: calc(var(--spacing) * 7);
+  min-height: calc(var(--spacing) * 7);
+  margin: calc(var(--spacing) * 0.5);
 }
 
 /* Where stop was the only idle action it keeps the right edge, so the X moves to
@@ -1232,7 +1299,7 @@
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-chat-composer-actions="right"]
   [data-fork-dictation-cancel="leading"] {
-  margin-inline-end: -4px;
+  margin-inline-end: calc(var(--spacing) * -1);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1252,7 +1319,10 @@
    opacity. */
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-action="dictate-cancel"] {
   --control-icon-color: #ffffff;
-  color: #ffffff;
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-action="dictate-cancel"] {
+  color: var(--fork-white);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
@@ -1270,8 +1340,8 @@
    and fall through to upstream's primary fill. */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
-  background: #ffffff;
-  color: #000000;
+  background: var(--fork-white);
+  color: var(--fork-black);
   box-shadow: none;
 }
 
@@ -1282,7 +1352,7 @@
 /* Stop is a ghost icon button, like attach and the mic: no red fill, the control row's ink,
    and their hover wash. 3D Glass still repaints it with its own lighting. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-action="stop"] {
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: transparent;
   box-shadow: none;
   color: var(--fork-composer-control-ink, var(--muted-foreground));
@@ -1296,7 +1366,7 @@
 /* In dark the stop square is pure white; light keeps the foreground ink. */
 :root[data-fork="noahhendrickson-t3code"].dark
   :is([data-fork-composer-action="stop"], [data-fork-composer-action="stop"]:hover:not(:disabled)) {
-  color: white;
+  color: var(--fork-white);
 }
 
 /* The mode controls carry leading and interleaved vertical rules, which earned
@@ -1339,7 +1409,7 @@
   padding: 0;
   /* Match the context row's pb-2 (8px) above the composer so the space
      between checkout and branch equals the space under both pills. */
-  gap: 8px;
+  gap: calc(var(--spacing) * 2);
 }
 
 /* Upstream nests the PR pill with the branch trigger at gap-1 (4px), while the
@@ -1360,7 +1430,7 @@
   justify-content: flex-start;
   margin-inline-start: 0;
   max-width: 100%;
-  gap: 8px;
+  gap: calc(var(--spacing) * 2);
 }
 
 /* The packing above only reaches children that are literally `.flex`, which
@@ -1425,14 +1495,14 @@
   /* Text + 10px tall, 6px radius. Inline padding is refined per trigger below so
      workspace and branch match; [data-fork-context-chip] is the locked
      workspace/env span — same pill when there is no interactive trigger. */
-  height: calc(var(--fork-composer-chip-text) + 10px);
-  min-height: calc(var(--fork-composer-chip-text) + 10px);
-  gap: 6px;
-  padding-inline: 8px;
-  border-radius: 6px;
+  height: calc(var(--fork-composer-chip-text) + var(--spacing) * 2.5);
+  min-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 2.5);
+  gap: calc(var(--spacing) * 1.5);
+  padding-inline: calc(var(--spacing) * 2);
+  border-radius: var(--radius-md);
   font-size: var(--fork-composer-chip-text);
   font-weight: 400;
-  line-height: calc(var(--fork-composer-chip-text) + 6px);
+  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
   background: var(--fork-context-chip-bg);
 }
 
@@ -1450,18 +1520,22 @@
   background: var(--fork-context-chip-bg-hover);
 }
 
-:root[data-fork="noahhendrickson-t3code"].dark
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: #ffffff;
+/* Dark inks them white; Basic's and Inlet's light colours ink them in the foreground: a locked
+   readout is not disabled, it simply has no caret (fork-basic-theme). */
+:root[data-fork="noahhendrickson-t3code"].dark {
+  --fork-context-chip-ink: var(--fork-white);
 }
 
-/* Basic's light tones ink them in the foreground, as dark does in white: a locked
-   readout is not disabled, it simply has no caret (fork-basic-theme). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]:not(.dark)
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-fork-composer-context-row]
+  :is(button, [data-slot="button"], [data-fork-context-chip]),
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"]
+  ):not(.dark)
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  color: var(--foreground);
+  color: var(--fork-context-chip-ink, var(--foreground));
 }
 
 /* The PR chip is the one context chip that carries a state: upstream inks
@@ -1514,10 +1588,11 @@
 /* Same inline padding on every chip. The folder glyph sits flush in its
    12px frame, so the workspace select needs real start padding — not the
    old optical 0 that left Current checkout tight on the pill edge. */
+/* design-lint-disable-next-line C1 -- the context row's triggers share one chip inset; SelectTrigger and ComboboxTrigger have no chip size */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   :is([data-slot="select-trigger"], [data-slot="combobox-trigger"], [data-fork-context-chip]) {
-  padding-inline: 8px;
+  padding-inline: calc(var(--spacing) * 2);
 }
 
 /* The xs select trigger carries a Tailwind `before:rounded-*` utility, and the
@@ -1528,6 +1603,7 @@
    folder glyph. Only the workspace select is built this way — the locked span
    and the branch chip have no before utility — which made Current checkout the
    one chip with a fat leading edge. */
+/* design-lint-disable-next-line C2 -- the xs ghost trigger's ::before sits in flow as a phantom flex item (see above); no variant drops it */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-context-row]
   [data-slot="select-trigger"]::before {
@@ -1547,8 +1623,8 @@
   [data-fork-composer-context-row]
   :is(button, [data-slot="button"], [data-fork-context-chip])
   svg {
-  width: 12px;
-  height: 12px;
+  width: calc(var(--spacing) * 3);
+  height: calc(var(--spacing) * 3);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-control-row-slot="right"] {
@@ -1582,11 +1658,11 @@
 
   /* 4px from each chip's icon to its label; the project chip keeps 6px below. */
   & :is(button, [data-slot="button"], [data-fork-context-chip]) {
-    gap: 4px;
+    gap: calc(var(--spacing) * 1);
   }
 
   & > :is([data-fork-draft-project-chip], [data-fork-context-chip="project"]) {
-    column-gap: 6px;
+    column-gap: calc(var(--spacing) * 1.5);
   }
 
   &[data-compact] > [data-fork-draft-project-chip] {
@@ -1601,6 +1677,7 @@
     opacity: 1;
   }
 
+  /* design-lint-disable-next-line C2 -- the xs ghost trigger's ::before sits in flow as a phantom flex item; no variant drops it */
   & [data-slot="select-trigger"]::before,
   & [data-slot="select-icon"] {
     display: none;
@@ -1623,6 +1700,7 @@
    whole overlay. The panel keeps its own slide transition and the chat
    column stops moving when the sidebar is toggled.
    ------------------------------------------------------------------------ */
+/* design-lint-disable-next-line C1 -- overlay mode is the gap spacer at zero width; Sidebar has no overlay variant */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-sidebar-overlay="true"]
   [data-slot="sidebar-gap"] {
@@ -1689,7 +1767,7 @@
   [data-fork-sidebar-overlay="true"]
   [data-slot="sidebar"][data-state="expanded"]
   [data-slot="sidebar-container"] {
-  box-shadow: 0 0 24px rgb(0 0 0 / 0.28);
+  box-shadow: 0 0 24px var(--fork-black-28);
 }
 
 /* ── Composited sidebar slide (sidebar-offcanvas-compositing) ─────────────────
@@ -1770,6 +1848,7 @@
    leave a gap where the tail joins and the tail reads as one shape with the
    card. The inner panel clips the rows to the corners instead of the
    container, which has to let the tail out. */
+/* design-lint-disable-next-line C1, C2 -- the peek card is a fork-only presentation of the collapsed sidebar; its geometry is the peek's own */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar"][data-collapsible="offcanvas"][data-side="left"]
@@ -1786,6 +1865,7 @@
   transition: none;
 }
 
+/* design-lint-disable-next-line C1 -- the peek card is a fork-only presentation of the collapsed sidebar; its geometry is the peek's own */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar-container"]
@@ -1793,9 +1873,10 @@
   border-radius: inherit;
   overflow: hidden;
   /* The hidden header held the rows off the top; match their 8px side inset. */
-  padding-top: 8px;
+  padding-top: calc(var(--spacing) * 2);
 }
 
+/* design-lint-disable-next-line C1 -- the peek card's edge layer takes the card's corner; it adds no geometry */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar-container"]::after {
@@ -1806,8 +1887,8 @@
   border: 1px solid var(--fork-peek-edge);
   border-radius: inherit;
   box-shadow:
-    0 12px 32px rgb(0 0 0 / 0.32),
-    0 2px 8px rgb(0 0 0 / 0.2);
+    0 12px 32px var(--fork-black-32),
+    0 2px 8px var(--fork-black-20);
   pointer-events: none;
   /* Everything but the edge under the tail's base and the shadow under the
      tail itself, which would darken a translucent tail. */
@@ -1829,6 +1910,7 @@
    slant with the outline's 1px edge laid over it, so it composites like the
    card's own edge does over the inner fill, translucent under Glass included.
    It takes hits, so the pointer crossing from the toggle stays on the card. */
+/* design-lint-disable-next-line C1 -- the peek card's tail is a fork-only shape on the sidebar container */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="sidebar-wrapper"][data-sidebar-state="collapsed"][data-fork-sidebar-peek="open"]
   [data-slot="sidebar-container"]::before {
@@ -2134,15 +2216,17 @@
    which on a 120Hz display is the difference between ~10 and ~480 updates.
    No `will-change` (would pin a layer for every monitoring row). Offscreen
    rows pay nothing via `content-visibility: auto` on the li. */
-:root[data-fork="noahhendrickson-t3code"].dark [data-fork-monitoring-pulse] {
-  background-color: #ffffff;
-  opacity: 0.5;
-  contain: paint;
-  animation: sidebar-v2-monitoring-pulse 4s infinite;
+:root[data-fork="noahhendrickson-t3code"].dark {
+  --fork-monitoring-pulse-fill: var(--fork-white);
 }
 
+:root[data-fork="noahhendrickson-t3code"]:not(.dark) {
+  --fork-monitoring-pulse-fill: var(--fork-black);
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark [data-fork-monitoring-pulse],
 :root[data-fork="noahhendrickson-t3code"]:not(.dark) [data-fork-monitoring-pulse] {
-  background-color: #000000;
+  background-color: var(--fork-monitoring-pulse-fill);
   opacity: 0.5;
   contain: paint;
   animation: sidebar-v2-monitoring-pulse 4s infinite;
@@ -2291,16 +2375,16 @@
 /* The composer's question-mode send sits in the prompt row with items-end. Pin it to stop
    and send's 28px box and 8px corners so the placeholder does not hang low in the surface. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action] {
-  height: 28px;
-  border-radius: 8px;
-  font-size: 12px;
+  height: calc(var(--spacing) * 7);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
   font-weight: 500;
-  line-height: 16px;
+  line-height: calc(var(--spacing) * 4);
 }
 
 /* The composer's question-mode send is an icon arrow: a 28px square like stop and send. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input-action="advance"] {
-  width: 28px;
+  width: calc(var(--spacing) * 7);
   padding: 0;
 }
 
@@ -2466,8 +2550,8 @@
   [data-fork-composer-notice="true"] {
   --composer-banner-icon-column: 16px;
   /* Chat stream size, like the transcript and the other banner cards. */
-  font-size: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
-  line-height: 1.375;
+  font-size: var(--fork-chat-text-base);
+  line-height: var(--leading-snug);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2477,7 +2561,8 @@
   )
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"] {
-  padding: 12px 8px 12px 16px;
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 2) calc(var(--spacing) * 3)
+    calc(var(--spacing) * 4);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2488,7 +2573,7 @@
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-composer-banner-row] {
-  column-gap: 6px;
+  column-gap: calc(var(--spacing) * 1.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2501,8 +2586,8 @@
   [data-slot="composer-banner-icon"]
   > svg {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* Notices stack title over description. Title is Regular at the source
@@ -2520,8 +2605,8 @@
   flex-direction: column;
   align-items: flex-start;
   align-self: start;
-  gap: 4px;
-  line-height: 16px;
+  gap: calc(var(--spacing) * 1);
+  line-height: calc(var(--spacing) * 4);
   padding-inline: 0;
   white-space: normal;
 }
@@ -2548,7 +2633,7 @@
   :is([data-fork-composer-vessel], [data-fork-composer-banners])
   [data-fork-composer-notice="true"]
   [data-slot="composer-banner-actions"] {
-  gap: 8px;
+  gap: calc(var(--spacing) * 2);
 }
 
 /* Banners as cards (fork-composer-shell). The dock now sits above the composer in
@@ -2562,10 +2647,10 @@
     margin: 0;
   }
   & > [data-slot="composer-banner-attachment"] {
-    margin-bottom: 8px;
+    margin-bottom: calc(var(--spacing) * 2);
   }
   & [data-slot="composer-banner-attachment"] + [data-slot="composer-banner-attachment"] {
-    margin-top: 6px;
+    margin-top: calc(var(--spacing) * 1.5);
   }
   & [data-slot="composer-banner"][data-composer-banner-surface="attached"] {
     --chat-composer-attachment-overlap: 0px;
@@ -2603,9 +2688,7 @@
 
   /* "Select one" reads at 14px (times Chat stream size), a step under the 16px answers. */
   & [data-fork-question-hint] {
-    font-size: calc(
-      0.875rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1)
-    );
+    font-size: var(--fork-chat-text-sm);
   }
 
   /* A picked answer shows as a blue control; the row itself stays plain, with the hover wash. */
@@ -2625,7 +2708,7 @@
   & [data-fork-question-option][aria-checked="true"] [data-fork-question-control] {
     border-color: transparent;
     background: var(--fork-question-accent);
-    color: white;
+    color: var(--fork-white);
   }
 
   /* The queue card follows the iOS one, and the stash is its twin: a 40px header and 40px rows
@@ -2639,9 +2722,9 @@
     border-radius: var(--fork-composer-radius);
 
     & [data-composer-banner-row] {
-      min-height: 40px;
-      padding-inline: 12px 8px;
-      column-gap: 8px;
+      min-height: calc(var(--spacing) * 10);
+      padding-inline: calc(var(--spacing) * 3) calc(var(--spacing) * 2);
+      column-gap: calc(var(--spacing) * 2);
       border-radius: 0;
     }
 
@@ -2660,7 +2743,7 @@
     }
 
     & [data-has-overflow-y] li[data-composer-banner-row] {
-      padding-inline-end: 16px;
+      padding-inline-end: calc(var(--spacing) * 4);
     }
   }
 }
@@ -2691,7 +2774,7 @@
     --accent: color-mix(in srgb, var(--foreground) 7%, transparent);
     /* The menu's rows set text-xs; here it reads at the chat stream size, like the queue's rows. */
     --text-xs: calc(1rem * var(--fork-chat-text-scale, 1) * var(--fork-interface-text-scale, 1));
-    margin-bottom: calc(1rem + 1px + 8px);
+    margin-bottom: calc(var(--spacing) * 6 + 1px);
     overflow: clip;
     pointer-events: auto;
     border-radius: var(--fork-composer-radius);
@@ -2704,14 +2787,16 @@
     mask-image: none;
   }
 
+  /* design-lint-disable-next-line C1 -- upstream's composer command menu; CommandList reads no padding token */
   & [data-slot="command-list"] {
     padding: 0;
   }
 
+  /* design-lint-disable-next-line C1 -- upstream's composer command menu; CommandItem reads no size or padding tokens, and the square corners must outrank Flat Glass's command-item radius */
   & [data-slot="command-item"][data-composer-item-id] {
-    min-height: 40px;
+    min-height: calc(var(--spacing) * 10);
     padding-block: 0;
-    padding-inline: 12px;
+    padding-inline: calc(var(--spacing) * 3);
     border-radius: 0;
   }
 
@@ -2766,10 +2851,10 @@
   height: var(--fork-notice-action-height);
   min-height: var(--fork-notice-action-height);
   border-radius: var(--fork-notice-action-radius);
-  padding-inline: 12px;
-  font-size: 13px;
+  padding-inline: calc(var(--spacing) * 3);
+  font-size: var(--fork-text-chip);
   font-weight: 500;
-  line-height: 16px;
+  line-height: calc(var(--spacing) * 4);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2778,11 +2863,11 @@
     [data-fork-theme="inlet"]
   )
   [data-fork-composer-notice-action="dismiss"] {
-  width: 24px;
-  height: 24px;
-  min-height: 24px;
+  width: calc(var(--spacing) * 6);
+  height: calc(var(--spacing) * 6);
+  min-height: calc(var(--spacing) * 6);
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 :root[data-fork="noahhendrickson-t3code"]:is(
@@ -2792,8 +2877,8 @@
   )
   [data-fork-composer-notice-action="dismiss"]
   svg {
-  width: 16px;
-  height: 16px;
+  width: calc(var(--spacing) * 4);
+  height: calc(var(--spacing) * 4);
 }
 
 /* ── Popup frost (fork-popup-surface) ────────────────────────────────────────
@@ -2889,6 +2974,7 @@
    whose phone sheet stays square. A footer is set off by its line, not a band,
    and the scrim dims without blurring the app. */
 :root[data-fork="noahhendrickson-t3code"]:is([data-fork-theme="basic"], [data-fork-theme="inlet"]) {
+  /* design-lint-disable-next-line C1 -- dialog-styles.ts inlines rounded-2xl, so there is no radius token for the command dialog to read */
   & [data-slot="command-dialog-popup"].dialog-glass {
     border-radius: var(--fork-dialog-radius);
   }
@@ -3008,7 +3094,7 @@
   position: absolute;
   inset-inline: 0;
   top: -2px;
-  height: 2px;
+  height: calc(var(--spacing) * 0.5);
   background: var(--ring);
   pointer-events: none;
   z-index: 2;
@@ -3029,7 +3115,7 @@
   position: absolute;
   inset-inline: 0;
   bottom: -2px;
-  height: 2px;
+  height: calc(var(--spacing) * 0.5);
   background: var(--ring);
   pointer-events: none;
   z-index: 2;
@@ -3057,16 +3143,15 @@
    sidebar's row hover cards keep their own type. */
 :root[data-fork="noahhendrickson-t3code"]:not([data-fork-theme="inlet"])
   [data-slot="tooltip-popup"]:not([data-fork-row-hover-card]):not(.font-mono) {
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 20px;
+  --fork-tooltip-radius: var(--radius-lg);
+  --fork-tooltip-font-size: var(--text-sm);
+  --fork-tooltip-line-height: calc(var(--spacing) * 5);
+  --fork-tooltip-padding-block: var(--spacing);
+  --fork-tooltip-padding-inline: calc(var(--spacing) * 2.5);
 
+  /* design-lint-disable-next-line C1 -- the primitive's rim keeps upstream's radius (fork-design-primitives), so it is drawn to the corner here */
   &::before {
-    border-radius: 7px;
-  }
-
-  & [data-slot="tooltip-viewport"] {
-    padding: 4px 10px;
+    border-radius: calc(var(--fork-tooltip-radius) - 1px);
   }
 }
 
@@ -3075,39 +3160,34 @@
    glass tooltip shares. A step larger than the default tooltip (12px / 8×4)
    so "Dictate" does not read as a status crumb. */
 :root[data-fork="noahhendrickson-t3code"] [data-slot="tooltip-popup"][data-fork-glass-tooltip] {
-  font-size: 13px;
-  line-height: 18px;
-  border-radius: 8px;
-}
-
-:root[data-fork="noahhendrickson-t3code"]
-  [data-slot="tooltip-popup"][data-fork-glass-tooltip]
-  [data-slot="tooltip-viewport"] {
-  padding-block: 6px;
-  padding-inline: 10px;
+  --fork-tooltip-radius: var(--radius-lg);
+  --fork-tooltip-font-size: var(--fork-text-chip);
+  --fork-tooltip-line-height: calc(var(--spacing) * 4.5);
+  --fork-tooltip-padding-block: calc(var(--spacing) * 1.5);
+  --fork-tooltip-padding-inline: calc(var(--spacing) * 2.5);
 }
 
 /* ── Dictation session (fork-local-dictation) ──────────────────────────────
    Named colours, not hexes: the capsule's white is its own in every mode, not
    a dark surface leaking into light mode (fork-surface-palette's guard). */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-live] {
-  color: rgb(0 0 0 / 0.85);
+  color: var(--fork-black-85);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-dictation-fill] {
   container-type: inline-size;
 
   & > * {
-    background: white;
+    background: var(--fork-white);
   }
 
   & > :is([data-fork-dictation-fill-start], [data-fork-dictation-fill-end]) {
-    border-radius: 9999px;
+    border-radius: calc(infinity * 1px);
   }
 }
 
 :root[data-fork="noahhendrickson-t3code"]:not(.dark) [data-fork-dictation-fill] {
-  filter: drop-shadow(0 0 0.5px rgb(0 0 0 / 0.35));
+  filter: drop-shadow(0 0 0.5px var(--fork-black-35));
 }
 
 /* Transforms only, so the grow stays smooth while the session spins up and the
@@ -3211,8 +3291,9 @@
     [data-slot="select-item"],
     [data-slot="combobox-item"]
   ):is([data-highlighted], [data-popup-open], :hover),
+:root[data-fork="noahhendrickson-t3code"].dark [data-slot="list-item"]:is(:hover, :focus-visible),
 /* A model row stays lit while the menu its control opened is open, the pointer inside that menu
-   (fork-model-picker); dark palettes light rows with this wash instead of --accent. */
+   (fork-model-picker); dark palettes light rows with this wash over the row's own --accent. */
 :root[data-fork="noahhendrickson-t3code"].dark
   [data-slot="menu-item"]:has(> * > [data-model-row-control] > [data-open]) {
   background: color-mix(in oklab, var(--foreground) 8%, transparent);
@@ -3288,7 +3369,8 @@
    menu keeps upstream's radius. */
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-  border-radius: 8px;
+  /* Fixed, not --radius-lg: an imported theme's --radius must not reshape it. */
+  --fork-menu-radius: 0.5rem;
 }
 
 /* ── Changed-files card in the chat column ───────────────────────────────────
@@ -3305,7 +3387,7 @@
    raised well (theme.custom.basic.css). */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
-  --fork-card-radius: 12px;
+  --fork-card-radius: var(--radius-xl);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--fork-card-radius);
@@ -3354,7 +3436,11 @@
    a white share, and the glass vibrancy wash (theme.custom.palettes.css) still
    outranks this rule. The send button's message-action tokens are untouched. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]) .bg-message {
-  background-color: color-mix(in srgb, #ffffff var(--fork-message-bubble-lift, 0%), var(--card));
+  background-color: color-mix(
+    in srgb,
+    var(--fork-white) var(--fork-message-bubble-lift, 0%),
+    var(--card)
+  );
 }
 
 /* Flat Glass and dark Basic lift the sent bubble 3% white off the card (fork-message-bubble-shape). */
@@ -3463,7 +3549,7 @@
   position: fixed;
   top: 0;
   left: -10000px;
-  padding: 12px;
+  padding: calc(var(--spacing) * 3);
   pointer-events: none;
 }
 
@@ -3471,8 +3557,8 @@
   background-color: var(--sidebar-row-active);
   color: var(--sidebar-foreground);
   box-shadow:
-    0 10px 24px -6px rgb(0 0 0 / 0.35),
-    0 2px 6px rgb(0 0 0 / 0.18);
+    0 10px 24px -6px var(--fork-black-35),
+    0 2px 6px var(--fork-black-18);
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-split-dragging] {
@@ -3550,7 +3636,7 @@
   [data-slot="composer-banner-content"]:has([data-fork-approval-notice]) {
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: calc(var(--spacing) * 1.5);
   white-space: normal;
 }
 
@@ -3559,13 +3645,14 @@
   height: var(--fork-notice-action-height);
   min-height: var(--fork-notice-action-height);
   border-radius: var(--fork-notice-action-radius);
-  padding-inline: 12px;
-  font-size: 13px;
+  padding-inline: calc(var(--spacing) * 3);
+  font-size: var(--fork-text-chip);
   font-weight: 500;
-  line-height: 16px;
+  line-height: calc(var(--spacing) * 4);
 }
 
 /* More is the row's menu trigger: a 32px square. Matched by its slot, not its (translated) label. */
+/* design-lint-disable-next-line C1 -- the approval row's More trigger is a square at the notice action size; Button has no size for it */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-approval-actions] [data-slot="menu-trigger"] {
   width: var(--fork-notice-action-height);
   height: var(--fork-notice-action-height);
@@ -3608,14 +3695,12 @@
   .chat-markdown
   .chat-markdown-file-link:not([data-state="invalid"]) {
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--fork-inline-code-radius);
   background: var(--fork-inline-code-wash);
-  padding: 0 6px;
+  padding: 0 calc(var(--spacing) * 1.5);
   color: var(--info-foreground);
-  font-size: 0.95em;
-  /* Geist Mono's ascent + descent, which sizes inline code's background, so a file link
-     (one line box tall) matches it under any interface font. */
-  line-height: 1.3;
+  font-size: var(--fork-inline-code-size);
+  line-height: var(--fork-inline-code-leading);
 }
 
 /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs
@@ -3848,8 +3933,9 @@
    inside an even 8px inset (the popup's 4px plus the section's 4px). */
 :root[data-fork="noahhendrickson-t3code"]
   [data-slot="menu-popup"]:has(:is([data-composer-permissions], [data-fork-option-menu])) {
-  border-radius: 18px;
+  --fork-menu-radius: 1.125rem;
 
+  /* design-lint-disable-next-line C1 -- the menu's own layers take its corner; they add no geometry */
   &::before,
   &::after {
     border-radius: inherit;
@@ -3864,15 +3950,15 @@
   &
     :is([data-composer-permissions], [data-fork-option-menu])
     :is([data-slot="menu-radio-item"], [data-slot="menu-checkbox-item"]) {
-    border-radius: 10px;
+    --fork-menu-row-radius: 0.625rem;
   }
 
   /* The label is ruled off edge to edge: it bleeds through both 4px insets and pads its
      text back in line with the option names. */
   & :is([data-composer-permissions-label], [data-fork-option-menu-label]) {
-    margin-inline: -8px;
-    margin-bottom: 4px;
-    padding: 0 16px 8px;
+    margin-inline: calc(var(--spacing) * -2);
+    margin-bottom: calc(var(--spacing) * 1);
+    padding: 0 calc(var(--spacing) * 4) calc(var(--spacing) * 2);
     border-bottom: 1px solid var(--border);
   }
 }

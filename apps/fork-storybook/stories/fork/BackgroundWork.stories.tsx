@@ -10,6 +10,7 @@ import {
   ComposerBackgroundWorkChip,
   type ComposerBackgroundWorkViewProps,
 } from "~/custom/ComposerBackgroundWork";
+import { BackgroundWorkLayersMark } from "~/custom/BackgroundWorkLayersMark";
 import type { ForkSubagentTreeRow } from "~/custom/forkSubagentTree";
 
 import { Stack } from "../Specimen.tsx";
@@ -96,5 +97,23 @@ export const States: Story = {
       <Composer {...MONITORING} stopping />
       <Composer {...MONITORING} canStop={false} />
     </Stack>
+  ),
+};
+
+/** The chip's mark: the Layers outline with a fill that travels front, middle, back. Reduced
+    motion keeps the outline alone. */
+export const LayersMark: Story = {
+  name: "Layers mark",
+  parameters: { surface: "stage", controls: { disable: true } },
+  render: () => (
+    <span data-fork-composer-status-chip="background-work" className="flex text-foreground">
+      <span
+        data-fork-liveness-mark
+        aria-hidden
+        className="flex size-3.5 items-center justify-center"
+      >
+        <BackgroundWorkLayersMark />
+      </span>
+    </span>
   ),
 };

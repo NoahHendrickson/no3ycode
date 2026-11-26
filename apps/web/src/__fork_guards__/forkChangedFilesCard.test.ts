@@ -43,7 +43,7 @@ describe("fork guard: fork-changed-files-card", () => {
     expect(card?.body).toMatch(/background:\s*var\(--card\)/u);
     expect(card?.body).toMatch(/border-radius:\s*var\(--fork-card-radius\)/u);
     // A subagent card's corners and border.
-    expect(card?.body).toMatch(/--fork-card-radius:\s*12px/u);
+    expect(card?.body).toMatch(/--fork-card-radius:\s*var\(--radius-xl\)/u);
     expect(card?.body).toMatch(/border:\s*1px solid var\(--border\)/u);
   });
 
@@ -95,7 +95,7 @@ describe("fork guard: fork-changed-files-card", () => {
     );
     // fork-message-bubble-shape lifts it off that rung by a per-theme white share.
     expect(bubble?.body).toMatch(
-      /background-color:\s*color-mix\(\s*in srgb,\s*#ffffff var\(--fork-message-bubble-lift, 0%\),\s*var\(--card\)\s*\)/u,
+      /background-color:\s*color-mix\(\s*in srgb,\s*var\(--fork-white\) var\(--fork-message-bubble-lift, 0%\),\s*var\(--card\)\s*\)/u,
     );
     expect(theme).not.toMatch(/--message-surface:/u);
     expect(readSibling("../components/chat/TimelineUserMessageRow.tsx")).toContain("bg-message ");

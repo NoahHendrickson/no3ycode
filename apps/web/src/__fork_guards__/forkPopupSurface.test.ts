@@ -165,7 +165,7 @@ describe("fork guard: fork-popup-surface", () => {
     expect(flat(glassPopup?.body ?? "")).toContain(
       "background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg)), var(--fork-glass-stage);",
     );
-    expect(glassPopup?.body).toContain("border-color: rgb(255 255 255 / 8%);");
+    expect(glassPopup?.body).toContain("border-color: var(--fork-white-8);");
     // The hole is cut the frame a popup mounts, so a fade-in would flash the
     // bare material through it: Glass popups open at full strength.
     // Only the popups that get a hole: toasts wear dropdown-glass too and
@@ -394,7 +394,7 @@ describe("fork guard: fork-popup-surface", () => {
     const selectPopupEnd = select.indexOf("</SelectPrimitive.Popup>", selectPopupStart);
     expect(selectPopupEnd).toBeGreaterThan(selectPopupStart);
     expect(select.slice(selectPopupStart, selectPopupEnd)).toMatch(
-      /<div\s+className=\{cn\(\s*"dropdown-glass/u,
+      /<div\s+className=\{cn\(\s*(?:\/\*[^*]*\*\/\s*)?"dropdown-glass/u,
     );
 
     // Combobox: the glass is the wrapper <span> whose child is the popup —
@@ -403,7 +403,7 @@ describe("fork guard: fork-popup-surface", () => {
       "dropdown-glass",
     );
     expect(combobox).toMatch(
-      /<span\s+className=\{cn\(\s*"dropdown-glass[\s\S]*?>\s*<ComboboxPrimitive\.Popup\b[\s\S]*?data-slot="combobox-popup"/u,
+      /<span\s+className=\{cn\(\s*(?:\/\*[^*]*\*\/\s*)?"dropdown-glass[\s\S]*?>\s*<ComboboxPrimitive\.Popup\b[\s\S]*?data-slot="combobox-popup"/u,
     );
   });
 });

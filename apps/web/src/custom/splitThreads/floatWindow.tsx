@@ -191,7 +191,7 @@ export function useFloatWindow(active: boolean) {
       <div
         key={handle.className}
         aria-hidden
-        className={cn("absolute z-[60]", handle.className)}
+        className={cn("absolute z-60", handle.className)}
         onPointerDown={(event) =>
           beginGesture(event, (start, delta, bounds) =>
             resizeFloatFrame(start, handle.edges, delta, bounds),

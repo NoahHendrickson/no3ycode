@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckIcon, MicIcon, XIcon } from "lucide-react";
+import { CheckIcon, MicIcon, XIcon } from "../icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
@@ -82,7 +82,7 @@ function VoiceLevelMeter(props: { level: number }) {
     <div
       aria-hidden
       data-fork-dictation-meter=""
-      className="flex h-5 shrink-0 items-center gap-[3px]"
+      className="flex h-5 shrink-0 items-center gap-0.75"
     >
       {METER_BAR_IDS.map((id, index) => (
         <span

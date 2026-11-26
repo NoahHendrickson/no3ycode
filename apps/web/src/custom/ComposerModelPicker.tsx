@@ -19,7 +19,7 @@ import {
   getProviderOptionCurrentValue,
   getProviderOptionDescriptors,
 } from "@t3tools/shared/model";
-import { ChevronsUpDownIcon } from "lucide-react";
+import { ChevronsUpDownIcon } from "./icons/lucide-hugeicons";
 import {
   type ComponentProps,
   Fragment,
@@ -81,7 +81,7 @@ function TraitIcon(props: { id: string; className: string }) {
 
 /** A value on a model row, laid out the same on the selected row and in previews. */
 const EFFORT_VALUE_CLASS =
-  "flex h-6 shrink-0 cursor-pointer items-center gap-0.5 rounded-[4px] px-1 text-base outline-none hover:bg-foreground/10";
+  "flex h-6 shrink-0 cursor-pointer items-center gap-0.5 rounded-sm px-1 text-base outline-none hover:bg-foreground/10";
 /** Rules a section off edge to edge, through the popup's and the menu's 4px insets. */
 const SECTION_RULE_CLASS = "-mx-2 my-1";
 
@@ -173,7 +173,7 @@ function SelectSection(props: {
         {props.title}
       </div>
       {props.note}
-      {/* A 1px gap, so a hovered value never touches the checked one. */}
+      {/* oxlint-disable-next-line shadcn/no-restyle -- a 1px gap, so a hovered value never touches the checked one; the group draws nothing else */}
       <MenuRadioGroup className="grid gap-px" aria-label={props.title} value={props.value ?? null}>
         {props.descriptor.options.map((option) => (
           <MenuRadioItem

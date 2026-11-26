@@ -233,7 +233,7 @@ describe("fork guard: fork-composer-shell", () => {
       rule.selector.includes('[data-chat-composer-mobile-collapsed="true"]'),
     );
     expect(collapsed?.selector).toContain("[data-fork-composer-surface]");
-    expect(collapsed?.body).toMatch(/border-radius:\s*12px/u);
+    expect(collapsed?.body).toMatch(/border-radius:\s*var\(--radius-xl\)/u);
   });
 
   it("centers the draft composer and docks it once the thread starts", () => {
@@ -391,7 +391,7 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes('[data-testid="composer-editor"]') &&
         rule.body.includes("font-size"),
     );
-    expect(promptType?.body).toMatch(/font-size:\s*var\(--font-size-prompt, 1rem\)/u);
+    expect(promptType?.body).toMatch(/font-size:\s*var\(--font-size-prompt, var\(--text-base\)\)/u);
     expect(promptType?.body).toMatch(/line-height:\s*var\(--fork-composer-prompt-line\)/u);
     expect(theme).toMatch(
       /--fork-composer-prompt-line:\s*calc\(var\(--font-size-prompt, 1rem\) \* 1\.5\)/u,
@@ -412,14 +412,14 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(geometry?.selector).not.toContain("data-fork-composer-status");
     expect(geometry?.selector).not.toContain("data-fork-composer-action");
-    expect(geometry?.body).toMatch(/border-radius:\s*6px/u);
+    expect(geometry?.body).toMatch(/border-radius:\s*var\(--radius-md\)/u);
     expect(geometry?.body).toMatch(/font-size:\s*var\(--fork-composer-chip-text\)/u);
     // A pixel under the Interface font size, so the row follows the setting.
     expect(theme).toContain("--fork-composer-chip-text: calc(var(--text-base) - 1px);");
     expect(theme).toContain(
       "--fork-composer-control-height: calc(var(--fork-composer-chip-text) + 12px);",
     );
-    expect(geometry?.body).toMatch(/padding-inline:\s*8px/u);
+    expect(geometry?.body).toMatch(/padding-inline:\s*calc\(var\(--spacing\) \* 2\)/u);
   });
 
   it("paints the outer vessel that floors the control row", () => {
@@ -516,10 +516,10 @@ describe("fork guard: fork-composer-shell", () => {
     const context = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
-        rule.body.includes("height: calc(var(--fork-composer-chip-text) + 10px)"),
+        rule.body.includes("height: calc(var(--fork-composer-chip-text) + var(--spacing) * 2.5)"),
     );
-    expect(context?.body).toMatch(/border-radius:\s*6px/u);
-    expect(context?.body).toMatch(/padding-inline:\s*8px/u);
+    expect(context?.body).toMatch(/border-radius:\s*var\(--radius-md\)/u);
+    expect(context?.body).toMatch(/padding-inline:\s*calc\(var\(--spacing\) \* 2\)/u);
     const chipPad = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
@@ -527,7 +527,7 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes('[data-slot="combobox-trigger"]') &&
         rule.selector.includes("[data-fork-context-chip]"),
     );
-    expect(chipPad?.body).toMatch(/padding-inline:\s*8px/u);
+    expect(chipPad?.body).toMatch(/padding-inline:\s*calc\(var\(--spacing\) \* 2\)/u);
     const triggerBefore = rules.find(
       (rule) =>
         rule.selector.includes("[data-fork-composer-context-row]") &&
@@ -540,8 +540,9 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-context-chip]") &&
         rule.body.includes("color:"),
     );
-    expect(chipInk?.body).toMatch(/color:\s*#ffffff/u);
+    expect(chipInk?.body).toMatch(/color:\s*var\(--fork-context-chip-ink, var\(--foreground\)\)/u);
     expect(chipInk?.selector).toContain(".dark");
+    expect(theme).toMatch(/\.dark \{\s*--fork-context-chip-ink:\s*var\(--fork-white\);/u);
     expect(readSibling("../components/BranchToolbarEnvironmentSelector.tsx")).toContain(
       "data-fork-context-chip",
     );
@@ -642,7 +643,7 @@ describe("fork guard: fork-composer-shell", () => {
     );
     expect(action?.body).toMatch(/height:\s*var\(--fork-composer-action-slot\)/u);
     expect(theme).toMatch(/--fork-composer-action-slot:\s*32px/u);
-    expect(action?.body).toMatch(/border-radius:\s*8px/u);
+    expect(action?.body).toMatch(/border-radius:\s*var\(--radius-lg\)/u);
     // Stop is a ghost icon button: no fill, no shadow, the control row's ink.
     const stop = rules.find((rule) =>
       rule.selector.endsWith('] [data-fork-composer-action="stop"]'),
@@ -682,7 +683,7 @@ describe("fork guard: fork-composer-shell", () => {
         rule.body.includes("padding-block:"),
     );
     expect(promptLift?.body, "one line centres on the 32px buttons").toMatch(
-      /--fork-composer-prompt-pad-block:\s*calc\(\s*\(var\(--fork-composer-action-slot\) - var\(--fork-composer-prompt-line\)\) \/ 2 \+ 4px\s*\)/u,
+      /--fork-composer-prompt-pad-block:\s*calc\(\s*\(var\(--fork-composer-action-slot\) - var\(--fork-composer-prompt-line\)\) \/ 2 \+ var\(--spacing\)\s*\)/u,
     );
     expect(theme).not.toMatch(/:not\(\[data-draft-hero\]\)\s*\[data-fork-composer-prompt\]/u);
     expect(chatComposer).not.toMatch(
@@ -759,7 +760,7 @@ describe("fork guard: fork-composer-shell", () => {
     expect(strip?.body).toMatch(/padding:\s*0/u);
     expect(strip?.body).toMatch(/width:\s*auto/u);
     expect(strip?.body).toMatch(/max-width:\s*none/u);
-    expect(strip?.body).toMatch(/gap:\s*8px/u);
+    expect(strip?.body).toMatch(/gap:\s*calc\(var\(--spacing\) \* 2\)/u);
     // Flattening the wrapper must not let the strip shrink-to-fit: upstream's
     // label-collapse heuristic measures the strip's own clientWidth as the
     // space available, so a content-sized strip reads as full once the labels
@@ -775,7 +776,7 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes('[data-slot="composer-context-strip"]') &&
         (rule.selector.includes(">.flex") || rule.selector.includes("> .flex")),
     );
-    expect(nested?.body).toMatch(/gap:\s*8px/u);
+    expect(nested?.body).toMatch(/gap:\s*calc\(var\(--spacing\) \* 2\)/u);
     expect(nested?.body).toMatch(/flex:\s*0 1 auto/u);
     expect(nested?.body).toMatch(/justify-content:\s*flex-start/u);
     expect(nested?.body).toMatch(/margin-inline-start:\s*0/u);

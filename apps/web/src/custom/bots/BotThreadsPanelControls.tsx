@@ -4,7 +4,7 @@
  * buttons as the sidebar Threads header's sort and settings menus do (data-fork-tab-trigger /
  * data-fork-tab-menu="bot-threads", `.fork/customizations.yaml#fork-inlet-theme`).
  */
-import { ArrowUpDownIcon, ListFilterIcon, SearchIcon } from "lucide-react";
+import { ArrowUpDownIcon, ListFilterIcon, SearchIcon } from "../icons/lucide-hugeicons";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -14,12 +14,12 @@ import {
   MenuItem,
   MenuPopup,
   MenuRadioGroup,
-  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
 } from "~/components/ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
+import { SidebarChromeRadioItem } from "../SidebarChromeButton";
 import { ScopeCheckboxItem } from "../SidebarV2ChromeRows";
 import { BOT_WORK_GROUPS, BOT_WORK_SORT_LABELS, BOT_WORK_SORTS, type BotWorkSort } from "./botWork";
 import {
@@ -175,14 +175,14 @@ export function BotThreadsPanelControls(props: {
             onValueChange={(value) => setBotThreadsSort(value as BotWorkSort)}
           >
             {BOT_WORK_SORTS.map((option) => (
-              <MenuRadioItem
+              <SidebarChromeRadioItem
                 key={option}
                 value={option}
                 closeOnClick
-                className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                className="h-8 min-h-8"
               >
                 {BOT_WORK_SORT_LABELS[option]}
-              </MenuRadioItem>
+              </SidebarChromeRadioItem>
             ))}
           </MenuRadioGroup>
         </MenuPopup>

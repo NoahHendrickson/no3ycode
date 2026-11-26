@@ -71,6 +71,13 @@
   --fork-glass-card-inset: 8px;
   --fork-glass-card-inset-left: var(--fork-glass-card-inset);
   --fork-glass-card-radius: 12px;
+  /* The red stop button's fill at rest, hovered and pressed. */
+  --fork-glass-stop-fill: rgb(234 49 80 / 48%);
+  --fork-glass-stop-fill-hover: rgb(234 49 80 / 56%);
+  --fork-glass-stop-fill-pressed: rgb(234 49 80 / 40%);
+  /* The docked sidebar's edge on desktop glass, and over a light picture. */
+  --fork-glass-sidebar-edge: rgb(64 64 64 / 60%);
+  --fork-glass-sidebar-edge-light: rgb(210 210 210 / 42%);
 }
 
 /* Short of Full 3D (custom/forkGlass3d.ts) there is no card for the
@@ -152,8 +159,16 @@
 }
 
 /* A section header's icon button (Threads / grouping headers: add, sort, settings; Petals: view, new) holds the
-   panel's selected fill while its menu is open, so the menu names the button it came from. */
+   panel's selected fill while its menu is open, so the menu names the button it came from. Basic too. */
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
+  :is(
+    [data-fork-projects-row],
+    [data-fork-bots-row],
+    [data-fork-status-section-header],
+    [data-fork-project-section-header]
+  )
+  button[data-popup-open],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is(
     [data-fork-projects-row],
     [data-fork-bots-row],
@@ -181,12 +196,21 @@
   [data-fork-thread-tabs],
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"]
   [data-fork-thread-started]
+  [data-chat-header],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-tabs],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-thread-started]
   [data-chat-header] {
-  box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line);
+  box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line, var(--border));
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
   --fork-glass-tabs-line: var(--border);
+  --fork-segmented-track: var(--fork-white-8);
+  --fork-segmented-hover: var(--fork-white-4);
+  --fork-segmented-hover-disabled: var(--fork-white-0);
+  --fork-segmented-pick: var(--fork-white-12);
+  --fork-segmented-line: var(--fork-white-8);
 }
 
 /* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
@@ -268,7 +292,7 @@
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
   :is([data-sidebar-version="v2"], [data-app-modal])
   [data-fork-chrome-row] {
-  border-radius: 9999px;
+  border-radius: var(--fork-pill-radius);
 }
 
 /* On Flat Glass, list rows across the sidebar (threads, top chrome rows,
@@ -283,6 +307,10 @@
   --fork-flat-radius: 8px;
   --fork-flat-model-picker-radius: 14px;
   --fork-flat-popup-radius: 12px;
+  --fork-petals-tile-radius: calc(var(--fork-flat-radius) + var(--spacing));
+  /* Popups and rows the rules below leave alone keep upstream's corners. */
+  --fork-menu-radius: var(--radius-lg);
+  --fork-menu-row-radius: var(--radius-sm);
 }
 
 @supports (corner-shape: superellipse(1.6)) {
@@ -313,12 +341,42 @@
       [data-slot="select-item"],
       [data-slot="combobox-item"],
       [data-slot="command-item"],
-      [data-testid="bot-threads-row"]
+      [data-slot="list-item"]
     ),
-  & [data-fork-model-picker="list"] > label,
-  & [data-fork-draft-launchpad-card] button {
-    border-radius: var(--fork-flat-radius);
+  & [data-fork-model-picker="list"] > label {
     corner-shape: superellipse(1.6);
+  }
+
+  /* design-lint-disable-next-line C1 -- Flat Glass rounds every row, ghost items and rows whose call site passes its own corner class included, which the token alone cannot outrank */
+  &
+    :is(
+      [data-slot="menu-item"],
+      [data-slot="menu-checkbox-item"],
+      [data-slot="menu-radio-item"],
+      [data-slot="menu-sub-trigger"],
+      [data-slot="select-item"],
+      [data-slot="combobox-item"],
+      [data-slot="list-item"]
+    ) {
+    --fork-menu-row-radius: var(--fork-flat-radius);
+    border-radius: var(--fork-flat-radius);
+  }
+
+  /* design-lint-disable-next-line C1 -- command-item reads no row-radius token yet (fork-design-primitives covers menu, select, combobox and autocomplete rows) */
+  &
+    :is([data-sidebar-version="v2"], [data-app-modal])
+    :is(
+      [data-fork-thread-row],
+      [data-fork-chrome-row],
+      li[data-fork-split-pair] > ul,
+      [data-testid="sidebar-v2-project-group-collapse"],
+      [data-testid="sidebar-v2-project-group-header"],
+      li[data-fork-status-section-header]
+    ),
+  & [data-fork-thread-tabs] [data-fork-thread-tab],
+  & [data-slot="command-item"],
+  & [data-fork-model-picker="list"] > label {
+    border-radius: var(--fork-flat-radius);
   }
 
   /* A group header's 28px buttons sit 2px inside its row, so their corners nest inside the row's. */
@@ -326,7 +384,7 @@
     :is(li[data-fork-status-section-header], [data-testid="sidebar-v2-project-group-header"])
     [data-fork-section-actions]
     button {
-    border-radius: calc(var(--fork-flat-radius) - 2px);
+    border-radius: calc(var(--fork-flat-radius) - var(--spacing) * 0.5);
     corner-shape: superellipse(1.6);
   }
 
@@ -345,26 +403,43 @@
       .dropdown-glass:has(> [data-slot="combobox-popup"]),
       [data-slot="autocomplete-positioner"] > *
     ) {
+    --fork-menu-radius: var(--fork-flat-popup-radius);
+  }
+
+  /* design-lint-disable-next-line C1 -- the tooltip-style popover draws no corner class to read the token */
+  & [data-slot="popover-popup"].dropdown-glass:not([data-fork-tab-menu]) {
     border-radius: var(--fork-flat-popup-radius);
   }
 
   /* The popover's and autocomplete's top highlight, and a padding="none" viewport, sit inside
      the popup's 1px edge. */
+  /* design-lint-disable-next-line C1 -- the primitives draw these rims at upstream's radius (fork-design-primitives keeps them), so they are drawn to the popup's corner here */
   & [data-slot="popover-popup"].dropdown-glass::before,
   & [data-slot="autocomplete-positioner"] > ::before,
   & [data-slot="popover-popup"].dropdown-glass > [data-slot="popover-viewport"] {
     border-radius: calc(var(--fork-flat-popup-radius) - 1px);
   }
 
-  /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
-  & [data-sidebar-version="v2"] [data-fork-petals-grid] [data-fork-thread-row] {
-    border-radius: calc(var(--fork-flat-radius) + 4px);
+  & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
+    --fork-menu-radius: var(--fork-flat-model-picker-radius);
   }
 
   & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
-    border-radius: var(--fork-flat-model-picker-radius);
     corner-shape: superellipse(1.6);
   }
+}
+
+/* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. Each
+   theme sets the radius; the fallback is Inlet's. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-sidebar-version="v2"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-sidebar-version="v2"]
+  [data-fork-petals-grid]
+  [data-fork-thread-row] {
+  border-radius: var(--fork-petals-tile-radius, 0.875rem);
 }
 
 /* Project chrome — the Projects row, the recent-projects strip, every project
@@ -433,6 +508,11 @@
   --fork-inlet-question-fill: var(--fork-popup-fill);
   /* The peek card's ink and fill on the cream frame. */
   --fork-inlet-frame-ink: #1c1c1a;
+  /* Black 65% over the cream frame, flattened (H6), and the frame's hover wash. */
+  --fork-inlet-frame-muted: #55544c;
+  --fork-inlet-frame-accent: #dfddc5;
+  /* The frame's chrome icons: black at 65%, unflattened. */
+  --fork-inlet-frame-icon: rgb(0 0 0 / 65%);
   --fork-inlet-peek-fill: color-mix(in srgb, var(--app-chrome-background) 55%, #ffffff);
   --background: #141414;
   --foreground: #e8e8e8;
@@ -549,6 +629,28 @@
   /* White 8% over the #141414 sidebar, flattened. */
   --fork-inlet-black-step-hover: #272727;
   --fork-inlet-black-line: #2a2a2a;
+  /* The dark palettes' flat red stop button. */
+  --fork-inlet-stop: #ea3150;
+  /* The new-agent draft's frosted cream vessel and chips. */
+  --fork-inlet-black-frost: rgb(208 204 181 / 55%);
+  /* A notice card's copy, inked for the light vessel: ink, and black 65% over it. */
+  --fork-inlet-black-vessel-ink: #1c1c1a;
+  --fork-inlet-black-vessel-muted: #55544c;
+  /* The composer menus' surface, a step up from the sidebar. */
+  --fork-inlet-black-raised: #262626;
+  /* The cream header menus' hovered and chosen row: black 8% on the cream, flattened. */
+  --fork-inlet-black-cream-step: #e4e0c7;
+  /* An unchecked box: the light ink at 24% over #141414, flattened. */
+  --fork-inlet-black-outline: #474747;
+  /* The model menu's recessed wells (the effort track, the mode segments), the effort
+     fill, a pressed segment, and the focus ring in the well. */
+  --fork-inlet-black-well: #303030;
+  --fork-inlet-black-mode-well: #1f1f1f;
+  --fork-inlet-black-well-fill: #4a4a4a;
+  --fork-inlet-black-pressed: #3a3a3a;
+  --fork-inlet-black-focus: rgb(255 255 255 / 70%);
+  /* The details card's editor marks drawn black-on-light, in their dark-mode fill. */
+  --fork-inlet-black-mark: #edecec;
   /* A row's hover card, and the row while it is open, are the sidebar's own
      hover fill in its light ink rather than the popover's cream. */
   --fork-inlet-row-card: var(--fork-inlet-black-step-hover);
@@ -923,7 +1025,7 @@
    keeps them the same colour for exactly that reason. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-changed-files-state] {
-  background: rgb(255 255 255 / 5%);
+  background: var(--fork-white-5);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
@@ -937,7 +1039,7 @@
    wallpaper. Same 5% wash as the changed-files card; nothing nests in them. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-scheduled-card] {
-  background-color: rgb(255 255 255 / 5%);
+  background-color: var(--fork-white-5);
 }
 
 /* The user's sent bubble shares the card's fill (theme.custom.css paints
@@ -948,7 +1050,7 @@
    so the :where() note below does not apply. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   .bg-message {
-  background-color: rgb(255 255 255 / 5%);
+  background-color: var(--fork-white-5);
 }
 
 /* Every other card in the stage, by class for the reason the `.bg-background`
@@ -996,7 +1098,7 @@
         :is([data-slot="sidebar-inset"], [data-app-modal])
     )
     :is(.bg-card, .bg-card\/40) {
-    background-color: rgb(255 255 255 / 5%);
+    background-color: var(--fork-white-5);
   }
 }
 
@@ -1024,7 +1126,7 @@
       [data-slot$="popup"]
       :is(button, a):not([data-slot="toggle"], .text-destructive-foreground)
   ).dark\:bg-input\/32 {
-    border-color: rgb(255 255 255 / 0%);
+    border-color: var(--fork-white-0);
   }
 
   :where(
@@ -1151,6 +1253,7 @@
    argument whichever one matched, so unwrapped its four selectors weighed
    every menu as much as the details card, and the stage sheet's frosted
    popups could not outrank this rule without !important. */
+/* design-lint-disable-next-line C2 -- over the native material a backdrop-filter never blurs the rows (see above); the popup is a wash over a cut-out hole */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   :is(
     :is(
@@ -1172,8 +1275,8 @@
   background:
     linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg)),
     var(--fork-glass-stage);
-  border-color: rgb(255 255 255 / 8%);
-  box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+  border-color: var(--fork-white-8);
+  box-shadow: 0 2px 16px var(--fork-black-25);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -1192,7 +1295,7 @@
   [data-thread-details-panel="inline"]
   > [data-thread-details-card].dropdown-glass {
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -1207,10 +1310,11 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-fork-split-pane="floating"] {
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
   /* The hole below is drawn with this radius; keep the two together. */
+  /* design-lint-disable-next-line A2 -- the hole is an SVG rx="14" in a mask url, which cannot read a token */
   border-radius: 14px;
-  box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+  box-shadow: 0 2px 16px var(--fork-black-25);
 }
 
 /* floatWindow writes these on every pane behind the window per drag frame, in
@@ -1300,7 +1404,7 @@
   background:
     linear-gradient(var(--fork-context-chip-bg), var(--fork-context-chip-bg)),
     var(--fork-popup-glass-floor);
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
 }
 
 /* The composer's context strip is surface-glass too (upstream #34846), but the
@@ -1317,7 +1421,7 @@
   background:
     linear-gradient(var(--fork-context-chip-bg-hover), var(--fork-context-chip-bg-hover)),
     var(--fork-popup-glass-floor);
-  border-color: rgb(255 255 255 / 12%);
+  border-color: var(--fork-white-12);
 }
 
 /* Once its hole is cut (fork-glass-scroll-pill), the scroll-to-end pill wears
@@ -1326,13 +1430,13 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-scroll-to-end][data-fork-hole-cut].surface-glass {
   background: linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 8%);
+  border-color: var(--fork-white-8);
 }
 
 /* The button's focus ring is a box-shadow too. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-scroll-to-end][data-fork-hole-cut].surface-glass:not(:focus-visible) {
-  box-shadow: 0 2px 16px rgb(0 0 0 / 25%);
+  box-shadow: 0 2px 16px var(--fork-black-25);
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
@@ -1340,7 +1444,7 @@
   background:
     linear-gradient(var(--fork-pill-hover), var(--fork-pill-hover)),
     linear-gradient(var(--fork-composer-vessel-bg), var(--fork-composer-vessel-bg));
-  border-color: rgb(255 255 255 / 12%);
+  border-color: var(--fork-white-12);
 }
 
 /* Glass turns on the cutoff mask's third layer (theme.custom.css). */
@@ -1436,6 +1540,9 @@
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
     --accent: var(--fork-composer-control-hover);
     --contrast-accent-foreground: #fff;
+  }
+
+  & [data-fork-draft-launchpad-card] {
     background: var(--fork-glass-picture-tint);
     border-color: var(--fork-composer-border);
   }
@@ -1446,11 +1553,11 @@
       [data-fork-composer-action="dictate"],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
-    color: #fff;
+    color: var(--fork-white);
   }
 
   & [data-chat-provider-model-picker-traits] {
-    color: rgb(255 255 255 / 70%);
+    color: var(--fork-white-70);
   }
 }
 
@@ -1459,7 +1566,7 @@
   body
   .dropdown-glass[data-fork-glass-over-picture] {
   background: var(--fork-glass-picture-menu-tint);
-  border-color: rgb(255 255 255 / 18%);
+  border-color: var(--fork-white-18);
   -webkit-backdrop-filter: var(--fork-glass-picture-blur);
   backdrop-filter: var(--fork-glass-picture-blur);
 }
@@ -1692,7 +1799,7 @@
    neighbouring column, and it is the panel's only edge. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="true"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
-  border-color: rgb(64 64 64 / 60%);
+  border-color: var(--fork-glass-sidebar-edge);
 }
 
 /* Over a bright new-agent picture on flat/selection Glass, 60% #404040 lands
@@ -1700,7 +1807,7 @@
    vanishes. Lift the seam so the sidebar/stage divider reads clearly. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-glass-picture="off"][data-fork-draft-hero-shown].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
-  border-color: rgb(210 210 210 / 42%);
+  border-color: var(--fork-glass-sidebar-edge-light);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1792,7 +1899,7 @@
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"].dark[data-fork-theme="cool-darker"]
   [data-slot="sidebar-container"][data-sidebar-version="v2"] {
-  border-color: rgb(255 255 255 / 16%);
+  border-color: var(--fork-white-16);
 }
 
 /* Flat Glass's collapsed-sidebar tab row is the window's titlebar: the sidebar glass spans the
@@ -1812,12 +1919,12 @@
   /* Clear over the glass, so the wallpaper's colour comes through; its foot takes the docked
      sidebar's edge over glass. */
   & [data-fork-thread-tabs] {
-    box-shadow: inset 0 -1px 0 rgb(255 255 255 / 16%);
-    --border: rgb(255 255 255 / 12%);
-    --sidebar-row-hover: rgb(255 255 255 / 6%);
-    --sidebar-row-active: rgb(255 255 255 / 10%);
-    --sidebar-row-selected: rgb(255 255 255 / 8%);
-    --accent: rgb(255 255 255 / 10%);
+    box-shadow: inset 0 -1px 0 var(--fork-white-16);
+    --border: var(--fork-white-12);
+    --sidebar-row-hover: var(--fork-white-6);
+    --sidebar-row-active: var(--fork-white-10);
+    --sidebar-row-selected: var(--fork-white-8);
+    --accent: var(--fork-white-10);
   }
 
   /* The floating sidebar toggle sits on the same glass, outside the strip; it hovers with the
@@ -1832,55 +1939,83 @@
    translucent glass strip below. */
 :root[data-fork="noahhendrickson-t3code"]:not(
     [data-fork-glass-3d="off"]
-  ).dark[data-fork-theme="cool-darker"]
-  [data-slot="sidebar-inset"]
-  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
-  --radius-sm: 12px;
-  border-radius: 12px;
+  ).dark[data-fork-theme="cool-darker"] {
+  --fork-page-tabs-radius: var(--radius-xl);
+  /* Full 3D keeps upstream's popup and menu-row corners where its rim rules leave them. */
+  --fork-menu-radius: var(--radius-lg);
+  --fork-menu-row-radius: var(--radius-sm);
 }
 
-/* On Flat Glass, segmented tab strips (Code / Chat, menu tabs, page tabs,
-   segmented ToggleGroup) match Basic's geometry (2px inset, 8px track, 6px
-   tabs) using translucent white washes so Liquid Glass shines through. */
+/* Each theme sets the page tabs' radius; the fallback is Inlet's. The chip's corner is
+   calc(var(--radius-sm) - 2px), so the strip carries it as --radius-sm too. */
+:root[data-fork="noahhendrickson-t3code"]:not(
+    [data-fork-glass-3d="off"]
+  ).dark[data-fork-theme="cool-darker"]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
+  [data-slot="sidebar-inset"]
+  [data-fork-segmented-tabs]:not([data-fork-thread-tabs] *) {
+  --radius-sm: var(--fork-page-tabs-radius, var(--radius-lg));
+  border-radius: var(--fork-page-tabs-radius, var(--radius-lg));
+}
+
+/* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
+   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
+   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
+   regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
+   height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
+   The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
+   Petal strips beside them take this one.
+   Flat Glass draws the same geometry in translucent white washes so Liquid Glass shines through;
+   each theme sets the --fork-segmented-* colours. */
+/* design-lint-disable-next-line C1 -- ToggleGroup's segmented variant shares the tab strip with the fork's SegmentedTabs, which owns the strip's geometry */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]),
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
-  gap: 2px;
-  padding: 2px;
-  border-radius: 8px;
-  background-color: rgb(255 255 255 / 8%);
+  gap: calc(var(--spacing) * 0.5);
+  padding: calc(var(--spacing) * 0.5);
+  border-radius: var(--radius-lg);
+  background-color: var(--fork-segmented-track);
 
   & > * {
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background-clip: border-box;
     box-shadow: none;
-    color: var(--foreground);
-    font-size: calc(0.75rem * var(--fork-interface-text-scale, 1));
+    color: var(--fork-segmented-ink, var(--foreground));
+    font-size: var(--fork-segmented-tab-font-size);
     font-weight: 400;
 
     &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
-      background-color: rgb(255 255 255 / 4%);
+      background-color: var(--fork-segmented-hover);
     }
 
+    /* A disabled tab stays hoverable for its tooltip, so it clears upstream's hover fill too. */
     &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
-      background-color: rgb(255 255 255 / 0%);
+      background-color: var(--fork-segmented-hover-disabled);
     }
 
     &[data-pressed] {
-      border-color: rgb(255 255 255 / 8%);
-      background-color: rgb(255 255 255 / 12%);
+      border-color: var(--fork-segmented-line);
+      background-color: var(--fork-segmented-pick);
     }
 
+    /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
     &:focus-visible {
       outline-offset: calc(-1 * var(--fork-focus-ring-width) - 1px);
     }
   }
 
+  /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
+     that keep their own width; the music strip's equal-width tabs keep their tight sides. */
   & > :not([aria-label], [data-fork-music-strip] *) {
-    padding-inline: 6px;
+    padding-inline: calc(var(--spacing) * 1.5);
   }
 
+  /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
   & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+    box-shadow: inset 0 0 0 1px var(--fork-segmented-line);
   }
 }
 
@@ -1891,10 +2026,17 @@
   [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
   [data-chat-header] {
   background: none;
+}
 
-  & > * {
-    visibility: hidden;
-  }
+:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
+  [data-chat-header]
+  > *,
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
+  [data-chat-header]
+  > * {
+  visibility: hidden;
 }
 
 /* The Flat Glass new-agent stage's glass inner glow (Figma no3y-code 13:3284, "Rays"): a broad
@@ -1910,9 +2052,9 @@
   z-index: 1;
   pointer-events: none;
   box-shadow:
-    inset 0 -4px 24px rgb(255 255 255 / 18%),
-    inset 0 6px 20px rgb(255 255 255 / 7%),
-    inset 0 1px 1px rgb(255 255 255 / 22%);
+    inset 0 -4px 24px var(--fork-white-18),
+    inset 0 6px 20px var(--fork-white-7),
+    inset 0 1px 1px var(--fork-white-22);
   opacity: 0;
   transition: opacity 400ms cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -1956,13 +2098,13 @@
       inset: 0;
       z-index: 2;
       border-radius: inherit;
-      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
+      box-shadow: inset 0 0 0 1px var(--fork-white-16);
       pointer-events: none;
     }
   }
 
   & [data-fork-composer-box] .text-placeholder {
-    color: rgb(255 255 255 / 50%);
+    color: var(--fork-white-50);
   }
 
   &
@@ -1972,7 +2114,7 @@
       [data-chat-provider-model-picker-traits],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
-    color: #ffffff;
+    color: var(--fork-white);
   }
 
   & [data-fork-draft-launchpad-card] {
@@ -1984,8 +2126,11 @@
     --contrast-icon-muted: rgb(255 255 255 / 65%);
     --accent: rgb(255 255 255 / 10%);
     --contrast-accent-foreground: #ffffff;
-    background: rgb(0 0 0 / 16%);
-    border-color: rgb(255 255 255 / 16%);
+  }
+
+  & [data-fork-draft-launchpad-card] {
+    background: var(--fork-black-16);
+    border-color: var(--fork-white-16);
   }
 }
 
@@ -2072,6 +2217,11 @@
   .dropdown-glass[data-fork-draft-glass-popup="true"] {
   --contrast-muted-foreground: rgb(255 255 255 / 72%);
   --contrast-border: rgb(255 255 255 / 14%);
+}
+
+:root[data-fork="noahhendrickson-t3code"][data-fork-sidebar-vibrancy="liquid-glass"][data-fork-draft-liquid-glass="true"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+  body
+  .dropdown-glass[data-fork-draft-glass-popup="true"] {
   /* The page is cut away beneath it (forkGlassPopupCutout.ts), so the native card is the menu. */
   background: transparent;
   border-color: transparent;

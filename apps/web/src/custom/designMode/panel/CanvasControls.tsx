@@ -29,7 +29,7 @@ export function CanvasControls({
   useCanvasViewportHandoff({ runtimeTabId, threadRef, tabId, canvasOn: canvas.on });
 
   const zoomButton =
-    "flex size-6 items-center justify-center rounded bg-[var(--fork-design-field)] text-muted-foreground transition-colors hover:text-foreground [&_svg]:size-3.5";
+    "flex size-6 items-center justify-center rounded bg-(--fork-design-field) text-muted-foreground transition-colors hover:text-foreground [&_svg]:size-3.5";
 
   return (
     <div className="flex h-9 shrink-0 items-center justify-between border-b border-border px-4">
@@ -41,8 +41,8 @@ export function CanvasControls({
         className={cn(
           "flex h-6 items-center gap-1.5 rounded px-1.5 text-xs transition-colors [&_svg]:size-4",
           canvas.on
-            ? "bg-[var(--fork-design-accent-bg)] text-[var(--fork-design-accent)]"
-            : "bg-[var(--fork-design-field)] text-muted-foreground hover:text-foreground",
+            ? "bg-(--fork-design-accent-bg) text-(--fork-design-accent)"
+            : "bg-(--fork-design-field) text-muted-foreground hover:text-foreground",
         )}
       >
         <CanvasIcon />
@@ -67,7 +67,7 @@ export function CanvasControls({
           <button
             type="button"
             title="Reset to 100%"
-            className="h-6 min-w-10 rounded bg-[var(--fork-design-field)] px-1 text-center font-mono text-[11px] text-foreground"
+            className="h-6 min-w-10 rounded bg-(--fork-design-field) px-1 text-center font-mono text-(length:--text-2xs) text-foreground"
             onClick={() => designModeBridge.canvasCommand(runtimeTabId, "zoom-100")}
           >
             {canvas.scalePercent}%

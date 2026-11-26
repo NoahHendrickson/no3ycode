@@ -3,7 +3,7 @@
  * docks. Dock to right pins a thread as the column's right pane, pressed while it is docked
  * there. The split toggle sits just before details; an unsent split draft gets a closing X. */
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { PictureInPicture2, SquareSplitHorizontal, XIcon } from "lucide-react";
+import { PictureInPicture2, SquareSplitHorizontal, XIcon } from "../icons/lucide-hugeicons";
 import type { ReactNode } from "react";
 
 import { Button } from "~/components/ui/button";

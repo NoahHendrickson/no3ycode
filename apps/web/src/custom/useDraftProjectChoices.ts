@@ -14,6 +14,7 @@ import {
 import type { ScopedProjectRef } from "@t3tools/contracts";
 
 import { openCommandPalette } from "~/commandPaletteBus";
+import type { ProjectFaviconProject } from "~/components/ProjectFavicon";
 import {
   orderItemsByPreferredIds,
   rankRecentProjectEntries,
@@ -250,8 +251,17 @@ export function useDraftProjectChoices(props: {
 
 export type DraftProjectChoices = ReturnType<typeof useDraftProjectChoices>;
 
-/** What the shared menu reads: the rows, the checked value and the dispatcher. */
+/** What the shared menu reads: the rows (each project's key, name and favicon), the checked value
+    and the dispatcher. */
 export type DraftProjectMenuChoices = Pick<
   DraftProjectChoices,
-  "entries" | "value" | "pick" | "noProjectEnvironmentId"
->;
+  "value" | "pick" | "noProjectEnvironmentId"
+> & {
+  readonly entries: ReadonlyArray<{
+    readonly group: Pick<
+      DraftProjectChoices["entries"][number]["group"],
+      "projectKey" | "displayName"
+    >;
+    readonly targetProject: ProjectFaviconProject;
+  }>;
+};

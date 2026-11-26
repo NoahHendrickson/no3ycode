@@ -3041,6 +3041,7 @@
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/custom/SidebarChromeButton.tsx
     - apps/web/src/custom/sidebarV2ProjectSort.ts
     - apps/web/src/custom/useScrollGutterWidth.ts
     - apps/web/src/custom/SidebarStageDitherArt.tsx
@@ -9641,6 +9642,101 @@
     - apps/mobile/src/features/pull-requests/PullRequestListRow.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
+
+- id: fork-design-primitives
+  intent: >
+    What components/ui carries so fork UI can take its look from the
+    primitives instead of restyling them (.fork/DESIGN-RULES.md B1, C1). Theme
+    CSS sets primitive geometry through tokens the primitives read: popups
+    (menu, submenu, popover, select, combobox, autocomplete, preview card)
+    round from --fork-menu-radius (their 1px rims keep upstream's radius);
+    menu, select, combobox and autocomplete rows from --fork-menu-row-radius;
+    tooltips take --fork-tooltip-radius, -font-size, -line-height and
+    -padding-inline / -block. Every read falls back to upstream's own class
+    value, so a theme that sets none draws what upstream draws. menu.tsx
+    exports MenuItem's row (menuRowClassName) and its tones (menuRowToneClassName,
+    "muted"), and custom/ListItem, a row for lists that stay on screen (the new
+    agent launchpad, the music strip, the Petal threads panel), is built from
+    the same string, so the two cannot drift. Variants several fork features pick: Button "ghost-tint" (the
+    sidebar's icon buttons), RadioGroup density "compact", TableRow
+    interactive={false}, TableCell tone and truncate. Every default is
+    upstream's look, unchanged. A look only one feature draws lives in that
+    feature's component, not here.
+  tier: 4
+  files:
+    - apps/web/src/custom/ListItem.tsx
+    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
+    - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/ui/autocomplete.tsx
+    - apps/web/src/components/ui/button.tsx
+    - apps/web/src/components/ui/combobox.tsx
+    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/popover.tsx
+    - apps/web/src/components/ui/preview-card.tsx
+    - apps/web/src/components/ui/radio-group.tsx
+    - apps/web/src/components/ui/select.tsx
+    - apps/web/src/components/ui/table.tsx
+    - apps/web/src/components/ui/tooltip.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
+    - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts
+    - apps/web/src/__fork_guards__/forkModelPicker.test.ts
+    - apps/web/src/__fork_guards__/forkTouchAffordances.test.ts
+
+- id: fork-design-lint
+  intent: >
+    Fork UI takes its values from tokens and its controls from components/ui,
+    per the rules in .fork/DESIGN-RULES.md (A1-A5 values, B1-B5 components,
+    C1-C6 theme CSS). design-lint.mjs --check (a CI step) checks the CSS and
+    the cross-file rules (stories, the per-theme token contract, dead
+    [data-fork-*] selectors). The TSX rules are oxlint overrides that
+    vite.config.ts always applies: the shadcn rules re-enabled for custom/ and
+    overrides/, plus the fork's three oxlint rules (no-hand-built-primitives,
+    no-hand-built-status-marks, no-direct-icon-imports). Flat Glass, Basic
+    Darker Neutral, Basic Light, Inlet Black and Inlet Cream are enforced;
+    Glass 3D is best effort. No ratchet: a rule passes or fails. Sheets are
+    read by design-lint/css.mjs, which the guards' cssRules.ts reads through
+    too, so the two never disagree about a sheet.
+    DESIGN_LINT_PENDING (and B5's pending: groups) lists the files that wait
+    on a design call, each to be fixed and removed.
+  tier: 4
+  files:
+    - .fork/DESIGN-RULES.md
+    - .fork/design-lint.mjs
+    - .fork/design-lint/css.mjs
+    - .fork/design-lint/css.d.mts
+    - .fork/design-lint/sources.mjs
+    - .fork/design-lint/suppressions.mjs
+    - .fork/design-lint/themes.mjs
+    - .fork/design-lint/rules/attributes.mjs
+    - .fork/design-lint/rules/contract.mjs
+    - .fork/design-lint/rules/primitives.mjs
+    - .fork/design-lint/rules/restated.mjs
+    - .fork/design-lint/rules/stories.mjs
+    - .fork/design-lint/rules/values.mjs
+    - .fork/design-rules.mjs
+    - .fork/design-rules.d.mts
+    - oxlint-plugin-t3code/rules/no-direct-icon-imports.ts
+    - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-primitives.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-status-marks.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
+  shadows: []
+  watch:
+    # Registers the three rules in the t3code plugin.
+    - oxlint-plugin-t3code/index.ts
+    # Appends the design overrides to lint.overrides.
+    - vite.config.ts
+    # Carries the step that runs the check.
+    - .github/workflows/ci.yml
+  verify:
+    - apps/web/src/__fork_guards__/forkDesignLint.test.ts
+    - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
+    - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
 
 - id: no3y-mobile-queue-default
   intent: >

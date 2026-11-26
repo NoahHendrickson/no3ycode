@@ -1,6 +1,6 @@
 /** A stage panel's close button, at the right end of its own header — see
     `.fork/customizations.yaml#fork-stage-columns`. The size of the header's toggles. */
-import { XIcon } from "lucide-react";
+import { XIcon } from "../icons/lucide-hugeicons";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

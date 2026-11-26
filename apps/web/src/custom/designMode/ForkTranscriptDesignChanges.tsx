@@ -1,4 +1,4 @@
-import { PencilRulerIcon } from "lucide-react";
+import { PencilRulerIcon } from "../icons/lucide-hugeicons";
 
 import { ContextChipShell } from "~/components/contextChipParts";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -25,7 +25,7 @@ function TranscriptVerdictLine({ messageId }: { messageId: string }) {
   if (!verdictLine) return null;
   return (
     <span
-      className="select-none self-center text-[10px] text-muted-foreground"
+      className="select-none self-center text-(length:--text-3xs) text-muted-foreground"
       data-fork-design-verdict-line
     >
       {verdictLine}
@@ -78,7 +78,8 @@ export function ForkTranscriptDesignChanges({
                 />
               }
             />
-            <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-[11px]">
+            {/* oxlint-disable-next-line shadcn/no-restyle -- monospace for the request it previews; theme.custom.css keeps .font-mono tooltips at the compact metrics */}
+            <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-2xs">
               {block.slice(0, 600)}
               {block.length > 600 ? "…" : ""}
             </TooltipPopup>

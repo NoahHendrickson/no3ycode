@@ -2,7 +2,7 @@ import {
   FULL_ACCESS_OVERRIDE_QUESTION,
   fullAccessOverrideExplanation,
 } from "@t3tools/client-runtime/state/thread-requests";
-import { ShieldIcon } from "lucide-react";
+import { ShieldIcon } from "./icons/lucide-hugeicons";
 import type { ComponentProps } from "react";
 
 import { ComposerPendingApprovalActions } from "~/components/chat/ComposerPendingApprovalActions";

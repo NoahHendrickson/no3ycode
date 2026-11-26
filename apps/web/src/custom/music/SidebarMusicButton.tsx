@@ -3,7 +3,7 @@
  * it. Renders nothing without the desktop's music bridge (the web and mobile).
  * See .fork/customizations.yaml#fork-music-panel.
  */
-import { MusicIcon } from "lucide-react";
+import { MusicIcon } from "../icons/lucide-hugeicons";
 
 import { SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

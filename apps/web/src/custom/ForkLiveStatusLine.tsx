@@ -2,7 +2,7 @@
  * The one-line live status — see `.fork/customizations.yaml#fork-working-row-last`.
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { useMessages } from "gt-react";
 import { use, useEffect, useState, type ReactNode } from "react";
 import { ActivityShimmerOverlay } from "~/components/chat/TimelineRowParts";

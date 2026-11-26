@@ -150,13 +150,14 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
           <button
             type="button"
             aria-label={triggerAriaLabel}
+            // oxlint-disable-next-line shadcn/no-arbitrary-values -- design mode keeps the Forge panel's 3px swatch corners
             className="size-4 shrink-0 cursor-pointer rounded-[3px] border border-border/70"
             style={{ backgroundColor: seededHex ?? value }}
           />
         }
       />
-      <PopoverPopup className="w-56 p-2" data-fork-design-color-picker>
-        <div className="space-y-2">
+      <PopoverPopup className="w-56" data-fork-design-color-picker>
+        <div className="space-y-2 p-2">
           <div
             className="relative h-32 w-full cursor-crosshair touch-none rounded"
             style={{
@@ -167,6 +168,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
             {...svDrag}
           >
             <span
+              // oxlint-disable-next-line shadcn/no-arbitrary-values -- the picker handle's contrast ring, readable on any colour
               className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
               style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%` }}
             />
@@ -179,6 +181,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
             {...hueDrag}
           >
             <span
+              // oxlint-disable-next-line shadcn/no-arbitrary-values -- the picker handle's contrast ring, readable on any colour
               className="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
               style={{ left: `${(hsv.h / 360) * 100}%`, backgroundColor: hueColor }}
             />
@@ -206,7 +209,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
           </div>
           {tokens && tokens.colors.length > 0 ? (
             <div className="space-y-1">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="text-(length:--text-3xs) font-medium uppercase tracking-wide text-muted-foreground">
                 Theme colors
               </p>
               <div className="grid max-h-28 grid-cols-10 gap-1 overflow-y-auto pr-0.5">
@@ -227,6 +230,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
                       }
                     }}
                     className={cn(
+                      // oxlint-disable-next-line shadcn/no-arbitrary-values -- design mode keeps the Forge panel's 3px swatch corners
                       "size-4 rounded-[3px] border border-border/50",
                       "transition-transform hover:scale-110",
                     )}

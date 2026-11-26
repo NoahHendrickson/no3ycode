@@ -74,6 +74,7 @@ export function SidebarV2BotGridBody(props: {
       </span>
       <span
         data-fork-bot-grid-badge=""
+        // oxlint-disable-next-line shadcn/no-arbitrary-values -- the badge's place in Figma's 2/3-scale Petal frame
         className="pointer-events-none absolute top-1.5 right-[6.33px] flex size-[10.67px] items-center justify-center"
       >
         <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
@@ -115,6 +116,7 @@ export function SidebarV2BotCardBody(props: {
   return (
     <div
       className={cn(
+        // oxlint-disable-next-line shadcn/no-arbitrary-values -- the Petal card's 32px avatar column and its two scale-following lines' px floors
         "relative z-10 grid grid-cols-[32px_minmax(0,1fr)_auto] grid-rows-[max(16px,var(--spacing-sidebar-16))_max(14px,var(--spacing-sidebar-14))] items-center gap-x-2 gap-y-0.5 py-1.5",
         SIDEBAR_V2_CARD_ALIGNMENT.cardPad,
       )}

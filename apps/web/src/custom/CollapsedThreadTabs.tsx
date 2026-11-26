@@ -532,7 +532,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
       ref={forkThreadTabsRef}
       data-fork-thread-tabs=""
       className={cn(
-        "drag-region flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-3",
+        "drag-region flex h-(--workspace-topbar-height) min-h-(--workspace-topbar-height) shrink-0 items-center gap-3",
         // Clears the window controls and the floating sidebar toggle.
         "pl-[calc(var(--workspace-controls-left)+var(--workspace-titlebar-control-size)+var(--workspace-titlebar-control-gap))]",
         "pr-(--workspace-gutter-end) wco:pr-(--workspace-native-controls-inset)",
@@ -651,7 +651,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
         ref={measureNav}
         aria-label="Active threads"
         // The min width keeps More (72px) and the halo padding on screen.
-        className="-mx-1 -my-1 flex min-w-[80px] flex-1 items-center gap-1.5 overflow-hidden px-1 py-1"
+        className="-mx-1 -my-1 flex min-w-20 flex-1 items-center gap-1.5 overflow-hidden px-1 py-1"
         {...splitDropHandlers}
       >
         {row.slots.length === 0 && row.overflow.length === 0 ? (
@@ -699,7 +699,7 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
                   aria-label={`${row.overflow.length} more active threads`}
                   data-fork-tab-trigger=""
                   data-fork-tab-strip-control=""
-                  className="flex h-7 w-[72px] shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
+                  className="flex h-7 w-18 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full text-xs font-medium text-muted-foreground outline-none hover:bg-black/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset data-popup-open:bg-black/5 data-popup-open:text-foreground dark:hover:bg-white/8 dark:data-popup-open:bg-white/8"
                 />
               }
             >
@@ -831,6 +831,7 @@ function ThreadTab(props: {
         <span className="relative flex h-full min-w-0 flex-1 items-center">
           {/* Stretched and pulled 4px into the padding so the hover mask, and the clip that
               keeps the marks off the PR badge on a minimum-width tab, spare the disc's shadow. */}
+          {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the mark and title fade under the hover actions: mask stops from the tab's end */}
           <span className="-ml-1 flex min-w-0 flex-1 items-center gap-1.5 self-stretch overflow-hidden pl-1 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]">
             {/* The model picker's marks: the Claude Code mascot, the Codex cloud. */}
             {props.provider ? <TabProviderMark entry={props.provider} /> : null}
@@ -870,7 +871,8 @@ function ThreadTab(props: {
           <ThreadPullRequestBadgeControl
             render={
               <InlineButton
-                className="pointer-events-auto relative flex items-center gap-1 [&>span]:text-[length:calc(0.75rem*var(--fork-interface-text-scale,1))] [&>span]:leading-4"
+                // oxlint-disable-next-line shadcn/no-restyle, shadcn/no-arbitrary-values -- the tab PR badge's 12px label on a 16px line, at the Interface font size
+                className="gap-1 [&>span]:text-[length:calc(0.75rem*var(--fork-interface-text-scale,1))] [&>span]:leading-4 pointer-events-auto relative flex items-center"
                 data-fork-sidebar-pr-badge
               />
             }
@@ -940,6 +942,7 @@ function DraftTab(
         {provider ? <TabProviderMark entry={provider} /> : null}
         {props.project ? <TabProjectMark project={props.project} /> : null}
         {/* Fades out under the discard button rather than sliding it in, so no tab moves. */}
+        {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the title fades under the discard button: mask stops from the tab's end */}
         <span className="flex min-w-0 flex-1 items-center gap-1.5 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))]">
           <DraftTitle draftId={props.draftId} />
           <SidebarV2StatusMark status={null} seed={props.draftId} idle="draft" />

@@ -1,5 +1,5 @@
 import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "./icons/lucide-hugeicons";
 
 import { ComputerActivityIcon, ComputerTerminalIcon } from "./icons/lucide-hugeicons";
 
