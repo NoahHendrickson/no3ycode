@@ -205,7 +205,7 @@ function reviewOpenSuggestions(
   }));
 }
 
-const DEV_SERVER_SUGGESTION: LaunchpadSuggestion = {
+export const DEV_SERVER_SUGGESTION: LaunchpadSuggestion = {
   id: "dev-server",
   kind: "dev-server",
   project: null,

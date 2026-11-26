@@ -6894,7 +6894,12 @@
     same toggle shows pressed, reads "Unsplit", and dissolves the pair,
     leaving that thread on screen alone. Both act on a mouse press rather than its release (the
     click that follows is swallowed, since it lands on the other action),
-    so mounting the new pane overlaps the press. Until it is sent, a split
+    so mounting the new pane overlaps the press. A draft in a split pair skips the
+    new-agent screen (a New agent draft beside a docked thread keeps it, with its project
+    picker): it opens as a plain empty thread with the composer at the
+    bottom, still showing the workspace strip (same project, branch and worktree as
+    its partner), and a centred card of starters (Review this branch,
+    Start the dev server) that add their prompt to the composer. Until it is sent, a split
     draft carries an X in its header that hands the route to the other pane
     and dissolves the pair; an empty draft is discarded, while one the user
     has written in stays a draft of its own. Dragging one sidebar card or
@@ -7031,6 +7036,7 @@
     - apps/web/src/custom/splitThreads/SplitAgentToggle.tsx
     - apps/web/src/custom/splitThreads/splitMorph.ts
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
+    - apps/web/src/custom/splitThreads/SplitDraftStarters.tsx
     - apps/web/src/custom/splitThreads/splitPaneNavigation.ts
     - apps/web/src/custom/splitThreads/floatFrame.ts
     - apps/web/src/custom/splitThreads/floatWindow.tsx
@@ -7289,7 +7295,7 @@
     and keeps upstream's later behavior: Send now starts a held queue when
     idle, guest messages are not editable, and editing is blocked while a
     question is open. Rows name a sender other than the owner (guest name,
-    Agent, Automation, T3 Code). A bookmark on each row moves the message to the
+    Agent, Automation, T3 Code). An inbox-download button on each row moves the message to the
     prompt stash (custom/stashQueuedRun.ts): it writes the entry first and
     takes it back, with any entry it evicted, if removing the run fails
     (promptStashStore.unstashEntry, fenced). Messages with files, design changes,

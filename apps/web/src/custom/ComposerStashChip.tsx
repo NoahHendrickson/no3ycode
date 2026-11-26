@@ -1,5 +1,5 @@
 import { useGT } from "gt-react";
-import { BookmarkIcon } from "./icons/lucide-hugeicons";
+import { InboxIcon } from "./icons/lucide-hugeicons";
 import { memo } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
@@ -23,7 +23,7 @@ export const ComposerStashChip = memo(function ComposerStashChip(props: {
       onPointerDown={(event) => event.preventDefault()}
       onClick={props.onOpen}
     >
-      <BookmarkIcon aria-hidden />
+      <InboxIcon aria-hidden />
       <span aria-hidden>
         {gt("Stash", { $context: "noun, saved prompts set aside for later" })}{" "}
         <span
