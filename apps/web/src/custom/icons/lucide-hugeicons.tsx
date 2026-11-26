@@ -640,6 +640,71 @@ export const OctagonXIcon = icon("octagon-x", Hg.OctagonXIcon, "themed");
 export const UnlinkIcon = icon("unlink", Hg.UnlinkIcon, "stroke");
 export const UserLockIcon = icon("user-lock", Hg.UserLockIcon, "themed");
 
+/** One fork glyph, always stroked: no lucide classes and no palette subscription. */
+export type StrokeGlyph = (props: Omit<LucideCompatProps, "weight">) => ReactElement;
+const stroked =
+  (data: IconSvgElement): StrokeGlyph =>
+  (props) => <HugeGlyph {...props} data={data} filled={false} />;
+
+/**
+ * Fork glyphs drawn stroked in every theme: design mode's panel and layers rail, and the sidebar
+ * card's subagent count. Kept off `*Icon` exports, which the project icon picker lists
+ * (lucideIconByName).
+ */
+export const StrokeGlyphs = {
+  ChatBot: stroked(Hg.ChatBotIcon),
+  // Layers rail.
+  Link01: stroked(Hg.Link01Icon),
+  News: stroked(Hg.NewsIcon),
+  CursorText: stroked(Hg.CursorTextIcon),
+  InputText: stroked(Hg.InputTextIcon),
+  LeftToRightListBullet: stroked(Hg.LeftToRightListBulletIcon),
+  Cube: stroked(Hg.CubeIcon),
+  Text: stroked(Hg.TextIcon),
+  Image: stroked(Hg.ImageIcon),
+  Square: stroked(Hg.SquareIcon),
+  // Design panel.
+  AlignLeft: stroked(Hg.AlignLeftIcon),
+  AlignHorizontalCenter: stroked(Hg.AlignHorizontalCenterIcon),
+  AlignRight: stroked(Hg.AlignRightIcon),
+  AlignTop: stroked(Hg.AlignTopIcon),
+  AlignVerticalCenter: stroked(Hg.AlignVerticalCenterIcon),
+  AlignBottom: stroked(Hg.AlignBottomIcon),
+  Pushpin: stroked(Hg.PinIcon),
+  GridView: stroked(Hg.GridViewIcon),
+  Unlink05: stroked(Hg.Unlink05Icon),
+  CornerDownRight: stroked(Hg.CornerDownRightIcon),
+  ArrowExpand: stroked(Hg.ArrowExpandIcon),
+  ArrowShrink: stroked(Hg.ArrowShrinkIcon),
+  Contrast: stroked(Hg.ContrastIcon),
+  SquareRoundCorner: stroked(Hg.SquareRoundCornerIcon),
+  TextFont: stroked(Hg.TextFontIcon),
+  TextBold: stroked(Hg.TextBoldIcon),
+  LetterSpacing: stroked(Hg.LetterSpacingIcon),
+  TextAlignLeft: stroked(Hg.TextAlignLeftIcon),
+  TextAlignCenter: stroked(Hg.TextAlignCenterIcon),
+  TextAlignRight: stroked(Hg.TextAlignRightIcon),
+  TextAlignJustifyCenter: stroked(Hg.TextAlignJustifyCenterIcon),
+  SquareDashed: stroked(Hg.SquareDashedIcon),
+  Computer: stroked(Hg.ComputerIcon),
+  MinusSign: stroked(Hg.MinusSignIcon),
+  PlusSign: stroked(Hg.PlusSignIcon),
+  PaintBucket: stroked(Hg.PaintBucketIcon),
+  StrokeCenter: stroked(Hg.StrokeCenterIcon),
+  DashedLine01: stroked(Hg.DashedLine01Icon),
+  PaintBrush01: stroked(Hg.PaintBrush01Icon),
+  ArrowRight02: stroked(Hg.ArrowRight02Icon),
+  ArrowDown02: stroked(Hg.ArrowDown02Icon),
+  FoldHorizontal: stroked(Hg.FoldHorizontalIcon),
+  FoldVertical: stroked(Hg.FoldVerticalIcon),
+  UnfoldVertical: stroked(Hg.UnfoldVerticalIcon),
+  Link02: stroked(Hg.Link02Icon),
+  FullScreen: stroked(Hg.FullScreenIcon),
+} as const;
+
+/** Layers02's raw parts, for the background-work mark, which masks a fill per layer with them. */
+export const LAYERS_02_GLYPH: IconSvgElement = Hg.Layers02Icon;
+
 /**
  * lucide's escape hatch for one-off glyphs drawn from path data (upstream's
  * settings snap-shot entry uses it). There is no Hugeicons counterpart to swap

@@ -3,12 +3,11 @@
  * Hugeicons' Layers02 outline with a fill that travels front → middle → back. Each layer's fill
  * is its own <svg>, so ComposerShell.css fades whole elements, which the compositor runs.
  */
-import { Layers02Icon } from "@hugeicons/core-free-icons";
 import { useId } from "react";
 
-import { HugeGlyph } from "./icons/lucide-hugeicons";
+import { HugeGlyph, LAYERS_02_GLYPH } from "./icons/lucide-hugeicons";
 
-const attrs = (index: number) => Layers02Icon[index]?.[1] ?? {};
+const attrs = (index: number) => LAYERS_02_GLYPH[index]?.[1] ?? {};
 const front = attrs(0);
 // Each behind square's outline stops where the square in front covers its top-right corner;
 // closing it straight is enough, since the mask hides that corner anyway.
@@ -50,7 +49,7 @@ function LayerFill(props: { readonly index: number }) {
 export function BackgroundWorkLayersMark() {
   return (
     <>
-      <HugeGlyph data={Layers02Icon} filled={false} />
+      <HugeGlyph data={LAYERS_02_GLYPH} filled={false} />
       {LAYERS.map(({ layer }, index) => (
         <LayerFill key={layer} index={index} />
       ))}
