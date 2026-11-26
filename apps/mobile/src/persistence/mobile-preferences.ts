@@ -31,7 +31,7 @@ import { MobileStorageDecodeError, MobileStorageEncodeError } from "./mobile-sto
 import { withPullRequestProjectSet } from "../../fork/no3yPullRequestProjects";
 /* fork:end no3y-pr-project-multiselect */
 /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
-import type { No3yInterfaceFont } from "../../fork/no3yInterfaceFont";
+import { isNo3yInterfaceFont, type No3yInterfaceFont } from "../../fork/no3yInterfaceFont";
 /* fork:end no3y-mobile-interface-font */
 
 const PREFERENCES_KEY = "t3code.preferences";
@@ -363,7 +363,7 @@ function sanitizePreferences(parsed: Preferences): Preferences {
   if (typeof parsed.mathRenderingEnabled === "boolean")
     preferences.mathRenderingEnabled = parsed.mathRenderingEnabled;
   /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
-  if (parsed.interfaceFont === "system" || parsed.interfaceFont === "cinnabar") {
+  if (isNo3yInterfaceFont(parsed.interfaceFont)) {
     preferences.interfaceFont = parsed.interfaceFont;
   }
   /* fork:end no3y-mobile-interface-font */

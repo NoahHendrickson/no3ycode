@@ -9839,13 +9839,17 @@
     section above Text: System (SF Pro, the default) or Cinnabar Interface,
     the face the desktop ships (its Settings calls it Cinnabar Sans). The
     pick is the local `interfaceFont` mobile preference and applies live:
-    the provider rewrites the global.css font tokens (--font-sans,
+    installNo3yInterfaceFont rewrites the global.css font tokens (--font-sans,
     --font-medium, --font-bold) in every Uniwind theme, and the
     native-styled text the classes can't reach (reply and file markdown,
     link chips, the native composer) reads useFontFamilies.
-    Families are PostScript names, which RCTFont resolves to the family and
-    then the face nearest the requested weight, and the Swift composer's
-    UIFont(name:) needs. app.config.ts bundles six static faces of the same
+    Regular and bold are the family name so RCTFont keeps an inherited
+    italic or weight (bold inside italic); medium is the Medium face because
+    chip links pass no weight, and the Swift composer's UIFont(name:) gets the
+    Regular face. The font comes from a derived atom over the preferences
+    atom (no3yInterfaceFontState.ts), so a save's optimistic patch moves the
+    tokens and the families together. The fork's raw search TextInputs take
+    font-sans. app.config.ts bundles six static faces of the same
     Cinnabar Interface build the web ships (Regular, Italic, Medium,
     MediumItalic, SemiBold, Bold — upright 800 falls to Bold); they come from
     the cinnabar-sans repo's fonts/static and are replaced wholesale, never
@@ -9855,6 +9859,7 @@
   tier: 4
   files:
     - apps/mobile/fork/no3yInterfaceFont.ts
+    - apps/mobile/fork/no3yInterfaceFontState.ts
     - apps/mobile/fork/No3yInterfaceFontSection.tsx
     - apps/mobile/fork/assets/fonts/cinnabar-interface/OFL.txt
     - apps/web/src/__fork_guards__/no3yMobileInterfaceFont.test.ts
@@ -9862,6 +9867,7 @@
   watch:
     - apps/mobile/app.config.ts
     - apps/mobile/src/lib/fontFamilies.ts
+    - apps/mobile/src/lib/mobileThemeRuntime.ts
     - apps/mobile/src/persistence/mobile-preferences.ts
     - apps/mobile/src/features/settings/appearance/AppearancePreferencesProvider.tsx
     - apps/mobile/src/features/settings/SettingsAppearanceRouteScreen.tsx

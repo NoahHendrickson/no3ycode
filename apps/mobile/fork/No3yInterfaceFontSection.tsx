@@ -6,15 +6,14 @@ import { AsyncResult } from "effect/reactivity";
 
 import { ListChoiceRow } from "../src/components/ui/ListChoiceRow";
 import { SettingsSection } from "../src/features/settings/components/SettingsSection";
-import { applyNo3yInterfaceFont } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { mobilePreferencesAtom, saveMobilePreferences } from "../src/state/preferences";
 import { useAtomCommand } from "../src/state/use-atom-command";
-import { NO3Y_INTERFACE_FONT_OPTIONS, useNo3yInterfaceFont } from "./no3yInterfaceFont";
+import { NO3Y_INTERFACE_FONT_OPTIONS } from "./no3yInterfaceFont";
+import { useNo3yInterfaceFont } from "./no3yInterfaceFontState";
 
 export function No3yInterfaceFontSection() {
-  const preferencesResult = useAtomValue(mobilePreferencesAtom);
+  const ready = AsyncResult.isSuccess(useAtomValue(mobilePreferencesAtom));
   const savePreferences = useAtomCommand(saveMobilePreferences);
-  const ready = AsyncResult.isSuccess(preferencesResult);
   const selected = useNo3yInterfaceFont();
 
   return (
@@ -26,10 +25,7 @@ export function No3yInterfaceFontSection() {
           selected={selected === option.font}
           separated={index > 0}
           disabled={!ready}
-          onPress={() => {
-            applyNo3yInterfaceFont(option.font);
-            void savePreferences({ interfaceFont: option.font });
-          }}
+          onPress={() => void savePreferences({ interfaceFont: option.font })}
         />
       ))}
     </SettingsSection>
