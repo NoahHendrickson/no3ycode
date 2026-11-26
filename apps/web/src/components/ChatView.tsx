@@ -3538,6 +3538,7 @@ export default function ChatView(props: ChatViewProps) {
         {embedded ? null : (
           <ComposerNextStepPill
             environmentId={activeThread.environmentId}
+            projectId={activeThread.projectId}
             // A shared checkout on another branch is not this thread's work or PR.
             cwd={localCheckoutBranchMismatch === null ? gitStatusCwd : null}
             branch={activeThreadBranch}

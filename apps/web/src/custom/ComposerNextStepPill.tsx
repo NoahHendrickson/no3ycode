@@ -2,7 +2,7 @@
     `.fork/customizations.yaml#fork-composer-next-step`. */
 import type { HabitSuggestion } from "@t3tools/client-runtime/fork-composer-habits";
 import type { ThreadStructure } from "@t3tools/client-runtime/state/shell";
-import type { EnvironmentId, ThreadPullRequestLink } from "@t3tools/contracts";
+import type { EnvironmentId, ProjectId, ThreadPullRequestLink } from "@t3tools/contracts";
 import { memo } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
@@ -20,6 +20,7 @@ import {
   type PickedComposerNextStep,
 } from "@t3tools/client-runtime/fork-composer-next-step";
 import { forgetComposerHabit, useComposerHabitSuggestion } from "./composerHabits";
+import { useThreadAutoMerge } from "./threadAutoMerge";
 import {
   GitMergeIcon,
   GitPullRequestArrowIcon,
@@ -39,6 +40,7 @@ const KIND_ICON: Record<PickedComposerNextStep["kind"], typeof EyeIcon> = {
 
 export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   readonly environmentId: EnvironmentId;
+  readonly projectId: ProjectId;
   /** ChatView's git-status cwd, null when the checkout is on another branch than the thread. */
   readonly cwd: string | null;
   readonly branch: string | null;
@@ -61,6 +63,7 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   );
   const previous = props.messages === null ? null : lastOwnerPrompt(props.messages);
   const habit = useComposerHabitSuggestion(previous);
+  const autoMerge = useThreadAutoMerge(props.environmentId, props.projectId, props.pullRequests);
   if (!props.settled || draftHasContent || props.messages === null) return null;
   const step = pickComposerNextStep({
     lastOwnerPrompt: previous,
@@ -69,6 +72,7 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
     branchPullRequest: null,
     gitStatus: status ?? null,
     habit,
+    autoMergeEnabled: autoMerge.state !== "off",
   });
   if (step === null) return null;
   return (

@@ -853,6 +853,12 @@ describe("fork guard: fork-composer-shell", () => {
     expect(composer).toMatch(/persistentChips=\{[\s\S]*?<ComposerStashChip/u);
     expect(shell).toMatch(/\{collapsedMobile \? null : statusChips\}\s*\{persistentChips\}/u);
     expect(chatView).toContain("statusChips={composerStatusChips}");
+    // An armed auto-merge gets its own chip after the PR's, read from the PR's detail, whose ban button turns
+    // it off through the shared action runner.
+    expect(prChip).toContain('data-fork-composer-status-chip="auto-merge"');
+    expect(prChip).toContain("useThreadAutoMerge(");
+    expect(prChip).toContain('perform("disable-auto-merge")');
+    expect(shellCss).toContain('[data-fork-composer-status-chip="auto-merge"]');
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");
     // A fill travels the Layers02 mark front → middle → back; reduced motion hides it.
