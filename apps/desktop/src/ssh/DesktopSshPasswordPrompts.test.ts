@@ -103,6 +103,9 @@ function layerElectronWindow(window: ReturnType<typeof makeTestWindow>["window"]
       reveal: () => Effect.void,
       sendAll: () => Effect.void,
       destroyAll: Effect.void,
+      /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+      hideAll: Effect.succeed([]),
+      /* fork:end fork-update-install-hide */
       syncAllAppearance: () => Effect.void,
     }),
   );

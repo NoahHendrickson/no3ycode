@@ -20,7 +20,8 @@ const settingsPanels = NodeFS.readFileSync(
 );
 
 describe("fork guard: fork-sidebar-update-label", () => {
-  it("labels an actionable update as a white Update pill", () => {
+  it("labels an actionable update as a white Update pill, Install once downloaded", () => {
+    expect(updatePill).toContain('{iconStatus === "downloaded" ? "Install" : "Update"}');
     expect(updatePill).toContain('iconStatus === "downloading" ||');
     expect(updatePill).toContain("<ForkUpdateDownloadRing");
     expect(updatePill).toMatch(/showUpdateLabel \? \([\s\S]*?Update[\s\S]*?\) : \(\s*statusIcon/);

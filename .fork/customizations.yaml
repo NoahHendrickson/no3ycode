@@ -7629,7 +7629,9 @@
   intent: >
     When an update is ready to act on (available to download, downloaded and
     ready to install, or an Update-everything run on offer), the sidebar's
-    round update icon becomes a fully rounded pill reading "Update": pure
+    round update icon becomes a fully rounded pill: "Update" while there is
+    something to download or run, "Install" once the download is done, so
+    the second click says what it does. Pure
     white with black text in dark mode (a fixed white, not --primary, which
     palettes recolour), inverted foreground/background in light mode where
     white would vanish on the sidebar. While the update downloads the pill
@@ -7654,6 +7656,34 @@
     - knip.jsonc
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
+
+- id: fork-update-install-hide
+  intent: >
+    Installing a downloaded app update hides every window first, then stops
+    the backends, closes SSH tunnels and hands off to the installer. Upstream
+    kept the window up through all of that: a backend gets up to 7s to stop,
+    and on macOS Squirrel only unpacks and verifies the new build once
+    quitAndInstall runs (auto-install-on-quit is off), so the app sat open
+    for a long beat after the click while its own threads showed the Mac as
+    disconnected. If the install fails or is interrupted, the windows it hid
+    come back with the error state. On macOS a successful quitAndInstall only
+    waits for Squirrel to stage the build, so if the app is still running two
+    minutes later the install is treated as failed: backends restart, the
+    windows come back, and the pill offers a retry.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/desktop/src/electron/ElectronWindow.ts
+    - apps/desktop/src/updates/DesktopUpdates.ts
+    - apps/desktop/src/updates/DesktopUpdates.test.ts
+    - apps/desktop/src/updates/updatesTestHarness.ts
+    - apps/desktop/src/app/DesktopLifecycle.test.ts
+    - apps/desktop/src/ssh/DesktopSshPasswordPrompts.test.ts
+    - apps/desktop/src/window/DesktopWindow.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkUpdateInstallHide.test.ts
+    - apps/desktop/src/updates/DesktopUpdates.test.ts
 
 - id: fork-separate-provider-updates
   intent: >
