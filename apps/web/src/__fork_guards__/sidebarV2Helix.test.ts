@@ -112,10 +112,10 @@ describe("fork guard: working indicator setting", () => {
     expect(panels).toContain("setWorkingMark(null)");
   });
 
-  it("defaults Basic and Inlet to the bead ring, Glass to the helix", () => {
+  it("defaults every fork palette to the bead ring", () => {
     expect(FORK_WORKING_MARK_DEFAULTS).toEqual({
       basic: "bead",
-      "cool-darker": "helix",
+      "cool-darker": "bead",
       inlet: "bead",
     });
   });

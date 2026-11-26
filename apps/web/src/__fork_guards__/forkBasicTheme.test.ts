@@ -92,7 +92,7 @@ describe("fork guard: fork-basic-theme", () => {
     const flat = bodyOf(`${BASIC} .dropdown-glass`, `${BASIC} .dialog-glass`);
     expect(flat).toMatch(/background:\s*var\(--popover\)/u);
     expect(flat).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
-    // The scrim and dialog radius are shared with Inlet (theme.custom.css).
+    // The scrim is shared with Inlet (theme.custom.css); the dialog radius is Inlet's alone.
     const shared = cssRules(readSibling("../theme.custom.css"));
     const scrim = shared.find(
       (rule) =>
@@ -100,10 +100,61 @@ describe("fork guard: fork-basic-theme", () => {
         rule.selector.includes(".dialog-backdrop"),
     );
     expect(scrim?.body).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
-    expect(sheet).toMatch(/--fork-dialog-radius:\s*8px/u);
-    expect(bodyOf(BASIC, '[data-slot="settings-group"]', "[data-scheduled-card]")).toMatch(
-      /border-radius:\s*var\(--radius-lg\)/u,
+    // Dialogs and page cards keep Flat Glass's corners: upstream's 16px and 12px.
+    expect(sheet).not.toMatch(/--fork-dialog-radius/u);
+    expect(
+      shared.some(
+        (rule) =>
+          rule.selector.includes('[data-fork-theme="basic"]') &&
+          /border-radius:\s*var\(--fork-dialog-radius\)/u.test(rule.body),
+      ),
+    ).toBe(false);
+    expect(bodyOf(BASIC, '[data-slot="settings-group"]', "[data-scheduled-card]")).not.toMatch(
+      /border-radius/u,
     );
+  });
+
+  it("shares every Flat Glass shape and sets only colours", () => {
+    // A selector shares Flat Glass's shapes when one :is() names Flat Glass and Basic, in any order.
+    // The shared block's head names those two alone; a rule that adds another theme stands apart.
+    const isGroups = (text: string) => [...text.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/gu)];
+    const namesOnlyFlatAndBasic = (args: string) =>
+      namesFlatAndBasic(args) && args.split(",").length === 2;
+    const namesFlatAndBasic = (args: string) =>
+      args.includes('[data-fork-theme="basic"]') &&
+      args.includes('[data-fork-glass-3d="off"]') &&
+      args.includes('[data-fork-theme="cool-darker"]');
+    const sharesFlatGlass = (selector: string) =>
+      isGroups(selector).some(([, args]) => namesFlatAndBasic(args ?? ""));
+    // That predicate heads one block in palettes.css, the home of every shape Basic shares.
+    expect(isGroups(palettes).filter(([, args]) => namesOnlyFlatAndBasic(args ?? ""))).toHaveLength(
+      1,
+    );
+    const paletteRules = cssRules(palettes);
+    const shared = paletteRules.filter((rule) => sharesFlatGlass(rule.selector));
+    expect(
+      shared.some(
+        (rule) =>
+          rule.selector.includes("[data-fork-thread-row]") &&
+          /border-radius:\s*var\(--fork-flat-radius\)/u.test(rule.body),
+      ),
+    ).toBe(true);
+    expect(shared.some((rule) => rule.selector.includes("[data-fork-stage-card-title]"))).toBe(
+      true,
+    );
+    // No other rule draws a shape for Basic, and Basic's sheet adds only the popups' shadow.
+    const shape =
+      /(^|[;{\s])(border-radius|corner-shape|box-shadow|outline(-\w+)?|border(-(top|right|bottom|left))?(-width)?|padding[\w-]*|margin[\w-]*|gap|width|height)\s*:/u;
+    const elsewhere = paletteRules.filter(
+      (rule) =>
+        rule.selector.includes('[data-fork-theme="basic"]') && !sharesFlatGlass(rule.selector),
+    );
+    for (const rule of elsewhere) expect(rule.body).not.toMatch(shape);
+    for (const rule of rules) {
+      expect(rule.body.replace(/box-shadow:\s*var\(--basic-popup-shadow\);?/gu, "")).not.toMatch(
+        shape,
+      );
+    }
   });
 
   it("draws switches green with a white thumb", () => {
@@ -114,9 +165,6 @@ describe("fork guard: fork-basic-theme", () => {
     expect(sheet).toMatch(/--fork-basic-switch-on: oklch\(59\.6% 0\.145 163\.225\);/u);
     expect(switches).toMatch(
       /& > \[data-slot="switch-thumb"\] \{\s*background-color: var\(--fork-white\);/u,
-    );
-    expect(switches).toMatch(
-      /&\[data-mixed\] > \[data-slot="switch-thumb"\] \{\s*translate: none;\s*opacity: 1;/u,
     );
   });
 

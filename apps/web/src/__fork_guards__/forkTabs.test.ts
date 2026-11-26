@@ -50,12 +50,16 @@ describe("fork-tabs", () => {
 
   it("draws every tab strip as the Figma tabs under Basic, menu and upstream ones included", () => {
     const basic = read("../theme.custom.basic.css");
-    // One rule draws Basic's and Flat Glass's strips (palettes sheet); Basic names its colours.
+    // One rule draws Basic's and Flat Glass's strips (the shared shapes block in the palettes
+    // sheet); Basic names its colours.
     const palettes = read("../theme.custom.palettes.css");
     const strips =
       ':is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"])';
-    const at = palettes.indexOf(`[data-fork-theme="basic"]\n  ${strips} {`);
+    const at = palettes.indexOf(`& ${strips} {`);
     expect(at).toBeGreaterThan(-1);
+    const head = palettes.slice(palettes.lastIndexOf(":root[", at), at);
+    expect(head).toContain('[data-fork-theme="basic"]');
+    expect(head).toContain('[data-fork-glass-3d="off"]');
     expect(palettes.slice(at)).toMatch(
       /\{\s*gap: calc\(var\(--spacing\) \* 0\.5\);\s*padding: calc\(var\(--spacing\) \* 0\.5\);\s*border-radius: var\(--radius-lg\);\s*background-color: var\(--fork-segmented-track\);\s*&\s*>\s*\*\s*\{[^}]*?font-size:\s*var\(--fork-segmented-tab-font-size\);/u,
     );

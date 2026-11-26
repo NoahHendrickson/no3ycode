@@ -1,8 +1,8 @@
 /**
  * Working indicator choice — see `.fork/customizations.yaml#fork-working-mark`.
  *
- * Which mark a running agent draws; Inlet and Basic default to the bead ring,
- * other palettes to the helix. Device-local, like the palette: a contracts
+ * Which mark a running agent draws; every fork palette defaults to the bead
+ * ring, an upstream theme to the helix. Device-local, like the palette: a contracts
  * field would put a fork key in a schema upstream owns.
  */
 import * as Schema from "effect/Schema";
@@ -27,7 +27,7 @@ export type ForkWorkingMark = (typeof FORK_WORKING_MARKS)[number];
 /** Each palette's mark until one is picked; an upstream theme (no palette) draws the helix. */
 export const FORK_WORKING_MARK_DEFAULTS = {
   basic: "bead",
-  "cool-darker": "helix",
+  "cool-darker": "bead",
   inlet: "bead",
 } as const satisfies Record<ForkPalette, ForkWorkingMark>;
 

@@ -57,7 +57,7 @@ describe("fork guard: fork-changed-files-card", () => {
       ...rule,
       selector: rule.selector.replace(/\s+/gu, " "),
     }));
-    // The tree under the header keeps the card's fill: no shared well fill (Basic paints its own).
+    // The tree under the header keeps the card's fill: no well fill, on Basic either.
     expect(
       rules.find((rule) => rule.selector.endsWith("[data-changed-files-header] ~ div")),
     ).toBeUndefined();
@@ -75,10 +75,8 @@ describe("fork guard: fork-changed-files-card", () => {
       selector: rule.selector.replace(/\s+/gu, " "),
     }));
     expect(
-      basicRules.find((rule) =>
-        rule.selector.endsWith('[data-fork-theme="basic"] [data-changed-files-header] ~ div'),
-      )?.body,
-    ).toMatch(/background:\s*var\(--basic-raised\)/u);
+      basicRules.find((rule) => rule.selector.includes("[data-changed-files-header]")),
+    ).toBeUndefined();
     expect(top?.body).toMatch(
       /border-top-right-radius:\s*calc\(var\(--fork-card-radius\) - 1px\)/u,
     );
