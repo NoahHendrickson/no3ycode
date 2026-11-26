@@ -152,11 +152,8 @@ export function SidebarBrandWidthProbe({
       ref={observeWidth}
     >
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-          The fork header is [toggle][back/forward on desktop] … [Code / Chat switch], with no
-          brand: the controls inset, the trigger's box plus the history pair's two, then the
-          switch and its trailing margin, measured from a hidden copy so every theme's strip
-          counts. The pill is not counted — it hides under the 15rem container query before it
-          could clip. */}
+          Measures [toggle][back/forward on desktop] … [Code / Chat switch]: a hidden copy of the
+          switch, so every theme's strip width counts. The pill hides under 15rem, so it's left out. */}
       {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the inset is a runtime variable, not a scale value */}
       <div className="flex items-center gap-2 pl-[var(--workspace-controls-left)]">
         <span className="flex shrink-0">
