@@ -888,6 +888,12 @@
   background: var(--fork-composer-vessel-bg, var(--card));
 }
 
+/* The launchpad reads a pixel under the Interface font size, like the composer's chips. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-draft-launchpad] {
+  --text-xs: var(--fork-composer-chip-text);
+  --text-sm: var(--fork-composer-chip-text);
+}
+
 /* The frame div is upstream's 1px gradient-border trick: a p-px shim whose
    child surface paints the fill. The fork wants a plain border, so the shim
    collapses and the surface takes the border directly. Upstream also glasses

@@ -5938,14 +5938,14 @@
     the title, the panel toggles and the thread details card while a local
     draft has no project, since there is nothing for them to name or show.
 
-    The project is first picked from the launchpad under the composer
-    (fork-draft-project-quick-picks); the composer's placeholder (fenced in
-    ChatComposer) asks for a project without pointing above. Once picked, it
-    shows as the first chip in the composer's context row
-    (custom/DraftProjectPill, which renders nothing while unassigned), ahead
-    of the workspace and branch chips and dressed like them: the row's CSS
+    The project is picked from the first chip in the composer's context row
+    (custom/DraftProjectPill), which reads "Choose a project" until one is
+    picked; the composer's placeholder (fenced in ChatComposer) asks for a
+    project without pointing above. A launchpad suggestion can also pick one
+    (fork-draft-project-quick-picks). The chip sits ahead
+    of the workspace and branch chips and is dressed like them: the row's CSS
     paints it as the same filled chip, at the same type, and its label collapses with
-    theirs when the strip overflows. Its menu, like the launchpad, offers a
+    theirs when the strip overflows. Its menu offers a
     "No project" row: picking it opens the environment's scratch
     project (upstream's projectless home, created by the server on first use)
     and assigns the draft to it like any other pick, so a New agent draft can
@@ -5955,7 +5955,7 @@
     agent key with the scratch project as its project, so it is still the one
     New agent returns to, keeps the machine chip, the sidebar's lit row and the
     settings it carried, and opens on No project, ready to send, with the
-    launchpad still offering the projects. With no scratch folder it stays
+    launchpad still offering the projects' work. With no scratch folder it stays
     unassigned as above. The scratch folder itself is never listed as a
     project. With two or more machines connected, an unassigned draft also gets a
     machine chip (custom/DraftMachineChip, upstream's
@@ -7162,36 +7162,33 @@
 
 - id: fork-draft-project-quick-picks
   intent: >
-    An unassigned New agent draft picks its project from a launchpad under
-    the centred composer (custom/DraftLaunchpad), not from a chip or pills
-    above it: the draft hero shows no headline and no project chip until a
-    project is picked. The launchpad sits in ChatView's out-of-flow slot under
-    the composer (fenced, fork-new-agent-draft), so it never moves the
-    composer. Its Projects card has a search field over a full-width divider,
-    then up to four projects with a thread the sidebar would show, newest
-    activity first by those same threads (rankRecentProjectEntries, which
-    ranks through sortLogicalProjectsForSidebar, so a hidden subagent or
-    off-sidebar automation run cannot reorder them; with no such project, the
-    first pickable ones), No project, and, when more projects exist than it
-    lists, "All projects (N)", which expands the list in place rather than
-    opening a menu (otherwise "Add a project" stands in its place). The whole
-    launchpad scrolls within the room left between it and the chat canvas's
-    bottom (above any terminal drawer), re-measured as the window, the canvas,
-    the composer above it or a notice in its slot changes. A short window (34rem or less)
-    pins the composer to the bottom with no room under it, so there the
-    launchpad is not shown and the unassigned draft gets the project chip
-    ("Choose a project") and its menu instead. While searching, Enter picks the top
-    match; Esc clears the search. Rows use the menu
-    item's inset, rounded hover. A row goes through the same pick dispatcher as
-    the chip's menu (useDraftProjectChoices, owned by fork-new-agent-draft).
+    A New agent draft picks its project from the "Choose a project" chip at
+    the start of the composer's context row (fork-new-agent-draft); the
+    launchpad under the centred composer (custom/DraftLaunchpad) holds no
+    project list. It sits in ChatView's out-of-flow slot under the composer
+    (fenced, fork-new-agent-draft), so it never moves the composer, and
+    spans the composer's width. Before a pick it draws on up to four
+    projects with a thread the sidebar would show, newest activity first by
+    those same threads (rankRecentProjectEntries, which ranks through
+    sortLogicalProjectsForSidebar, so a hidden subagent or off-sidebar
+    automation run cannot reorder them; with no such project, the first
+    pickable ones). The whole launchpad scrolls within the room left between
+    it and the chat canvas's bottom (above any terminal drawer), re-measured
+    as the window, the canvas, the composer above it or a notice in its slot
+    changes. A short window (34rem or less) pins the composer to the bottom
+    with no room under it, so there the launchpad is not shown. A
+    suggestion's pick goes through the
+    same dispatcher as the chip's menu (useDraftProjectChoices, owned by
+    fork-new-agent-draft).
 
-    Beside it, "Start something new" offers up to four pieces of new work for
+    "Start something new" offers up to four pieces of new work for
     those projects, each read from the copy a pick runs on, the draft's
     machine (or, once a project is picked, for that project alone):
     conflicts, failing checks, requested changes and approved, mergeable pull
     requests you opened; open pull requests that request your review; one
-    "Review N open PRs" row, naming each open pull request listed (yours or
-    asking your review) as repo#N for the first project that has any; and,
+    "Review N open PRs: #A, #B" row, its prompt naming each open pull request
+    listed (yours or asking your review) as repo#N, for the first project
+    that has any; and,
     when the picked project runs in its own checkout rather than a new
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
     request, then, last, starting the dev server for a picked project in its
@@ -7204,11 +7201,18 @@
     launchpad (short window or Chat mode draft) queries nothing. A No project
     draft keeps the launchpad like an unassigned one: the projects, their work,
     and a pick moves the draft off No project.
-    Picking a suggestion picks its project and writes its prompt into the
-    draft composer, after anything the user already wrote (once: a second
-    click on the same row adds nothing). A suggestion whose project is not
-    pickable is left out. It never sends and never opens another thread: New
-    agent is for new work. With nothing to suggest, the card is not shown.
+    Suggestion rows are 36px buttons, split by full-width dividers, with a
+    hover (and keyboard focus) fill edge to edge, and a "Draft it" pill that
+    hugs the title and slides in from its left (not under reduced motion). A row picks its project and writes its prompt into the draft
+    composer, after anything the user already wrote (once: a second click
+    on the same row adds nothing). It never sends: the user reviews the
+    prompt and sends it. A suggestion whose project is not pickable is left
+    out. It never opens another thread: New agent is for new work. With
+    nothing to suggest, the card is not shown.
+
+    The launchpad's text reads a pixel
+    under the Interface font size (--fork-composer-chip-text, like the
+    composer's chips), set on its root in theme.custom.css.
 
     The project chip opens from the picked row, sliding to the context row's
     start as its label is revealed. The pick is kept outside the component

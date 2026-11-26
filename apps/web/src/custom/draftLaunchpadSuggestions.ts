@@ -183,24 +183,30 @@ function reviewOpenSuggestions(
 ): LaunchpadSuggestion[] {
   const byProject = new Map<
     string,
-    { readonly project: NonNullable<LaunchpadSuggestion["project"]>; readonly refs: string[] }
+    {
+      readonly project: NonNullable<LaunchpadSuggestion["project"]>;
+      readonly refs: string[];
+      readonly numbers: string[];
+    }
   >();
   for (const pr of openPullRequests) {
     const key = `${pr.environmentId}:${pr.projectId}`;
     const group = byProject.get(key) ?? {
       project: { environmentId: pr.environmentId, projectId: pr.projectId },
       refs: [],
+      numbers: [],
     };
     // A project's list can span repositories (a fork and its upstream), so name the repository.
     group.refs.push(`${pr.repository}#${pr.number}`);
+    group.numbers.push(`#${pr.number}`);
     byProject.set(key, group);
   }
-  return [...byProject].map(([key, { project, refs }]) => ({
+  return [...byProject].map(([key, { project, refs, numbers }]) => ({
     id: `review-open:${key}`,
     kind: "review-open",
     project,
     envMode: null,
-    title: `Review ${refs.length} open ${plural(refs.length, "PR", "PRs")}`,
+    title: `Review ${refs.length} open ${plural(refs.length, "PR", "PRs")}: ${numbers.join(", ")}`,
     prompt: `Code-review the open PRs (${refs.join(", ")}), leave your reviews on them, and tell me which are ready to merge.`,
   }));
 }

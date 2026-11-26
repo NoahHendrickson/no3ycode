@@ -189,7 +189,7 @@ describe("deriveLaunchpadSuggestions", () => {
       offerDevServer: true,
     });
     expect(suggestions.map((suggestion) => suggestion.title)).toEqual([
-      "Review 2 open PRs",
+      "Review 2 open PRs: #1, #2",
       "Merge #1 · PR 1",
       "Start the dev server",
     ]);
