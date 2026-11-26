@@ -11,11 +11,9 @@ const pillHeight = (
   body: number,
   fontScale: number,
   pill: { readonly paddingVertical: number; readonly fontScale: number },
-  border: number,
 ) =>
   Math.ceil(
-    1.19307 * rct(body, fontScale) * pill.fontScale +
-      2 * (Math.max(0, pill.paddingVertical) + border),
+    1.19307 * rct(body, fontScale) * pill.fontScale + 2 * Math.max(0, pill.paddingVertical),
   );
 
 describe("no3y reply chip heights", () => {
@@ -25,7 +23,7 @@ describe("no3y reply chip heights", () => {
         const sizes = no3yChipSizes({ bodyFontSize: body, chipFontScale: 0.95, fontScale });
         const code = 1.1640625 * rct(body * 0.95, fontScale) + 2 * sizes.code.paddingVertical;
         expect(code).toBeCloseTo(Math.round(code), 6);
-        expect(pillHeight(body, fontScale, sizes.file, 0)).toBeCloseTo(code, 6);
+        expect(pillHeight(body, fontScale, sizes.file)).toBeCloseTo(code, 6);
       }
     }
   });
