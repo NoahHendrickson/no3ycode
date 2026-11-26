@@ -9,7 +9,7 @@ import { Toggle } from "~/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useNewThreadHandler } from "~/hooks/useHandleNewThread";
 
-import { Columns2Icon } from "../icons/lucide-hugeicons";
+import { SplitAgentIcon } from "../icons/lucide-hugeicons";
 import { useSplitPane, type SplitPaneState } from "./splitPaneContext";
 import { morphSplitPairs } from "./splitMorph";
 import { usePendingSplitStore, useSplitThreadStore } from "./splitThreadStore";
@@ -85,7 +85,7 @@ export function SplitAgentToggle(props: {
                 : splitAgent,
             )}
           >
-            <Columns2Icon className="size-4" />
+            <SplitAgentIcon className="size-4" />
           </Toggle>
         </TooltipTrigger>
         <TooltipPopup side="bottom">{label}</TooltipPopup>

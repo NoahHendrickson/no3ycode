@@ -124,6 +124,22 @@ describe("fork guard: fork-split-threads", () => {
       /\{props\.splitAgentToggle\}\s*<div[^>]*>\s*\{props\.panelToggleControls\}/u,
     );
     expect(chatView).not.toMatch(/const composerContextTrailing =[^;]*SplitAgent/u);
+    // A draft in a split is a plain empty thread, not the new-agent screen.
+    expect(chatView).toMatch(
+      /const draftHeroEligible = resolveDraftHeroState\([\s\S]*?const splitDraftAsThread = splitPane\.split && splitPane\.canSplit;\s*const isDraftHeroState = !splitDraftAsThread && draftHeroEligible;/u,
+    );
+    // ...that offers starters instead of the empty-thread line...
+    expect(chatView).toMatch(/\{splitDraftStartersShown \? \(\s*<SplitDraftStarters\b/u);
+    expect(chatView).toMatch(/hideEmptyPlaceholder=\{[^}]*splitDraftStartersShown/u);
+    const starters = readSibling("../custom/splitThreads/SplitDraftStarters.tsx");
+    expect(starters).toContain('"Review this branch"');
+    expect(starters).toContain('"Start the dev server"');
+    // ...with the started header rule...
+    expect(chatView).toContain(
+      'data-fork-thread-started={isLocalDraftThread && !splitDraftAsThread ? undefined : ""}',
+    );
+    // ...that still shows the workspace (project, branch, worktree) it shares with its partner.
+    expect(chatView).toMatch(/isDraftHeroState: draftHeroEligible,/u);
   });
 
   it("paints pairs and takes card drops in the sidebar", () => {
