@@ -29,7 +29,8 @@ export type MobileThemeRuntimeOperation =
       readonly themeMode: MobileThemeMode;
     };
 
-const UNIWIND_THEME_NAMES: ReadonlyArray<"light" | "dark" | MobileUniwindThemeName> = [
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+export const UNIWIND_THEME_NAMES: ReadonlyArray<"light" | "dark" | MobileUniwindThemeName> = [
   "light",
   "dark",
   ...BUILT_IN_THEME_IDS.flatMap((themeId) => [
@@ -37,6 +38,7 @@ const UNIWIND_THEME_NAMES: ReadonlyArray<"light" | "dark" | MobileUniwindThemeNa
     `${themeId}-dark` as const,
   ]),
 ];
+/* fork:end no3y-mobile-interface-font */
 
 export function getMobileUniwindThemeName(
   themeId: MobileThemeId,

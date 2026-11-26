@@ -165,6 +165,7 @@ function No3ySearchHeader(
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
+        className="font-sans"
         style={{
           flex: 1,
           ...NO3Y_FONT.regular,

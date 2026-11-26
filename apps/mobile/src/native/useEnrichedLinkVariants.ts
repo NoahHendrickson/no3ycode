@@ -12,7 +12,9 @@ import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markd
 import type { ComposerContextRecord } from "@t3tools/contracts";
 import { contextChipAccent, contextChipPresentation } from "../lib/composerChipPresentation";
 import { CONTEXT_CHIP_ICON_SOURCES } from "../lib/contextChipIcons.generated";
-import { FONT_FAMILIES } from "../lib/fontFamilies";
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+import { useFontFamilies } from "../lib/fontFamilies";
+/* fork:end no3y-mobile-interface-font */
 import { contextChipIconSource } from "../lib/contextChipIconSource";
 import { markdownFileIconSource } from "../lib/markdownFileIcons";
 import { markdownLinkIcon } from "../lib/markdownLinkIcons";
@@ -136,6 +138,9 @@ export function useEnrichedLinkVariants(
 ) {
   const { linkCustomization, skills, models, textStyle, fileEmbedLabel } = props;
   const theme = useUniwindTheme();
+  /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+  const fontFamilies = useFontFamilies();
+  /* fork:end no3y-mobile-interface-font */
   const links = useMemo(() => {
     const byUrl = new Map<string, MarkdownLinkCustomization>();
     for (const url of urls) {
@@ -236,7 +241,9 @@ export function useEnrichedLinkVariants(
                 paddingHorizontal: 5,
                 paddingVertical: 2,
               },
-              fontFamily: chipForeground ? FONT_FAMILIES.medium : textStyle.fontFamily,
+              /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+              fontFamily: chipForeground ? fontFamilies.medium : textStyle.fontFamily,
+              /* fork:end no3y-mobile-interface-font */
               color: chipForeground ?? link.color ?? textStyle.fileTextColor,
               underline: false,
               backgroundColor: "transparent",
@@ -244,7 +251,9 @@ export function useEnrichedLinkVariants(
           ];
         }),
       ),
-    [chipForegrounds, links, textStyle, chipSizes],
+    // fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font
+    [chipForegrounds, links, textStyle, chipSizes, fontFamilies],
+    // fork:end no3y-mobile-interface-font
   );
   const linkPillContent = useMemo<Record<string, LinkPillContent>>(
     () =>
