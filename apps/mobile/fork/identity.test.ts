@@ -46,12 +46,12 @@ it.each([
   });
   expect(config.owner).toBeUndefined();
   expect(config.updates).toEqual({ enabled: false });
-  // The launch screen is the pixel leaf mark on the dark page the launch animation starts from.
+  // The launch screen is the pixel leaf mark on the left leaf's green, darkened, where the launch animation starts.
   expect(pluginOptions(config, "expo-splash-screen")).toMatchObject({
     image: "./fork/assets/no3y-splash-leaf.png",
     imageWidth: 147,
-    backgroundColor: "#191817",
-    dark: { image: "./fork/assets/no3y-splash-leaf.png", backgroundColor: "#191817" },
+    backgroundColor: "#005236",
+    dark: { image: "./fork/assets/no3y-splash-leaf.png", backgroundColor: "#005236" },
   });
   expect(config.extra?.eas?.projectId).toBeUndefined();
   // Native permission copy is read before Metro's rename runs.

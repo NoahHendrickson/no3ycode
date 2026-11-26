@@ -8797,7 +8797,8 @@
   intent: >
     A cold launch of the no3y iPhone app opens on the pixel leaf mark from the
     app icon. The iOS launch screen is the leaf at 147pt (7pt a cell) on the
-    dark page (#191817) (fork/identity.ts sets expo-splash-screen's iOS
+    leaves' outline green (#005236, the left leaf's green darkened, not the
+    icon's #182E26) (fork/identity.ts sets expo-splash-screen's iOS
     options). fork/no3yLeafMark.ts is the one source for the mark: the top
     leaf on its 21-cell grid, turned a quarter at a time for the others, in
     the one paint order that rests as the logo (bottom, right, top, left).

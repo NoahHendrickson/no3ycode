@@ -3,6 +3,7 @@ import type { ExpoConfig } from "expo/config";
 
 import { rewriteUpstreamDisplayName } from "../../../scripts/lib/fork-brand-name-core.ts";
 import { NO3Y_APPLE_TEAM_ID, NO3Y_BUNDLE_IDENTIFIER } from "./no3yConstants.ts";
+import { NO3Y_LEAF_OUTLINE } from "./no3yLeafMark.ts";
 
 type AppVariant = "development" | "preview" | "production";
 
@@ -69,8 +70,8 @@ export function no3yVariant<V extends UpstreamVariant>(
   };
 }
 
-/** The page colour the launch leaf animation (fork/No3yLaunchLeaf.tsx) starts on. */
-export const NO3Y_SPLASH_BACKGROUND = "#191817";
+/** The launch page (and the leaf animation in fork/No3yLaunchLeaf.tsx) is the leaves' outline green. */
+export const NO3Y_SPLASH_BACKGROUND = NO3Y_LEAF_OUTLINE;
 /** Drawn at this width (7pt a leaf cell), centred, the frame the JS animation's first frame matches. */
 export const NO3Y_SPLASH_IMAGE_WIDTH = 147;
 const NO3Y_SPLASH_IMAGE = "./fork/assets/no3y-splash-leaf.png";
