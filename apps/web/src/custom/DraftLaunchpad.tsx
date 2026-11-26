@@ -6,7 +6,7 @@ import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId, PullRequestListInput, ScopedProjectRef } from "@t3tools/contracts";
 import * as Equal from "effect/Equal";
 import { AsyncResult, Atom } from "effect/reactivity";
-import { Fragment, type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { useComposerDraftStore } from "~/composerDraftStore";
@@ -110,20 +110,6 @@ function pullRequestTargets(
   }));
 }
 
-/** A launchpad card: a label over its rows. */
-function Card(props: { readonly label: string; readonly children: ReactNode }) {
-  return (
-    <div
-      data-fork-draft-launchpad-card=""
-      // Rounds with the composer above it, not the 8px cards beside a thread (--fork-card-radius).
-      className="flex min-w-0 flex-col overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card"
-    >
-      <div className="px-3 pt-3 pb-3 text-muted-foreground/70 text-xs">{props.label}</div>
-      <div className="flex min-w-0 flex-col">{props.children}</div>
-    </div>
-  );
-}
-
 export function DraftLaunchpad(
   props: Parameters<typeof useDraftProjectChoices>[0] & {
     /** The checkout a picked project's thread will run in, when it is the project's own
@@ -137,7 +123,7 @@ export function DraftLaunchpad(
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
   const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   const { draftId } = props;
-  // No repository yet: the launchpad offers the projects and their work, and a pick moves the draft.
+  // No repository yet: the launchpad offers the recent projects' work, and a pick moves the draft.
   const { needsProject } = choices;
   const isChat = useComposerDraftStore((store) =>
     draftId === null ? false : isChatDraft(store.getDraftSession(draftId)),
@@ -223,37 +209,46 @@ export function DraftLaunchpad(
       entry: needsProject ? entryFor(suggestion.project) : null,
     }))
     .filter((row) => !needsProject || row.entry !== null);
-  const suggestionCard =
-    rows.length === 0 ? null : (
-      <Card label="Start something new">
-        {rows.map(({ suggestion, entry }, index) => {
-          const Icon = KIND_ICON[suggestion.kind];
-          /** Picks the suggestion's project and writes its prompt into the draft. */
-          const write = (event: MouseEvent<HTMLElement>) => {
-            if (entry !== null) {
-              choices.pick(
-                entry.group.projectKey,
-                event.currentTarget,
-                suggestion.envMode === null ? undefined : { envMode: suggestion.envMode },
-              );
-            }
-            // A draft can already hold what the user wrote before picking.
-            const written =
-              useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
-            if (written.includes(suggestion.prompt)) return;
-            const prompt =
-              written.trim().length > 0 ? `${written}\n\n${suggestion.prompt}` : suggestion.prompt;
-            setPrompt(draftId, prompt);
-          };
-          return (
-            <Fragment key={suggestion.id}>
-              {index > 0 ? <div className="border-border border-t" /> : null}
-              {/* The 36px section between the dividers, edge to edge; it writes the prompt into the
-                  draft and never sends. */}
+  if (rows.length === 0) return null;
+  return (
+    <LaunchpadRoot>
+      <div
+        data-fork-draft-launchpad-card=""
+        // Rounds with the composer above it, not the 8px cards beside a thread (--fork-card-radius).
+        className="flex min-w-0 flex-col overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card"
+      >
+        {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
+        <div className="p-3 text-muted-foreground/70">Start something new</div>
+        {/* Full-width dividers between the rows. */}
+        <div className="flex min-w-0 flex-col divide-y divide-border">
+          {rows.map(({ suggestion, entry }) => {
+            const Icon = KIND_ICON[suggestion.kind];
+            /** Picks the suggestion's project and writes its prompt into the draft. */
+            const write = (event: MouseEvent<HTMLElement>) => {
+              if (entry !== null) {
+                choices.pick(
+                  entry.group.projectKey,
+                  event.currentTarget,
+                  suggestion.envMode === null ? undefined : { envMode: suggestion.envMode },
+                );
+              }
+              // A draft can already hold what the user wrote before picking.
+              const written =
+                useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
+              if (written.includes(suggestion.prompt)) return;
+              const prompt =
+                written.trim().length > 0
+                  ? `${written}\n\n${suggestion.prompt}`
+                  : suggestion.prompt;
+              setPrompt(draftId, prompt);
+            };
+            return (
               <button
+                key={suggestion.id}
                 type="button"
-                className="group/suggestion flex min-h-9 min-w-0 cursor-pointer items-center gap-2 py-1 pr-3 pl-3 text-left text-foreground text-sm outline-none hover:bg-accent focus-visible:bg-accent"
-                onClick={(event) => write(event)}
+                // 36px, edge to edge between the dividers; it writes the prompt and never sends.
+                className="group/suggestion flex min-h-9 min-w-0 cursor-pointer items-center gap-2 px-3 py-1 text-left text-foreground outline-none hover:bg-accent focus-visible:bg-accent"
+                onClick={write}
               >
                 {entry !== null ? (
                   <ProjectFavicon
@@ -265,25 +260,28 @@ export function DraftLaunchpad(
                   <Icon className="size-4 shrink-0 text-muted-foreground" />
                 )}
                 <span className="min-w-0 truncate">{suggestion.title}</span>
-                {/* Hugs the title and slides in from its left on hover or focus. */}
-                <span className="inline-flex h-6 shrink-0 -translate-x-2 items-center rounded-full bg-foreground/8 px-2 text-muted-foreground text-xs opacity-0 transition-[translate,opacity] duration-150 ease-out group-hover/suggestion:translate-x-0 group-hover/suggestion:opacity-100 group-focus-visible/suggestion:translate-x-0 group-focus-visible/suggestion:opacity-100 motion-reduce:transition-none">
+                {/* Hugs the title and slides in from its left on hover or focus; hidden from the
+                    button's name, which the title already gives. */}
+                <span
+                  aria-hidden
+                  className="inline-flex h-6 shrink-0 -translate-x-2 items-center rounded-full bg-foreground/8 px-2 text-muted-foreground opacity-0 transition-[translate,opacity] duration-150 ease-out group-hover/suggestion:translate-x-0 group-hover/suggestion:opacity-100 group-focus-visible/suggestion:translate-x-0 group-focus-visible/suggestion:opacity-100 motion-reduce:transition-none"
+                >
                   {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
                   Draft it
                 </span>
               </button>
-            </Fragment>
-          );
-        })}
-      </Card>
-    );
-
-  return suggestionCard === null ? null : <LaunchpadRoot>{suggestionCard}</LaunchpadRoot>;
+            );
+          })}
+        </div>
+      </div>
+    </LaunchpadRoot>
+  );
 }
 
 /**
  * The launchpad scrolls inside the room left between it and the chat canvas's
- * bottom edge (above any terminal drawer), so a tall list or a phone's stacked
- * cards never run off screen or under the drawer.
+ * bottom edge (above any terminal drawer), so a tall list never runs off screen
+ * or under the drawer.
  */
 function LaunchpadRoot(props: { readonly children: ReactNode }) {
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
@@ -317,7 +315,8 @@ function LaunchpadRoot(props: { readonly children: ReactNode }) {
     <div
       ref={setRoot}
       data-fork-draft-launchpad=""
-      className="overflow-y-auto overscroll-contain"
+      // A pixel under the Interface font size, like the composer's chips.
+      className="overflow-y-auto overscroll-contain text-(length:--fork-composer-chip-text)"
       style={maxHeight === null ? undefined : { maxHeight }}
     >
       {props.children}

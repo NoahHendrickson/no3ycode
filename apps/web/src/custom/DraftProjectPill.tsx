@@ -70,7 +70,7 @@ function DraftProjectChip(props: {
         ? selection.label
         : "Choose a project";
   const chipRef = useRef<HTMLButtonElement>(null);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- slides a newly mounted chip in from the picked pill, reading both boxes before paint
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- slides a remounted chip in from the picked row, reading both boxes before paint
   useLayoutEffect(() => {
     if (props.draftId !== null && chipRef.current) {
       playDraftProjectPick(props.draftId, chipRef.current);

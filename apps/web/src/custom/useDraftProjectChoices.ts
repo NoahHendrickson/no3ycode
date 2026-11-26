@@ -41,8 +41,8 @@ import {
   useDraftProjectAssignmentPending,
 } from "./useNewAgentDraft";
 
-/** How many recent projects an unassigned draft's launchpad lists before "All projects";
-    the composer is centred, so the launchpad has roughly half a window to fit in. */
+/** How many recent projects an unassigned draft's launchpad draws its work from; the composer
+    is centred, so the launchpad has roughly half a window to fit in. */
 export const QUICK_PICK_LIMIT = 4;
 
 /** Short windows pin the composer to the bottom and put the slot under it in flow
@@ -186,7 +186,7 @@ export function useDraftProjectChoices(props: {
       : selection.kind === "project"
         ? (selection.entry?.group.projectKey ?? "")
         : "";
-  // No repository yet (unassigned, or No project): the launchpad lists the recent projects.
+  // No repository yet (unassigned, or No project): the launchpad offers the recent projects' work.
   const needsProject = selection.kind !== "project";
   const recentEntries =
     needsProject && draftId !== null

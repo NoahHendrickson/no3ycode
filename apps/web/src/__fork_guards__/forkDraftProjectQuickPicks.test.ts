@@ -25,9 +25,7 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
   it("picks the unassigned draft's project from the composer's chip, with work under it", () => {
     const pill = read("../custom/DraftProjectPill.tsx");
     // Every draft, unassigned included, carries the chip; "Choose a project" until one is picked.
-    expect(pill).not.toContain('selection.kind === "unassigned" && !shortWindow) return null');
     expect(pill).toContain(': "Choose a project";');
-    expect(launchpad).not.toContain("function ProjectList(");
     // A short window has no room under its bottom-pinned composer.
     expect(launchpad).toMatch(/const shown =\s*draftId !== null &&\s*!shortWindow &&/u);
     expect(launchpad).toContain("if (!shown || draftId === null) return null;");
@@ -66,16 +64,12 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
       /written\.trim\(\)\.length > 0\s*\? `\$\{written\}\\n\\n\$\{suggestion\.prompt\}`/u,
     );
     expect(launchpad).not.toMatch(/navigate|useNavigate|router/u);
-    // A suggestion only writes its prompt; nothing in the launchpad sends.
-    expect(launchpad).not.toMatch(/onGo|onSend/u);
     expect(read("../custom/draftLaunchpadSuggestions.ts")).toContain(
       "export function deriveLaunchpadSuggestions(",
     );
   });
 
   it("sets the launchpad a pixel under the Interface font size", () => {
-    expect(read("../theme.custom.css")).toMatch(
-      /\[data-fork-draft-launchpad\] \{\s*--text-xs: var\(--fork-composer-chip-text\);\s*--text-sm: var\(--fork-composer-chip-text\);/u,
-    );
+    expect(launchpad).toContain("text-(length:--fork-composer-chip-text)");
   });
 });

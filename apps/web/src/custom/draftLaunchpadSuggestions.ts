@@ -185,29 +185,26 @@ function reviewOpenSuggestions(
     string,
     {
       readonly project: NonNullable<LaunchpadSuggestion["project"]>;
-      readonly refs: string[];
-      readonly numbers: string[];
+      readonly prs: LaunchpadPullRequest[];
     }
   >();
   for (const pr of openPullRequests) {
     const key = `${pr.environmentId}:${pr.projectId}`;
     const group = byProject.get(key) ?? {
       project: { environmentId: pr.environmentId, projectId: pr.projectId },
-      refs: [],
-      numbers: [],
+      prs: [],
     };
-    // A project's list can span repositories (a fork and its upstream), so name the repository.
-    group.refs.push(`${pr.repository}#${pr.number}`);
-    group.numbers.push(`#${pr.number}`);
+    group.prs.push(pr);
     byProject.set(key, group);
   }
-  return [...byProject].map(([key, { project, refs, numbers }]) => ({
+  return [...byProject].map(([key, { project, prs }]) => ({
     id: `review-open:${key}`,
     kind: "review-open",
     project,
     envMode: null,
-    title: `Review ${refs.length} open ${plural(refs.length, "PR", "PRs")}: ${numbers.join(", ")}`,
-    prompt: `Code-review the open PRs (${refs.join(", ")}), leave your reviews on them, and tell me which are ready to merge.`,
+    title: `Review ${prs.length} open ${plural(prs.length, "PR", "PRs")}: ${prs.map((pr) => `#${pr.number}`).join(", ")}`,
+    // A project's list can span repositories (a fork and its upstream), so the prompt names them.
+    prompt: `Code-review the open PRs (${prs.map((pr) => `${pr.repository}#${pr.number}`).join(", ")}), leave your reviews on them, and tell me which are ready to merge.`,
   }));
 }
 

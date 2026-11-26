@@ -7193,14 +7193,14 @@
     worktree (a multi-model send always makes new ones), its uncommitted files, commits to pull and a branch with no pull
     request, then, last, starting the dev server for a picked project in its
     own checkout (custom/draftLaunchpadSuggestions). Before a pick, the same git
-    work comes from each listed project's own checkout, named for its
+    work comes from each recent project's own checkout, named for its
     project; picking one moves the draft into that checkout ("local", pinned to
     that machine), never a new worktree; each suggestion carries that policy. The pull requests come from the cached pullRequests.list
     query and the checkouts from the git status queries the chat uses; a
     failed or unsupported list just offers nothing. Visibility is decided before either is asked for, so a hidden
     launchpad (short window or Chat mode draft) queries nothing. A No project
-    draft keeps the launchpad like an unassigned one: the projects, their work,
-    and a pick moves the draft off No project.
+    draft keeps the launchpad like an unassigned one: the recent projects'
+    work, and a pick moves the draft off No project.
     Suggestion rows are 36px buttons, split by full-width dividers, with a
     hover (and keyboard focus) fill edge to edge, and a "Draft it" pill that
     hugs the title and slides in from its left (not under reduced motion). A row picks its project and writes its prompt into the draft
