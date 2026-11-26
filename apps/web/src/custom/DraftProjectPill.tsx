@@ -45,7 +45,7 @@ export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices
   const choices = useDraftProjectChoices(props);
   const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) {
-    return <DraftProjectPillView choices={null} onAddProject={openAddProject} />;
+    return <DraftAddProjectButton onAdd={openAddProject} />;
   }
   // An unassigned draft picks from the launchpad, except in a short window, which has
   // no room for it.
@@ -64,9 +64,7 @@ function DraftProjectChip(props: {
       playDraftProjectPick(props.draftId, chipRef.current);
     }
   }, [props.draftId]);
-  return (
-    <DraftProjectPillView ref={chipRef} choices={props.choices} onAddProject={openAddProject} />
-  );
+  return <DraftProjectPillView ref={chipRef} choices={props.choices} />;
 }
 
 /** What the chip reads: the menu's rows and pick, the selection it names, and whether a pick is
@@ -78,33 +76,32 @@ export type DraftProjectPillViewChoices = DraftProjectMenuChoices & {
   readonly pending: boolean;
 };
 
+/** @public — the chip in a pill's place when there is no project to pick; Storybook renders it. */
+export function DraftAddProjectButton({ onAdd }: { readonly onAdd: () => void }) {
+  return (
+    <Button
+      type="button"
+      size="xs"
+      variant="ghost"
+      className={DRAFT_PROJECT_CHIP_CLASS_NAME}
+      onClick={onAdd}
+      data-testid="draft-project-pill"
+      data-composer-context-control
+    >
+      <FolderPlusIcon className="size-3 shrink-0 text-current" />
+      <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
+    </Button>
+  );
+}
+
 /** @public — the pill as drawn; Storybook renders it on its own. */
 export function DraftProjectPillView({
   choices,
-  onAddProject,
   ref,
 }: {
-  /** Null when there is no project to pick: the pill adds one instead. */
-  readonly choices: DraftProjectPillViewChoices | null;
-  readonly onAddProject: () => void;
+  readonly choices: DraftProjectPillViewChoices;
   readonly ref?: Ref<HTMLButtonElement> | undefined;
 }) {
-  if (choices === null) {
-    return (
-      <Button
-        type="button"
-        size="xs"
-        variant="ghost"
-        className={DRAFT_PROJECT_CHIP_CLASS_NAME}
-        onClick={onAddProject}
-        data-testid="draft-project-pill"
-        data-composer-context-control
-      >
-        <FolderPlusIcon className="size-3 shrink-0 text-current" />
-        <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
-      </Button>
-    );
-  }
   const { selection, pending } = choices;
   const label =
     selection.kind === "no-project"

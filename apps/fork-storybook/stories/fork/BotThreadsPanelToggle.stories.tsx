@@ -31,7 +31,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /** Opens and closes the Threads panel beside a petal's conversation and its work. */
-export const Playground: Story = {};
+export const Playground: Story = {
+  // The header holds open in state; remount it when the control changes.
+  render: (args) => <Header key={String(args.open)} {...args} />,
+};
 
 /** Closed, and pressed while the panel is open. */
 export const States: Story = {

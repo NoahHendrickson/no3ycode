@@ -4092,8 +4092,8 @@
     unified Layout section (W/H with per-axis Fixed/Hug/Fill menus and an
     aspect-ratio lock, direction, gap, the 3x3 align matrix, padding pairs) and
     Appearance (opacity, radius, per-corner grid) — with icon field prefixes
-    (panel/PanelIcons.tsx, Phosphor at `regular`, NOT through the lucide duotone
-    shim). Controls the spec does not draw are kept rather than dropped: margins,
+    (panel/PanelIcons.tsx, Hugeicons from the shim's StrokeGlyphs, always
+    stroked). Controls the spec does not draw are kept rather than dropped: margins,
     per-side padding/stroke, min/max sizing, the raw display select and the
     flex-child controls live behind in-section disclosures. Align is a set of
     VERBS with no read-back state; engine/align.ts maps each to the one honest

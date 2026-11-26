@@ -3,7 +3,11 @@ import { EnvironmentId } from "@t3tools/contracts";
 import { useState } from "react";
 
 import { renderComposerContextStripFallback } from "~/custom/composerContextStrip";
-import { DraftProjectPillView, type DraftProjectPillViewChoices } from "~/custom/DraftProjectPill";
+import {
+  DraftAddProjectButton,
+  DraftProjectPillView,
+  type DraftProjectPillViewChoices,
+} from "~/custom/DraftProjectPill";
 import { NO_PROJECT_VALUE } from "~/custom/useDraftProjectChoices";
 
 import { Row, Stack } from "../Specimen.tsx";
@@ -37,26 +41,31 @@ function Composer(props: { readonly selection: Selection; readonly pending?: boo
   );
   const [kind, setKind] = useState(props.selection);
   const label = ENTRIES.find((entry) => entry.group.projectKey === value)?.group.displayName;
-  const choices: DraftProjectPillViewChoices | null =
-    kind === "add"
-      ? null
-      : {
-          entries: ENTRIES,
-          value: kind === "unassigned" ? "" : value,
-          pick: (next) => {
-            setValue(next);
-            setKind(next === NO_PROJECT_VALUE ? "no-project" : "project");
-          },
-          noProjectEnvironmentId: environmentId,
-          selection: kind === "project" ? { kind, label: label ?? "no3ycode" } : { kind },
-          pending: props.pending ?? false,
-        };
+  const choices: DraftProjectPillViewChoices = {
+    entries: ENTRIES,
+    value: kind === "unassigned" ? "" : value,
+    pick: (next) => {
+      setValue(next);
+      setKind(next === NO_PROJECT_VALUE ? "no-project" : "project");
+    },
+    noProjectEnvironmentId: environmentId,
+    selection:
+      kind === "project"
+        ? { kind, label: label ?? "no3ycode" }
+        : { kind: kind === "add" ? "unassigned" : kind },
+    pending: props.pending ?? false,
+  };
   return (
     <div className="w-[736px] max-w-full">
       <StoryComposer
         prompt="What should the agent do?"
         context={renderComposerContextStripFallback({
-          leading: <DraftProjectPillView choices={choices} onAddProject={() => {}} />,
+          leading:
+            kind === "add" ? (
+              <DraftAddProjectButton onAdd={() => {}} />
+            ) : (
+              <DraftProjectPillView choices={choices} />
+            ),
         })}
       />
     </div>
@@ -82,7 +91,10 @@ type Story = StoryObj<typeof meta>;
 
 /** A draft's project chip; it opens the draft's project menu (Fork/Draft project menu). It reads
     the draft and the environment's projects, so the story hands the choices in. */
-export const Playground: Story = {};
+export const Playground: Story = {
+  // The pill holds its pick in state; remount it when a control changes.
+  render: (args) => <Composer key={`${args.selection}-${String(args.pending)}`} {...args} />,
+};
 
 /** A project, No project, nothing picked yet (shown in a short window, where the launchpad
     has no room), and Add a project when there is nothing to pick. */

@@ -595,54 +595,66 @@ export const OctagonXIcon = icon("octagon-x", Hg.OctagonXIcon, "themed");
 export const UnlinkIcon = icon("unlink", Hg.UnlinkIcon, "stroke");
 export const UserLockIcon = icon("user-lock", Hg.UserLockIcon, "themed");
 
+/** One fork glyph, always stroked: no lucide classes and no palette subscription. */
+export type StrokeGlyph = (props: Omit<LucideCompatProps, "weight">) => ReactElement;
+const stroked =
+  (data: IconSvgElement): StrokeGlyph =>
+  (props) => <HugeGlyph {...props} data={data} filled={false} />;
+
 /**
  * Fork glyphs drawn stroked in every theme: design mode's panel and layers rail, and the sidebar
  * card's subagent count. Kept off `*Icon` exports, which the project icon picker lists
  * (lucideIconByName).
  */
 export const StrokeGlyphs = {
-  ChatBot: icon("chat-bot", Hg.ChatBotIcon, "stroke"),
+  ChatBot: stroked(Hg.ChatBotIcon),
   // Layers rail.
-  Link01: icon("link-01", Hg.Link01Icon, "stroke"),
-  News: icon("news", Hg.NewsIcon, "stroke"),
-  CursorText: icon("cursor-text", Hg.CursorTextIcon, "stroke"),
-  InputText: icon("input-text", Hg.InputTextIcon, "stroke"),
-  LeftToRightListBullet: icon("left-to-right-list-bullet", Hg.LeftToRightListBulletIcon, "stroke"),
-  Cube: icon("cube", Hg.CubeIcon, "stroke"),
+  Link01: stroked(Hg.Link01Icon),
+  News: stroked(Hg.NewsIcon),
+  CursorText: stroked(Hg.CursorTextIcon),
+  InputText: stroked(Hg.InputTextIcon),
+  LeftToRightListBullet: stroked(Hg.LeftToRightListBulletIcon),
+  Cube: stroked(Hg.CubeIcon),
+  Text: stroked(Hg.TextIcon),
+  Image: stroked(Hg.ImageIcon),
+  Square: stroked(Hg.SquareIcon),
   // Design panel.
-  AlignLeft: icon("align-left", Hg.AlignLeftIcon, "stroke"),
-  AlignHorizontalCenter: icon("align-horizontal-center", Hg.AlignHorizontalCenterIcon, "stroke"),
-  AlignRight: icon("align-right", Hg.AlignRightIcon, "stroke"),
-  AlignTop: icon("align-top", Hg.AlignTopIcon, "stroke"),
-  AlignVerticalCenter: icon("align-vertical-center", Hg.AlignVerticalCenterIcon, "stroke"),
-  AlignBottom: icon("align-bottom", Hg.AlignBottomIcon, "stroke"),
-  Pushpin: icon("pushpin", Hg.PinIcon, "stroke"),
-  GridView: icon("grid-view", Hg.GridViewIcon, "stroke"),
-  Unlink05: icon("unlink-05", Hg.Unlink05Icon, "stroke"),
-  CornerDownRight: icon("corner-down-right", Hg.CornerDownRightIcon, "stroke"),
-  ArrowExpand: icon("arrow-expand", Hg.ArrowExpandIcon, "stroke"),
-  ArrowShrink: icon("arrow-shrink", Hg.ArrowShrinkIcon, "stroke"),
-  Contrast: icon("contrast", Hg.ContrastIcon, "stroke"),
-  SquareRoundCorner: icon("square-round-corner", Hg.SquareRoundCornerIcon, "stroke"),
-  TextFont: icon("text-font", Hg.TextFontIcon, "stroke"),
-  TextBold: icon("text-bold", Hg.TextBoldIcon, "stroke"),
-  LetterSpacing: icon("letter-spacing", Hg.LetterSpacingIcon, "stroke"),
-  TextAlignLeft: icon("text-align-left", Hg.TextAlignLeftIcon, "stroke"),
-  TextAlignCenter: icon("text-align-center", Hg.TextAlignCenterIcon, "stroke"),
-  TextAlignRight: icon("text-align-right", Hg.TextAlignRightIcon, "stroke"),
-  TextAlignJustifyCenter: icon(
-    "text-align-justify-center",
-    Hg.TextAlignJustifyCenterIcon,
-    "stroke",
-  ),
-  SquareDashed: icon("square-dashed", Hg.SquareDashedIcon, "stroke"),
-  Computer: icon("computer", Hg.ComputerIcon, "stroke"),
-  MinusSign: icon("minus-sign", Hg.MinusSignIcon, "stroke"),
-  PlusSign: icon("plus-sign", Hg.PlusSignIcon, "stroke"),
-  PaintBucket: icon("paint-bucket", Hg.PaintBucketIcon, "stroke"),
-  StrokeCenter: icon("stroke-center", Hg.StrokeCenterIcon, "stroke"),
-  DashedLine01: icon("dashed-line-01", Hg.DashedLine01Icon, "stroke"),
-  PaintBrush01: icon("paint-brush-01", Hg.PaintBrush01Icon, "stroke"),
+  AlignLeft: stroked(Hg.AlignLeftIcon),
+  AlignHorizontalCenter: stroked(Hg.AlignHorizontalCenterIcon),
+  AlignRight: stroked(Hg.AlignRightIcon),
+  AlignTop: stroked(Hg.AlignTopIcon),
+  AlignVerticalCenter: stroked(Hg.AlignVerticalCenterIcon),
+  AlignBottom: stroked(Hg.AlignBottomIcon),
+  Pushpin: stroked(Hg.PinIcon),
+  GridView: stroked(Hg.GridViewIcon),
+  Unlink05: stroked(Hg.Unlink05Icon),
+  CornerDownRight: stroked(Hg.CornerDownRightIcon),
+  ArrowExpand: stroked(Hg.ArrowExpandIcon),
+  ArrowShrink: stroked(Hg.ArrowShrinkIcon),
+  Contrast: stroked(Hg.ContrastIcon),
+  SquareRoundCorner: stroked(Hg.SquareRoundCornerIcon),
+  TextFont: stroked(Hg.TextFontIcon),
+  TextBold: stroked(Hg.TextBoldIcon),
+  LetterSpacing: stroked(Hg.LetterSpacingIcon),
+  TextAlignLeft: stroked(Hg.TextAlignLeftIcon),
+  TextAlignCenter: stroked(Hg.TextAlignCenterIcon),
+  TextAlignRight: stroked(Hg.TextAlignRightIcon),
+  TextAlignJustifyCenter: stroked(Hg.TextAlignJustifyCenterIcon),
+  SquareDashed: stroked(Hg.SquareDashedIcon),
+  Computer: stroked(Hg.ComputerIcon),
+  MinusSign: stroked(Hg.MinusSignIcon),
+  PlusSign: stroked(Hg.PlusSignIcon),
+  PaintBucket: stroked(Hg.PaintBucketIcon),
+  StrokeCenter: stroked(Hg.StrokeCenterIcon),
+  DashedLine01: stroked(Hg.DashedLine01Icon),
+  PaintBrush01: stroked(Hg.PaintBrush01Icon),
+  ArrowRight02: stroked(Hg.ArrowRight02Icon),
+  ArrowDown02: stroked(Hg.ArrowDown02Icon),
+  FoldHorizontal: stroked(Hg.FoldHorizontalIcon),
+  FoldVertical: stroked(Hg.FoldVerticalIcon),
+  UnfoldVertical: stroked(Hg.UnfoldVerticalIcon),
+  Link02: stroked(Hg.Link02Icon),
+  FullScreen: stroked(Hg.FullScreenIcon),
 } as const;
 
 /** Layers02's raw parts, for the background-work mark, which masks a fill per layer with them. */
