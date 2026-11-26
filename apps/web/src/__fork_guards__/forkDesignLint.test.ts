@@ -253,6 +253,20 @@ function Local() {}`;
     });
   });
 
+  describe("B6 Figma kit stamps", () => {
+    const STORY = "apps/fork-storybook/stories/fork/Chip.stories.tsx";
+    const stamps = (text: string) => ({ [STORY]: DesignLint.storyHash(text) });
+    const findings = (stories: Map<string, string>, stamped: Record<string, string>) =>
+      DesignLint.checkFigmaStamps(stories, stamped) as readonly Finding[];
+
+    it("passes a story whose stamp matches and flags an edited, new or deleted one", () => {
+      expect(findings(new Map([[STORY, "a"]]), stamps("a"))).toEqual([]);
+      expect(findings(new Map([[STORY, "b"]]), stamps("a"))[0]?.message).toMatch(/changed since/);
+      expect(findings(new Map([[STORY, "a"]]), {})[0]?.message).toMatch(/^new story/);
+      expect(findings(new Map(), stamps("a"))[0]?.message).toMatch(/deleted story/);
+    });
+  });
+
   describe("suppressions", () => {
     const css = (reason: string) => `${ROOT} .fork-x {
   /* design-lint-disable-next-line A3${reason} */

@@ -9782,10 +9782,10 @@
 - id: fork-design-lint
   intent: >
     Fork UI takes its values from tokens and its controls from components/ui,
-    per the rules in .fork/DESIGN-RULES.md (A1-A5 values, B1-B5 components,
+    per the rules in .fork/DESIGN-RULES.md (A1-A5 values, B1-B6 components,
     C1-C6 theme CSS). design-lint.mjs --check (a CI step) checks the CSS and
-    the cross-file rules (stories, the per-theme token contract, dead
-    [data-fork-*] selectors). The TSX rules are oxlint overrides that
+    the cross-file rules (stories, the Figma kit check on changed stories,
+    the per-theme token contract, dead [data-fork-*] selectors). The TSX rules are oxlint overrides that
     vite.config.ts always applies: the shadcn rules re-enabled for custom/ and
     overrides/, plus the fork's three oxlint rules (no-hand-built-primitives,
     no-hand-built-status-marks, no-direct-icon-imports). Flat Glass, Basic
@@ -9804,12 +9804,14 @@
     - .fork/design-lint/themes.mjs
     - .fork/design-lint/rules/attributes.mjs
     - .fork/design-lint/rules/contract.mjs
+    - .fork/design-lint/rules/figma.mjs
     - .fork/design-lint/rules/primitives.mjs
     - .fork/design-lint/rules/restated.mjs
     - .fork/design-lint/rules/stories.mjs
     - .fork/design-lint/rules/values.mjs
     - .fork/design-rules.mjs
     - .fork/design-rules.d.mts
+    - .fork/figma-kit.json
     - oxlint-plugin-t3code/rules/no-direct-icon-imports.ts
     - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-primitives.ts

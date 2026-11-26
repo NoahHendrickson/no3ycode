@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Fork design-system lint: the CSS and cross-file rules of .fork/DESIGN-RULES.md, the ones
- * oxlint cannot see (`vp lint` carries the TSX rules). `--check` fails on any finding.
+ * oxlint cannot see (`vp lint` carries the TSX rules). `--check` fails on any finding;
+ * `--figma-checked <story files…>` records the Figma kit as checked against them (B6).
  */
 
 import * as NodeFS from "node:fs";
@@ -10,6 +11,7 @@ import * as NodeURL from "node:url";
 
 import { loadStylesheet } from "./design-lint/css.mjs";
 import { checkDeadForkAttributes } from "./design-lint/rules/attributes.mjs";
+import { checkFigma, stampFigma } from "./design-lint/rules/figma.mjs";
 import {
   buildTokenIndex,
   checkThemeContract,
@@ -39,6 +41,7 @@ import { allowlisted, applySuppressions } from "./design-lint/suppressions.mjs";
 export { loadStylesheet } from "./design-lint/css.mjs";
 export { checkDeadForkAttributes } from "./design-lint/rules/attributes.mjs";
 export { buildTokenIndex, checkThemeContract } from "./design-lint/rules/contract.mjs";
+export { checkFigmaStamps, storyHash } from "./design-lint/rules/figma.mjs";
 export { checkDuplicatedThemeBlocks } from "./design-lint/rules/restated.mjs";
 export { exportedComponents, storyImports } from "./design-lint/rules/stories.mjs";
 export { checkStylesheet } from "./design-lint/rules/values.mjs";
@@ -89,13 +92,21 @@ export function collectFindings(root = REPO_ROOT) {
     ...checkThemeContract([...checked.flatMap(cssConsumers), ...tsxConsumers], definitions),
     ...checkDeadForkAttributes(checked, sourceText),
     ...checkStories(root),
+    ...checkFigma(root),
   ];
   return applySuppressions(findings, checked).filter((entry) => !allowlisted(entry));
 }
 
 function main() {
-  if (process.argv.slice(2).join(" ") !== "--check") {
-    console.error("usage: node .fork/design-lint.mjs --check");
+  const [mode, ...paths] = process.argv.slice(2);
+  if (mode === "--figma-checked" && paths.length > 0) {
+    console.log(
+      `design-lint: stamped ${stampFigma(REPO_ROOT, paths)} story file(s) as checked against Figma.`,
+    );
+    return;
+  }
+  if (mode !== "--check" || paths.length > 0) {
+    console.error("usage: node .fork/design-lint.mjs --check | --figma-checked <story files…>");
     process.exit(2);
   }
   const findings = collectFindings(REPO_ROOT);
