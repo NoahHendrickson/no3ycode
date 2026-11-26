@@ -8,6 +8,9 @@ import { Image } from "react-native";
 /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
 import { StyleSheet } from "react-native";
 /* fork:end no3y-subagent-link-chip */
+/* fork:begin fork-file-link-ink — see .fork/customizations.yaml#fork-file-link-ink */
+import { parseThreadLinkHref } from "@t3tools/shared/threadLinks";
+/* fork:end fork-file-link-ink */
 import type { LinkPillContent, MarkdownStyle } from "react-native-enriched-markdown";
 import type { ComposerContextRecord } from "@t3tools/contracts";
 import { contextChipAccent, contextChipPresentation } from "../lib/composerChipPresentation";
@@ -158,7 +161,11 @@ export function useEnrichedLinkVariants(
         [...links].map(([url, link]) => [
           url,
           link.chip
-            ? (contextChipAccent(link.chip.accent, theme, textStyle.color) ?? textStyle.color)
+            ? /* fork:begin fork-file-link-ink — see .fork/customizations.yaml#fork-file-link-ink */
+              ((parseThreadLinkHref(url)
+                ? textStyle.linkColor
+                : /* fork:end fork-file-link-ink */
+                  contextChipAccent(link.chip.accent, theme, textStyle.color)) ?? textStyle.color)
             : undefined,
         ]),
       ),
