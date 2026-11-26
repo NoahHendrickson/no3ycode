@@ -5,11 +5,7 @@ import * as NodeURL from "node:url";
 import { DEFERRED_LINT_RULES, DEFERRED_LINT_SCOPE } from "./.fork/lint-deferred.mjs";
 /* fork:end fork-lint-cleanliness */
 /* fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint */
-import {
-  DESIGN_LINT_BLOCKING,
-  DESIGN_LINT_ENV,
-  DESIGN_LINT_OVERRIDES,
-} from "./.fork/design-rules.mjs";
+import { DESIGN_LINT_OVERRIDES } from "./.fork/design-rules.mjs";
 /* fork:end fork-design-lint */
 import { remoteCacheUrl } from "./infra/task-cache/src/remoteCache.ts";
 import { cachedTestTasks } from "./scripts/lib/cached-tests.ts";
@@ -733,10 +729,7 @@ export default defineConfig({
       },
       /* fork:end fork-lint-cleanliness */
       /* fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint */
-      // On while DESIGN_LINT_BLOCKING is; with it off, `design-lint.mjs --report` sets the env.
-      ...(DESIGN_LINT_BLOCKING || process.env[DESIGN_LINT_ENV] === "1"
-        ? DESIGN_LINT_OVERRIDES
-        : []),
+      ...DESIGN_LINT_OVERRIDES,
       /* fork:end fork-design-lint */
     ],
     options: {

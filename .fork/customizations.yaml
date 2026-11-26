@@ -9668,17 +9668,16 @@
   intent: >
     Fork UI takes its values from tokens and its controls from components/ui,
     per the rules in .fork/DESIGN-RULES.md (A1-A5 values, B1-B5 components,
-    C1-C6 theme CSS). design-lint.mjs checks the CSS and the cross-file rules
-    (stories, the per-theme token contract, dead [data-fork-*] selectors) and
-    runs the TSX rules through vp lint: the shadcn rules re-enabled for
-    custom/ and overrides/, plus the fork's three oxlint rules
-    (no-hand-built-primitives, no-hand-built-status-marks,
-    no-direct-icon-imports). Flat Glass, Basic Darker Neutral, Basic Light,
-    Inlet Black and Inlet Cream are enforced; Glass 3D is best effort.
-    Blocking: DESIGN_LINT_BLOCKING in design-rules.mjs and the CI --check step
-    are on together, and the guard fails if only one moves. No ratchet: a rule
-    passes or fails. DESIGN_LINT_PENDING (and B5's pending: groups) lists the
-    files that wait on a design call, each to be fixed and removed.
+    C1-C6 theme CSS). design-lint.mjs --check (a CI step) checks the CSS and
+    the cross-file rules (stories, the per-theme token contract, dead
+    [data-fork-*] selectors). The TSX rules are oxlint overrides that
+    vite.config.ts always applies: the shadcn rules re-enabled for custom/ and
+    overrides/, plus the fork's three oxlint rules (no-hand-built-primitives,
+    no-hand-built-status-marks, no-direct-icon-imports). Flat Glass, Basic
+    Darker Neutral, Basic Light, Inlet Black and Inlet Cream are enforced;
+    Glass 3D is best effort. No ratchet: a rule passes or fails.
+    DESIGN_LINT_PENDING (and B5's pending: groups) lists the files that wait
+    on a design call, each to be fixed and removed.
   tier: 4
   files:
     - .fork/DESIGN-RULES.md
@@ -9695,7 +9694,7 @@
   watch:
     # Registers the three rules in the t3code plugin.
     - oxlint-plugin-t3code/index.ts
-    # Appends the design overrides to lint.overrides behind the switch.
+    # Appends the design overrides to lint.overrides.
     - vite.config.ts
     # Carries the step that runs the check.
     - .github/workflows/ci.yml

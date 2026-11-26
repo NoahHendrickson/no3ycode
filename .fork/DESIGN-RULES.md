@@ -6,11 +6,11 @@ hold fork code to that. They cover fork-owned code only: `apps/web/src/custom/**
 `overrides/`, and the fork's fenced hunks in `index.css`.
 
 Enforced themes: Flat Glass (primary), Basic Darker Neutral, Basic Light, Inlet Black and Inlet
-Cream. Glass 3D gets best effort: its findings show up in the report but never block.
+Cream. Glass 3D gets best effort: a finding only it can see is printed but never blocks.
 
-**Status: blocking.** CI runs `node .fork/design-lint.mjs --check` and `vp lint` carries the TSX
-rules. There's no ratchet or baseline: a rule either passes or it fails. A few files wait on a
-design call (see [Pending](#pending)).
+CI runs `node .fork/design-lint.mjs --check` and `vp lint` carries the TSX rules. There's no
+ratchet or baseline: a rule either passes or it fails. A few files wait on a design call (see
+[Pending](#pending)).
 
 ## A. Values come only from tokens
 
@@ -64,21 +64,12 @@ Only when the rule really doesn't fit, and always with a reason.
 
 ## How the checks run
 
-- `node .fork/design-lint.mjs --report` prints counts per rule (split into mechanical, new token
-  and judgement) and per file, then writes the full inventory to
-  `node_modules/.cache/fork-design-lint/inventory.json` (`--json <file>` writes it elsewhere).
-  It never fails.
-- `node .fork/design-lint.mjs --check` fails on any finding. CI will run this.
-- The CSS rules and the cross-file checks (B5, C3, C5) live in `design-lint.mjs`. A5 and B1–B4
-  are oxlint rules: the shadcn rules, plus `t3code/no-hand-built-primitives`,
+- `node .fork/design-lint.mjs --check` runs the CSS rules and the cross-file checks (B5, C3,
+  C5) and fails on any finding.
+- A5 and B1–B4 are oxlint rules: the shadcn rules, plus `t3code/no-hand-built-primitives`,
   `t3code/no-hand-built-status-marks` and `t3code/no-direct-icon-imports`. `design-rules.mjs`
-  configures them, and the report runs them through `vp lint` with `T3CODE_FORK_DESIGN_LINT=1`.
+  configures them for fork files and `vite.config.ts` applies them, so `vp lint` reports them.
   A1 also covers raw palette classes in TSX (`shadcn/no-raw-colors`).
-
-## Switching on
-
-`DESIGN_LINT_BLOCKING` in `.fork/design-rules.mjs` and the `Check fork design rules` step in
-`.github/workflows/ci.yml` move together; `forkDesignLint.test.ts` fails if only one moves.
 
 ## Pending
 

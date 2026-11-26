@@ -1,4 +1,3 @@
-// @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork guard — see `.fork/customizations.yaml#fork-design-lint` and `.fork/DESIGN-RULES.md`.
  *
@@ -6,9 +5,6 @@
  * TSX rules are oxlint rules with their own tests in oxlint-plugin-t3code/rules/.
  */
 
-import * as NodeFS from "node:fs";
-import * as NodePath from "node:path";
-import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 // Namespace import on one line: @ts-expect-error applies to the line that follows it.
@@ -20,8 +16,6 @@ interface Finding {
   readonly line: number;
   readonly message: string;
   readonly kind?: string;
-  readonly fix?: string;
-  readonly hint?: string;
 }
 
 const ROOT = ':root[data-fork="noahhendrickson-t3code"]';
@@ -284,43 +278,5 @@ function Local() {}`;
     it("reports a suppression without a reason", () => {
       expect(rules(run(css("")))).toEqual(["S1", "S2"]);
     });
-  });
-
-  describe("classification", () => {
-    it("calls a raw value with a same-valued token or scale step mechanical", () => {
-      const tokens = sheet(
-        `${ROOT} { --spacing: 0.25rem; --radius-lg: 0.5rem; --fork-ink: #ffffff; }`,
-      );
-      const findings = DesignLint.checkStylesheet(
-        sheet(`${ROOT} .fork-x { border-radius: 8px; gap: 6px; color: #fff; width: 7px; }`),
-        SLOTS,
-      );
-      const classified = DesignLint.classify(
-        findings,
-        DesignLint.buildTokenIndex([tokens]),
-      ) as readonly Finding[];
-      expect(classified.map((finding) => [finding.rule, finding.fix])).toEqual([
-        ["A2", "mechanical"],
-        ["A3", "mechanical"],
-        ["A1", "mechanical"],
-        ["A3", "new-token"],
-      ]);
-    });
-  });
-
-  it("keeps the design rules out of CI until the switch flips", () => {
-    const repoRoot = NodePath.resolve(
-      NodeURL.fileURLToPath(new URL(".", import.meta.url)),
-      "../../../..",
-    );
-    const rulesModule = NodeFS.readFileSync(
-      NodePath.join(repoRoot, ".fork/design-rules.mjs"),
-      "utf8",
-    );
-    const ci = NodeFS.readFileSync(NodePath.join(repoRoot, ".github/workflows/ci.yml"), "utf8");
-    const blocking = /export const DESIGN_LINT_BLOCKING = (true|false);/u.exec(rulesModule)?.[1];
-    // The vite.config switch and the CI step move together.
-    const ciStepOn = /^\s+run: node \.fork\/design-lint\.mjs --check$/mu.test(ci);
-    expect(blocking === "true").toBe(ciStepOn);
   });
 });

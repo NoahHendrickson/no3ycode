@@ -140,8 +140,7 @@ jobs:
       # fork:end fork-lint-cleanliness
 
       # fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint
-      # The design rules (.fork/DESIGN-RULES.md). This step and DESIGN_LINT_BLOCKING in
-      # .fork/design-rules.mjs move together; forkDesignLint.test.ts holds them together.
+      # The CSS and cross-file design rules (.fork/DESIGN-RULES.md); vp lint carries the TSX ones.
       - name: Check fork design rules
         run: node .fork/design-lint.mjs --check
       # fork:end fork-design-lint

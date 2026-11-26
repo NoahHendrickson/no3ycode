@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 /**
  * Fork design-system lint: the CSS and cross-file rules of .fork/DESIGN-RULES.md, plus the
- * oxlint TSX rules run with design-rules.mjs switched on. `--report [--json <file>]` never
- * fails; `--check` fails on any finding; `--no-oxlint` skips the TSX pass; `--stats <baseline>`
- * compares a saved inventory with now. Dependency-free.
+ * oxlint TSX rules. `--check` fails on any finding.
  */
 
 import * as NodeChildProcess from "node:child_process";
@@ -12,36 +10,11 @@ import * as NodeModule from "node:module";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 
-import {
-  DESIGN_ARBITRARY_VALUE_ALLOW,
-  DESIGN_LINT_ENV,
-  DESIGN_LINT_PENDING_ENV,
-  DESIGN_OXLINT_RULE_IDS,
-} from "./design-rules.mjs";
+import { DESIGN_OXLINT_RULE_IDS } from "./design-rules.mjs";
 
 const FORK_DIR = NodePath.dirname(NodeURL.fileURLToPath(import.meta.url));
 const REPO_ROOT = NodePath.resolve(FORK_DIR, "..");
 const WEB_SRC = "apps/web/src";
-
-export const RULE_TITLES = {
-  A1: "raw colour outside a token block",
-  A2: "raw px border-radius",
-  A3: "raw px size, padding, gap or margin",
-  A4: "raw font-size or line-height",
-  A5: "arbitrary Tailwind value",
-  B1: "restyled components/ui export",
-  B2: "hand-built interactive primitive",
-  B3: "hand-built status mark",
-  B4: "icon not from the Hugeicons shim",
-  B5: "exported custom component without a story",
-  C1: "geometry on a [data-slot] primitive",
-  C2: "CSS cancelling a primitive's own paint",
-  C3: "token undefined in an enforced theme",
-  C5: "dead [data-fork-*] selector",
-  C6: "per-theme rule restated instead of tokenised",
-  S1: "suppression without a reason",
-  S2: "unused suppression",
-};
 
 /** The themes C3 holds every consumed token to. `classes`/`attrs` are what the root carries. */
 export const THEMES = [
@@ -586,32 +559,6 @@ export function colorLiterals(property, value) {
   return out;
 }
 
-export function normalizeColor(literal) {
-  const value = literal.toLowerCase().replace(/\s+/gu, " ").trim();
-  const hex = /^#([0-9a-f]{3,8})$/u.exec(value);
-  if (hex) {
-    const digits = hex[1].length <= 4 ? [...hex[1]].map((digit) => digit + digit).join("") : hex[1];
-    return `#${digits.endsWith("ff") && digits.length === 8 ? digits.slice(0, 6) : digits}`;
-  }
-  const rgb =
-    /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)\s*(?:[,/]\s*([\d.]+%?))?\s*\)$/u.exec(value);
-  if (rgb) {
-    const alpha =
-      rgb[4] === undefined
-        ? 1
-        : rgb[4].endsWith("%")
-          ? Number.parseFloat(rgb[4]) / 100
-          : Number(rgb[4]);
-    const channels = rgb
-      .slice(1, 4)
-      .map((channel) => Number(channel).toString(16).padStart(2, "0"));
-    return alpha === 1 ? `#${channels.join("")}` : `rgb(${rgb.slice(1, 4).join(" ")} / ${alpha})`;
-  }
-  if (value === "white") return "#ffffff";
-  if (value === "black") return "#000000";
-  return value;
-}
-
 /** px literals, ignoring 0 and hairlines (±1px, 0.5px). */
 const pxLiterals = (value) =>
   [
@@ -729,46 +676,29 @@ export function checkStylesheet(sheet, slots = new Set()) {
     for (const declaration of rule.declarations) {
       if (!sheet.owns(declaration.line)) continue;
       const { property, value, line } = declaration;
-      const at = {
-        ruleLine: rule.line,
-        selector: selectors[0] ?? `@${rule.name}`,
-        property,
-        value,
-        themes,
-      };
+      const at = { ruleLine: rule.line, selector: selectors[0] ?? `@${rule.name}`, themes };
       const custom = property.startsWith("--");
-      const splittable = custom && selectors.every((selector) => rootCompound(selector) !== null);
 
-      if (!tokenBlock && !/^(?:-webkit-)?mask/u.test(property) && !property.startsWith("--tw-")) {
-        const colors = colorLiterals(property, value);
-        if (colors.length > 0) {
-          out.push(
-            finding("A1", sheet.path, line, `${property}: ${value}`, {
-              ...at,
-              literals: colors,
-              splittable,
-            }),
-          );
-        }
+      if (
+        !tokenBlock &&
+        !/^(?:-webkit-)?mask/u.test(property) &&
+        !property.startsWith("--tw-") &&
+        colorLiterals(property, value).length > 0
+      ) {
+        out.push(finding("A1", sheet.path, line, `${property}: ${value}`, at));
       }
       if (
         !tokenBlock &&
         (custom ? RADIUS_TOKEN_NAME.test(property) : RADIUS_PROPERTY.test(property))
       ) {
-        const px = pxLiterals(value);
-        if (px.length > 0)
-          out.push(
-            finding("A2", sheet.path, line, `${property}: ${value}`, { ...at, px, splittable }),
-          );
+        if (pxLiterals(value).length > 0)
+          out.push(finding("A2", sheet.path, line, `${property}: ${value}`, at));
       } else if (
         !tokenBlock &&
         (custom ? SPACE_TOKEN_NAME.test(property) : SPACE_PROPERTY.test(property))
       ) {
-        const px = pxLiterals(value);
-        if (px.length > 0)
-          out.push(
-            finding("A3", sheet.path, line, `${property}: ${value}`, { ...at, px, splittable }),
-          );
+        if (pxLiterals(value).length > 0)
+          out.push(finding("A3", sheet.path, line, `${property}: ${value}`, at));
       }
       if (
         !tokenBlock &&
@@ -788,13 +718,7 @@ export function checkStylesheet(sheet, slots = new Set()) {
             : !(unit === "" && (number === 0 || number === 1)),
         );
         if (literals.length > 0) {
-          out.push(
-            finding("A4", sheet.path, line, `${property}: ${value}`, {
-              ...at,
-              literals,
-              splittable,
-            }),
-          );
+          out.push(finding("A4", sheet.path, line, `${property}: ${value}`, at));
         }
       }
       if (primitive && GEOMETRY_PROPERTY.test(property)) {
@@ -935,14 +859,13 @@ function tailwindTheme(root) {
 }
 
 /**
- * Every custom-property definition with the themes it can apply in. F1 (upstream token takeover)
- * reuses this: feed it upstream's consumers instead of the fork's.
+ * Every custom property, with the theme ids each of its definitions can apply in.
  */
 export function buildTokenIndex(sheets, runtime = new Set()) {
   const definitions = new Map();
-  const define = (name, entry) => {
+  const define = (name, themes) => {
     const list = definitions.get(name) ?? [];
-    list.push(entry);
+    list.push(themes);
     definitions.set(name, list);
   };
   const allThemes = THEMES.map((theme) => theme.id);
@@ -951,38 +874,18 @@ export function buildTokenIndex(sheets, runtime = new Set()) {
       if (rule.kind === "at") {
         if (rule.name === "property") {
           const name = /@property\s+(--[\w-]+)/u.exec(rule.prelude)?.[1];
-          const initial = rule.declarations.find(
-            (declaration) => declaration.property === "initial-value",
-          );
-          if (name)
-            define(name, {
-              themes: allThemes,
-              value: initial?.value ?? "",
-              file: sheet.path,
-              line: rule.line,
-            });
+          if (name) define(name, allThemes);
         }
         if (rule.name !== "theme" && !rule.selectors) continue;
       }
       const themes = rule.selectors ? [...new Set(rule.selectors.flatMap(themesFor))] : allThemes;
       for (const declaration of rule.declarations) {
         if (!declaration.property.startsWith("--")) continue;
-        define(declaration.property, {
-          themes,
-          value: declaration.value,
-          file: sheet.path,
-          line: declaration.line,
-          tokenBlock: isTokenBlock(rule),
-          global: rule.selectors
-            ? rule.selectors.every((selector) => compounds(selector).length === 1)
-            : rule.kind === "at",
-          tailwindDefault: sheet.path === "tailwindcss/theme.css",
-        });
+        define(declaration.property, themes);
       }
     }
   }
-  for (const name of runtime)
-    define(name, { themes: allThemes, value: "", file: "(runtime)", line: 0 });
+  for (const name of runtime) define(name, allThemes);
   return definitions;
 }
 
@@ -1022,13 +925,10 @@ export function checkThemeContract(consumers, definitions, themes = THEMES) {
     const entries = definitions.get(consumer.name) ?? [];
     for (const theme of themes) {
       if (!consumer.themes.includes(theme.id)) continue;
-      if (entries.some((entry) => entry.themes.includes(theme.id))) continue;
+      if (entries.some((ids) => ids.includes(theme.id))) continue;
       const key = `${consumer.name}␟${theme.id}`;
       if (reported.has(key)) continue;
       reported.add(key);
-      const definedSomewhere = THEMES.some(
-        (other) => other.enforced && entries.some((entry) => entry.themes.includes(other.id)),
-      );
       out.push(
         finding(
           "C3",
@@ -1036,10 +936,7 @@ export function checkThemeContract(consumers, definitions, themes = THEMES) {
           consumer.line,
           `${consumer.name} is not defined in ${theme.id}`,
           {
-            token: consumer.name,
-            theme: theme.id,
             enforced: theme.enforced,
-            definedSomewhere,
           },
         ),
       );
@@ -1259,7 +1156,7 @@ const parseReport = (stdout) => {
   }
 };
 
-function runOxlint(root, { pending = false } = {}) {
+function runOxlint(root) {
   const files = forkTsxFiles(root, ["custom", "overrides"]);
   const codes = new Map(
     Object.entries(DESIGN_OXLINT_RULE_IDS).map(([rule, id]) => [
@@ -1271,11 +1168,6 @@ function runOxlint(root, { pending = false } = {}) {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
-    env: {
-      ...process.env,
-      [DESIGN_LINT_ENV]: "1",
-      ...(pending ? { [DESIGN_LINT_PENDING_ENV]: "1" } : {}),
-    },
   });
   const report = result.error ? undefined : parseReport(result.stdout);
   if (report === undefined) {
@@ -1309,252 +1201,7 @@ function runOxlint(root, { pending = false } = {}) {
     );
 }
 
-/** Resolve a token to px (or a unitless number) in one theme, following var() and simple calc. */
-function makeResolver(definitions) {
-  const cache = new Map();
-  const resolve = (name, themeId, seen = new Set()) => {
-    const key = `${name}␟${themeId}`;
-    if (cache.has(key)) return cache.get(key);
-    if (seen.has(name)) return null;
-    seen.add(name);
-    // App-wide definitions outrank subtree overrides, and the app outranks Tailwind defaults.
-    let candidates = (definitions.get(name) ?? []).filter(
-      (entry) => entry.themes.includes(themeId) && entry.value,
-    );
-    if (candidates.some((entry) => entry.global))
-      candidates = candidates.filter((entry) => entry.global);
-    if (candidates.some((entry) => !entry.tailwindDefault)) {
-      candidates = candidates.filter((entry) => !entry.tailwindDefault);
-    }
-    const values = new Set(candidates.map((entry) => evaluate(entry.value, themeId, seen)));
-    const result = values.size === 1 ? [...values][0] : null;
-    cache.set(key, result);
-    return result;
-  };
-  const evaluate = (expression, themeId, seen) => {
-    const source = expression.trim().replace(/^calc\((.*)\)$/su, "$1");
-    const tokens = source.match(
-      /var\([^()]*(?:\([^()]*\)[^()]*)*\)|-?\d*\.?\d+(?:px|rem|em)?|[-+*/()]/gu,
-    );
-    if (!tokens || tokens.join("").replace(/\s/gu, "") !== source.replace(/\s|calc/gu, ""))
-      return null;
-    let position = 0;
-    const primary = () => {
-      const token = tokens[position++];
-      if (token === "(") {
-        const value = sum();
-        position++;
-        return value;
-      }
-      if (token?.startsWith("var(")) {
-        const parsed = /^var\(\s*(--[\w-]+)\s*(?:,(.*))?\)$/su.exec(token);
-        if (!parsed) return null;
-        const resolved =
-          resolve(parsed[1], themeId, new Set(seen)) ??
-          (parsed[2] ? evaluate(parsed[2], themeId, seen) : null);
-        if (resolved === null) return null;
-        return resolved.endsWith("px")
-          ? { px: Number.parseFloat(resolved) }
-          : { n: Number(resolved) };
-      }
-      const number = /^(-?\d*\.?\d+)(px|rem|em)?$/u.exec(token ?? "");
-      if (!number) return null;
-      const value = Number(number[1]);
-      return number[2] === "rem"
-        ? { px: value * 16 }
-        : number[2] === "px"
-          ? { px: value }
-          : number[2]
-            ? null
-            : { n: value };
-    };
-    const product = () => {
-      let left = primary();
-      while (tokens[position] === "*" || tokens[position] === "/") {
-        const operator = tokens[position++];
-        const right = primary();
-        if (!left || !right) return null;
-        const scalar = right.n ?? null;
-        if (operator === "*") {
-          if (left.n !== undefined && right.px !== undefined) left = { px: left.n * right.px };
-          else if (scalar !== null)
-            left = left.px !== undefined ? { px: left.px * scalar } : { n: left.n * scalar };
-          else return null;
-        } else if (scalar !== null && scalar !== 0) {
-          left = left.px !== undefined ? { px: left.px / scalar } : { n: left.n / scalar };
-        } else return null;
-      }
-      return left;
-    };
-    const sum = () => {
-      let left = product();
-      while (tokens[position] === "+" || tokens[position] === "-") {
-        const operator = tokens[position++];
-        const right = product();
-        if (!left || !right || (left.px === undefined) !== (right.px === undefined)) return null;
-        left =
-          left.px !== undefined
-            ? { px: left.px + (operator === "+" ? right.px : -right.px) }
-            : { n: left.n + (operator === "+" ? right.n : -right.n) };
-      }
-      return left;
-    };
-    const value = sum();
-    if (!value || position !== tokens.length) return null;
-    return value.px !== undefined
-      ? `${Math.round(value.px * 1000) / 1000}px`
-      : `${Math.round(value.n * 1000) / 1000}`;
-  };
-  return resolve;
-}
-
-/** Tokens holding exactly `value` in every theme of `themes`, from names matching `family`. */
-function tokensWithValue(definitions, resolve, family, value, themes, colorMode = false) {
-  const out = [];
-  if (themes.length === 0) return out;
-  for (const [name, entries] of definitions) {
-    if (!family.test(name) || isRuntimeToken(name)) continue;
-    const matches = themes.every((themeId) => {
-      if (colorMode) {
-        const literal = entries
-          .filter((entry) => entry.tokenBlock !== false && entry.themes.includes(themeId))
-          .map((entry) => normalizeColor(entry.value));
-        return literal.length > 0 && literal.every((candidate) => candidate === value);
-      }
-      return resolve(name, themeId) === value;
-    });
-    if (matches) out.push(name);
-  }
-  // Suggest app-wide tokens before ones scoped to a component.
-  const global = (name) => (definitions.get(name) ?? []).some((entry) => entry.global);
-  return out.sort(
-    (left, right) => Number(global(right)) - Number(global(left)) || left.length - right.length,
-  );
-}
-
-/** The scale a rule prefers when several tokens hold the value. */
-const SCALE = {
-  A2: /^--radius-/u,
-  A3: /^--spacing/u,
-  A4: /^--(?:text-[a-z0-9]+|leading-[a-z]+)$/u,
-};
-
-const FAMILY = {
-  A2: /radius/u,
-  A3: /^--(?:spacing|[\w-]*(?:height|width|size|pad|padding|inset|gap|margin|space))/u,
-  A4font: /^--(?:text-[\w-]+$|font-size)|font-size/u,
-  A4line: /line-height|leading/u,
-};
-
-export function classify(findings, definitions) {
-  const resolve = makeResolver(definitions);
-  const repeats = new Map();
-  for (const entry of findings) {
-    if (entry.rule === "A1" && entry.literals) {
-      for (const literal of entry.literals) {
-        const key = normalizeColor(literal);
-        repeats.set(key, (repeats.get(key) ?? 0) + 1);
-      }
-    }
-  }
-  const colorTokens = new Map();
-  for (const entry of findings) {
-    const applicable = entry.themes ?? [];
-    const enforced = applicable.filter((id) => THEMES.find((theme) => theme.id === id)?.enforced);
-    const themes = enforced.length > 0 ? enforced : applicable;
-    switch (entry.oxlint && entry.rule === "A1" ? "A1-tsx" : entry.rule) {
-      case "A1": {
-        const hints = entry.literals.map((literal) => {
-          const key = `${normalizeColor(literal)}␟${themes.join(",")}`;
-          if (!colorTokens.has(key)) {
-            colorTokens.set(
-              key,
-              tokensWithValue(definitions, resolve, /^--/u, normalizeColor(literal), themes, true),
-            );
-          }
-          return colorTokens.get(key);
-        });
-        if (hints.every((names) => names.length > 0)) {
-          entry.fix = "mechanical";
-          entry.hint = `same value as ${hints.map((names) => names[0]).join(", ")}`;
-        } else if (entry.splittable) {
-          entry.fix = "mechanical";
-          entry.hint = "move the custom property into its own token block";
-        } else {
-          entry.fix = entry.literals.some(
-            (literal) => (repeats.get(normalizeColor(literal)) ?? 0) > 1,
-          )
-            ? "new-token"
-            : "judgement";
-        }
-        break;
-      }
-      case "A2":
-      case "A3":
-      case "A4": {
-        const values =
-          entry.rule === "A4"
-            ? entry.literals.map(({ number, unit }) =>
-                unit === "rem" ? `${number * 16}px` : unit ? `${number}${unit}` : `${number}`,
-              )
-            : entry.px.map((px) => `${px}px`);
-        const family =
-          entry.rule === "A4"
-            ? entry.property === "font-size"
-              ? FAMILY.A4font
-              : FAMILY.A4line
-            : FAMILY[entry.rule];
-        const hints = values.map((value) => {
-          const px = Number.parseFloat(value);
-          // The spacing scale first: a named token that merely shares the value says the wrong thing.
-          // Tailwind's leading-N is the same scale, so px line heights take it too.
-          const onScale =
-            entry.rule === "A3" || (entry.rule === "A4" && entry.property === "line-height");
-          if (onScale && value.endsWith("px") && px % 2 === 0) {
-            return `calc(var(--spacing) * ${px / 4})`;
-          }
-          const named = tokensWithValue(definitions, resolve, family, value, themes);
-          return named.find((name) => SCALE[entry.rule].test(name)) ?? named[0] ?? null;
-        });
-        if (hints.every(Boolean)) {
-          entry.fix = "mechanical";
-          entry.hint = hints.join(", ");
-        } else if (entry.splittable) {
-          entry.fix = "mechanical";
-          entry.hint = "move the custom property into its own token block";
-        } else {
-          entry.fix = /calc\(|var\(/u.test(entry.value) ? "judgement" : "new-token";
-        }
-        break;
-      }
-      case "A5":
-        entry.fix =
-          /same value/u.test(entry.message) || /\[var\(--/u.test(entry.message)
-            ? "mechanical"
-            : /Nearest on the scale/u.test(entry.message) || /\[\d/u.test(entry.message)
-              ? "new-token"
-              : "judgement";
-        break;
-      case "B4":
-        entry.fix = /lucide-react|"lucide"/u.test(entry.source ?? "") ? "mechanical" : "judgement";
-        break;
-      case "C3":
-        entry.fix = entry.definedSomewhere ? "new-token" : "judgement";
-        break;
-      case "C5":
-        entry.fix = "mechanical";
-        break;
-      case "C6":
-        entry.fix = entry.kind === "identical" ? "mechanical" : "new-token";
-        break;
-      default:
-        entry.fix = "judgement";
-    }
-  }
-  return findings;
-}
-
-export function collectFindings(root = REPO_ROOT, { oxlint = true, pending = false } = {}) {
+export function collectFindings(root = REPO_ROOT) {
   const forkSheets = forkCssFiles(root).map((path) => loadStylesheet(path, read(root, path)));
   const fencedSheets = FENCED_CSS_FILES.filter((path) =>
     NodeFS.existsSync(NodePath.join(root, path)),
@@ -1600,29 +1247,7 @@ export function collectFindings(root = REPO_ROOT, { oxlint = true, pending = fal
     ...checkStories(root),
   ];
   findings = applySuppressions(findings, checked).filter((entry) => !allowlisted(entry));
-  if (oxlint) {
-    findings.push(
-      ...runOxlint(root, { pending }).map((entry) => {
-        if (entry.rule !== "B4") return entry;
-        const line = read(root, entry.file).split("\n")[entry.line - 1] ?? "";
-        return { ...entry, source: /from\s+["']([^"']+)["']/u.exec(line)?.[1] ?? line };
-      }),
-    );
-  }
-  return classify(findings, definitions);
-}
-
-export function summarize(findings) {
-  const byRule = {};
-  const byFile = {};
-  for (const entry of findings) {
-    const rule = (byRule[entry.rule] ??= { total: 0, mechanical: 0, "new-token": 0, judgement: 0 });
-    rule.total++;
-    rule[entry.fix]++;
-    byFile[entry.file] ??= {};
-    byFile[entry.file][entry.rule] = (byFile[entry.file][entry.rule] ?? 0) + 1;
-  }
-  return { byRule, byFile };
+  return [...findings, ...runOxlint(root)];
 }
 
 /** Glass 3D is best effort: a finding only it can see is reported, never blocking. */
@@ -1632,125 +1257,12 @@ export function isBlocking(entry) {
   return entry.themes.some((id) => THEMES.find((theme) => theme.id === id)?.enforced);
 }
 
-function printReport(findings) {
-  const { byRule, byFile } = summarize(findings);
-  console.log("rule  total  mechanical  new-token  judgement  what");
-  for (const rule of Object.keys(RULE_TITLES)) {
-    const counts = byRule[rule];
-    if (!counts) continue;
-    console.log(
-      `${rule.padEnd(4)}  ${String(counts.total).padStart(5)}  ${String(counts.mechanical).padStart(10)}  ` +
-        `${String(counts["new-token"]).padStart(9)}  ${String(counts.judgement).padStart(9)}  ${RULE_TITLES[rule]}`,
-    );
-  }
-  const bestEffort = findings.filter((entry) => !isBlocking(entry)).length;
-  console.log(
-    `\n${findings.length} findings (${bestEffort} only in Glass 3D, best effort). Top files:`,
-  );
-  const files = Object.entries(byFile)
-    .map(([file, rules]) => [
-      file,
-      Object.values(rules).reduce((sum, count) => sum + count, 0),
-      rules,
-    ])
-    .sort((left, right) => right[1] - left[1]);
-  for (const [file, total, rules] of files.slice(0, 25)) {
-    const detail = Object.entries(rules)
-      .map(([rule, count]) => `${rule} ${count}`)
-      .join(", ");
-    console.log(`  ${String(total).padStart(4)}  ${file}  (${detail})`);
-  }
-}
-
-/** Written exceptions, each with its reason: what the zero is made of besides fixes. */
-function countExceptions(root) {
-  const fork = walk(root, WEB_SRC, (path) => /\.(?:css|tsx?)$/u.test(path) && !isTestFile(path));
-  const designRules = Object.keys(DESIGN_OXLINT_RULE_IDS).join("|");
-  const inline = new RegExp(`oxlint-disable-next-line (?:${designRules})\\b`, "gu");
-  let css = 0;
-  let tsx = 0;
-  for (const path of fork) {
-    const text = read(root, path);
-    if (path.endsWith(".css")) css += text.match(/design-lint-disable-next-line/gu)?.length ?? 0;
-    else tsx += text.match(inline)?.length ?? 0;
-  }
-  const pendingStories = ALLOWLIST.filter((entry) => entry.reason?.startsWith("pending")).length;
-  return {
-    "CSS suppressions": css,
-    "TSX suppressions": tsx,
-    "A5 allowlist values": DESIGN_ARBITRARY_VALUE_ALLOW.length,
-    "allowlisted selectors and non-atomic components": ALLOWLIST.length - pendingStories,
-    pendingStories,
-  };
-}
-
-/** `--stats <baseline inventory>`: then and now, per rule, for the readout. */
-function printStats(baselinePath) {
-  const baseline = JSON.parse(NodeFS.readFileSync(baselinePath, "utf8")).summary.byRule;
-  const now = summarize(collectFindings(REPO_ROOT).filter(isBlocking)).byRule;
-  const held = summarize(collectFindings(REPO_ROOT, { pending: true })).byRule;
-  const exceptions = countExceptions(REPO_ROOT);
-  const rows = Object.keys(RULE_TITLES).map((rule) => {
-    const before = baseline[rule]?.total ?? 0;
-    const blocking = now[rule]?.total ?? 0;
-    const pending =
-      (held[rule]?.total ?? 0) - blocking + (rule === "B5" ? exceptions.pendingStories : 0);
-    return { rule, title: RULE_TITLES[rule], before, pending, blocking };
-  });
-  const sum = (key) => rows.reduce((total, row) => total + row[key], 0);
-  console.log("rule  before  pending  blocking  what");
-  for (const row of rows.filter((entry) => entry.before + entry.pending + entry.blocking > 0)) {
-    console.log(
-      `${row.rule.padEnd(4)}  ${String(row.before).padStart(6)}  ${String(row.pending).padStart(7)}  ${String(row.blocking).padStart(8)}  ${row.title}`,
-    );
-  }
-  console.log(
-    `\nbefore ${sum("before")}, pending a design call ${sum("pending")}, blocking ${sum("blocking")}`,
-  );
-  console.log("written exceptions:");
-  for (const [kind, count] of Object.entries(exceptions)) {
-    if (kind !== "pendingStories") console.log(`  ${String(count).padStart(4)}  ${kind}`);
-  }
-  const statsIndex = process.argv.indexOf("--json");
-  if (statsIndex !== -1) {
-    NodeFS.writeFileSync(
-      NodePath.resolve(process.argv[statsIndex + 1]),
-      `${JSON.stringify({ rows, exceptions }, null, 2)}\n`,
-    );
-  }
-}
-
 function main() {
-  const args = process.argv.slice(2);
-  const statsIndex = args.indexOf("--stats");
-  if (statsIndex !== -1) {
-    printStats(NodePath.resolve(args[statsIndex + 1] ?? ""));
-    return;
-  }
-  const report = args.includes("--report");
-  const check = args.includes("--check");
-  if (report === check) {
-    console.error(
-      "usage: node .fork/design-lint.mjs --report [--json <file>] | --check  [--no-oxlint] | --stats <baseline.json> [--json <file>]",
-    );
+  if (process.argv.slice(2).join(" ") !== "--check") {
+    console.error("usage: node .fork/design-lint.mjs --check");
     process.exit(2);
   }
-  const findings = collectFindings(REPO_ROOT, { oxlint: !args.includes("--no-oxlint") });
-  if (report) {
-    printReport(findings);
-    const jsonIndex = args.indexOf("--json");
-    const jsonPath =
-      jsonIndex === -1
-        ? NodePath.join(REPO_ROOT, "node_modules/.cache/fork-design-lint/inventory.json")
-        : NodePath.resolve(args[jsonIndex + 1]);
-    NodeFS.mkdirSync(NodePath.dirname(jsonPath), { recursive: true });
-    NodeFS.writeFileSync(
-      jsonPath,
-      `${JSON.stringify({ summary: summarize(findings), findings }, null, 2)}\n`,
-    );
-    console.log(`\ninventory: ${NodePath.relative(REPO_ROOT, jsonPath)}`);
-    return;
-  }
+  const findings = collectFindings(REPO_ROOT);
   const blocking = findings.filter(isBlocking);
   for (const entry of blocking) {
     console.error(`  ${entry.file}:${entry.line}  ${entry.rule}  ${entry.message}`);
