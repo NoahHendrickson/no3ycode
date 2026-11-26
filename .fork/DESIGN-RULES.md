@@ -30,6 +30,7 @@ ratchet or baseline: a rule either passes or it fails.
 | B3  | Status marks come only from `custom/SidebarV2StatusIndicator.tsx`: no `CircleHalfIcon`, no hand-drawn status dots                 | One status language across sidebar, tabs and chips                                     | `SidebarV2StatusMark` and its siblings                                                                                                                                                                                                            |
 | B4  | Icons come only from the Hugeicons shim, never an icon package directly                                                           | The shim owns each glyph's stroke and fill policy                                      | `~/custom/icons/lucide-hugeicons`                                                                                                                                                                                                                 |
 | B5  | Every exported **atomic** component in `custom/` (a button, chip, mark, row, card, menu, picker, indicator) has a Storybook story | The story is where Figma and code are compared                                         | A story in `apps/fork-storybook/stories`; a page, layout, section, provider or wrapper gets a `b5Exempt` entry in `design-rules.mjs` with its kind as the reason                                                                                  |
+| B6  | A story that changes gets its Figma kit component checked in the same change                                                      | A story change means the component's look or states changed, so the kit is now behind  | Bring the kit component up to date (`.fork/AGENTS.md` › Figma kit ↔ code), then `node .fork/design-lint.mjs --figma-checked <story files…>` records it in `.fork/figma-kit.json`. A story the kit doesn't draw is stamped the same way            |
 
 B4 applies to `custom/` only. Upstream files (and their copies in `overrides/`) keep
 `from "lucide-react"`, which the build aliases to the shim.
@@ -64,7 +65,7 @@ Only when the rule really doesn't fit, and always with a reason.
 
 ## How the checks run
 
-- `node .fork/design-lint.mjs --check` runs the CSS rules and the cross-file checks (B5, C3,
+- `node .fork/design-lint.mjs --check` runs the CSS rules and the cross-file checks (B5, B6, C3,
   C5) and fails on any finding. The engine is in `.fork/design-lint/` (one module per rule
   group); every exemption it reads is in `design-rules.mjs`.
 - A5 and B1–B4 are oxlint rules: the shadcn rules, plus `t3code/no-hand-built-primitives`,
