@@ -319,11 +319,14 @@ describe("the status line rotation", () => {
     expect(forkStatusLineReconcile(beat, voices(null, "old")).voice).toBe("word");
   });
 
-  it("gives a voice that takes over between beats a full beat", () => {
+  it("hands a tool that settles between beats back to the thought, with a full beat", () => {
     const line = forkStatusLineStart(voices("vp", "old"));
     const settled = forkStatusLineReconcile(line, voices(null, "old"));
-    expect(settled.voice).toBe("word");
+    expect(settled.voice).toBe("thought");
     expect(settled.arrival).toBe(line.arrival + 1);
+    expect(
+      forkStatusLineReconcile(forkStatusLineStart(voices("vp", null)), voices(null, null)).voice,
+    ).toBe("word");
   });
 
   it("treats a thought that is still streaming as the same arrival", () => {
@@ -386,8 +389,10 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     command("second", 5, "inProgress"),
   ];
 
-  it("folds steps and replies alike into the one status line", () => {
-    expect(kinds(rowsFor(turn, true))).toEqual(["working"]);
+  it("closes the steps before the newest reply into one row and folds the rest into the line", () => {
+    expect(kinds(rowsFor(turn, true))).toEqual(["work-toggle", "working"]);
+    expect(kinds(rowsFor(turn.slice(0, 3), true))).toEqual(["work-toggle", "working"]);
+    expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
   });
 
   it("settles a thought whose only follower is a held reply", () => {

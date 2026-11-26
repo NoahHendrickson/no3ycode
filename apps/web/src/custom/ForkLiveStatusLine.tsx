@@ -23,6 +23,48 @@ import {
 } from "./forkWorkingRowLast";
 
 const BEAT_MS = 4000;
+const DWELL_MS = 1500;
+/** The shimmer's cycle; theme.custom.css keeps upstream's 2.2s. */
+const SHIMMER_CYCLE_MS = 2200;
+
+/**
+ * The line swaps a div for a button when a group appears, which remounts the shimmer and
+ * would start a sweep at once. Phasing each mount to the clock keeps the sweeps 2.2s apart.
+ */
+function shimmerLineRef(element: HTMLSpanElement | null) {
+  element?.style.setProperty(
+    "--fork-shimmer-phase",
+    `${-(performance.now() % SHIMMER_CYCLE_MS)}ms`,
+  );
+  return observeVisibleAnimation(element);
+}
+
+/**
+ * Each new label stays up for DWELL_MS, so a burst of arrivals never flickers through the line.
+ * A streaming thought only grows, so it passes through on its first deadline. The list reuses
+ * this line across threads, so a new thread shows its own label at once.
+ */
+function useDwelledLabel(label: string, thought: boolean, thread: string): string {
+  const [shown, setShown] = useState({ label, thought, thread, dwelling: true, arrival: 0 });
+  if (label !== shown.label || thread !== shown.thread) {
+    if (thread === shown.thread && thought && shown.thought && label.startsWith(shown.label)) {
+      setShown({ ...shown, label });
+    } else if (!shown.dwelling || thread !== shown.thread) {
+      setShown({ label, thought, thread, dwelling: true, arrival: shown.arrival + 1 });
+    }
+  }
+  const { dwelling, arrival } = shown;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a wall-clock dwell, started by each new label
+  useEffect(() => {
+    if (!dwelling) return;
+    const id = window.setTimeout(
+      () => setShown((s) => (s.arrival === arrival ? { ...s, dwelling: false } : s)),
+      DWELL_MS,
+    );
+    return () => window.clearTimeout(id);
+  }, [dwelling, arrival]);
+  return shown.label;
+}
 
 /** The rotation's state; forkWorkingRowLast holds the rules, this hook only the clock. */
 function useStatusLineState(voices: ForkStatusLineVoices) {
@@ -62,7 +104,11 @@ export function ForkLiveStatusLine({
   const groupId = live?.groupId;
   const voices = forkStatusLineVoices(live, use(TimelineRowActivityCtx), ctx.workspaceRoot, m);
   const rotation = useStatusLineState(voices);
-  const label = forkStatusLineText(voices, rotation, row.forkWordSeed);
+  const label = useDwelledLabel(
+    forkStatusLineText(voices, rotation, row.forkWordSeed),
+    voices.pinned === null && rotation.voice === "thought",
+    ctx.routeThreadKey,
+  );
   const text = (
     <>
       <span className="min-w-0 truncate">{label}</span>
@@ -73,7 +119,7 @@ export function ForkLiveStatusLine({
     <>
       <SidebarV2WorkingMark seed={row.id} />
       <span
-        ref={observeVisibleAnimation}
+        ref={shimmerLineRef}
         data-fork-status-line
         className="relative flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap"
       >

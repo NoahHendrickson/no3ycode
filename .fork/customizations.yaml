@@ -6586,6 +6586,13 @@
     fork-quiet-live-turn), the running tool, and the thinking word. A new
     tool or thought takes the line at once; otherwise it turns every 4s,
     skipping voices with nothing to say, and the word changes each lap. A
+    tool that ends between beats hands the line back to the thought, not on
+    to the word, and each new label stays up at least 1.5s (a thought still
+    streaming passes through), so a burst of reply, tool and settle never
+    flickers three texts through the line in a few frames. The line swaps
+    a div for a button when a group appears, which remounts its shimmer, so
+    each mount is phased to the clock (--fork-shimmer-phase) and a change
+    never starts a second sweep right after one. A
     provider startup or "Waiting on N subagents" holds the line alone and
     stops the clock. The thinking word comes from
     @t3tools/shared/forkThinkingWords: the seed is what last landed (the row
@@ -6629,33 +6636,37 @@
 
 - id: fork-quiet-live-turn
   intent: >
-    A running turn reads as one status line in every tool-call mode, the way
-    Zen reads. Outside Zen upstream streams each reply as it lands, so a
-    turn grew a column of command, reply, command rows that the turn fold
-    swallowed into "Worked for …" the moment it ended. The fork holds a
-    running turn's replies (Zen's rule: everything after the response
-    boundary, except a revealed message, a steer's answer and a final-answer
-    reply) until the turn ends, so its steps join one stretch that folds into
-    the status line (fork-working-row-last), and the line reads Zen's
-    preview of them. MessagesTimeline opts in with forkHoldLiveReplies,
-    except while Find is open, which searches reply text, and the guest share
-    page opts out (forkStreamLiveReplies), so a guest still watches replies
-    stream as upstream shows them. While the turn waits on the user (an
-    approval or a question), the latest held reply shows, since it usually
-    explains the request (forkShowLatestHeldReply); unlike Zen. The hold runs
-    after settleSupersededReasoning, so a thought followed only by a held
-    reply still reads settled. Upstream's logic
-    tests derive without the flag and keep upstream's shapes. The guard runs
-    one fixture through Zen and through the hold and requires the same
-    replies, so a sync that adds a Zen exemption fails it. The no3y iOS app
-    is unchanged.
+    A running turn reads calmly in every tool-call mode: one summary row
+    that grows as the turn goes, then the status line. Outside Zen upstream
+    streams each reply as it lands, so a turn grew a column of command,
+    reply, command rows that the turn fold swallowed into "Worked for …" the
+    moment it ended. The fork holds a running turn's replies (Zen's rule:
+    everything after the response boundary, except a revealed message, a
+    steer's answer and a final-answer reply) until the turn ends, except the
+    newest, which stays in the entries but draws no row
+    (deriveMessagesTimelineRows skips it). It still splits the turn, so the
+    steps before it close into one summary row whose counts climb with each
+    update, and the steps since it fold into the status line
+    (fork-working-row-last), which reads Zen's preview of it. Only the status
+    line ever carries the agent's words. MessagesTimeline opts in with
+    forkHoldLiveReplies, except while Find is open, which searches reply
+    text, and the guest share page opts out (forkStreamLiveReplies), so a
+    guest still watches replies stream as upstream shows them. While the turn
+    waits on the user (an approval or a question), the newest reply shows,
+    since it usually explains the request (forkShowLatestHeldReply); unlike
+    Zen. The hold runs after settleSupersededReasoning, so a thought followed
+    only by a held reply still reads settled. Upstream's logic tests derive
+    without the flag and keep upstream's shapes. The guard runs one fixture
+    through Zen and through the hold and requires the same replies, so a sync
+    that adds a Zen exemption fails it. The no3y iOS app is unchanged.
   tier: 3
   files:
     - apps/web/src/__fork_guards__/forkQuietLiveTurn.test.ts
   shadows: []
   watch:
-    # Fenced: the forkHoldLiveReplies input, forkHeldLiveReplyIds and the
-    # filter in timelineRowEntries after the visibility filters.
+    # Fenced: the forkHoldLiveReplies input, forkLiveReplyIds, the filter in
+    # timelineRowEntries after the visibility filters, and the skipped row
+    # for the newest reply in deriveMessagesTimelineRows.
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
     # Fenced: passes forkHoldLiveReplies, the forkStreamLiveReplies prop, and
     # reads liveAnswerPreview in every mode (upstream gates it to Zen).

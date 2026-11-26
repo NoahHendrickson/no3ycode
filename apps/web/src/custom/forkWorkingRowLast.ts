@@ -200,7 +200,8 @@ export function forkStatusLineStart(voices: ForkStatusLineVoices): ForkStatusLin
 
 /**
  * Brings the line up to date in render. A new tool or thought takes it at once; the voice
- * showing going quiet hands over. Either starts a fresh beat. Returns `line` if unchanged.
+ * showing going quiet hands back to the thought, else moves on. Either starts a fresh beat.
+ * Returns `line` if unchanged.
  */
 export function forkStatusLineReconcile(
   line: ForkStatusLineState,
@@ -219,7 +220,12 @@ export function forkStatusLineReconcile(
         : null;
   if (arrived !== null) return { ...seen, voice: arrived, arrival: line.arrival + 1 };
   if (speaks(seen, seen.voice)) return seen;
-  return { ...forkStatusLineAdvance(seen), arrival: line.arrival + 1 };
+  // A tool that ends between beats returns the line to the update it was part of.
+  const next =
+    seen.voice !== "thought" && speaks(seen, "thought")
+      ? { ...seen, voice: "thought" as const }
+      : forkStatusLineAdvance(seen);
+  return { ...next, arrival: line.arrival + 1 };
 }
 
 /** Whether the line needs a beat: nothing pins it and it has more than the word to say. */
