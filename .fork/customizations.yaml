@@ -7631,7 +7631,9 @@
   intent: >
     When an update is ready to act on (available to download, downloaded and
     ready to install, or an Update-everything run on offer), the sidebar's
-    round update icon becomes a fully rounded pill reading "Update": pure
+    round update icon becomes a fully rounded pill: "Update" while there is
+    something to download or run, "Install" once the download is done, so
+    the second click says what it does. Pure
     white with black text in dark mode (a fixed white, not --primary, which
     palettes recolour), inverted foreground/background in light mode where
     white would vanish on the sidebar. While the update downloads the pill
@@ -7656,6 +7658,34 @@
     - knip.jsonc
   verify:
     - apps/web/src/__fork_guards__/forkSidebarUpdateLabel.test.ts
+
+- id: fork-update-install-hide
+  intent: >
+    Installing a downloaded app update hides every window first, then stops
+    the backends, closes SSH tunnels and hands off to the installer. Upstream
+    kept the window up through all of that: a backend gets up to 7s to stop,
+    and on macOS Squirrel only unpacks and verifies the new build once
+    quitAndInstall runs (auto-install-on-quit is off), so the app sat open
+    for a long beat after the click while its own threads showed the Mac as
+    disconnected. If the install fails or is interrupted, the windows it hid
+    come back with the error state. On macOS a successful quitAndInstall only
+    waits for Squirrel to stage the build, so if the app is still running two
+    minutes later the install is treated as failed: backends restart, the
+    windows come back, and the pill offers a retry.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/desktop/src/electron/ElectronWindow.ts
+    - apps/desktop/src/updates/DesktopUpdates.ts
+    - apps/desktop/src/updates/DesktopUpdates.test.ts
+    - apps/desktop/src/updates/updatesTestHarness.ts
+    - apps/desktop/src/app/DesktopLifecycle.test.ts
+    - apps/desktop/src/ssh/DesktopSshPasswordPrompts.test.ts
+    - apps/desktop/src/window/DesktopWindow.test.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkUpdateInstallHide.test.ts
+    - apps/desktop/src/updates/DesktopUpdates.test.ts
 
 - id: fork-separate-provider-updates
   intent: >
@@ -8799,7 +8829,8 @@
   intent: >
     A cold launch of the no3y iPhone app opens on the pixel leaf mark from the
     app icon. The iOS launch screen is the leaf at 147pt (7pt a cell) on the
-    dark page (#191817) (fork/identity.ts sets expo-splash-screen's iOS
+    leaves' outline green (#005236, the left leaf's green darkened, not the
+    icon's #182E26) (fork/identity.ts sets expo-splash-screen's iOS
     options). fork/no3yLeafMark.ts is the one source for the mark: the top
     leaf on its 21-cell grid, turned a quarter at a time for the others, in
     the one paint order that rests as the logo (bottom, right, top, left).
@@ -9049,13 +9080,14 @@
     and the feed's closing status lines are hidden on iPhone so nothing shows
     twice. Syncing stays in the header, which the no3y header keeps.
     The Mac's "Resume with less context" notice (fork-resume-compaction-banner)
-    replaces upstream's compact-on-next-send there: one 44pt glass pill stacked
+    replaces upstream's compact-on-next-send there: one 49pt glass pill stacked
     on the composer, above the queued banner, in the thread header bubbles'
     style with its controls nested inside (fork/No3yCompactBanner.tsx, rising
-    in): a shrink icon, "Resume with less context" with the token count muted
-    (it gives way first when short of room), a glass Compact pill that sends
-    `/compact` now as the Mac's compactContext does, and an X, Keep full
-    history, dismissing it for that thread and snapshot for the session. The
+    in): a shrink icon, "Resume with less context" over a muted second line
+    with the token count, as the Mac's description, a glass Compact pill
+    that sends `/compact` now as the Mac's compactContext does, and an X,
+    Keep full history, dismissing it for that thread and snapshot for the
+    session. The
     offer is client-runtime's compactBeforeSendTokens, which applies the Mac's
     shouldOfferResumeCompaction (fork/no3yResumeCompaction.ts), and a send on
     the no3y layout never compacts first (fenced in use-thread-composer-state, read from the dock-published layout flag in fork/no3yHomeTabs.ts).
@@ -10031,3 +10063,22 @@
     - apps/web/src/components/chat/MessagesTimeline.tsx
   verify:
     - apps/web/src/__fork_guards__/forkInlineTurnDiff.test.ts
+
+- id: fork-dev-electron-no-startup-relaunch
+  intent: >
+    The desktop dev runner relaunches Electron after any abnormal exit. When
+    Electron dies during startup, a retry dies the same way, and the runner
+    looped forever (136 launches in about two minutes on Nov 26 2026). The
+    common cause is another worktree's dev app holding the shared t3code-dev
+    profile: upstream's single-instance lock (#19554) makes the new app quit,
+    and each attempt raises and focuses the other app's window, so the user
+    can't click anything. A crash within ten seconds of launch is now left
+    down with a message; a rebuild or a rerun of dev:desktop still relaunches it,
+    and so does a crash more than ten seconds after launch.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/desktop/scripts/dev-electron.mjs
+  verify:
+    - apps/web/src/__fork_guards__/forkDevElectronNoStartupRelaunch.test.ts

@@ -1,7 +1,7 @@
 /**
  * The sidebar header's Code / Chat switch — see `.fork/customizations.yaml#fork-chat-mode`.
- * Figma t3-fork 676:42030: a 28px track with each mode a 28px icon tab, the
- * chosen one raised in the sidebar's own fill.
+ * A 32px track with each mode a wide icon tab, 1px apart, the chosen one raised in the
+ * sidebar's own fill.
  */
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
@@ -33,7 +33,7 @@ export function SidebarModeTabs(props: {
         <Tooltip key={mode}>
           <TooltipTrigger
             render={
-              <IconTab value={mode} aria-label={label}>
+              <IconTab value={mode} aria-label={label} shape="wide">
                 <Icon className="size-4" />
               </IconTab>
             }

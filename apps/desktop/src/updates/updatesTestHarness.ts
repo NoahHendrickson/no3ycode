@@ -126,7 +126,12 @@ export function makeHarness(options: UpdatesHarnessOptions = {}) {
     setMain: () => Effect.void,
     clearMain: () => Effect.void,
     prepareReveal: () => Effect.succeed(false),
-    reveal: () => Effect.void,
+    /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+    reveal: () =>
+      Effect.sync(() => {
+        installSteps.push("revealWindow");
+      }),
+    /* fork:end fork-update-install-hide */
     sendAll: (_channel, state) =>
       Effect.sync(() => {
         sentStates.push(state as DesktopUpdateState);
@@ -134,6 +139,12 @@ export function makeHarness(options: UpdatesHarnessOptions = {}) {
     destroyAll: Effect.sync(() => {
       installSteps.push("destroyAll");
     }),
+    /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+    hideAll: Effect.sync(() => {
+      installSteps.push("hideWindows");
+      return [{} as never];
+    }),
+    /* fork:end fork-update-install-hide */
     syncAllAppearance: () => Effect.void,
   } satisfies ElectronWindow.ElectronWindow["Service"]);
 

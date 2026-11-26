@@ -64,6 +64,10 @@ const CHANNEL_CHANGE_RETRIES = 30;
 const AUTO_UPDATE_STARTUP_DELAY = "15 seconds";
 const AUTO_UPDATE_POLL_INTERVAL = "4 hours";
 const UPDATE_CHECK_WAIT = Duration.seconds(90);
+/* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+// macOS quits only once Squirrel stages the build; past this, a hidden install has stalled.
+const INSTALL_STALL_TIMEOUT = Duration.minutes(2);
+/* fork:end fork-update-install-hide */
 
 type UpdateAction = "check" | "download" | "install" | "install-recovery" | "channel";
 
@@ -399,6 +403,13 @@ export const make = Effect.gen(function* () {
   const installRunningBackendsRef = yield* Ref.make<
     ReadonlyArray<DesktopBackendPool.DesktopBackendInstance>
   >([]);
+  /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+  const installHiddenWindowsRef = yield* Ref.make<
+    Effect.Success<ElectronWindow.ElectronWindow["Service"]["hideAll"]>
+  >([]);
+  const installAttemptRef = yield* Ref.make(0);
+  const serviceScope = yield* Effect.scope;
+  /* fork:end fork-update-install-hide */
   const finishedUpdateActions = yield* PubSub.unbounded<UpdateAction>();
   const updaterConfiguredRef = yield* Ref.make(false);
   const lastLoggedDownloadMilestoneRef = yield* Ref.make(-1);
@@ -844,8 +855,22 @@ export const make = Effect.gen(function* () {
       })),
     );
 
+  /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+  // A failed or interrupted install must not leave the app running with every window hidden.
+  const revealInstallHiddenWindows = Ref.getAndSet(installHiddenWindowsRef, []).pipe(
+    Effect.flatMap((windows) =>
+      Effect.forEach(windows, (window) => electronWindow.reveal(window).pipe(Effect.ignoreCause), {
+        discard: true,
+      }),
+    ),
+  );
+
+  /* fork:end fork-update-install-hide */
   const resetInstallAction = Effect.all(
     [
+      /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+      revealInstallHiddenWindows,
+      /* fork:end fork-update-install-hide */
       finishUpdateAction("install"),
       Ref.set(desktopState.quitting, false),
       Ref.set(installRunningBackendsRef, []),
@@ -887,7 +912,11 @@ export const make = Effect.gen(function* () {
       Effect.catchCause(() =>
         logUpdaterError("Desktop update install recovery failed unexpectedly."),
       ),
-      Effect.ensuring(finishUpdateAction("install-recovery")),
+      /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+      Effect.ensuring(
+        Effect.andThen(revealInstallHiddenWindows, finishUpdateAction("install-recovery")),
+      ),
+      /* fork:end fork-update-install-hide */
     );
   });
 
@@ -931,6 +960,14 @@ export const make = Effect.gen(function* () {
         yield* Ref.set(installRunningBackendsRef, []);
 
         return yield* Effect.gen(function* () {
+          /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+          // Close the app on click; stopping backends and staging the update run behind it.
+          yield* Effect.uninterruptible(
+            electronWindow.hideAll.pipe(
+              Effect.flatMap((windows) => Ref.set(installHiddenWindowsRef, windows)),
+            ),
+          );
+          /* fork:end fork-update-install-hide */
           yield* writeUpdateRestartMarker;
           yield* writeUpdateInProgressMarker;
           const { downloadedVersion } = yield* Ref.get(updateStateRef);
@@ -958,6 +995,18 @@ export const make = Effect.gen(function* () {
             isSilent: true,
             isForceRunAfter: true,
           });
+          /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+          const attempt = yield* Ref.updateAndGet(installAttemptRef, (count) => count + 1);
+          yield* Effect.sleep(INSTALL_STALL_TIMEOUT).pipe(
+            Effect.andThen(Ref.get(installAttemptRef)),
+            Effect.flatMap((current) =>
+              current === attempt
+                ? recoverFailedInstall("The update did not finish installing.")
+                : Effect.void,
+            ),
+            Effect.forkIn(serviceScope),
+          );
+          /* fork:end fork-update-install-hide */
           return { accepted: true, completed: false, failed: false };
         }).pipe(
           Effect.catchTags({
