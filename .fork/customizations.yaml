@@ -5562,7 +5562,9 @@
     transcript working row, subagent members):
     the pixel rain, a 7x7 DNA helix from the "Sequencing" thinking chip, or
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
-    into beads and merges back). Until one is picked, Inlet and Basic draw the
+    into beads and merges back), or the same bead ring in white (the
+    surface's text ink, so dark on Inlet Cream's frame and light themes).
+    Until one is picked, Inlet and Basic draw the
     bead ring and every other palette the helix. The choice is device-local
     (localStorage), not a contracts setting, and Restore defaults clears it
     back to the palette's default. Each mark bakes one loop of frames into a
@@ -5588,6 +5590,7 @@
     - apps/web/src/custom/beadRing.ts
     - apps/web/src/custom/SidebarV2StatusIndicator.tsx
     - apps/web/src/theme.custom.css
+    - apps/web/src/theme.custom.inlet.css
   shadows: []
   watch:
     # Fenced import, state, restore-defaults entry and the Interface row.

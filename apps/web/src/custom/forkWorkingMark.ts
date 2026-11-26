@@ -21,7 +21,7 @@ const STORAGE_KEY = "t3code:fork:working-mark:v2";
 /** v1 stored "helix" for a reset as well as a pick, so only its other picks carry over. */
 const LEGACY_STORAGE_KEY = "t3code:fork:working-mark:v1";
 
-export const FORK_WORKING_MARKS = ["helix", "rain", "bead"] as const;
+export const FORK_WORKING_MARKS = ["helix", "rain", "bead", "bead-white"] as const;
 export type ForkWorkingMark = (typeof FORK_WORKING_MARKS)[number];
 
 /** Each palette's mark until one is picked; an upstream theme (no palette) draws the helix. */
@@ -39,6 +39,7 @@ export const FORK_WORKING_MARK_LABELS: Record<ForkWorkingMark, string> = {
   helix: "DNA helix",
   rain: "Pixel rain",
   bead: "Bead ring",
+  "bead-white": "White bead ring",
 };
 
 const ForkWorkingMarkSchema = Schema.Literals(FORK_WORKING_MARKS);
