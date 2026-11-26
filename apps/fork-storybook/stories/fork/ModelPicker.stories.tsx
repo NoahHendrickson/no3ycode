@@ -104,6 +104,7 @@ function ModelPicker(props: { selection: ModelSelection }) {
   return (
     <ScheduledTaskModelPicker
       environmentId={null}
+      isComposerOwned
       activeInstanceId={selection.instanceId}
       model={selection.model}
       lockedProvider={null}
@@ -153,9 +154,10 @@ export const EffortMenu: Story = {
   },
 };
 
-/** A query searches every provider: one flat list, each row led by its provider's mark. */
+/** A query searches every provider: one flat list, each row led by its provider's mark. "o" hits
+    Claude, Codex and Antigravity alike. */
 export const Search: Story = {
   play: async () => {
-    await userEvent.type(await screen.findByRole("textbox", { name: "Search models" }), "5.5");
+    await userEvent.type(await screen.findByRole("textbox", { name: "Search models" }), "o");
   },
 };

@@ -8,6 +8,7 @@ import figma from "figma";
 export default {
   example: figma.tsx`<ComposerModelPicker
   environmentId={environmentId}
+  isComposerOwned
   activeInstanceId={activeInstanceId}
   model={model}
   lockedProvider={lockedProvider}
