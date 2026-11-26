@@ -193,7 +193,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     expect(
       card?.body,
       "an opaque or tinted fill here stops the wallpaper at the card's edge",
-    ).toMatch(/background-color:\s*rgb\(255 255 255 \/ \d+%\)/u);
+    ).toMatch(/background-color:\s*var\(--fork-white-\d+\)/u);
 
     // The user's sent bubble is painted from --card by fork-changed-files-card,
     // and --card under glass is the 88% slab — so the bubble follows the
@@ -204,9 +204,9 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
         rule.selector.includes("[data-changed-files-state]") && rule.body.includes("background"),
     );
     const bubble = glassRules.find((rule) => rule.selector.includes(".bg-message"));
-    expect(changedFiles?.body).toMatch(/background:\s*rgb\(255 255 255 \/ 5%\)/u);
+    expect(changedFiles?.body).toMatch(/background:\s*var\(--fork-white-5\)/u);
     expect(bubble?.body, "the bubble must match the changed-files card's wash").toMatch(
-      /background-color:\s*rgb\(255 255 255 \/ 5%\)/u,
+      /background-color:\s*var\(--fork-white-5\)/u,
     );
 
     // Scoped to the inset: the sidebar block redefines --card to the panel tint,
@@ -493,7 +493,7 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
     const panel = readSibling("../custom/designMode/panel/ForkDesignPanel.tsx");
     expect(panel).toContain("data-fork-design-panel");
     expect(panel, "the panel surface must stay driven by the token").toContain(
-      "bg-[var(--fork-design-surface)]",
+      "bg-(--fork-design-surface)",
     );
     const rail = readSibling("../custom/designMode/ForkLayersTree.tsx");
     expect(rail).toContain("data-fork-design-layers");
@@ -760,8 +760,11 @@ describe("fork guard: fork-cool-darker-sidebar-vibrancy", () => {
   });
 
   it("gives Flat Glass's tab row the docked sidebar's washes over the same glass", () => {
+    // The tab row may name the same wash by its token (--fork-white-12 is rgb(255 255 255 / 12%)).
     const declared = (body: string | undefined, token: string) =>
-      new RegExp(`${token}:\\s*([^;]+);`, "u").exec(body ?? "")?.[1];
+      new RegExp(`${token}:\\s*([^;]+);`, "u")
+        .exec(body ?? "")?.[1]
+        ?.replace(/^var\(--fork-white-(\d+)\)$/u, "rgb(255 255 255 / $1%)");
     const docked = glassRules.find(
       (rule) =>
         rule.selector.includes('[data-fork-sidebar-vibrancy="liquid-glass"]') &&

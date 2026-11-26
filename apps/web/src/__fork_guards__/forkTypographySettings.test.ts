@@ -87,10 +87,11 @@ describe("fork guard: fork-typography-settings", () => {
     for (const token of ["2xs", "3xs"]) {
       const size = new RegExp(`--text-${token}: ([\\d.]+rem);`).exec(index)?.[1];
       expect(size, `index.css --text-${token}`).toBeDefined();
+      expect(rule(`${TIMELINE} .text-${token}`)?.body).toContain(`var(--text-${token})`);
       // The formatter may wrap the calc's operands onto their own lines.
-      expect(rule(`${TIMELINE} .text-${token}`)?.body).toMatch(
+      expect(tokens?.body).toMatch(
         new RegExp(
-          `calc\\(\\s*${size?.replace(".", "\\.")} \\* var\\(--fork-chat-text-scale, 1\\) \\* var\\(--fork-interface-text-scale, 1\\)\\s*\\)`,
+          `--text-${token}: calc\\(\\s*${size?.replace(".", "\\.")} \\* var\\(--fork-chat-text-scale, 1\\) \\* var\\(--fork-interface-text-scale, 1\\)\\s*\\)`,
           "u",
         ),
       );
@@ -105,7 +106,10 @@ describe("fork guard: fork-typography-settings", () => {
         `font-size: var(--text-${token})`,
       );
     }
-    expect(rule(`${TIMELINE} .chat-markdown table`)?.body).toContain("var(--fork-chat-text-scale");
+    expect(rule(`${TIMELINE} .chat-markdown table`)?.body).toContain("var(--fork-chat-text-sm)");
+    expect(readSibling("../theme.custom.css")).toMatch(
+      /--fork-chat-text-sm: calc\(\s*0\.875rem \* var\(--fork-chat-text-scale, 1\) \* var\(--fork-interface-text-scale, 1\)\s*\);/u,
+    );
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
       'data-timeline-root="true"',
     );

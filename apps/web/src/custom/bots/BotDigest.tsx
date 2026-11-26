@@ -13,7 +13,7 @@ import {
   MessageCircleQuestionIcon,
   ReplyIcon,
   XIcon,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import * as Schema from "effect/Schema";
 import { type ReactNode, useState } from "react";
 
@@ -244,8 +244,8 @@ export function BotDigestView(props: {
               <span className="flex items-center gap-1 px-0.5">
                 {askKeys.map((key, index) => (
                   <button
-                    key={key}
                     type="button"
+                    key={key}
                     aria-label={`Ask ${index + 1} of ${askKeys.length}`}
                     aria-current={index === at ? "true" : undefined}
                     onClick={() => onPage(index)}
@@ -373,7 +373,7 @@ export function BotDigestAskCardView(props: {
         <span
           aria-hidden
           className={cn(
-            "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[color-mix(in_srgb,currentColor_14%,transparent)]",
+            "flex size-8 shrink-0 items-center justify-center rounded-lg bg-current/14",
             props.toneClassName,
           )}
         >

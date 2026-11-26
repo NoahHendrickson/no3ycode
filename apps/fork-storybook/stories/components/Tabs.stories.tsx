@@ -10,14 +10,16 @@ import {
 } from "lucide-react";
 import { type ComponentType, type ReactNode, type SVGProps, useState } from "react";
 
+import { Button } from "~/components/ui/button";
+import { Menu, MenuPopup, MenuTrigger } from "~/components/ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import type { ForkSidebarMode } from "~/custom/chatMode";
 import { SidebarModeTabs } from "~/custom/SidebarModeTabs";
-import { IconTab, Tab, Tabs, type TabsSize } from "~/custom/Tabs";
+import { IconTab, MenuIconTab, MenuTabs, Tab, Tabs, type TabsSize } from "~/custom/Tabs";
 
 import { Dimension, measureWithin, Specimen } from "../Anatomy.tsx";
 import { type ForcedState, forcedStateProps } from "../forcedStates.ts";
-import { Matrix, Row, Stack } from "../Specimen.tsx";
+import { Matrix, POPUP_ANCHOR, Row, Stack } from "../Specimen.tsx";
 
 type Glyph = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -288,6 +290,43 @@ export const SidebarMode: Story = {
   render: function SidebarModeStory() {
     const [mode, setMode] = useState<ForkSidebarMode>("code");
     return <SidebarModeTabs mode={mode} onModeChange={setMode} />;
+  },
+};
+
+/** Icon tabs inside a menu (the Threads menu's Group by): the strip joins the menu's keyboard
+    navigation, and the pick is cut from the menu's own surface. */
+export const InAMenu: Story = {
+  name: "In a menu",
+  parameters: { controls: { disable: true } },
+  render: function InAMenuStory() {
+    const [value, setValue] = useState("project");
+    return (
+      <div style={POPUP_ANCHOR}>
+        <Menu defaultOpen modal={false}>
+          <MenuTrigger render={<Button variant="outline" size="sm" />}>View</MenuTrigger>
+          <MenuPopup align="start" className="min-w-56">
+            <div className="flex items-center justify-between gap-4 px-2 py-1 text-sm">
+              Group by
+              <MenuTabs
+                aria-label="Group by"
+                value={value}
+                onValueChange={(next) => setValue(String(next))}
+              >
+                <MenuIconTab value="none" aria-label="No grouping">
+                  <CircleSlashIcon className="size-4" />
+                </MenuIconTab>
+                <MenuIconTab value="project" aria-label="Group by project">
+                  <FolderIcon className="size-4" />
+                </MenuIconTab>
+                <MenuIconTab value="status" aria-label="Group by status">
+                  <Rows3Icon className="size-4" />
+                </MenuIconTab>
+              </MenuTabs>
+            </div>
+          </MenuPopup>
+        </Menu>
+      </div>
+    );
   },
 };
 

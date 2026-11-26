@@ -9,7 +9,7 @@ import { type ComponentProps, useState } from "react";
 
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { UsageLimitsPooled } from "~/components/usage/UsageLimitsPooled";
-import { UsageCircleMeter } from "~/custom/UsageMeter";
+import { UsageCircleMeter, UsageMeter } from "~/custom/UsageMeter";
 
 import { Row, Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
@@ -40,6 +40,22 @@ export const Rings: Story = {
       ))}
       <Row label="No reading">
         <UsageCircleMeter remaining={null} />
+      </Row>
+    </Stack>
+  ),
+};
+
+/** The Usage view's bar, toned like the ring. */
+export const Bars: Story = {
+  render: () => (
+    <Stack gap={3}>
+      {[100, 62, 35, 8].map((remaining) => (
+        <Row key={remaining} label={`${remaining}% left`}>
+          <UsageMeter remaining={remaining} className="h-1.5 w-40" />
+        </Row>
+      ))}
+      <Row label="No reading">
+        <UsageMeter remaining={null} className="h-1.5 w-40" />
       </Row>
     </Stack>
   ),

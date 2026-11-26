@@ -28,7 +28,6 @@ const sidebarV2 = readSibling("../components/Sidebar.tsx");
 const chromeRows = readSibling("../custom/SidebarV2ChromeRows.tsx");
 const trailingColumn = readSibling("../custom/sidebarV2TrailingColumn.ts");
 const groupHeader = readSibling("../custom/SidebarV2ProjectGroupHeader.tsx");
-const ghostIconTint = readSibling("../custom/ghostIconTint.ts");
 const theme = readSibling("../theme.custom.css");
 const button = readSibling("../components/ui/button.tsx");
 const iconButton = readSibling("../custom/SidebarV2IconButton.tsx");
@@ -72,15 +71,17 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
   });
 
   it("sizes the shared action box at 24px with a visible hover surface", () => {
-    // Every icon-only control in the list is the Storybook Button, ghost-muted, pinned to the
+    // Every icon-only control in the list is the Storybook Button, ghost-tint, pinned to the
     // trailing column's fixed boxes: Button's icon sizes grow below sm, the column's offsets don't.
-    expect(iconButton).toContain('variant="ghost-muted"');
+    expect(iconButton).toContain('variant="ghost-tint"');
     expect(iconButton).toContain('row: { size: "icon-xs", className: "size-6" }');
-    expect(iconButton).toContain('header: { size: "icon", className: "size-8 rounded-[10px]" }');
+    expect(iconButton).toContain(
+      'header: { size: "icon", className: "size-8 rounded-(--radius-sidebar-row)" }',
+    );
     // The fill makes the target legible, and a foreground tint stays a step off the row's own
     // hover and selected fills (accent is one of them in some themes).
-    expect(iconButton).toContain("GHOST_ICON_TINT_CLASS,");
-    expect(ghostIconTint).toContain('"[:hover,[data-pressed]]:bg-foreground/10"');
+    const tint = readSibling("../components/ui/button.tsx").split('"ghost-tint":')[1] ?? "";
+    expect(tint.slice(0, tint.indexOf('",'))).toContain("[:hover,[data-pressed]]:bg-foreground/10");
     // No compositor layer per hidden row action.
     expect(iconButton).toContain(
       '"[&:not([aria-haspopup]):not(:disabled):not([aria-disabled=true])]:will-change-auto"',
@@ -186,7 +187,9 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(sidebarV2).toContain("SIDEBAR_V2_TRAILING_OFFSET.cardStatus");
     expect(trailingColumn).toContain("SIDEBAR_V2_TRAILING_OFFSET.slimActions");
     expect(groupHeader).toContain("SIDEBAR_V2_TRAILING_OFFSET.headerPlus");
-    expect(chromeRows).toContain("SIDEBAR_V2_TRAILING_OFFSET.chromeRow");
+    expect(readSibling("../custom/SidebarChromeButton.tsx")).toContain(
+      "SIDEBAR_V2_TRAILING_OFFSET.chromeRow",
+    );
     expect(chromeRows).toContain("SIDEBAR_V2_TRAILING_OFFSET.chromeStatus");
     expect(readSibling("../custom/SidebarV2StatusSectionHeader.tsx")).toContain(
       "SIDEBAR_V2_TRAILING_OFFSET.headerPlus",

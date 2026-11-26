@@ -1,5 +1,5 @@
 import { useGT } from "gt-react";
-import { BookmarkIcon } from "lucide-react";
+import { BookmarkIcon } from "./icons/lucide-hugeicons";
 import { memo } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";

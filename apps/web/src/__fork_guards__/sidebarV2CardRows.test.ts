@@ -89,7 +89,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(indicator).toContain("data-fork-monitoring-pulse");
     expect(theme).toContain("@keyframes sidebar-v2-monitoring-pulse");
     expect(theme).toMatch(
-      /\.dark \[data-fork-monitoring-pulse\]\s*\{[^}]*opacity:\s*0\.5[^}]*contain:\s*paint[^}]*animation:\s*sidebar-v2-monitoring-pulse/u,
+      /\.dark \[data-fork-monitoring-pulse\],[^{]*\{[^}]*opacity:\s*0\.5[^}]*contain:\s*paint[^}]*animation:\s*sidebar-v2-monitoring-pulse/u,
     );
     // Duty-cycled + stepped (ghost-pulse / status-pulse): holds at each pole
     // with a short steps() ramp, not ease-in-out every vsync.
@@ -387,14 +387,14 @@ describe("fork guard: sidebar-v2-card-rows", () => {
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.statusBoxWidth).toBe(12);
     expect(SIDEBAR_V2_CARD_ALIGNMENT_PX.statusBoxHeight).toBe(14);
     const marks = readSibling("../custom/SidebarV2StatusIndicator.tsx");
-    expect(marks).toContain('className="relative block h-[14px] shrink-0 overflow-hidden"');
+    expect(marks).toContain('className="relative block h-3.5 shrink-0 overflow-hidden"');
     expect(marks).toContain("const SLOT = 14");
     expect(marks).not.toContain("overflow-visible");
     // The settled forms: a filled dot for Done, the same circle hollow for
     // Idle, the half-filled circle for the two blocked-on-you states, and the
     // same dot in red for Failed — so form separates waiting from settled.
     expect(marks).toContain(
-      'const MARK_SLOT_CLASS = "flex h-[14px] w-[12px] shrink-0 items-center justify-center"',
+      'const MARK_SLOT_CLASS = "flex h-3.5 w-3 shrink-0 items-center justify-center"',
     );
     expect(marks).toMatch(
       /tone === "approval" \|\| tone === "input" \? \(\s*<CircleHalfIcon className="size-3" \/>/u,

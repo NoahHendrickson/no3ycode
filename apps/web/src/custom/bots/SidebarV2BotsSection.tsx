@@ -3,18 +3,18 @@
  * density, naming a new bot, and what folds it and the Threads list under it.
  */
 import * as Schema from "effect/Schema";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon } from "../icons/lucide-hugeicons";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
-import { SidebarGroup, SidebarMenuButton } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { cn } from "~/lib/utils";
 
 import { SettingsIcon } from "../icons/lucide-hugeicons";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
-import { CHROME_ROW_INSET, OptionCheckboxItem, PROJECTS_ROW_BUTTON } from "../SidebarV2ChromeRows";
+import { SidebarChromeButton, SidebarChromeGroup } from "../SidebarChromeButton";
+import { OptionCheckboxItem } from "../SidebarV2ChromeRows";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 
 import { BotMascot, BotMascotTile } from "./BotMascot";
@@ -129,7 +129,7 @@ export function SidebarV2NewBotRow(props: {
         }
         className={cn(
           "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-60",
-          compact ? "-mx-[7px]" : "-mx-[2px]",
+          compact ? "-mx-1.75" : "-mx-0.5",
         )}
       >
         {compact ? (
@@ -164,6 +164,7 @@ export function SidebarV2NewBotRow(props: {
 /** @public — the Petals grid's columns: as many tiles at least 56px wide as the width holds,
     sharing it equally, 8px apart. auto-fit, so a short row still spans the sidebar. Storybook
     lays its tiles out on it too. */
+// oxlint-disable-next-line shadcn/no-arbitrary-values -- as many 56px-min Petal tiles as fit the row
 export const PETALS_GRID_CLASS_NAME = "grid grid-cols-[repeat(auto-fit,minmax(56px,1fr))] gap-2";
 
 /** @public — the Petals row's View options popup: the layout picker, and Compact cards under it
@@ -210,7 +211,7 @@ export function SidebarV2BotsRow(props: {
   readonly naming: ReactNode;
 }) {
   return (
-    <SidebarGroup data-fork-bots-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+    <SidebarChromeGroup data-fork-bots-row="" className="mt-6">
       <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
@@ -228,10 +229,9 @@ export function SidebarV2BotsRow(props: {
                 render={
                   <MenuTrigger
                     render={
-                      <SidebarMenuButton
-                        size="sm"
+                      <SidebarChromeButton
+                        shape="icon"
                         type="button"
-                        className={PROJECTS_ROW_BUTTON}
                         aria-label="Petal view options"
                         data-testid="sidebar-v2-bots-options"
                         data-fork-tab-trigger=""
@@ -254,10 +254,9 @@ export function SidebarV2BotsRow(props: {
           <Tooltip>
             <TooltipTrigger
               render={
-                <SidebarMenuButton
-                  size="sm"
+                <SidebarChromeButton
+                  shape="icon"
                   type="button"
-                  className={PROJECTS_ROW_BUTTON}
                   aria-label="New petal"
                   data-testid="sidebar-v2-new-bot"
                   onClick={props.onNewBot}
@@ -293,6 +292,6 @@ export function SidebarV2BotsRow(props: {
           </ul>
         ) : null}
       </TooltipProvider>
-    </SidebarGroup>
+    </SidebarChromeGroup>
   );
 }

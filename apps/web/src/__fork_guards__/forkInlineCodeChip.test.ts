@@ -34,7 +34,8 @@ describe("fork guard: fork-inline-code-chip", () => {
     expect(chip?.selector.startsWith(MARKER)).toBe(true);
     expect(chip?.body).toContain("color: var(--info-foreground)");
     expect(chip?.body).toContain("background: var(--fork-inline-code-wash)");
-    expect(chip?.body).toContain("line-height: 1.3");
+    expect(chip?.body).toContain("line-height: var(--fork-inline-code-leading)");
+    expect(readSibling("../theme.custom.css")).toContain("--fork-inline-code-leading: 1.3;");
   });
 
   it("still finds the hooks upstream owns", () => {

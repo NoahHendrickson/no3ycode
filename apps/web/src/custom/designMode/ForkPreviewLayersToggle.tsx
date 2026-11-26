@@ -1,4 +1,4 @@
-import { PanelLeftIcon } from "lucide-react";
+import { PanelLeftIcon } from "../icons/lucide-hugeicons";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";

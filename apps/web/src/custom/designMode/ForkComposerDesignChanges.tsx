@@ -1,5 +1,5 @@
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { PaintbrushIcon, X } from "lucide-react";
+import { PaintbrushIcon, X } from "../icons/lucide-hugeicons";
 
 import type { DraftId } from "~/composerDraftStore";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -89,7 +89,7 @@ export function DesignChangeChip({
                 right-most child is the X — an unremovable attachment is a one-way door
                 (PR #71 review). */}
             {unresolved > 0 ? (
-              <span className="min-w-0 truncate text-[11px] font-medium opacity-80">
+              <span className="min-w-0 truncate text-(length:--text-2xs) font-medium opacity-80">
                 {entry.elements.length === 1 ? "no source" : `${unresolved} without source`}
               </span>
             ) : null}
@@ -107,7 +107,8 @@ export function DesignChangeChip({
           </span>
         }
       />
-      <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-[11px]">
+      {/* oxlint-disable-next-line shadcn/no-restyle -- monospace for the request it previews; theme.custom.css keeps .font-mono tooltips at the compact metrics */}
+      <TooltipPopup className="max-w-96 whitespace-pre-wrap font-mono text-2xs">
         {unresolved > 0
           ? `${unresolved === entry.elements.length ? (unresolved === 1 ? "This element has" : "These elements have") : `${unresolved} of ${entry.elements.length} elements ${unresolved === 1 ? "has" : "have"}`} no source location — the request carries selector and text context instead.\n\n`
           : ""}

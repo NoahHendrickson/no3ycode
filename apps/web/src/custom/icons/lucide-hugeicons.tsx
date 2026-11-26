@@ -85,6 +85,7 @@ export function HugeGlyph({
   const { bodies, knockouts, holes, plain } = glyphDrawing(data, filled);
   const mask = (suffix: string, content: IconSvgElement) => (
     <mask id={maskId + suffix} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+      {/* oxlint-disable-next-line shadcn/no-raw-colors -- mask luminance: white keeps the glyph */}
       <rect width="24" height="24" fill="white" stroke="none" />
       {content.map(draw)}
     </mask>

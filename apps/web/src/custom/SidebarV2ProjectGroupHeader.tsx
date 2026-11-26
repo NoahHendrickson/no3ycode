@@ -63,7 +63,7 @@ import {
   FolderOpenIcon,
   PlusIcon,
   SettingsIcon,
-} from "lucide-react";
+} from "./icons/lucide-hugeicons";
 import { useState } from "react";
 import { type SortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -156,7 +156,7 @@ export function SidebarV2ProjectGroupHeader(props: {
           // Gap, padding and margins are all derived — see
           // custom/sidebarV2CardAlignment for the arithmetic this row shares
           // with the cards under it.
-          "relative flex min-h-8 w-full items-center rounded-[10px] text-left hover:bg-sidebar-row-hover",
+          "relative flex min-h-8 w-full items-center rounded-(--radius-sidebar-row) text-left hover:bg-sidebar-row-hover",
           SIDEBAR_V2_CARD_ALIGNMENT.headerPad,
           SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
           props.isFirst
@@ -183,7 +183,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             onClick={props.onToggleCollapsed}
             {...(props.reorderable ? sortable.listeners : {})}
             className={cn(
-              "absolute inset-0 z-0 cursor-pointer rounded-[10px]",
+              "absolute inset-0 z-0 cursor-pointer rounded-(--radius-sidebar-row)",
               props.reorderable && "cursor-grab active:cursor-grabbing",
               "outline-none",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar",
@@ -195,7 +195,7 @@ export function SidebarV2ProjectGroupHeader(props: {
               layer. */}
           <span
             className={cn(
-              "pointer-events-none relative z-[1] flex shrink-0 items-center justify-center text-muted-foreground group-hover/collapse:text-sidebar-foreground",
+              "pointer-events-none relative z-1 flex shrink-0 items-center justify-center text-muted-foreground group-hover/collapse:text-sidebar-foreground",
               SIDEBAR_V2_CARD_ALIGNMENT.headerMarkBox,
             )}
           >
@@ -228,7 +228,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             aria-level={3}
             // Regular, 1px under the Sidebar font size, --muted-foreground (368:21364), lifting to
             // foreground with the mark while the row is hovered.
-            className="pointer-events-none relative z-[1] min-w-0 flex-1 truncate text-sidebar-label font-normal text-muted-foreground group-hover/collapse:text-sidebar-foreground"
+            className="pointer-events-none relative z-1 min-w-0 flex-1 truncate text-sidebar-label font-normal text-muted-foreground group-hover/collapse:text-sidebar-foreground"
           >
             {label}
           </span>
@@ -243,7 +243,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             data-fork-section-actions=""
             data-fork-menu-open={anyMenuOpen ? "" : undefined}
             className={cn(
-              "relative z-10 flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-[8px] [&_button:hover]:bg-foreground/10",
+              "relative z-10 flex shrink-0 items-center [&_button]:size-7 [&_button]:rounded-lg [&_button:hover]:bg-foreground/10",
               SIDEBAR_V2_TRAILING_OFFSET.headerPlus,
             )}
           >

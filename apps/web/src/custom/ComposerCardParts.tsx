@@ -1,4 +1,4 @@
-import { Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "./icons/lucide-hugeicons";
 import type { ComponentProps, ReactNode } from "react";
 
 import { ComposerBanner } from "~/components/chat/ComposerBanner";

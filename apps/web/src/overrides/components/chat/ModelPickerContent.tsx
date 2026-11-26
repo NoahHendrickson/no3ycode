@@ -196,9 +196,9 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
   return event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
 }
 
-/** Every row shares one shape: 32px, 4px corners, 12px medium label. */
-const ROW_CLASS =
-  "h-8 min-h-8 rounded-[4px] px-2 py-0 text-base font-normal sm:min-h-8 sm:text-base";
+/** Every row is 32px with a regular label at the interface size. */
+// oxlint-disable-next-line shadcn/no-restyle -- the picker's dense rows, which only this menu draws
+const ROW_CLASS = "py-0 text-base font-normal sm:text-base h-8 min-h-8 sm:min-h-8";
 
 /** Logos for the sub-providers a reseller (OpenCode, fx) routes through, keyed by lowercased name. */
 const SUB_PROVIDER_ICONS: Readonly<Record<string, Icon>> = {
@@ -215,7 +215,9 @@ const HOVER_REVEAL_CLASS =
 /** Whose models the list shows when no query is typed: the selected tab. */
 type ModelPickerScope = ProviderInstanceId | "favorites";
 
-const TOOLTIP_CLASS = "max-w-64 text-balance font-normal leading-snug";
+const TOOLTIP_CLASS = "max-w-64";
+/** The tooltips' explanations: balanced lines at regular weight. */
+const TOOLTIP_TEXT_CLASS = "block text-balance font-normal";
 
 export const ModelPickerContent = memo(function ModelPickerContent(props: {
   environmentId: EnvironmentId | null;
@@ -833,7 +835,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           ROW_CLASS,
           // relative: contains the sr-only provider label inside the scrolling list.
           "group relative",
-          // Lit while the menu its control opened is open (dark palettes: theme.custom.css).
+          // oxlint-disable-next-line shadcn/no-restyle -- the row stays lit while the effort menu its control opened is open (dark palettes: theme.custom.css)
           "has-[>*>[data-model-row-control]>[data-open]]:bg-accent",
           disabledReason && "data-disabled:pointer-events-auto",
         )}
@@ -855,7 +857,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               {label}
             </TooltipTrigger>
             <TooltipPopup side="left" align="center" className={TOOLTIP_CLASS}>
-              {disabledReason}
+              <span className={TOOLTIP_TEXT_CLASS}>{disabledReason}</span>
             </TooltipPopup>
           </Tooltip>
         ) : (
@@ -885,7 +887,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             tabIndex={-1}
             aria-label={isFavorite ? gt("Unpin") : gt("Pin")}
             className={cn(
-              "flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-muted-foreground outline-none hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed",
+              "flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed",
               // A pinned model shows its filled pin at rest, so the pin reads at a glance and
               // unpins from there; an unpinned one shows the outline on hover.
               !isFavorite && HOVER_REVEAL_CLASS,
@@ -970,7 +972,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           }
         />
         <TooltipPopup side="top" sideOffset={6} align="center" className={TOOLTIP_CLASS}>
-          {input.title}
+          <span className={TOOLTIP_TEXT_CLASS}>{input.title}</span>
         </TooltipPopup>
       </Tooltip>
     );
@@ -1051,7 +1053,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           closeOnClick={false}
           disabled={unavailable}
           aria-expanded={unavailable ? undefined : section.isExpanded}
-          className={cn(ROW_CLASS, "gap-2", unavailable && "data-disabled:pointer-events-auto")}
+          className={cn(ROW_CLASS, unavailable && "data-disabled:pointer-events-auto")}
           onClick={() => toggleSubProviderSection(section.key)}
         >
           {unavailable ? (
@@ -1060,7 +1062,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 {label}
               </TooltipTrigger>
               <TooltipPopup side="left" align="center" className={TOOLTIP_CLASS}>
-                {section.unavailableReason}
+                <span className={TOOLTIP_TEXT_CLASS}>{section.unavailableReason}</span>
               </TooltipPopup>
             </Tooltip>
           ) : (
@@ -1106,7 +1108,8 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 closeOnClick={false}
                 aria-expanded={showLegacy}
                 data-model-picker-legacy-toggle="true"
-                className={cn(ROW_CLASS, "gap-2 text-muted-foreground")}
+                tone="muted"
+                className={ROW_CLASS}
                 onClick={() => setShowLegacy((shown) => !shown)}
               >
                 <span className="min-w-0 flex-1 truncate">Legacy models</span>
@@ -1187,7 +1190,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
       >
         {renderProviderTabs()}
         <div className="flex min-w-0 flex-1 flex-col gap-1 p-2" data-fork-model-picker="list">
-          <label className="flex h-9 shrink-0 items-center gap-2 rounded-[4px] border border-foreground/12 bg-foreground/4 px-2">
+          <label className="flex h-9 shrink-0 items-center gap-2 rounded-sm border border-foreground/12 bg-foreground/4 px-2">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <input
               ref={searchInputRef}

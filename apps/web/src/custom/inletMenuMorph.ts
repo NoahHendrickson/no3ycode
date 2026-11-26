@@ -17,6 +17,13 @@ const CLOSE_MS = 280;
 const CLOSED_MS = CLOSE_MS + 32;
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+// A custom property computes to its token text (a token can hold rem), so convert it here.
+const tokenPx = (value: string) => {
+  const number = Number.parseFloat(value) || 0;
+  return value.trim().endsWith("rem")
+    ? number * Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
+    : number;
+};
 const segment = (value: number, from: number, to: number) =>
   clamp((value - from) / (to - from), 0, 1);
 const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
@@ -306,7 +313,7 @@ function startMorph(popup: HTMLElement, trigger: HTMLElement | null) {
   const fill = glassStyle.backgroundColor;
   const menuRadius = Number.parseFloat(glassStyle.borderBottomLeftRadius) || 8;
   const popupStyle = getComputedStyle(popup);
-  const pad = Number.parseFloat(popupStyle.getPropertyValue("--fork-inlet-tab-pad")) || 0;
+  const pad = tokenPx(popupStyle.getPropertyValue("--fork-inlet-tab-pad"));
   // A menu that sets its own shadow (a header menu flipped above its button) keeps it.
   const shadow = popupStyle.getPropertyValue("--fork-inlet-morph-shadow").trim();
   const triggerStyle = getComputedStyle(trigger);

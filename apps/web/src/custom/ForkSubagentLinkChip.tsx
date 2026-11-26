@@ -213,6 +213,7 @@ export function SubagentLinkMark(props: {
   readonly seed: string;
 }) {
   return (
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- the sidebar marks at 80%, so they sit in a chip line
     <span aria-hidden className="inline-flex shrink-0 [zoom:0.8]">
       {props.kind === "working" ? (
         <SidebarV2StillWorkingMark />
@@ -305,7 +306,9 @@ export function ForkSubagentLinkChip(props: {
                 driverKind={provider.driver}
                 displayName={provider.displayName}
                 acpRegistryIconUrl={provider.iconUrl}
+                // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo at the mark's 80% zoom
                 className="z-auto [zoom:0.8]"
+                // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo follows the chip's font size
                 iconClassName="size-[1em]"
               />
             ) : null}

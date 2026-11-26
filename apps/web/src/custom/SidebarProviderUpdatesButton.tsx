@@ -4,7 +4,7 @@ import {
   type ProviderDriverKind,
 } from "@t3tools/contracts";
 import { settlePromise } from "@t3tools/client-runtime/state/runtime";
-import { PackageIcon } from "lucide-react";
+import { PackageIcon } from "./icons/lucide-hugeicons";
 import { useRef, useState } from "react";
 
 import { getProviderUpdateRunToastView } from "~/components/ProviderUpdateLaunchNotification.logic";

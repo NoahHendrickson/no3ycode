@@ -4,6 +4,9 @@
  * colour on hover.
  */
 
+import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
+import { ToggleGroup as ToggleGroupPrimitive } from "@base-ui/react/toggle-group";
+
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../components/ui/tooltip";
 import { cn } from "../lib/utils";
 
@@ -18,20 +21,26 @@ export function ForkSwatchPicker<T extends string>(props: {
   readonly onChange: (value: T) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label={props.label}>
+    <ToggleGroupPrimitive
+      className="flex flex-wrap gap-1.5"
+      aria-label={props.label}
+      value={[props.value]}
+      onValueChange={(next) => {
+        const pick = props.options.find((option) => option.value === next[0]);
+        if (pick) props.onChange(pick.value);
+      }}
+    >
       {props.options.map((option) => (
         <Tooltip key={option.value}>
           <TooltipTrigger
             render={
-              <button
-                type="button"
+              <TogglePrimitive
+                value={option.value}
                 aria-label={option.label}
-                aria-pressed={props.value === option.value}
                 className={cn(
                   "flex size-7 cursor-pointer items-center justify-center rounded-full border border-transparent outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                   props.value === option.value && "border-foreground/64",
                 )}
-                onClick={() => props.onChange(option.value)}
               />
             }
           >
@@ -43,6 +52,6 @@ export function ForkSwatchPicker<T extends string>(props: {
           <TooltipPopup>{option.label}</TooltipPopup>
         </Tooltip>
       ))}
-    </div>
+    </ToggleGroupPrimitive>
   );
 }

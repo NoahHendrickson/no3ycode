@@ -78,6 +78,7 @@ export function PullRequestDetailHeaderBody({
       <div className="mt-2.5 flex min-h-5 min-w-0 items-center gap-3 text-xs">
         <PullRequestBranchFlow head={head} base={base} density="default" />
         {checkout ? (
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the checkout command yields the header row to the branch names first
           <span className="flex min-w-0 max-w-[40%] shrink-[12] justify-end text-muted-foreground/70 @max-[28rem]/pr-header:hidden">
             {checkout}
           </span>

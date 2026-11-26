@@ -1,4 +1,4 @@
-import { PaintbrushIcon } from "lucide-react";
+import { PaintbrushIcon } from "../icons/lucide-hugeicons";
 import { useCallback, useEffect, useRef } from "react";
 
 import { Button } from "~/components/ui/button";

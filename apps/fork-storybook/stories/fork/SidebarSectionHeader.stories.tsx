@@ -4,7 +4,8 @@ import { useArgs } from "storybook/preview-api";
 import { FolderPlusIcon } from "lucide-react";
 
 import { ArrowUpDownIcon, SettingsIcon } from "~/custom/icons/lucide-hugeicons";
-import { PROJECTS_ROW_BUTTON } from "~/custom/SidebarV2ChromeRows";
+import { SidebarProvider } from "~/components/ui/sidebar";
+import { SidebarChromeButton } from "~/custom/SidebarChromeButton";
 import { SidebarV2StatusSectionHeader } from "~/custom/SidebarV2StatusSectionHeader";
 import {
   SIDEBAR_V2_STATUS_SECTION_LABELS,
@@ -21,27 +22,15 @@ const SECTIONS = Object.keys(SIDEBAR_V2_STATUS_SECTION_LABELS) as SidebarV2Statu
 function MockTrailingControls() {
   return (
     <>
-      <button
-        type="button"
-        aria-label="Add a project"
-        className={`inline-flex items-center ${PROJECTS_ROW_BUTTON}`}
-      >
+      <SidebarChromeButton shape="icon" aria-label="Add a project">
         <FolderPlusIcon className="size-4 shrink-0" />
-      </button>
-      <button
-        type="button"
-        aria-label="Sort projects"
-        className={`inline-flex items-center ${PROJECTS_ROW_BUTTON}`}
-      >
+      </SidebarChromeButton>
+      <SidebarChromeButton shape="icon" aria-label="Sort projects">
         <ArrowUpDownIcon weight="stroke" className="size-4 shrink-0" />
-      </button>
-      <button
-        type="button"
-        aria-label="Filter projects"
-        className={`inline-flex items-center ${PROJECTS_ROW_BUTTON}`}
-      >
+      </SidebarChromeButton>
+      <SidebarChromeButton shape="icon" aria-label="Filter projects">
         <SettingsIcon className="size-4 shrink-0" />
-      </button>
+      </SidebarChromeButton>
     </>
   );
 }
@@ -50,10 +39,13 @@ function MockTrailingControls() {
     list controls (`data-fork-section-actions`) just like hovering the header itself. */
 function Header({ hover = false, ...props }: HeaderProps & { readonly hover?: boolean }) {
   return (
-    <ul className="w-64 list-none p-0">
-      <SidebarV2StatusSectionHeader renderTrailing={() => <MockTrailingControls />} {...props} />
-      {hover ? <li data-fork-status-section="" hidden {...forcedStateProps("hover")} /> : null}
-    </ul>
+    // The trailing controls are the real SidebarChromeButton, which reads the sidebar context.
+    <SidebarProvider className="min-h-0">
+      <ul className="w-64 list-none p-0">
+        <SidebarV2StatusSectionHeader renderTrailing={() => <MockTrailingControls />} {...props} />
+        {hover ? <li data-fork-status-section="" hidden {...forcedStateProps("hover")} /> : null}
+      </ul>
+    </SidebarProvider>
   );
 }
 

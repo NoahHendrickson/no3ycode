@@ -139,6 +139,12 @@ jobs:
         run: node .fork/lint-owned.mjs
       # fork:end fork-lint-cleanliness
 
+      # fork:begin fork-design-lint — see .fork/customizations.yaml#fork-design-lint
+      # The CSS and cross-file design rules (.fork/DESIGN-RULES.md); vp lint carries the TSX ones.
+      - name: Check fork design rules
+        run: node .fork/design-lint.mjs --check
+      # fork:end fork-design-lint
+
   build:
     permissions:
       contents: read

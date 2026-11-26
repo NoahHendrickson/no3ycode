@@ -101,12 +101,14 @@ describe("fork local dictation", () => {
     expect(control).toMatch(/transcribing \? \(\s*<Spinner[^>]*\/>\s*\) : \(\s*<CheckIcon/u);
     expect(control).toContain("onClick={recording ? dictation.stop : undefined}");
     expect(theme).toMatch(
-      /\] \[data-fork-dictation-live\]\s*\{\s*color:\s*rgb\(0 0 0 \/ 0\.85\);\s*\}/u,
+      /\] \[data-fork-dictation-live\]\s*\{\s*color:\s*var\(--fork-black-85\);\s*\}/u,
     );
-    expect(theme).toMatch(/\[data-fork-dictation-fill\] \{[^}]*& > \* \{\s*background: white;/u);
+    expect(theme).toMatch(
+      /\[data-fork-dictation-fill\] \{[^}]*& > \* \{\s*background: var\(--fork-white\);/u,
+    );
     // The capsule takes the mic's pull toward the slot, keeping the check on the mic's spot.
     expect(theme).toMatch(
-      /> \[data-fork-dictation-mic\]\[data-fork-dictation-live\]\s*\{\s*margin-inline-end:\s*-6px;/u,
+      /> \[data-fork-dictation-mic\]\[data-fork-dictation-live\]\s*\{\s*margin-inline-end:\s*calc\(var\(--spacing\) \* -1\.5\);/u,
     );
     // Where stop was the only idle action, the X leads the capsule, so a second
     // click where the mic was finishes instead of cancelling.
@@ -254,7 +256,7 @@ describe("fork local dictation", () => {
     expect(frost?.selector).toContain(".dropdown-glass");
     expect(frost?.selector).not.toContain("data-fork-glass-tooltip");
     expect(theme).toMatch(
-      /\[data-slot="tooltip-popup"\]\[data-fork-glass-tooltip\]\s*\{[^}]*font-size:\s*13px/u,
+      /\[data-slot="tooltip-popup"\]\[data-fork-glass-tooltip\]\s*\{[^}]*--fork-tooltip-font-size:\s*var\(--fork-text-chip\)/u,
     );
     // Toggle is a tap of right Command, not a chord that would steal ⌘C.
     expect(dictationModule).toContain('event.code === "MetaRight"');

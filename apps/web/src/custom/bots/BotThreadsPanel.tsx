@@ -24,6 +24,7 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
 
+import { ListItem } from "../ListItem";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
@@ -148,7 +149,7 @@ function BotThreadsBody(props: {
   const header = (
     <div
       className={cn(
-        "flex h-[var(--workspace-topbar-height)] min-h-[var(--workspace-topbar-height)] shrink-0 items-center gap-2 border-b border-border pl-3.5",
+        "flex h-(--workspace-topbar-height) min-h-(--workspace-topbar-height) shrink-0 items-center gap-2 border-b border-border pl-3.5",
         "pr-2",
         isElectron && "drag-region",
         isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",
@@ -338,14 +339,13 @@ export function BotThreadsRowView(props: {
 }) {
   return (
     <li>
-      <button
-        type="button"
+      <ListItem
         aria-current={props.current ? "page" : undefined}
         onClick={props.onOpen}
         onContextMenu={props.onContextMenu}
         className={cn(
-          "flex w-full cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1.5 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          props.current ? "bg-accent" : "hover:bg-accent",
+          "items-start gap-2.5 px-1.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          props.current && "bg-accent",
         )}
         data-testid="bot-threads-row"
       >
@@ -379,7 +379,7 @@ export function BotThreadsRowView(props: {
             ) : null}
           </span>
         </span>
-      </button>
+      </ListItem>
     </li>
   );
 }

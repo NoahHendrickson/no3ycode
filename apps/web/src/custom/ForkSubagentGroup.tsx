@@ -24,7 +24,7 @@ import {
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { SideThreadOpenIntent } from "@t3tools/client-runtime/side-thread";
 import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
-import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "lucide-react";
+import { ArrowUpRightIcon, ChevronDownIcon, ListTreeIcon } from "./icons/lucide-hugeicons";
 import {
   type ComponentProps,
   type CSSProperties,
@@ -389,7 +389,7 @@ export function ForkSubagentCardView(props: {
     <div
       data-fork-subagent-card=""
       data-work-entry-id={member.id}
-      className="w-full min-w-0 overflow-clip rounded-[12px] border border-border bg-card"
+      className="w-full min-w-0 overflow-clip rounded-xl border border-border bg-card"
     >
       <div className="flex min-h-14 items-center gap-2 px-3 py-2">
         {details.length === 0 ? (
@@ -447,7 +447,8 @@ export function ForkSubagentCardView(props: {
           id={wellId}
           hidden={!open}
           data-fork-subagent-well=""
-          className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[11px] bg-[var(--fork-composer-bg)] px-3 py-2 text-xs leading-[18px] shadow-[inset_0_1px_0_var(--color-border)]"
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the well's top corners nest inside the card's 12px corner and 1px rim
+          className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[11px] bg-(--fork-composer-bg) px-3 py-2 text-xs leading-4.5 shadow-[inset_0_1px_0_var(--color-border)]"
         >
           {details.map(({ term, detail }) => (
             <Fragment key={term}>
@@ -498,7 +499,7 @@ export function ForkSubagentIdentity(props: {
               className="absolute inset-0 size-auto rounded-none border-0 bg-transparent ring-0"
               providerIconClassName="absolute inset-0"
               iconClassName="hidden"
-              badgeClassName="top-[-0.3125rem] right-[-0.3125rem] bottom-auto h-3 min-w-3 px-0.5 text-5xs"
+              badgeClassName="-top-1.25 -right-1.25 bottom-auto h-3 min-w-3 px-0.5 text-5xs"
             />
           </>
         ) : (

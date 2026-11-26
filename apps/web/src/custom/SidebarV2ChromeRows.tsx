@@ -35,7 +35,7 @@ import type {
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "./icons/lucide-hugeicons";
 // Fork-only glyphs (no lucide counterpart) come from the shim's own path: this
 // file is fork-owned, so there is no upstream import site to preserve.
 import {
@@ -54,11 +54,10 @@ import {
   Menu,
   MenuPopup,
   MenuRadioGroup,
-  MenuRadioItem,
   MenuSearchInput,
   MenuTrigger,
 } from "~/components/ui/menu";
-import { SidebarGroup, SidebarMenuButton, useSidebar } from "~/components/ui/sidebar";
+import { useSidebar } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { cn } from "~/lib/utils";
@@ -66,6 +65,11 @@ import type { SidebarV2Grouping } from "./sidebarV2ProjectGrouping";
 import { SidebarV2IconButton } from "./SidebarV2IconButton";
 import { SIDEBAR_V2_TRAILING_OFFSET } from "./sidebarV2TrailingColumn";
 import { SidebarV2SectionLabel } from "./SidebarV2SectionLabel";
+import {
+  SidebarChromeButton,
+  SidebarChromeGroup,
+  SidebarChromeRadioItem,
+} from "./SidebarChromeButton";
 import { useQuietThreadShells } from "~/state/entities";
 import { usePullRequestsSupported } from "~/state/environments";
 import { readPullRequestListPreferences } from "~/components/pullRequest/pullRequestListPreferences";
@@ -96,42 +100,6 @@ export interface SidebarV2ChromeProjectGroup extends ProjectFaviconProject {
   readonly displayName: string;
 }
 
-/** Every chrome row sits on the list's own 8px inset now (the action block's
- *  px-2 and the Projects row's), so its trailing 32px buttons centre on the
- *  same 24px axis the project headers' do — see
- *  custom/sidebarV2TrailingColumn, which records the derivation. The inset
- *  carries no scrollbar term: the list gives its reserved gutter back out of
- *  its own end padding, so a gutter term here would double-count it. */
-export const CHROME_ROW_INSET = SIDEBAR_V2_TRAILING_OFFSET.chromeRow;
-/** Displaces sidebarMenuButtonVariants' base icon pair (muted-foreground at
-    opacity-60, upstream v0.0.30): parent-level [&>svg] selectors outweigh the
-    icon's own class, so without this the fork's tint on the glyph is dead and
-    the icon dims to 60% on top of the duotone layer's own alpha. twMerge
-    keeps this later same-slot pair. One spelling, shared by every chrome-row
-    button that renders an icon as a direct child; the guard asserts the
-    merged outcome, so a base-selector change that stops displacing shows up
-    red. The design (364:11246) tints the icon and the label alike, at the
-    panel's foreground. */
-export const CHROME_ROW_ICON_TINT = "[&>svg]:text-sidebar-foreground [&>svg]:opacity-100";
-/** Label/14 Regular for Search / New agent / Usage / Automations / Pull requests — literal
-    so the panel's 13px text-xs remap cannot shrink them. font-normal and the
-    active twin displace sidebarMenuButtonVariants' font-medium (default
-    variant and data-[active=true]), so the New agent row stays Regular while
-    a draft is held. The Threads label matches the status-section labels and
-    spells its own. */
-const CHROME_TYPE =
-  "text-sidebar-chrome font-normal text-sidebar-foreground data-[active=true]:font-normal";
-/** The Projects row's two icon buttons (Figma 368:21214 / 368:21215): the
-    design system's 32px icon-only ghost button at muted foreground, the same
-    box the project headers' plus and settings buttons draw. Icon tint is
-    overridden to muted here (CHROME_ROW_ICON_TINT lifts it to foreground for
-    the action rows), lifting back to foreground on hover. */
-export const PROJECTS_ROW_BUTTON = cn(
-  "relative size-8 shrink-0 justify-center rounded-[10px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
-  CHROME_ROW_ICON_TINT,
-  "[&>svg]:text-current",
-);
-
 const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
   updated_at: "Last user message",
   created_at: "Created at",
@@ -139,15 +107,9 @@ const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
 };
 const SORT_ORDERS: ReadonlyArray<SidebarProjectSortOrder> = ["updated_at", "created_at", "manual"];
 
-/** The design system's ghost Button at its default size (Figma 364:10544):
-    h-32, 10px corners, px-12, gap-6, hover on the panel's row fill. Spelled on
-    SidebarMenuButton rather than ui/button so the row keeps the sidebar's own
-    hover token and the base-icon displacement above. */
-const CHROME_ACTION = cn(
-  "h-auto w-full gap-1.5 rounded-[10px] py-1.5 border-0 bg-transparent px-3 hover:bg-sidebar-row-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar",
-  CHROME_TYPE,
-  CHROME_ROW_ICON_TINT,
-);
+/** The box of the design system's ghost Button at its default size (Figma 364:10544); the
+    look is SidebarChromeButton's, which keeps the sidebar's own hover token. */
+const CHROME_ACTION = "h-auto w-full";
 
 type ChromeIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -184,7 +146,7 @@ function ChromeLabeledAction({
   readonly trailing?: ReactNode;
   readonly className?: string;
 } & Omit<
-  ComponentProps<typeof SidebarMenuButton>,
+  ComponentProps<typeof SidebarChromeButton>,
   | "aria-label"
   | "children"
   | "className"
@@ -196,14 +158,9 @@ function ChromeLabeledAction({
   | "type"
 >) {
   return (
-    <SidebarMenuButton
-      size="sm"
+    <SidebarChromeButton
       type="button"
-      className={cn(
-        CHROME_ACTION,
-        active && "bg-sidebar-row-hover text-sidebar-foreground",
-        className,
-      )}
+      className={cn(CHROME_ACTION, className)}
       isActive={active === true}
       onClick={onClick}
       disabled={disabled}
@@ -218,7 +175,7 @@ function ChromeLabeledAction({
       <Icon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1 truncate text-left">{label}</span>
       {trailing}
-    </SidebarMenuButton>
+    </SidebarChromeButton>
   );
 }
 
@@ -230,8 +187,7 @@ function ChromeLabeledAction({
 function ChromeSearchRow(props: { readonly commandPaletteShortcutLabel: string | null }) {
   const { isMobile, setOpenMobile } = useSidebar();
   return (
-    <SidebarMenuButton
-      size="sm"
+    <SidebarChromeButton
       type="button"
       aria-label={
         props.commandPaletteShortcutLabel
@@ -248,7 +204,7 @@ function ChromeSearchRow(props: { readonly commandPaletteShortcutLabel: string |
     >
       <SearchIcon className="size-4 shrink-0" />
       <div className="flex-1 truncate text-left">Search</div>
-    </SidebarMenuButton>
+    </SidebarChromeButton>
   );
 }
 
@@ -270,10 +226,7 @@ export function SidebarV2ChromeActionRows(props: {
     ? "Add a project to start an agent"
     : undefined;
   return (
-    <SidebarGroup
-      data-fork-chrome-rows=""
-      className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
-    >
+    <SidebarChromeGroup data-fork-chrome-rows="" stack>
       <ChromeSearchRow commandPaletteShortcutLabel={props.commandPaletteShortcutLabel} />
       <ChromeLabeledAction
         icon={NavigationArrowIcon}
@@ -294,7 +247,7 @@ export function SidebarV2ChromeActionRows(props: {
       <ChromeUsageRow />
       <ChromeAutomationsRow />
       <ChromePullRequestsRow />
-    </SidebarGroup>
+    </SidebarChromeGroup>
   );
 }
 
@@ -309,10 +262,7 @@ export function SidebarV2ChatActionRows() {
     return draft?.promotedTo == null && isChatDraft(draft);
   });
   return (
-    <SidebarGroup
-      data-fork-chrome-rows=""
-      className={cn("gap-0.5 px-2 pt-0 pb-0", CHROME_ROW_INSET)}
-    >
+    <SidebarChromeGroup data-fork-chrome-rows="" stack>
       <ChromeLabeledAction
         icon={NavigationArrowIcon}
         label="New chat"
@@ -321,7 +271,7 @@ export function SidebarV2ChatActionRows() {
         active={active}
         onClick={() => void startNewChat()}
       />
-    </SidebarGroup>
+    </SidebarChromeGroup>
   );
 }
 
@@ -480,8 +430,7 @@ const SCOPE_ITEM =
     moment the pointer reached its row. An alpha reads as a lift of whatever
     the row paints, hovered or not — the same reasoning as the wash itself.
     Light keeps ui/checkbox's border-input, which clears the zinc hover. */
-const SCOPE_CHECKBOX =
-  "inline-flex size-4 shrink-0 items-center justify-center rounded-[.25rem] border";
+const SCOPE_CHECKBOX = "inline-flex size-4 shrink-0 items-center justify-center rounded-sm border";
 const SCOPE_CHECKBOX_OFF = "border-input bg-transparent dark:border-foreground/24";
 const SCOPE_CHECKBOX_ON = "border-primary bg-primary text-primary-foreground";
 
@@ -642,7 +591,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
     // never reaches the screen.
     // data-fork-projects-row is the palette's hook: Glass re-inks this row, the
     // project headers and the card meta lines together (theme.custom.palettes.css).
-    <SidebarGroup data-fork-projects-row="" className={cn("mt-6 px-2 pt-0 pb-0", CHROME_ROW_INSET)}>
+    <SidebarChromeGroup data-fork-projects-row="" className="mt-6">
       <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
@@ -657,7 +606,7 @@ export function SidebarV2ProjectScopeRow<TProject extends SidebarV2ChromeProject
           <SidebarV2ThreadControls {...props} />
         </div>
       </div>
-    </SidebarGroup>
+    </SidebarChromeGroup>
   );
 }
 
@@ -706,10 +655,9 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
       <Tooltip>
         <TooltipTrigger
           render={
-            <SidebarMenuButton
-              size="sm"
+            <SidebarChromeButton
+              shape="icon"
               type="button"
-              className={PROJECTS_ROW_BUTTON}
               aria-label="Add a project"
               data-testid="sidebar-v2-add-project"
               onClick={(event) => {
@@ -733,10 +681,9 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
                 render={
                   <MenuTrigger
                     render={
-                      <SidebarMenuButton
-                        size="sm"
+                      <SidebarChromeButton
+                        shape="icon"
                         type="button"
-                        className={PROJECTS_ROW_BUTTON}
                         aria-label={sortTooltip}
                         data-testid="sidebar-v2-project-sort"
                         data-fork-tab-trigger=""
@@ -768,14 +715,14 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
                 }
               >
                 {SORT_ORDERS.map((sortOrder) => (
-                  <MenuRadioItem
+                  <SidebarChromeRadioItem
                     key={sortOrder}
                     value={sortOrder}
                     closeOnClick
-                    className="h-8 min-h-8 px-2 py-0 text-sm font-medium"
+                    className="h-8 min-h-8"
                   >
                     {SORT_ORDER_LABELS[sortOrder]}
-                  </MenuRadioItem>
+                  </SidebarChromeRadioItem>
                 ))}
               </MenuRadioGroup>
             </MenuPopup>
@@ -786,14 +733,11 @@ export function SidebarV2ThreadControls<TProject extends SidebarV2ChromeProjectG
                 render={
                   <MenuTrigger
                     render={
-                      <SidebarMenuButton
-                        size="sm"
+                      <SidebarChromeButton
+                        shape="icon"
+                        // The active scope lifts the glyph to foreground.
+                        lit={isScoped}
                         type="button"
-                        className={cn(
-                          PROJECTS_ROW_BUTTON,
-                          // The active scope lifts the glyph to foreground.
-                          isScoped && "text-sidebar-foreground",
-                        )}
                         aria-label={filterAriaLabel}
                         data-testid="sidebar-v2-project-filter"
                         data-fork-tab-trigger=""

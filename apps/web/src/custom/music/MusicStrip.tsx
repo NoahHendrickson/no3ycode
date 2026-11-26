@@ -20,7 +20,7 @@ import {
   UserRoundIcon,
   Volume2,
   VolumeOff,
-} from "lucide-react";
+} from "../icons/lucide-hugeicons";
 import { type CSSProperties, memo, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -30,6 +30,7 @@ import { useSidebar } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { cn } from "~/lib/utils";
 
+import { ListItem } from "../ListItem";
 import { SegmentedTab, SegmentedTabs } from "../SegmentedTabs";
 import { useSidebarPeekState } from "../sidebarPeek";
 import {
@@ -60,8 +61,9 @@ import { setMusicStripMode, useMusicStripMode } from "./musicStripMode";
 
 type ReadyState = Extract<MusicState, { status: "ready" }>;
 
-const ROW_CLASS =
-  "flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
+// Music rows sit a step taller than a menu row: a song carries its cover and two lines. The ring
+// marks keyboard focus on the playing row, which already wears the hover wash.
+const ROW_CLASS = "py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
 
 function MusicUnavailable(props: {
   status: Exclude<MusicState["status"], "ready">;
@@ -305,6 +307,7 @@ function Transport(props: { state: ReadyState; volume: number; expanded: boolean
   return (
     // Equal side columns, so the transport centres on the card rather than between the cover and the
     // two buttons on the right. A sidebar too narrow for that (it goes down to 208px) drops the cover.
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- below a 14.5rem sidebar the strip drops its cover
     <div className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-1 p-1.5 @max-[14.5rem]/strip:grid-cols-[auto_1fr]">
       <div className="@max-[14.5rem]/strip:hidden">
         <Artwork src={state.artwork} />
@@ -385,16 +388,16 @@ function SongRow(props: {
   onPlay: () => void;
 }) {
   return (
-    <button
+    <ListItem
       aria-current={props.playing ? "true" : undefined}
       // Rows off screen skip layout and paint; a library's list runs to hundreds.
       className={cn(
         ROW_CLASS,
+        // oxlint-disable-next-line shadcn/no-arbitrary-values -- an off-screen row's placeholder height for content-visibility
         "[contain-intrinsic-size:auto_2.75rem] [content-visibility:auto]",
         props.playing && "bg-accent",
       )}
       onClick={props.onPlay}
-      type="button"
     >
       <Cover src={props.artwork} />
       <span className="min-w-0 flex-1">
@@ -402,7 +405,7 @@ function SongRow(props: {
         <span className="block truncate text-xs text-muted-foreground">{props.artist}</span>
       </span>
       {props.playing ? <Volume2 className="size-3.5 shrink-0 text-muted-foreground" /> : null}
-    </button>
+    </ListItem>
   );
 }
 
@@ -473,13 +476,14 @@ const CoverGrid = memo(function CoverGrid(props: {
   const { rows, kind } = props;
   if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
   return (
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- as many 7rem-min covers as fit the strip
     <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1 py-1">
       {rows.map((row) => (
         <button
+          type="button"
           className="flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-md p-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           key={row.id}
           onClick={() => void openMusicRow(row, kind)}
-          type="button"
         >
           {row.artwork === null ? (
             <span className="flex aspect-square w-full items-center justify-center rounded-sm bg-muted text-muted-foreground">
@@ -505,15 +509,15 @@ const CoverGrid = memo(function CoverGrid(props: {
 const ArtistList = memo(function ArtistList({ rows }: { rows: ReadonlyArray<MusicRow> }) {
   if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
   return rows.map((artist) => (
-    <button
+    <ListItem
+      // oxlint-disable-next-line shadcn/no-arbitrary-values -- an off-screen row's placeholder height for content-visibility
       className={cn(ROW_CLASS, "[contain-intrinsic-size:auto_2rem] [content-visibility:auto]")}
       key={artist.id}
       onClick={() => void openMusicRow(artist, "artists")}
-      type="button"
     >
       <UserRoundIcon className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm">{artist.name}</span>
-    </button>
+    </ListItem>
   ));
 });
 
@@ -563,6 +567,7 @@ const TABS: ReadonlyArray<{ readonly value: MusicTab; readonly label: string }> 
 
 /** Its colours live in theme.custom.css ([data-fork-music-strip]), beside its button's. */
 const CARD_CLASS = cn(
+  // oxlint-disable-next-line shadcn/no-arbitrary-values -- the strip card's drop shadow; no shadow token yet
   "@container/strip flex min-w-0 flex-col overflow-hidden rounded-xl text-foreground shadow-[0_12px_32px_-18px_rgb(0_0_0/45%)]",
   "transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0 motion-reduce:transition-none",
 );

@@ -21,7 +21,7 @@ import {
   ChevronDownIcon,
   Clock3Icon,
   GripVerticalIcon,
-} from "lucide-react";
+} from "./icons/lucide-hugeicons";
 import {
   useId,
   useImperativeHandle,

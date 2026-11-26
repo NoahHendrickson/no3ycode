@@ -69,10 +69,10 @@ describe("SidebarV2ThreadCardMeta", () => {
     // The 40% cap exists so the branch — the more distinguishing half — keeps
     // the rest of the line. A card with no branch has nothing to yield to.
     const withBranch = renderToStaticMarkup(<SidebarV2ThreadCardMeta {...base} />);
-    expect(withBranch).toContain("max-w-[40%]");
+    expect(withBranch).toContain("max-w-2/5");
 
     const withoutBranch = renderToStaticMarkup(<SidebarV2ThreadCardMeta {...base} branch={null} />);
-    expect(withoutBranch).not.toContain("max-w-[40%]");
+    expect(withoutBranch).not.toContain("max-w-2/5");
     expect(withoutBranch).toContain("alpha-service");
   });
 

@@ -18,20 +18,21 @@ import {
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
 
-/** Same trigger dress as the branch chip; the row's CSS owns the chip fill. */
+/** The branch chip's dress on a ghost Button; the row's CSS owns the chip fill. */
 const DRAFT_PROJECT_CHIP_CLASS_NAME =
-  "min-w-0 max-w-72 font-normal text-muted-foreground/70 hover:text-foreground/80 active:scale-100";
+  // oxlint-disable-next-line shadcn/no-restyle -- the composer context strip's muted chip label, which only this chip wears
+  "font-normal text-muted-foreground/70 hover:text-foreground/80 min-w-0 max-w-72 active:scale-100";
 
 /** Upstream's collapsing chip label: hidden with its siblings when the strip overflows. */
 function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {
   return (
     <span
       data-composer-label
-      className="min-w-0 max-w-[240px] group-data-[compact]/composer-context:max-w-0"
+      className="min-w-0 max-w-60 group-data-[compact]/composer-context:max-w-0"
     >
       <span
         data-composer-label-motion
-        className="block w-full min-w-0 max-w-[240px] truncate transition-opacity duration-180 ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
+        className="block w-full min-w-0 max-w-60 truncate transition-opacity duration-180 ease-drawer group-data-[compact]/composer-context:opacity-0 motion-reduce:transition-none"
       >
         {children}
       </span>

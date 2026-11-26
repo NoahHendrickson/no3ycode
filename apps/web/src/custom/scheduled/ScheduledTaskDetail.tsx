@@ -15,7 +15,7 @@ import {
  */
 import { useAtomValue } from "@effect/atom-react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftIcon, PlayIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, PlayIcon, Trash2Icon } from "../icons/lucide-hugeicons";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AuthOrchestrationOperateScope,
@@ -464,7 +464,7 @@ function TaskDetailForm(props: {
           onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
         />
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-          <Label className="inline-flex items-center gap-2">
+          <Label className="inline-flex items-center">
             <Switch
               size="sm"
               checked={draft.enabled}

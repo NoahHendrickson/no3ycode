@@ -36,7 +36,7 @@ describe("fork guard: fork-composer-command-card", () => {
     expect(inset?.body).toMatch(/--chat-composer-drawer-inset:\s*0rem/u);
     const drawer = drawerRule();
     expect(drawer?.body).toMatch(/--chat-composer-attachment-overlap:\s*0px/u);
-    expect(drawer?.body).toMatch(/margin-bottom:\s*calc\(1rem \+ 1px \+ 8px\)/u);
+    expect(drawer?.body).toMatch(/margin-bottom:\s*calc\(var\(--spacing\) \* 6 \+ 1px\)/u);
     expect(drawer?.body).toMatch(/border-radius:\s*var\(--fork-composer-radius\)/u);
   });
 
@@ -71,7 +71,7 @@ describe("fork guard: fork-composer-command-card", () => {
 
   it("runs 40px rows edge to edge between full-width hairlines", () => {
     const row = drawerRule(' [data-slot="command-item"][data-composer-item-id]');
-    expect(row?.body).toMatch(/min-height:\s*40px/u);
+    expect(row?.body).toMatch(/min-height:\s*calc\(var\(--spacing\) \* 10\)/u);
     expect(row?.body).toMatch(/border-radius:\s*0/u);
     const rule = drawerRule(
       ' [data-slot="command-item"][data-composer-item-id] + [data-slot="command-item"]',
