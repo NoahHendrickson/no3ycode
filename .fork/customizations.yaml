@@ -10024,7 +10024,7 @@
     and each attempt raises and focuses the other app's window, so the user
     can't click anything. A crash within ten seconds of launch is now left
     down with a message; a rebuild or a rerun of dev:desktop still relaunches it,
-    and so does a crash after the window was up.
+    and so does a crash more than ten seconds after launch.
   tier: 4
   files: []
   shadows: []
