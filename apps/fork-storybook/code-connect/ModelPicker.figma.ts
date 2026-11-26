@@ -1,22 +1,22 @@
 // url=https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=72-1081
-// source=https://github.com/NoahHendrickson/no3ycode/blob/custom/apps/web/src/overrides/components/chat/ModelPickerContent.tsx
-// component=ModelPickerContent
+// source=https://github.com/NoahHendrickson/no3ycode/blob/custom/apps/web/src/custom/ComposerModelPicker.tsx
+// component=ComposerModelPicker
 import figma from "figma";
 
-// The model picker's popup body (ProviderModelPicker.tsx): providers, models and traits all come
-// from the environment's provider instances.
+// The composer's model menu: ProviderModelPicker with each row's effort and its Effort menu.
+// Providers, models and traits all come from the environment's provider instances.
 export default {
-  example: figma.tsx`<ModelPickerContent
-  searchInputRef={searchInputRef}
-  environmentId={props.environmentId}
+  example: figma.tsx`<ComposerModelPicker
+  environmentId={environmentId}
+  isComposerOwned
   activeInstanceId={activeInstanceId}
-  model={props.model}
-  instanceEntries={props.instanceEntries}
-  modelOptionsByInstance={props.modelOptionsByInstance}
+  model={model}
+  lockedProvider={lockedProvider}
+  instanceEntries={instanceEntries}
+  modelOptionsByInstance={modelOptionsByInstance}
   onInstanceModelChange={handleInstanceModelChange}
-  onRequestClose={() => setIsMenuOpen(false)}
-  /* …and the picker's lock, keybinding and disabled-reason props */
+  traitsInput={traitsInput}
 />`,
-  imports: ['import { ModelPickerContent } from "~/components/chat/ModelPickerContent";'],
+  imports: ['import { ComposerModelPicker } from "~/custom/ComposerModelPicker";'],
   id: "model-picker",
 };
