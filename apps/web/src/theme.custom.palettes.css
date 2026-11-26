@@ -2013,6 +2013,11 @@
     padding-inline: calc(var(--spacing) * 1.5);
   }
 
+  /* The sidebar's Code / Chat switch sets its wide tabs closer together. */
+  &[data-fork-sidebar-mode-tabs] {
+    gap: calc(var(--spacing) * 0.25);
+  }
+
   /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
   & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
     box-shadow: inset 0 0 0 1px var(--fork-segmented-line);

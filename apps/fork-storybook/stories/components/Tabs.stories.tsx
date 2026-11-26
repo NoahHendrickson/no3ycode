@@ -231,7 +231,8 @@ export const Playground: Story = {
 };
 
 /** Square tabs for one glyph each. The size is the strip's height in every theme: `sm` 28px,
-    `md` 32px (the sidebar's Code / Chat switch and the model picker's provider bar), `lg` 36px.
+    `md` 32px (the model picker's provider bar), `lg` 36px. The sidebar's Code / Chat switch
+    uses `shape="wide"` at `md`: the glyph with 10px either side.
     Basic and Flat Glass inset the track 2px with a 2px gap, so their tabs are 24, 28 and 32px. */
 export const Icon: Story = {
   name: "Icon tabs",
