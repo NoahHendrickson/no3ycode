@@ -1,12 +1,12 @@
-/** The New agent draft's launchpad under the centred composer: the projects to
-    pick from while the draft has none, and new work drawn from open pull
-    requests and the checkout's git status. See
+/** The New agent draft's launchpad under the centred composer: new work drawn
+    from open pull requests and the checkout's git status. The project is
+    picked from the composer's chip. See
     `.fork/customizations.yaml#fork-draft-project-quick-picks`. */
 import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId, PullRequestListInput, ScopedProjectRef } from "@t3tools/contracts";
 import * as Equal from "effect/Equal";
 import { AsyncResult, Atom } from "effect/reactivity";
-import { type ReactNode, useLayoutEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useLayoutEffect, useState } from "react";
 
 import { ProjectFavicon } from "~/components/ProjectFavicon";
 import { useComposerDraftStore } from "~/composerDraftStore";
@@ -22,32 +22,24 @@ import {
   type LaunchpadSuggestionKind,
 } from "./draftLaunchpadSuggestions";
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
   CircleAlertIcon,
   CircleXIcon,
   CloudDownloadIcon,
   EyeIcon,
   FolderIcon,
-  FolderPlusIcon,
   GitCommitIcon,
   GitMergeIcon,
   GitPullRequestArrowIcon,
-  MessageSquareDashedIcon,
   PenLineIcon,
   PlayIcon,
-  SearchIcon,
 } from "./icons/lucide-hugeicons";
 import {
-  NO_PROJECT_VALUE,
-  openAddProject,
   QUICK_PICK_LIMIT,
   SHORT_WINDOW_QUERY,
   useDraftProjectChoices,
   type DraftProjectChoices,
 } from "./useDraftProjectChoices";
 import { isChatDraft } from "./chatMode";
-import { ListItem } from "./ListItem";
 
 const KIND_ICON: Record<LaunchpadSuggestionKind, typeof CircleXIcon> = {
   conflicts: CircleAlertIcon,
@@ -118,28 +110,6 @@ function pullRequestTargets(
   }));
 }
 
-/** A launchpad card: a header row (a label, or the project search) over its rows. */
-function Card(props: {
-  readonly label?: string;
-  readonly header?: ReactNode;
-  readonly children: ReactNode;
-}) {
-  return (
-    <div
-      data-fork-draft-launchpad-card=""
-      // Rounds with the composer above it, not the 8px cards beside a thread (--fork-card-radius).
-      className="flex min-w-0 flex-col overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card pb-1"
-    >
-      {props.header ?? (
-        <div className="flex h-9 items-center px-3 font-medium text-muted-foreground/70 text-xs">
-          {props.label}
-        </div>
-      )}
-      <div className="flex min-w-0 flex-col px-1 pt-1">{props.children}</div>
-    </div>
-  );
-}
-
 export function DraftLaunchpad(
   props: Parameters<typeof useDraftProjectChoices>[0] & {
     /** The checkout a picked project's thread will run in, when it is the project's own
@@ -153,7 +123,7 @@ export function DraftLaunchpad(
   const setPrompt = useComposerDraftStore((store) => store.setPrompt);
   const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   const { draftId } = props;
-  // No repository yet: the launchpad offers the projects and their work, and a pick moves the draft.
+  // No repository yet: the launchpad offers the recent projects' work, and a pick moves the draft.
   const { needsProject } = choices;
   const isChat = useComposerDraftStore((store) =>
     draftId === null ? false : isChatDraft(store.getDraftSession(draftId)),
@@ -239,76 +209,81 @@ export function DraftLaunchpad(
       entry: needsProject ? entryFor(suggestion.project) : null,
     }))
     .filter((row) => !needsProject || row.entry !== null);
-  const suggestionCard =
-    rows.length === 0 ? null : (
-      <Card label="Start something new">
-        {rows.map(({ suggestion, entry }) => {
-          const Icon = KIND_ICON[suggestion.kind];
-          return (
-            <ListItem
-              key={suggestion.id}
-              onClick={(event) => {
-                if (entry !== null) {
-                  choices.pick(
-                    entry.group.projectKey,
-                    event.currentTarget,
-                    suggestion.envMode === null ? undefined : { envMode: suggestion.envMode },
-                  );
-                }
-                // A draft can already hold what the user wrote before picking.
-                const written =
-                  useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
-                if (written.includes(suggestion.prompt)) return;
-                setPrompt(
-                  draftId,
-                  written.trim().length > 0
-                    ? `${written}\n\n${suggestion.prompt}`
-                    : suggestion.prompt,
-                );
-              }}
-            >
-              {entry !== null ? (
-                <ProjectFavicon
-                  project={entry.targetProject}
-                  className="size-4 shrink-0"
-                  fallbackIcon={FolderIcon}
-                />
-              ) : (
-                <Icon className="size-4 shrink-0 text-muted-foreground" />
-              )}
-              <span className="min-w-0 flex-1 truncate">{suggestion.title}</span>
-            </ListItem>
-          );
-        })}
-      </Card>
-    );
-
-  if (!needsProject) {
-    return suggestionCard === null ? null : <LaunchpadRoot>{suggestionCard}</LaunchpadRoot>;
-  }
+  if (rows.length === 0) return null;
   return (
-    <LaunchpadRoot
-      className={
-        suggestionCard === null
-          ? undefined
-          : "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-2 max-sm:grid-cols-1"
-      }
-    >
-      <ProjectList choices={choices} recent={recent} />
-      {suggestionCard}
+    <LaunchpadRoot>
+      <div
+        data-fork-draft-launchpad-card=""
+        // Rounds with the composer above it, not the 8px cards beside a thread (--fork-card-radius).
+        className="flex min-w-0 flex-col overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card"
+      >
+        {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
+        <div className="p-3 text-muted-foreground/70">Start something new</div>
+        {/* Full-width dividers between the rows. */}
+        <div className="flex min-w-0 flex-col divide-y divide-border">
+          {rows.map(({ suggestion, entry }) => {
+            const Icon = KIND_ICON[suggestion.kind];
+            /** Picks the suggestion's project and writes its prompt into the draft. */
+            const write = (event: MouseEvent<HTMLElement>) => {
+              if (entry !== null) {
+                choices.pick(
+                  entry.group.projectKey,
+                  event.currentTarget,
+                  suggestion.envMode === null ? undefined : { envMode: suggestion.envMode },
+                );
+              }
+              // A draft can already hold what the user wrote before picking.
+              const written =
+                useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
+              if (written.includes(suggestion.prompt)) return;
+              const prompt =
+                written.trim().length > 0
+                  ? `${written}\n\n${suggestion.prompt}`
+                  : suggestion.prompt;
+              setPrompt(draftId, prompt);
+            };
+            return (
+              <button
+                key={suggestion.id}
+                type="button"
+                // 36px, edge to edge between the dividers; it writes the prompt and never sends.
+                className="group/suggestion flex min-h-9 min-w-0 cursor-pointer items-center gap-2 px-3 py-1 text-left text-foreground outline-none hover:bg-accent focus-visible:bg-accent"
+                onClick={write}
+              >
+                {entry !== null ? (
+                  <ProjectFavicon
+                    project={entry.targetProject}
+                    className="size-4 shrink-0"
+                    fallbackIcon={FolderIcon}
+                  />
+                ) : (
+                  <Icon className="size-4 shrink-0 text-muted-foreground" />
+                )}
+                <span className="min-w-0 truncate">{suggestion.title}</span>
+                {/* Hugs the title and slides in from its left on hover or focus; hidden from the
+                    button's name, which the title already gives. */}
+                <span
+                  aria-hidden
+                  className="inline-flex h-6 shrink-0 -translate-x-2 items-center rounded-full bg-foreground/8 px-2 text-muted-foreground opacity-0 transition-[translate,opacity] duration-150 ease-out group-hover/suggestion:translate-x-0 group-hover/suggestion:opacity-100 group-focus-visible/suggestion:translate-x-0 group-focus-visible/suggestion:opacity-100 motion-reduce:transition-none"
+                >
+                  {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
+                  Draft it
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </LaunchpadRoot>
   );
 }
 
 /**
  * The launchpad scrolls inside the room left between it and the chat canvas's
- * bottom edge (above any terminal drawer), so a tall list or a phone's stacked
- * cards never run off screen or under the drawer.
+ * bottom edge (above any terminal drawer), so a tall list never runs off screen
+ * or under the drawer.
  */
-function LaunchpadRoot(props: {
-  readonly className?: string | undefined;
-  readonly children: ReactNode;
-}) {
+function LaunchpadRoot(props: { readonly children: ReactNode }) {
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const [maxHeight, setMaxHeight] = useState<number | null>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- tracks the window and the composer above, which move the room below
@@ -340,7 +315,8 @@ function LaunchpadRoot(props: {
     <div
       ref={setRoot}
       data-fork-draft-launchpad=""
-      className={`overflow-y-auto overscroll-contain ${props.className ?? ""}`}
+      // A pixel under the Interface font size, like the composer's chips.
+      className="overflow-y-auto overscroll-contain text-(length:--fork-composer-chip-text)"
       style={maxHeight === null ? undefined : { maxHeight }}
     >
       {props.children}
@@ -352,114 +328,4 @@ function LaunchpadRoot(props: {
 function recentProjectRows(choices: DraftProjectChoices) {
   const recent = choices.recentEntries ?? [];
   return recent.length > 0 ? recent : choices.entries.slice(0, QUICK_PICK_LIMIT);
-}
-
-function ProjectList(props: {
-  readonly choices: DraftProjectChoices;
-  readonly recent: ReturnType<typeof recentProjectRows>;
-}) {
-  const { choices, recent } = props;
-  const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState(false);
-  // Expanded or searching, the list grows in place; LaunchpadRoot scrolls it.
-  const searching = query.trim().length > 0;
-  const open = expanded || searching;
-
-  const recentKeys = new Set(recent.map((entry) => entry.group.projectKey));
-  const allOrdered = [
-    ...recent,
-    ...choices.entries.filter((entry) => !recentKeys.has(entry.group.projectKey)),
-  ];
-  const needle = query.trim().toLowerCase();
-  const rows = searching
-    ? allOrdered.filter((entry) => entry.group.displayName.toLowerCase().includes(needle))
-    : expanded
-      ? allOrdered
-      : recent;
-
-  const toggle = () => setExpanded(!expanded);
-  // With every project already listed, there is nothing to expand to.
-  const hasMore = choices.entries.length > recent.length;
-
-  const search = (
-    <label className="flex h-9 min-w-0 cursor-text items-center gap-2 border-border border-b px-3 text-muted-foreground/70">
-      <SearchIcon className="size-3.5 shrink-0" />
-      <input
-        type="text"
-        value={query}
-        placeholder="Search projects"
-        aria-label="Search projects"
-        spellCheck={false}
-        autoComplete="off"
-        className="min-w-0 flex-1 bg-transparent text-foreground text-xs outline-none placeholder:font-medium placeholder:text-muted-foreground/70"
-        onChange={(event) => setQuery(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && searching && rows[0]) {
-            event.preventDefault();
-            choices.pick(rows[0].group.projectKey, event.currentTarget);
-          } else if (event.key === "Escape" && query.length > 0) {
-            event.preventDefault();
-            event.stopPropagation();
-            setQuery("");
-          }
-        }}
-      />
-    </label>
-  );
-
-  return (
-    <Card header={search}>
-      <div>
-        {rows.map((entry) => (
-          <ListItem
-            key={entry.group.projectKey}
-            onClick={(event) => choices.pick(entry.group.projectKey, event.currentTarget)}
-          >
-            <ProjectFavicon
-              project={entry.targetProject}
-              className="size-4 shrink-0"
-              fallbackIcon={FolderIcon}
-            />
-            <span className="min-w-0 flex-1 truncate">{entry.group.displayName}</span>
-          </ListItem>
-        ))}
-        {searching && rows.length === 0 ? (
-          <div className="flex h-8 items-center px-2 text-muted-foreground/70 text-sm">
-            No matching projects
-          </div>
-        ) : null}
-        {!searching && choices.noProjectEnvironmentId !== null ? (
-          <ListItem
-            tone="muted"
-            onClick={(event) => choices.pick(NO_PROJECT_VALUE, event.currentTarget)}
-          >
-            <MessageSquareDashedIcon className="size-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">No project</span>
-          </ListItem>
-        ) : null}
-        {open || !hasMore ? (
-          <ListItem tone="muted" onClick={openAddProject}>
-            <FolderPlusIcon className="size-4 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">Add a project</span>
-          </ListItem>
-        ) : null}
-      </div>
-      {searching || !hasMore ? null : (
-        <>
-          {/* The divider spans the card edge to edge, past the list padding. */}
-          {expanded ? <div className="-mx-1 my-1 border-border border-t" /> : null}
-          <ListItem tone="muted" aria-expanded={expanded} onClick={toggle}>
-            {expanded ? (
-              <ChevronUpIcon className="size-4 shrink-0 opacity-60" />
-            ) : (
-              <ChevronDownIcon className="size-4 shrink-0 opacity-60" />
-            )}
-            <span className="min-w-0 flex-1 truncate">
-              {expanded ? "Fewer projects" : `All projects (${choices.entries.length})`}
-            </span>
-          </ListItem>
-        </>
-      )}
-    </Card>
-  );
 }

@@ -22,17 +22,16 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     expect(helper).toContain("sortLogicalProjectsForSidebar(");
   });
 
-  it("picks the unassigned draft's project from the list under the composer", () => {
-    expect(read("../custom/DraftProjectPill.tsx")).toContain(
-      'if (choices.selection.kind === "unassigned" && !shortWindow) return null;',
-    );
+  it("picks the unassigned draft's project from the composer's chip, with work under it", () => {
+    const pill = read("../custom/DraftProjectPill.tsx");
+    // Every draft, unassigned included, carries the chip; "Choose a project" until one is picked.
+    expect(pill).toContain(': "Choose a project";');
     // A short window has no room under its bottom-pinned composer.
     expect(launchpad).toMatch(/const shown =\s*draftId !== null &&\s*!shortWindow &&/u);
     expect(launchpad).toContain("if (!shown || draftId === null) return null;");
     expect(read("../components/ChatView.tsx")).toMatch(
       /isDraftHeroState &&\s*\(composerBannerItems\.length > 0 \|\| isLocalDraftThread\)[\s\S]{0,1600}<DraftLaunchpad/u,
     );
-    expect(launchpad).toContain("choices.pick(entry.group.projectKey, event.currentTarget)");
     expect(choices).toMatch(/const pick = \(\s*next: string,\s*pill\?: Element,\s*options\?:/u);
     expect(choices).toMatch(/void assignDraftProject\(draftId, entry, options\)\.catch\(/u);
   });
@@ -68,5 +67,9 @@ describe("fork guard: fork-draft-project-quick-picks", () => {
     expect(read("../custom/draftLaunchpadSuggestions.ts")).toContain(
       "export function deriveLaunchpadSuggestions(",
     );
+  });
+
+  it("sets the launchpad a pixel under the Interface font size", () => {
+    expect(launchpad).toContain("text-(length:--fork-composer-chip-text)");
   });
 });

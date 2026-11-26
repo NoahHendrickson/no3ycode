@@ -1,19 +1,16 @@
 /** A draft's project chip, first in the composer's context row and painted like
     its neighbours by the row's CSS ([data-fork-composer-context-row]). An
-    unassigned draft has none: it picks from the launchpad under the composer
-    (custom/DraftLaunchpad). See `.fork/customizations.yaml#fork-new-agent-draft`. */
+    unassigned draft's reads "Choose a project". See `.fork/customizations.yaml#fork-new-agent-draft`. */
 import { type ReactNode, type Ref, useLayoutEffect, useRef } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
 import type { DraftId } from "~/composerDraftStore";
-import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
 import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/lucide-hugeicons";
 import {
   openAddProject,
-  SHORT_WINDOW_QUERY,
   useDraftProjectChoices,
   type DraftProjectChoices,
   type DraftProjectMenuChoices,
@@ -43,13 +40,9 @@ function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {
 
 export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices>[0]) {
   const choices = useDraftProjectChoices(props);
-  const shortWindow = useMediaQuery(SHORT_WINDOW_QUERY);
   if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) {
     return <DraftAddProjectButton onAdd={openAddProject} />;
   }
-  // An unassigned draft picks from the launchpad, except in a short window, which has
-  // no room for it.
-  if (choices.selection.kind === "unassigned" && !shortWindow) return null;
   return <DraftProjectChip choices={choices} draftId={props.draftId} />;
 }
 
@@ -58,7 +51,7 @@ function DraftProjectChip(props: {
   readonly draftId: DraftId | null;
 }) {
   const chipRef = useRef<HTMLButtonElement>(null);
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- slides a newly mounted chip in from the picked pill, reading both boxes before paint
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- slides a remounted chip in from the picked row, reading both boxes before paint
   useLayoutEffect(() => {
     if (props.draftId !== null && chipRef.current) {
       playDraftProjectPick(props.draftId, chipRef.current);
