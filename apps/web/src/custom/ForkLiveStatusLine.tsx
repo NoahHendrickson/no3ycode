@@ -13,6 +13,9 @@ import { ForkLiveTaskList } from "./ForkLiveTaskList";
 import { ForkLiveTasksCtx } from "./forkLiveTasks";
 import {
   forkStatusLineAdvance,
+  forkStatusLineDwellEnd,
+  forkStatusLineDwellReconcile,
+  forkStatusLineDwellStart,
   forkStatusLineReconcile,
   forkStatusLineRotates,
   forkStatusLineStart,
@@ -24,46 +27,38 @@ import {
 
 const BEAT_MS = 4000;
 const DWELL_MS = 1500;
-/** The shimmer's cycle; theme.custom.css keeps upstream's 2.2s. */
-const SHIMMER_CYCLE_MS = 2200;
 
 /**
  * The line swaps a div for a button when a group appears, which remounts the shimmer and
- * would start a sweep at once. Phasing each mount to the clock keeps the sweeps 2.2s apart.
+ * would start a sweep at once. Phasing each mount to the clock keeps the sweeps a cycle apart.
  */
 function shimmerLineRef(element: HTMLSpanElement | null) {
-  element?.style.setProperty(
-    "--fork-shimmer-phase",
-    `${-(performance.now() % SHIMMER_CYCLE_MS)}ms`,
-  );
+  const shimmer = element?.querySelector<HTMLElement>(".live-activity-focus");
+  const cycleMs = shimmer
+    ? Number.parseFloat(getComputedStyle(shimmer).animationDuration) * 1000
+    : 0;
+  if (element && cycleMs > 0) {
+    element.style.setProperty("--fork-shimmer-phase", `${-(performance.now() % cycleMs)}ms`);
+  }
   return observeVisibleAnimation(element);
 }
 
-/**
- * Each new label stays up for DWELL_MS, so a burst of arrivals never flickers through the line.
- * A streaming thought only grows, so it passes through on its first deadline. The list reuses
- * this line across threads, so a new thread shows its own label at once.
- */
-function useDwelledLabel(label: string, thought: boolean, thread: string): string {
-  const [shown, setShown] = useState({ label, thought, thread, dwelling: true, arrival: 0 });
-  if (label !== shown.label || thread !== shown.thread) {
-    if (thread === shown.thread && thought && shown.thought && label.startsWith(shown.label)) {
-      setShown({ ...shown, label });
-    } else if (!shown.dwelling || thread !== shown.thread) {
-      setShown({ label, thought, thread, dwelling: true, arrival: shown.arrival + 1 });
-    }
-  }
-  const { dwelling, arrival } = shown;
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a wall-clock dwell, started by each new label
+/** Holds each new label for DWELL_MS; forkWorkingRowLast holds the rules, this hook only the clock. */
+function useDwelledLabel(label: string, thought: boolean): string {
+  const [shown, setShown] = useState(() => forkStatusLineDwellStart(label, thought));
+  const next = forkStatusLineDwellReconcile(shown, label, thought);
+  if (next !== shown) setShown(next);
+  const { dwelling, arrival } = next;
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- a wall-clock dwell, started by each label that takes the line
   useEffect(() => {
     if (!dwelling) return;
     const id = window.setTimeout(
-      () => setShown((s) => (s.arrival === arrival ? { ...s, dwelling: false } : s)),
+      () => setShown((current) => forkStatusLineDwellEnd(current, arrival)),
       DWELL_MS,
     );
     return () => window.clearTimeout(id);
   }, [dwelling, arrival]);
-  return shown.label;
+  return next.label;
 }
 
 /** The rotation's state; forkWorkingRowLast holds the rules, this hook only the clock. */
@@ -107,7 +102,6 @@ export function ForkLiveStatusLine({
   const label = useDwelledLabel(
     forkStatusLineText(voices, rotation, row.forkWordSeed),
     voices.pinned === null && rotation.voice === "thought",
-    ctx.routeThreadKey,
   );
   const text = (
     <>

@@ -380,9 +380,12 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
   const forkTasks = use(ForkLiveTasksCtx);
   /* fork:end fork-live-task-list */
   /* fork:begin fork-working-row-last — see .fork/customizations.yaml#fork-working-row-last */
+  const { routeThreadKey } = use(TimelineRowCtx);
   if (isForkStatusLine(row)) {
     return (
       <ForkLiveStatusLine
+        // The list reuses this row across threads; a new thread starts its own rotation and dwell.
+        key={routeThreadKey}
         row={row}
         timer={row.createdAt ? <WorkingTimer createdAt={row.createdAt} /> : null}
         trailing={

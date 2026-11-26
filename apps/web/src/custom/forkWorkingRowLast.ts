@@ -244,3 +244,39 @@ export function forkStatusLineText(
   if (line.voice === "thought" && voices.thought !== null) return voices.thought;
   return forkThinkingWord(line.lap === 0 ? wordSeed : `${wordSeed}:${line.lap}`);
 }
+
+/** The label on the line, held for a dwell so a burst of arrivals never flickers through. */
+export interface ForkStatusLineDwell {
+  readonly label: string;
+  /** The label is the thought voice, which may grow through its dwell while it streams. */
+  readonly thought: boolean;
+  readonly dwelling: boolean;
+  /** Bumped by each label that takes the line; its dwell ends only its own hold. */
+  readonly arrival: number;
+}
+
+export function forkStatusLineDwellStart(label: string, thought: boolean): ForkStatusLineDwell {
+  return { label, thought, dwelling: true, arrival: 0 };
+}
+
+/**
+ * A new label waits out the dwell of the one showing, then takes the line with a dwell of its
+ * own. A thought that only grows passes through on its first deadline. Returns `shown` if unchanged.
+ */
+export function forkStatusLineDwellReconcile(
+  shown: ForkStatusLineDwell,
+  label: string,
+  thought: boolean,
+): ForkStatusLineDwell {
+  if (label === shown.label) return shown;
+  if (thought && shown.thought && label.startsWith(shown.label)) return { ...shown, label };
+  if (shown.dwelling) return shown;
+  return { label, thought, dwelling: true, arrival: shown.arrival + 1 };
+}
+
+export function forkStatusLineDwellEnd(
+  shown: ForkStatusLineDwell,
+  arrival: number,
+): ForkStatusLineDwell {
+  return shown.arrival === arrival && shown.dwelling ? { ...shown, dwelling: false } : shown;
+}

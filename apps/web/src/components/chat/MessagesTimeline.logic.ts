@@ -1525,12 +1525,7 @@ export function liveAnswerPreview(entries: ReadonlyArray<TimelineEntry>): string
 function forkLiveReplyIds(
   input: Pick<
     MessagesTimelineRowsInput,
-    | "timelineEntries"
-    | "isWorking"
-    | "latestRun"
-    | "runningRunId"
-    | "revealedMessageId"
-    | "forkShowLatestHeldReply"
+    "timelineEntries" | "isWorking" | "latestRun" | "runningRunId" | "revealedMessageId"
   >,
 ): ReadonlyArray<string> {
   const replies: string[] = [];
@@ -1587,9 +1582,13 @@ function timelineRowEntries(
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     | "forkHoldLiveReplies"
-    | "forkShowLatestHeldReply"
     /* fork:end fork-quiet-live-turn */
   >,
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  forkLiveReplies: ReadonlyArray<string> = input.forkHoldLiveReplies === true
+    ? forkLiveReplyIds(input)
+    : [],
+  /* fork:end fork-quiet-live-turn */
 ) {
   const visibility = input.toolCallVisibility ?? "showAll";
   const entries = input.timelineEntries;
@@ -1643,9 +1642,7 @@ function timelineRowEntries(
   const settled = settleSupersededReasoning(shown);
   // The newest stays in the entries: deriveMessagesTimelineRows draws no row for it, but it
   // splits the turn, so the steps before it close into one summary row that grows each update.
-  const held = new Set(
-    input.forkHoldLiveReplies === true ? forkLiveReplyIds(input).slice(0, -1) : [],
-  );
+  const held = new Set(forkLiveReplies.slice(0, -1));
   return withoutSubagentDelegationRows(
     held.size > 0 ? settled.filter((entry) => !held.has(entry.id)) : settled,
   );
@@ -1718,13 +1715,13 @@ export function deriveMessagesTimelineRows(
   },
   resolve: MessageResolver = m,
 ): MessagesTimelineRow[] {
-  const timelineEntries = timelineRowEntries(input);
   /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-     While the turn waits on the user, the newest reply shows, since it explains the request. */
+     Upstream: timelineRowEntries(input). While the turn waits on the user, the newest reply
+     shows, since it explains the request. */
+  const forkLiveReplies = input.forkHoldLiveReplies === true ? forkLiveReplyIds(input) : [];
+  const timelineEntries = timelineRowEntries(input, forkLiveReplies);
   const forkUnshownReplyId =
-    input.forkHoldLiveReplies === true && input.forkShowLatestHeldReply !== true
-      ? (forkLiveReplyIds(input).at(-1) ?? null)
-      : null;
+    input.forkShowLatestHeldReply === true ? null : (forkLiveReplies.at(-1) ?? null);
   /* fork:end fork-quiet-live-turn */
   const embeddedResultRunIds = new Set<RunId>();
   for (const entry of timelineEntries) {
@@ -1887,7 +1884,14 @@ export function deriveMessagesTimelineRows(
   const activeWorkRow =
     activeWorkAnchor && latestVisibleToolEntry && !latestToolFailed
       ? (() => {
-          const groupId = workGroupId(activeWorkAnchor.id);
+          /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+             Upstream: workGroupId(activeWorkAnchor.id). Each newest reply moves the live
+             group's first step, so the run names it and an opened status line stays open. */
+          const groupId =
+            input.forkHoldLiveReplies === true && unsettledRunId !== null
+              ? workGroupId(`fork-live:${unsettledRunId}`)
+              : workGroupId(activeWorkAnchor.id);
+          /* fork:end fork-quiet-live-turn */
           return {
             kind: "work-live" as const,
             id: latestToolKeepsActivityLive
