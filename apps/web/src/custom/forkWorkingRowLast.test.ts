@@ -417,8 +417,24 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     command("second", 5, "inProgress"),
   ];
 
-  it("closes the steps before the newest reply into one row and folds the rest into the line", () => {
+  it("closes each stretch before a held reply into its own row and folds the rest into the line", () => {
     expect(kinds(rowsFor(turn, true))).toEqual(["work-toggle", "working"]);
+    const later = {
+      ...commentary(6),
+      id: "later-entry",
+      message: { ...commentary(6).message, id: "later" as never },
+    };
+    const grown = rowsFor(
+      [
+        ...turn.slice(0, 3),
+        command("second", 5, "completed"),
+        later,
+        command("third", 7, "inProgress"),
+      ],
+      true,
+    );
+    expect(kinds(grown)).toEqual(["work-toggle", "work", "working"]);
+    expect(grown.some((row) => row.kind === "message")).toBe(false);
     expect(kinds(rowsFor(turn.slice(0, 3), true))).toEqual(["work-toggle", "working"]);
     expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
   });

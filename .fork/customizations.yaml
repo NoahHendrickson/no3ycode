@@ -6670,17 +6670,18 @@
 
 - id: fork-quiet-live-turn
   intent: >
-    A running turn reads calmly in every tool-call mode: one summary row
-    that grows as the turn goes, then the status line. Outside Zen upstream
-    streams each reply as it lands, so a turn grew a column of command,
-    reply, command rows that the turn fold swallowed into "Worked for …" the
-    moment it ended. The fork holds a running turn's replies (Zen's rule:
-    everything after the response boundary, except a revealed message, a
-    steer's answer and a final-answer reply) until the turn ends, except the
-    newest, which stays in the entries but draws no row
-    (deriveMessagesTimelineRows skips it). It still splits the turn, so the
-    steps before it close into one summary row whose counts climb with each
-    update, and the steps since it fold into the status line
+    A running turn reads calmly in every tool-call mode: a stack of summary
+    rows that grows as the turn goes, then the status line. Outside Zen
+    upstream streams each reply as it lands, so a turn grew a column of
+    command, reply, command rows that the turn fold swallowed into "Worked
+    for …" the moment it ended. The fork holds a running turn's replies
+    (Zen's rule: everything after the response boundary, except a revealed
+    message, a steer's answer and a final-answer reply) until the turn ends:
+    they stay in the entries but draw no row (deriveMessagesTimelineRows
+    skips them). Each still splits the turn, so the stretch before every
+    update closes into its own summary row (Nov 26: chosen over one merged
+    row for the sense of growth; long Claude turns reach 10 to 30 rows), and
+    the steps since the newest fold into the status line
     (fork-working-row-last), which reads Zen's preview of it. Only the status
     line ever carries the agent's words. Each split moves the live group's
     first step, so the live group is named for the run, and a status line
@@ -6694,8 +6695,8 @@
     Zen. The hold ends when the provider turn does, but the run stays open
     until the server settles it, and upstream folds only settled runs, so the
     ended run folds at once; otherwise every step flashed open in between. The
-    hold runs after settleSupersededReasoning, so a thought followed
-    only by a held reply still reads settled. Upstream's logic tests derive
+    held replies stay in the entries settleSupersededReasoning reads, so a
+    thought followed only by a held reply still reads settled. Upstream's logic tests derive
     without the flag and keep upstream's shapes. The guard runs one fixture
     through Zen and through the hold and requires the same replies, so a sync
     that adds a Zen exemption fails it. The no3y iOS app is unchanged.
@@ -6704,10 +6705,8 @@
     - apps/web/src/__fork_guards__/forkQuietLiveTurn.test.ts
   shadows: []
   watch:
-    # Fenced: the forkHoldLiveReplies input, forkLiveReplyIds, the filter in
-    # timelineRowEntries after the visibility filters (and its
-    # forkLiveReplies parameter), the skipped row for the newest reply in
-    # deriveMessagesTimelineRows, the live group's run-named id, and
+    # Fenced: the forkHoldLiveReplies input, forkLiveReplyIds, the skipped
+    # rows for the held replies in deriveMessagesTimelineRows, the live group's run-named id, and
     # forkFoldableActiveRunIds, which drops the ended run from both fold
     # derivations (the rows and the citation lookup).
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
