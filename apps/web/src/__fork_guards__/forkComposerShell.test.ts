@@ -387,6 +387,14 @@ describe("fork guard: fork-composer-shell", () => {
         /\[data-fork-composer-prompt\]\s+\[data-testid="composer-editor"\]$/u.test(rule.selector),
     );
     expect(editorEnd?.body).toMatch(/margin-inline-end:\s*0/u);
+    // The placeholder and live dictation words wrap at the editor's text column.
+    const siblingsEnd = rules.find(
+      (rule) =>
+        unscoped(rule) &&
+        rule.selector.includes("[data-fork-dictation-preview]") &&
+        /~\s*div/u.test(rule.selector),
+    );
+    expect(siblingsEnd?.body).toMatch(/padding-inline-end:\s*calc\(var\(--spacing\) \* 1\)/u);
 
     const placeholder = rules.find(
       (rule) =>
