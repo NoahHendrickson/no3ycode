@@ -744,8 +744,9 @@
     statuses draw a hand-built half circle at the design's 9.75px. Where the
     derivation cannot reach Hugeicons' solid look (a straight divider the
     outline lacks, back panels and handles that are open strokes, parts that
-    should stand apart), a row passes a hand-drawn filled weight from
-    custom/icons/handDrawnSolids.ts that replaces the derived one. The shim
+    should stand apart), the derivation hands back a hand-drawn filled
+    weight from custom/icons/handDrawnSolids.ts, keyed by glyph, so every
+    caller and the guard see the same drawing. The shim
     also reproduces lucide's `lucide lucide-<name>` SVG classes,
     because upstream tests assert them to identify which icon rendered —
     honouring the contract keeps those tests passing unmodified instead of
@@ -762,6 +763,7 @@
     - apps/web/src/custom/icons/lucide-hugeicons.tsx
     - apps/web/src/custom/icons/hugeiconsFill.ts
     - apps/web/src/custom/icons/handDrawnSolids.ts
+    - apps/web/src/custom/icons/glyphCuts.ts
     - apps/web/src/custom/icons/hugeiconsFill.test.ts
     # Shared; this entry owns only the low-density duotone rule.
     - apps/web/src/theme.custom.css

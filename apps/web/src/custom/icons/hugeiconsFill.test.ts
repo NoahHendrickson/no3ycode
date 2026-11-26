@@ -15,6 +15,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { describe, expect, it } from "vite-plus/test";
 
+import { HAND_DRAWN } from "./handDrawnSolids";
 import { canFill, GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
 
 const counts = (icon: IconSvgElement) => {
@@ -61,7 +62,16 @@ describe("glyphDrawing", () => {
   });
 
   it("parts bodies whose outlines meet with a seam", () => {
-    expect(counts(ServerIcon)).toMatchObject({ bodies: 2, knockouts: 1 });
+    const racks: IconSvgElement = [
+      ["rect", { x: 2, y: 4, width: 20, height: 8, stroke: "currentColor", key: "top" }],
+      ["rect", { x: 2, y: 12, width: 20, height: 8, stroke: "currentColor", key: "bottom" }],
+    ];
+    expect(counts(racks)).toMatchObject({ bodies: 2, knockouts: 1 });
+  });
+
+  it("draws a hand-drawn weight in place of the derived one", () => {
+    expect(glyphDrawing(ServerIcon, true)).toBe(HAND_DRAWN.get(ServerIcon));
+    expect(canFill(ServerIcon)).toBe(true);
   });
 
   it("keeps a closed part too small to fill as a stroke", () => {
