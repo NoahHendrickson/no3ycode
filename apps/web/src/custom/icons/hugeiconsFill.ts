@@ -16,10 +16,12 @@ export const GLYPH_STROKE = {
 } as const;
 
 export interface GlyphDrawing {
-  /** Filled bodies; drawn through the mask when there are knockouts. */
+  /** Filled, unstroked bodies; drawn through the masks below when they have content. */
   readonly bodies: IconSvgElement;
-  /** Mask content, already black so it cuts out of the bodies. */
+  /** Mask content that cuts through a body's edge: details running to it, seams between bodies. */
   readonly knockouts: IconSvgElement;
+  /** Mask content for details inside a body, then a white rim that keeps the body's edge whole. */
+  readonly holes: IconSvgElement;
   /** Drawn as they are, after the bodies. */
   readonly plain: IconSvgElement;
 }
@@ -31,9 +33,14 @@ const MIN_BODY_SHARE = 0.15;
 /** Half a stroke: a detail touching a body's outline still counts as inside it. */
 const EDGE_TOLERANCE = 0.75;
 
-/** A filled glyph is drawn one stroke smaller, centred: its bodies keep their stroke (knockouts
-    and joints are tuned to it), so the shrink puts the outer edge back on the drawn outline. */
-export const FILLED_TRANSFORM = "matrix(0.9375 0 0 0.9375 0.75 0.75)";
+/** A closed part smaller than this box (a sun ray's dot) stays a stroke: filled, it vanishes. */
+const MIN_FILL_BOX = 4;
+/** A detail this close to a body's outline runs to it (a grid line) and cuts through the edge. */
+const CUT_REACH = 0.25;
+/** Width of the edge a hole may not cut into: half a stroke, the outline glyph's inner rim. */
+const RIM_WIDTH = 0.75;
+/** Two bodies whose outlines meet (a server's stacked racks) are parted by a one-stroke seam. */
+const SEAM_WIDTH = 1.5;
 
 type Matrix = readonly [number, number, number, number, number, number];
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
@@ -381,10 +388,46 @@ function hoisted([tag, attrs]: Element): Element {
   return [tag, rest];
 }
 
+const outlineDistance = (point: Point, body: Shape) =>
+  Math.min(
+    ...body.points.map((corner, i) =>
+      distanceToSegment(point, corner, body.points[(i + 1) % body.points.length]!),
+    ),
+  );
+
+/** The stretches of a's outline lying on b's, as open paths. */
+function seams(a: Shape, b: Shape): Element[] {
+  const near = a.points.map((point) => outlineDistance(point, b) <= CUT_REACH);
+  const start = near.indexOf(false);
+  if (start < 0) return [];
+  const runs: Point[][] = [];
+  let run: Point[] = [];
+  for (let k = 1; k <= near.length; k++) {
+    const i = (start + k) % near.length;
+    if (near[i]) run.push(a.points[i]!);
+    else if (run.length > 0) {
+      runs.push(run);
+      run = [];
+    }
+  }
+  return runs
+    .filter((points) => points.length > 1)
+    .map((points, i) => [
+      "path",
+      {
+        key: `seam-${i}`,
+        d: "M" + points.map(([x, y]) => `${x} ${y}`).join("L"),
+        stroke: "black",
+        fill: "none",
+        strokeWidth: SEAM_WIDTH,
+      },
+    ]);
+}
+
 function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
   const all = shapes(icon);
   if (!all || all.length === 0) return null;
-  const closed = all.filter((shape) => shape.closed);
+  const closed = all.filter((shape) => shape.closed && boxArea(shape.points) >= MIN_FILL_BOX);
   const bodies = new Set(
     closed.filter(
       (shape) =>
@@ -394,24 +437,53 @@ function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
   const largest = Math.max(0, ...[...bodies].map((body) => boxArea(body.points)));
   const extent = boxArea(all.flatMap((shape) => shape.points));
   if (bodies.size === 0 || largest < MIN_BODY_SHARE * extent) return null;
-  const knockouts: Element[] = [];
+  const parts = [...bodies];
+  const knockouts: Element[] = parts.flatMap((a, i) =>
+    parts
+      .slice(i + 1)
+      .flatMap((b, j) =>
+        seams(a, b).map(([tag, attrs]): Element => [
+          tag,
+          { ...attrs, key: `${i}-${j}-${String(attrs["key"])}` },
+        ]),
+      ),
+  );
+  const holes: Element[] = [];
   const plain: Element[] = [];
   for (const shape of all) {
     if (bodies.has(shape)) continue;
     const [tag, attrs] = hoisted(shape.element);
-    if (![...bodies].some((body) => within(shape, body))) plain.push([tag, attrs]);
-    else if (shape.outlined) knockouts.push([tag, { ...attrs, fill: "black" }]);
-    else
-      knockouts.push([
-        tag,
-        { ...attrs, stroke: "black", fill: "none", strokeWidth: KNOCKOUT_WIDTH },
-      ]);
+    if (!parts.some((body) => within(shape, body))) {
+      plain.push([tag, attrs]);
+      continue;
+    }
+    const cut: Element = shape.outlined
+      ? [tag, { ...attrs, fill: "black" }]
+      : [tag, { ...attrs, stroke: "black", fill: "none", strokeWidth: KNOCKOUT_WIDTH }];
+    const reach = Math.min(
+      ...shape.points.flatMap((point) => parts.map((body) => outlineDistance(point, body))),
+    );
+    (reach <= CUT_REACH ? knockouts : holes).push(cut);
   }
-  const filledBodies = [...bodies].map((body): Element => {
+  const filledBodies = parts.map((body): Element => {
     const [tag, attrs] = hoisted(body.element);
-    return [tag, { ...attrs, fill: "currentColor" }];
+    return [tag, { ...attrs, fill: "currentColor", stroke: "none" }];
   });
-  return { bodies: filledBodies, knockouts, plain };
+  if (holes.length > 0) {
+    for (const [tag, attrs] of filledBodies) {
+      holes.push([
+        tag,
+        {
+          ...attrs,
+          key: `${String(attrs["key"] ?? tag)}-rim`,
+          fill: "none",
+          stroke: "white",
+          strokeWidth: 2 * RIM_WIDTH,
+        },
+      ]);
+    }
+  }
+  return { bodies: filledBodies, knockouts, holes, plain };
 }
 
 const strokeCache = new WeakMap<IconSvgElement, GlyphDrawing>();
@@ -420,7 +492,7 @@ const fillCache = new WeakMap<IconSvgElement, GlyphDrawing | null>();
 function strokeDrawing(icon: IconSvgElement): GlyphDrawing {
   const cached = strokeCache.get(icon);
   if (cached) return cached;
-  const drawing: GlyphDrawing = { bodies: [], knockouts: [], plain: icon.map(hoisted) };
+  const drawing: GlyphDrawing = { bodies: [], knockouts: [], holes: [], plain: icon.map(hoisted) };
   strokeCache.set(icon, drawing);
   return drawing;
 }

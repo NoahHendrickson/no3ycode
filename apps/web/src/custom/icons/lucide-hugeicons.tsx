@@ -29,7 +29,7 @@ import type { FC, ReactElement, SVGProps } from "react";
 import { createElement, useId } from "react";
 
 import { forkPaletteFillsIcons, useActiveForkPalette } from "../forkActivePalette";
-import { FILLED_TRANSFORM, GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
+import { GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
 
 /** `stroke` never fills, `themed` fills under the fork palettes, `fill` always fills. */
 type FillPolicy = "stroke" | "themed" | "fill";
@@ -82,25 +82,16 @@ export function HugeGlyph({
   ...props
 }: Omit<LucideCompatProps, "weight"> & { data: IconSvgElement; filled: boolean }) {
   const maskId = `fork-icon-${useId().replace(/[^\w-]/g, "")}`;
-  const { bodies, knockouts, plain } = glyphDrawing(data, filled);
-  const glyph = (
-    <>
-      {knockouts.length > 0 ? (
-        <>
-          <defs>
-            <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
-              <rect width="24" height="24" fill="white" stroke="none" />
-              {knockouts.map(draw)}
-            </mask>
-          </defs>
-          <g mask={`url(#${maskId})`}>{bodies.map(draw)}</g>
-        </>
-      ) : (
-        bodies.map(draw)
-      )}
-      {plain.map(draw)}
-    </>
+  const { bodies, knockouts, holes, plain } = glyphDrawing(data, filled);
+  const mask = (suffix: string, content: IconSvgElement) => (
+    <mask id={maskId + suffix} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+      <rect width="24" height="24" fill="white" stroke="none" />
+      {content.map(draw)}
+    </mask>
   );
+  let body: ReactElement | ReactElement[] = bodies.map(draw);
+  if (holes.length > 0) body = <g mask={`url(#${maskId}-h)`}>{body}</g>;
+  if (knockouts.length > 0) body = <g mask={`url(#${maskId}-k)`}>{body}</g>;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -112,7 +103,14 @@ export function HugeGlyph({
       {...props}
     >
       {alt ? <title>{alt}</title> : null}
-      {bodies.length > 0 ? <g transform={FILLED_TRANSFORM}>{glyph}</g> : glyph}
+      {knockouts.length > 0 || holes.length > 0 ? (
+        <defs>
+          {knockouts.length > 0 ? mask("-k", knockouts) : null}
+          {holes.length > 0 ? mask("-h", holes) : null}
+        </defs>
+      ) : null}
+      {body}
+      {plain.map(draw)}
     </svg>
   );
 }
