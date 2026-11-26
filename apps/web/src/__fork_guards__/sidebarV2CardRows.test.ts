@@ -162,11 +162,8 @@ describe("fork guard: sidebar-v2-card-rows", () => {
       /variant === "card" &&\n(?:\s*\/\/ oxlint-disable-next-line [^\n]*\n)?\s*"flex items-center gap-1 \[&>span\]:text-sidebar-meta"/u,
     );
     expect(sidebarV2).not.toContain("{prBadge || hasHoverActions");
-    // Settled slim rows mute the badge's state colour at rest; upstream's own
-    // muting sat on a row surface the fork replaces.
-    expect(sidebarV2).toContain(
-      '"not-group-hover/v2-row:not-group-focus-within/v2-row:[&>span]:text-secondary-label"',
-    );
+    // Settled slim rows keep the badge's state colour at rest.
+    expect(sidebarV2).not.toContain("not-group-hover/v2-row:not-group-focus-within/v2-row");
     // Upstream grays the number; the fork's number inherits the glyph's ink.
     expect(sidebarV2).toContain("data-fork-sidebar-pr-badge");
     expect(theme).toMatch(
