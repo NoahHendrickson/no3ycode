@@ -64,7 +64,10 @@ When you change a component the Figma kit draws ("no3y code — Basic UI kit",
 kUDQTOR0ndxERlBCqgy3nk), look at its Figma component as part of the same change and bring
 whichever side is behind up to date. If its props change, update its Code Connect template in
 `apps/fork-storybook/code-connect/` and run `vp run --filter @t3tools/fork-storybook figma:publish`.
-A weekly scheduled check reports any drift that slips through; nothing else syncs the two.
+Design lint B6 holds this for stories: a changed story fails until the kit is checked and the
+story is stamped with `node .fork/design-lint.mjs --figma-checked <story files…>`. Stamp only
+after the kit is updated (or confirmed not to draw it). A weekly scheduled check reports drift
+the stories don't show, such as a CSS-only restyle.
 
 ## No `:has()` on large ancestors
 
