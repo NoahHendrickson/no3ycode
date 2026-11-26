@@ -115,16 +115,44 @@ describe("fork guard: fork-basic-theme", () => {
   });
 
   it("shares every Flat Glass shape and sets only colours", () => {
-    const flatOrBasic =
-      /:is\(\s*\[data-fork-glass-3d="off"\]\.dark\[data-fork-theme="cool-darker"\],\s*\[data-fork-theme="basic"\]\s*\)/u;
-    const shared = cssRules(palettes).filter((rule) => flatOrBasic.test(rule.selector));
-    // The corner system (rows, menus, popups, the model picker, Petals tiles), the header hairlines.
-    expect(shared.some((rule) => /--fork-flat-radius:\s*8px/u.test(rule.body))).toBe(true);
-    expect(shared.some((rule) => /--fork-flat-popup-radius:\s*12px/u.test(rule.body))).toBe(true);
-    expect(shared.some((rule) => rule.selector.includes("[data-fork-petals-grid]"))).toBe(true);
+    // A selector shares Flat Glass's shapes when one :is() names Flat Glass and Basic, in any order.
+    // The shared block's head names those two alone; a rule that adds another theme stands apart.
+    const isGroups = (text: string) => [...text.matchAll(/:is\(((?:[^()]|\([^()]*\))*)\)/gu)];
+    const namesOnlyFlatAndBasic = (args: string) =>
+      namesFlatAndBasic(args) && args.split(",").length === 2;
+    const namesFlatAndBasic = (args: string) =>
+      args.includes('[data-fork-theme="basic"]') &&
+      args.includes('[data-fork-glass-3d="off"]') &&
+      args.includes('[data-fork-theme="cool-darker"]');
+    const sharesFlatGlass = (selector: string) =>
+      isGroups(selector).some(([, args]) => namesFlatAndBasic(args ?? ""));
+    // That predicate heads one block in palettes.css, the home of every shape Basic shares.
+    expect(isGroups(palettes).filter(([, args]) => namesOnlyFlatAndBasic(args ?? ""))).toHaveLength(
+      1,
+    );
+    const paletteRules = cssRules(palettes);
+    const shared = paletteRules.filter((rule) => sharesFlatGlass(rule.selector));
+    expect(
+      shared.some(
+        (rule) =>
+          rule.selector.includes("[data-fork-thread-row]") &&
+          /border-radius:\s*var\(--fork-flat-radius\)/u.test(rule.body),
+      ),
+    ).toBe(true);
     expect(shared.some((rule) => rule.selector.includes("[data-right-panel-tabbar]"))).toBe(true);
-    // Basic's own sheet draws no corners of its own that would fight them.
-    for (const rule of rules) expect(rule.body).not.toMatch(/radius|corner-shape/u);
+    // No other rule draws a shape for Basic, and Basic's sheet adds only the popups' shadow.
+    const shape =
+      /(^|[;{\s])(border-radius|corner-shape|box-shadow|outline(-\w+)?|border(-(top|right|bottom|left))?(-width)?|padding[\w-]*|margin[\w-]*|gap|width|height)\s*:/u;
+    const elsewhere = paletteRules.filter(
+      (rule) =>
+        rule.selector.includes('[data-fork-theme="basic"]') && !sharesFlatGlass(rule.selector),
+    );
+    for (const rule of elsewhere) expect(rule.body).not.toMatch(shape);
+    for (const rule of rules) {
+      expect(rule.body.replace(/box-shadow:\s*var\(--basic-popup-shadow\);?/gu, "")).not.toMatch(
+        shape,
+      );
+    }
   });
 
   it("draws switches green with a white thumb", () => {

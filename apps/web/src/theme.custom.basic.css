@@ -167,11 +167,9 @@
 }
 
 /* ---------------------------------------------------------------------------
-   The drawn edges. Basic separates with hairlines rather than fills: under
-   the tab strip, under the chat header once a thread has started (ChatView's
-   data-fork-thread-started, off while it is still a local draft), round
-   the new-agent composer. Every corner and other shape is Flat Glass's, and
-   the tab strip's and header's lines are drawn with Glass's (theme.custom.palettes.css). */
+   Surfaces and edges. Every corner, ring, hairline and edge is Flat Glass's, drawn by the
+   shared shapes block in theme.custom.palettes.css; this sheet colours them, and adds only
+   the popups' softer shadow. */
 
 /* A draft has no header: its breadcrumb and panel controls only mean something once the
    thread has started. The row stays (it is the window's drag strip) but paints nothing,
@@ -181,14 +179,6 @@
   [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
   [data-chat-header] {
   background-color: transparent;
-}
-
-/* The new-agent draft's vessel is ringed, as Flat Glass rings its own over the picture; the
-   Petal digests' and the scheduled editor's are Flat Glass's rule (theme.custom.palettes.css). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-chat-composer-overlay="true"][data-draft-hero]
-  [data-fork-composer-vessel] {
-  box-shadow: inset 0 0 0 1px var(--fork-composer-border);
 }
 
 /* Switches (Figma kit): on is green and the thumb is white in both states, because a grey thumb

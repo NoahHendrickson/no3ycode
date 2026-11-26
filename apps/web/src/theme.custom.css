@@ -1362,11 +1362,10 @@
   [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
   background: var(--fork-white);
   color: var(--fork-black);
-  box-shadow: none;
 }
 
-/* Basic's light send keeps upstream's primary fill but drops its edge and shadow, as dark does. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+/* Dark and Basic (light too, on upstream's primary fill) drop the send's edge and shadow. */
+:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
   box-shadow: none;
 }

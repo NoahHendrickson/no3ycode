@@ -78,7 +78,7 @@ describe("fork guard: settings glass", () => {
     expect(noHairline?.atRules).toContain("@layer utilities");
     const highlight = palettes.find((rule) => settings(rule) && rule.selector.endsWith("::before"));
     expect(highlight?.body).toContain("box-shadow: none");
-    expect(highlight?.selector).toContain("[data-fork-glass-3d]");
+    expect(highlight?.selector).toContain('[data-fork-glass-3d="off"]');
     expect(highlight?.selector).not.toMatch(atFull);
     const depth = surfaces.find(
       (rule) => settings(rule) && rule.body.includes("--fork-glass-halo-soft"),

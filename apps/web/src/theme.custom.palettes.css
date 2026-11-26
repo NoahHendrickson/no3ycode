@@ -192,12 +192,9 @@
   --fork-glass-tabs-line: rgb(255 255 255 / 13%);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"]
-  [data-fork-thread-tabs],
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"]
   [data-fork-thread-started]
-  [data-chat-header],
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-tabs] {
+  [data-chat-header] {
   box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line, var(--border));
 }
 
@@ -208,31 +205,6 @@
   --fork-segmented-hover-disabled: var(--fork-white-0);
   --fork-segmented-pick: var(--fork-white-12);
   --fork-segmented-line: var(--fork-white-8);
-}
-
-/* Flat Glass and Basic draw a 1px inner ring on the composer vessels outside a composer form,
-   Petal digest cards and the scheduled editor. The thread composer paints no vessel and the draft
-   draws its own (theme.custom.thread-composer.css, the draft-hero block below). */
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
-  )
-  :is([data-fork-bot-digest], [data-scheduled-composer])
-  [data-fork-composer-vessel] {
-  box-shadow: inset 0 0 0 1px var(--fork-composer-border);
-}
-
-/* A started thread's header, a page's title and the right panel's tab bar stand on a hairline. */
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
-  )
-  :is(
-    [data-fork-thread-started] [data-chat-header],
-    [data-fork-stage-card-title],
-    [data-right-panel-tabbar]
-  ) {
-  box-shadow: inset 0 -1px 0 var(--border);
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark[data-fork-theme="cool-darker"]
@@ -299,14 +271,15 @@
   border-radius: var(--fork-pill-radius);
 }
 
-/* On Flat Glass, list rows across the sidebar (threads, top chrome rows,
-   active split pairs, project group headers, collapsed thread tabs), menus,
-   selects, command palette items, Petals drawer rows, the model picker search
-   field, and the draft launchpad cards share one 8px continuous (iOS-smoothed)
-   corner radius. CSS corner-shape stays inside border-radius (unlike iOS/Figma,
-   which extend ~1.5x along the edge), so engines supporting superellipse(1.6)
-   bump the token to 12px (18px on the concentric model picker shell) while
-   others fall back to 8px (14px). Basic shares every shape here; only colours differ. */
+/* Flat Glass's shapes, which Basic shares: Basic differs only in colour. Every Flat Glass
+   corner, ring, hairline and edge goes in this block; colours go in each theme's own rules.
+
+   List rows across the sidebar (threads, top chrome rows, active split pairs, project group
+   headers, collapsed thread tabs), menus, selects, command palette items, Petals drawer rows,
+   the model picker search field, and the draft launchpad cards share one 8px continuous
+   (iOS-smoothed) corner radius. CSS corner-shape stays inside border-radius (unlike iOS/Figma,
+   which extend ~1.5x along the edge), so engines supporting superellipse(1.6) bump the token to
+   12px (18px on the concentric model picker shell) while others fall back to 8px (14px). */
 :root[data-fork="noahhendrickson-t3code"]:is(
     [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
     [data-fork-theme="basic"]
@@ -318,22 +291,12 @@
   /* Popups and rows the rules below leave alone keep upstream's corners. */
   --fork-menu-radius: var(--radius-lg);
   --fork-menu-row-radius: var(--radius-sm);
-}
 
-@supports (corner-shape: superellipse(1.6)) {
-  :root[data-fork="noahhendrickson-t3code"]:is(
-      [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-      [data-fork-theme="basic"]
-    ) {
+  @supports (corner-shape: superellipse(1.6)) {
     --fork-flat-radius: 12px;
     --fork-flat-model-picker-radius: 18px;
   }
-}
 
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
-  ) {
   &
     :is([data-sidebar-version="v2"], [data-app-modal])
     :is(
@@ -440,18 +403,132 @@
   & :is([data-slot="menu-popup"], [data-slot="menu-sub-content"]):has([data-fork-model-picker]) {
     corner-shape: superellipse(1.6);
   }
+
+  /* The collapsed sidebar's tab strip, a started thread's header, a page's title and the right
+     panel's tab bar stand on a hairline. */
+  & [data-fork-thread-tabs] {
+    box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line, var(--border));
+  }
+
+  &
+    :is(
+      [data-fork-thread-started] [data-chat-header],
+      [data-fork-stage-card-title],
+      [data-right-panel-tabbar]
+    ) {
+    box-shadow: inset 0 -1px 0 var(--border);
+  }
+
+  /* A 1px inner ring on the composer vessels outside a composer form: Petal digest cards and
+     the scheduled editor. The thread composer paints no vessel (theme.custom.thread-composer.css). */
+  & :is([data-fork-bot-digest], [data-scheduled-composer]) [data-fork-composer-vessel] {
+    box-shadow: inset 0 0 0 1px var(--fork-composer-border);
+  }
+
+  /* The new-agent draft's vessel draws its ring on top of its contents, in the theme's
+     --fork-draft-vessel-ring. */
+  & [data-chat-composer-overlay="true"][data-draft-hero] [data-fork-composer-vessel] {
+    position: relative;
+    box-shadow: none;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px var(--fork-draft-vessel-ring, var(--fork-composer-border));
+      pointer-events: none;
+    }
+  }
+
+  /* Settings' outline buttons and select triggers (fork-settings-glass): upstream's 1px top
+     highlight inside the hairline thickened only its top run. Unlayered, as upstream already
+     drops it in every focus, invalid and pressed state. */
+  &[data-fork-settings]
+    [data-slot$="popup"]
+    :is(button, a):not(
+      [data-slot="toggle"],
+      .text-destructive-foreground
+    ).dark\:bg-input\/32::before {
+    box-shadow: none;
+  }
+
+  /* A new-agent draft hides the header's breadcrumb and panel controls, keeping the row as the
+     window's drag strip. A split pane keeps its header so its close button stays reachable. */
+  &
+    [data-chat-column]:not([data-fork-thread-started]):not(
+      [data-fork-split-pane] [data-chat-column]
+    )
+    [data-chat-header]
+    > * {
+    visibility: hidden;
+  }
+
+  /* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
+     740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
+     An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
+     regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
+     height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
+     The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
+     Petal strips beside them take this one.
+     Flat Glass draws the same geometry in translucent white washes so Liquid Glass shines through;
+     each theme sets the --fork-segmented-* colours. */
+  /* design-lint-disable-next-line C1 -- ToggleGroup's segmented variant shares the tab strip with the fork's SegmentedTabs, which owns the strip's geometry */
+  & :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
+    gap: calc(var(--spacing) * 0.5);
+    padding: calc(var(--spacing) * 0.5);
+    border-radius: var(--radius-lg);
+    background-color: var(--fork-segmented-track);
+
+    & > * {
+      border-radius: var(--radius-md);
+      background-clip: border-box;
+      box-shadow: none;
+      color: var(--fork-segmented-ink, var(--foreground));
+      font-size: var(--fork-segmented-tab-font-size);
+      font-weight: 400;
+
+      &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
+        background-color: var(--fork-segmented-hover);
+      }
+
+      /* A disabled tab stays hoverable for its tooltip, so it clears upstream's hover fill too. */
+      &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
+        background-color: var(--fork-segmented-hover-disabled);
+      }
+
+      &[data-pressed] {
+        border-color: var(--fork-segmented-line);
+        background-color: var(--fork-segmented-pick);
+      }
+
+      /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
+      &:focus-visible {
+        outline-offset: calc(-1 * var(--fork-focus-ring-width) - 1px);
+      }
+    }
+
+    /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
+       that keep their own width; the music strip's equal-width tabs keep their tight sides. */
+    & > :not([aria-label], [data-fork-music-strip] *) {
+      padding-inline: calc(var(--spacing) * 1.5);
+    }
+
+    /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
+    & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
+      box-shadow: inset 0 0 0 1px var(--fork-segmented-line);
+    }
+  }
 }
 
-/* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. Each
-   theme sets the radius; the fallback is Inlet's. Basic takes Flat Glass's. */
+/* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. Flat
+   Glass and Basic set the radius in the shared shapes block; the fallback is Inlet's. */
 :root[data-fork="noahhendrickson-t3code"]:is(
     [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
+    [data-fork-theme="basic"],
+    [data-fork-theme="inlet"][data-fork-inlet-color]
   )
-  [data-sidebar-version="v2"]
-  [data-fork-petals-grid]
-  [data-fork-thread-row],
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color]
   [data-sidebar-version="v2"]
   [data-fork-petals-grid]
   [data-fork-thread-row] {
@@ -1160,21 +1237,6 @@
     ).dark\:bg-input\/32:is(.dark *):is(:hover, [data-pressed], [data-popup-open]) {
     background-color: var(--fork-context-chip-bg-hover);
   }
-}
-
-/* Below Full 3D, and on Basic, which shares Flat Glass's shapes, upstream's 1px top
-   highlight inside the hairline thickened only its top run. Unlayered, as upstream already drops it in every focus,
-   invalid and pressed state. */
-:root[data-fork="noahhendrickson-t3code"]:is(
-    [data-fork-glass-3d].dark[data-fork-theme="cool-darker"],
-    [data-fork-theme="basic"]
-  )[data-fork-settings]
-  [data-slot$="popup"]
-  :is(button, a):not(
-    [data-slot="toggle"],
-    .text-destructive-foreground
-  ).dark\:bg-input\/32::before {
-  box-shadow: none;
 }
 
 /* The transcript scrim (theme.custom.css, [data-chat-composer-overlay]) fades
@@ -1979,83 +2041,12 @@
   border-radius: var(--fork-page-tabs-radius, var(--radius-lg));
 }
 
-/* Every tab strip in the app draws the Storybook Tabs (custom/Tabs.tsx, Figma t3-fork
-   740:1163): the fork's Tabs and SegmentedTabs, menu tabs, and upstream's segmented ToggleGroup.
-   An 8% track inset 2px, the pick a 12% wash behind an 8% line, every label at full ink in 12px
-   regular type (0.75rem, so the interface font size still scales it). Each strip keeps its own
-   height; Tabs.tsx sizes its track and tabs fill it. Every direct child of a strip is a tab.
-   The collapsed sidebar's thread tabs are not a strip and keep their own look; the project and
-   Petal strips beside them take this one.
-   Flat Glass draws the same geometry in translucent white washes so Liquid Glass shines through;
-   each theme sets the --fork-segmented-* colours. */
-/* design-lint-disable-next-line C1 -- ToggleGroup's segmented variant shares the tab strip with the fork's SegmentedTabs, which owns the strip's geometry */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]),
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is([data-fork-segmented-tabs], [data-slot="toggle-group"][data-variant="segmented"]) {
-  gap: calc(var(--spacing) * 0.5);
-  padding: calc(var(--spacing) * 0.5);
-  border-radius: var(--radius-lg);
-  background-color: var(--fork-segmented-track);
-
-  & > * {
-    border-radius: var(--radius-md);
-    background-clip: border-box;
-    box-shadow: none;
-    color: var(--fork-segmented-ink, var(--foreground));
-    font-size: var(--fork-segmented-tab-font-size);
-    font-weight: 400;
-
-    &:hover:not([data-pressed], [data-disabled], [aria-disabled="true"]) {
-      background-color: var(--fork-segmented-hover);
-    }
-
-    /* A disabled tab stays hoverable for its tooltip, so it clears upstream's hover fill too. */
-    &:hover:is([data-disabled], [aria-disabled="true"]):not([data-pressed]) {
-      background-color: var(--fork-segmented-hover-disabled);
-    }
-
-    &[data-pressed] {
-      border-color: var(--fork-segmented-line);
-      background-color: var(--fork-segmented-pick);
-    }
-
-    /* The track clips its tabs, so the fork's outset ring is drawn inside the tab's edge. */
-    &:focus-visible {
-      outline-offset: calc(-1 * var(--fork-focus-ring-width) - 1px);
-    }
-  }
-
-  /* Word tabs take 6px sides. An icon tab's aria-label is its only name, so it marks the tabs
-     that keep their own width; the music strip's equal-width tabs keep their tight sides. */
-  & > :not([aria-label], [data-fork-music-strip] *) {
-    padding-inline: calc(var(--spacing) * 1.5);
-  }
-
-  /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
-  & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
-    box-shadow: inset 0 0 0 1px var(--fork-segmented-line);
-  }
-}
-
-/* On Flat Glass, a new-agent draft hides the header's breadcrumb and panel
-   controls (matching Basic), keeping the row as the window's drag strip. A
-   split pane keeps its header so its close button stays reachable. */
+/* On Flat Glass, a new-agent draft's header paints nothing; its contents hide with Basic's in the
+   shared shapes block above. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
   [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
   [data-chat-header] {
   background: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
-  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
-  [data-chat-header]
-  > *,
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-chat-column]:not([data-fork-thread-started]):not([data-fork-split-pane] [data-chat-column])
-  [data-chat-header]
-  > * {
-  visibility: hidden;
 }
 
 /* The Flat Glass new-agent stage's glass inner glow (Figma no3y-code 13:3284, "Rays"): a broad
@@ -2106,21 +2097,7 @@
   --fork-composer-control-hover: rgb(255 255 255 / 10%);
   --fork-context-chip-bg: rgb(0 0 0 / 16%);
   --fork-context-chip-bg-hover: rgb(0 0 0 / 26%);
-
-  & [data-fork-composer-vessel] {
-    position: relative;
-    box-shadow: none;
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      border-radius: inherit;
-      box-shadow: inset 0 0 0 1px var(--fork-white-16);
-      pointer-events: none;
-    }
-  }
+  --fork-draft-vessel-ring: var(--fork-white-16);
 
   & [data-fork-composer-box] .text-placeholder {
     color: var(--fork-white-50);
