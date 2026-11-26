@@ -3845,8 +3845,8 @@
     size; a separate prompt size in Settings → Typography still wins:
     appearanceFonts.ts). The prompt wrapper owns the single scrollport at every
     width, growing up to min(45dvh, 36rem) before scrolling (min(30dvh, 18rem)
-    on coarse-pointer touch devices where the virtual keyboard stays out of
-    dvh). The control row, context row and status chips read
+    on coarse-pointer touch devices, since iOS keeps dvh when the keyboard
+    opens). The control row, context row and status chips read
     --fork-composer-chip-text, a pixel under the interface size
     (calc(var(--text-base) - 1px); rem no longer moves), so they follow
     Settings → Typography too; their heights add fixed room around it.

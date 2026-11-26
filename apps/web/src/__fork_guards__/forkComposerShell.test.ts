@@ -353,7 +353,7 @@ describe("fork guard: fork-composer-shell", () => {
         rule.body.includes("max-height"),
     );
     // The cap scales with the viewport over whatever block padding the prompt wears,
-    // staying tighter on coarse-pointer touch devices where the virtual keyboard stays out of dvh.
+    // staying tighter on coarse-pointer touch devices (iOS keeps dvh when the keyboard opens).
     expect(scrollport?.body).toMatch(/--fork-composer-prompt-max:\s*min\(45dvh,\s*36rem\)/u);
     expect(scrollport?.body).toMatch(
       /--fork-composer-prompt-cap:\s*calc\(\s*var\(--fork-composer-prompt-max\)\s*\+\s*2\s*\*\s*var\(--fork-composer-prompt-pad-block,\s*4px\)\s*\)/u,

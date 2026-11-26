@@ -1023,8 +1023,9 @@
   overflow-y: auto;
 }
 
-/* On coarse-pointer touch devices (phones and tablets) the virtual keyboard claims the
-   lower half of the viewport without shrinking dvh, so cap the prompt lower there. */
+/* On coarse-pointer touch devices (phones and tablets), cap the prompt lower so it
+   leaves room above the on-screen keyboard (iOS keeps dvh when the keyboard opens;
+   Android shrinks dvh via interactive-widget=resizes-content). */
 @media (pointer: coarse) {
   :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
     --fork-composer-prompt-max: min(30dvh, 18rem);
