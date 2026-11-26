@@ -1,7 +1,7 @@
 /** A draft's project chip, first in the composer's context row and painted like
     its neighbours by the row's CSS ([data-fork-composer-context-row]). An
     unassigned draft's reads "Choose a project". See `.fork/customizations.yaml#fork-new-agent-draft`. */
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { type ReactNode, type Ref, useLayoutEffect, useRef } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Menu, MenuTrigger } from "~/components/ui/menu";
@@ -13,6 +13,7 @@ import {
   openAddProject,
   useDraftProjectChoices,
   type DraftProjectChoices,
+  type DraftProjectMenuChoices,
 } from "./useDraftProjectChoices";
 
 /** The branch chip's dress on a ghost Button; the row's CSS owns the chip fill. */
@@ -40,20 +41,7 @@ function DraftProjectChipLabel({ children }: { readonly children: ReactNode }) {
 export function DraftProjectPill(props: Parameters<typeof useDraftProjectChoices>[0]) {
   const choices = useDraftProjectChoices(props);
   if (choices.entries.length === 0 && choices.noProjectEnvironmentId === null) {
-    return (
-      <Button
-        type="button"
-        size="xs"
-        variant="ghost"
-        className={DRAFT_PROJECT_CHIP_CLASS_NAME}
-        onClick={openAddProject}
-        data-testid="draft-project-pill"
-        data-composer-context-control
-      >
-        <FolderPlusIcon className="size-3 shrink-0 text-current" />
-        <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
-      </Button>
-    );
+    return <DraftAddProjectButton onAdd={openAddProject} />;
   }
   return <DraftProjectChip choices={choices} draftId={props.draftId} />;
 }
@@ -62,13 +50,6 @@ function DraftProjectChip(props: {
   readonly choices: DraftProjectChoices;
   readonly draftId: DraftId | null;
 }) {
-  const { selection, pending } = props.choices;
-  const label =
-    selection.kind === "no-project"
-      ? "No project"
-      : selection.kind === "project"
-        ? selection.label
-        : "Choose a project";
   const chipRef = useRef<HTMLButtonElement>(null);
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- slides a remounted chip in from the picked row, reading both boxes before paint
   useLayoutEffect(() => {
@@ -76,10 +57,55 @@ function DraftProjectChip(props: {
       playDraftProjectPick(props.draftId, chipRef.current);
     }
   }, [props.draftId]);
+  return <DraftProjectPillView ref={chipRef} choices={props.choices} />;
+}
+
+/** What the chip reads: the menu's rows and pick, the selection it names, and whether a pick is
+    still landing. */
+export type DraftProjectPillViewChoices = DraftProjectMenuChoices & {
+  readonly selection:
+    | { readonly kind: "unassigned" | "no-project" }
+    | { readonly kind: "project"; readonly label: string };
+  readonly pending: boolean;
+};
+
+/** @public — the chip in a pill's place when there is no project to pick; Storybook renders it. */
+export function DraftAddProjectButton({ onAdd }: { readonly onAdd: () => void }) {
+  return (
+    <Button
+      type="button"
+      size="xs"
+      variant="ghost"
+      className={DRAFT_PROJECT_CHIP_CLASS_NAME}
+      onClick={onAdd}
+      data-testid="draft-project-pill"
+      data-composer-context-control
+    >
+      <FolderPlusIcon className="size-3 shrink-0 text-current" />
+      <DraftProjectChipLabel>Add a project</DraftProjectChipLabel>
+    </Button>
+  );
+}
+
+/** @public — the pill as drawn; Storybook renders it on its own. */
+export function DraftProjectPillView({
+  choices,
+  ref,
+}: {
+  readonly choices: DraftProjectPillViewChoices;
+  readonly ref?: Ref<HTMLButtonElement> | undefined;
+}) {
+  const { selection, pending } = choices;
+  const label =
+    selection.kind === "no-project"
+      ? "No project"
+      : selection.kind === "project"
+        ? selection.label
+        : "Choose a project";
   return (
     <Menu>
       <MenuTrigger
-        ref={chipRef}
+        ref={ref}
         render={
           <Button
             type="button"
@@ -104,7 +130,7 @@ function DraftProjectChip(props: {
         )}
         <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
       </MenuTrigger>
-      <DraftProjectMenuPopup choices={props.choices} />
+      <DraftProjectMenuPopup choices={choices} />
     </Menu>
   );
 }

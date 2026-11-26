@@ -69,22 +69,6 @@ export const DESIGN_ARBITRARY_VALUE_ALLOW = [
 ];
 
 /**
- * Files where one rule stays off until the maintainer makes a design call (Nov 25, 2026). Each
- * entry is a decision, not an exception: settle it, fix the file, and delete the line. A new
- * file never joins this list.
- */
-export const DESIGN_LINT_PENDING = {
-  // B4: Hugeicons drawn from the icon package's raw data through the shim's HugeGlyph (masked
-  // marks, design mode's icon sets). Moving them into the shim's table is the call.
-  "t3code/no-direct-icon-imports": [
-    "apps/web/src/custom/BackgroundWorkLayersMark.tsx",
-    "apps/web/src/custom/SidebarV2SubagentCount.tsx",
-    "apps/web/src/custom/designMode/panel/LayerTypeIcon.tsx",
-    "apps/web/src/custom/designMode/panel/PanelIcons.tsx",
-  ],
-};
-
-/**
  * Exceptions that are not a line comment: a whole selector or file the rule does not fit.
  * `match` is a substring of the selector (or of the component name for B5); a B5 `name` must match
  * the component exactly. Each needs a reason. design-lint.mjs reads these.
@@ -150,6 +134,8 @@ export const DESIGN_LINT_ALLOWLIST = [
     "SidebarProviderUpdatesButton.tsx": ["SidebarProviderUpdatesButton"],
     // MusicStripCardView, Fork/Music strip.
     "music/MusicStrip.tsx": ["SidebarMusicStrip"],
+    // SidebarV2AutomationsHoverCardView and SidebarV2AutomationsRunView, Fork/Automations hover card.
+    "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
   }),
   ...b5Exempt("wrapper: the sidebar chrome's look on a primitive (Fork/Sidebar controls)", {
     "SidebarChromeButton.tsx": ["SidebarChromeGroup", "SidebarChromeRadioItem"],
@@ -160,15 +146,9 @@ export const DESIGN_LINT_ALLOWLIST = [
   ...b5Exempt("wrapper around upstream's ThreadHoverCardPopup, which places it", {
     "SubagentRowHoverCardPopup.tsx": ["SubagentRowHoverCardPopup"],
   }),
-  // Pending (Nov 25): these read live state (stores, queries, git status) and have no
-  // props-only view yet, so a story needs a *View split first. The split is a design call.
-  ...b5Exempt("pending: reads live state, needs a *View split for a story", {
+  ...b5Exempt("wrapper around an upstream control that reads live state itself", {
     "ComposerModelPicker.tsx": ["ComposerModelPicker"],
-    "ComposerNextStepPill.tsx": ["ComposerNextStepPill"],
     "DraftMachineChip.tsx": ["DraftMachineChip"],
-    "DraftProjectPill.tsx": ["DraftProjectPill"],
-    "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
-    "bots/BotThreadsPanelToggle.tsx": ["BotThreadsPanelToggle"],
   }),
 ];
 
@@ -237,8 +217,4 @@ export const DESIGN_LINT_OVERRIDES = [
     files: ["apps/web/src/custom/SidebarV2StatusIndicator.tsx"],
     rules: { "t3code/no-hand-built-status-marks": "off" },
   },
-  ...Object.entries(DESIGN_LINT_PENDING).map(([rule, files]) => ({
-    files,
-    rules: { [rule]: "off" },
-  })),
 ];
