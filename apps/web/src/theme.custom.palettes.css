@@ -197,10 +197,7 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d][data-fork-has-thread-tabs].dark[data-fork-theme="cool-darker"]
   [data-fork-thread-started]
   [data-chat-header],
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-tabs],
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-thread-started]
-  [data-chat-header] {
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-tabs] {
   box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line, var(--border));
 }
 
@@ -213,16 +210,23 @@
   --fork-segmented-line: var(--fork-white-8);
 }
 
-/* Flat Glass draws a 1px inner ring on the composer vessels outside a composer form, Petal
-   digest cards and the scheduled editor. The thread composer paints no vessel and the draft
+/* Flat Glass and Basic draw a 1px inner ring on the composer vessels outside a composer form,
+   Petal digest cards and the scheduled editor. The thread composer paints no vessel and the draft
    draws its own (theme.custom.thread-composer.css, the draft-hero block below). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  )
   :is([data-fork-bot-digest], [data-scheduled-composer])
   [data-fork-composer-vessel] {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border);
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+/* A started thread's header, a page's title and the right panel's tab bar stand on a hairline. */
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  )
   :is(
     [data-fork-thread-started] [data-chat-header],
     [data-fork-stage-card-title],
@@ -302,8 +306,11 @@
    corner radius. CSS corner-shape stays inside border-radius (unlike iOS/Figma,
    which extend ~1.5x along the edge), so engines supporting superellipse(1.6)
    bump the token to 12px (18px on the concentric model picker shell) while
-   others fall back to 8px (14px). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+   others fall back to 8px (14px). Basic shares every shape here; only colours differ. */
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  ) {
   --fork-flat-radius: 8px;
   --fork-flat-model-picker-radius: 14px;
   --fork-flat-popup-radius: 12px;
@@ -314,13 +321,19 @@
 }
 
 @supports (corner-shape: superellipse(1.6)) {
-  :root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+  :root[data-fork="noahhendrickson-t3code"]:is(
+      [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+      [data-fork-theme="basic"]
+    ) {
     --fork-flat-radius: 12px;
     --fork-flat-model-picker-radius: 18px;
   }
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"] {
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  ) {
   &
     :is([data-sidebar-version="v2"], [data-app-modal])
     :is(
@@ -430,8 +443,11 @@
 }
 
 /* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. Each
-   theme sets the radius; the fallback is Inlet's. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"]
+   theme sets the radius; the fallback is Inlet's. Basic takes Flat Glass's. */
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  )
   [data-sidebar-version="v2"]
   [data-fork-petals-grid]
   [data-fork-thread-row],
@@ -1146,10 +1162,13 @@
   }
 }
 
-/* Below Full 3D, upstream's 1px top highlight inside the hairline thickened
-   only its top run. Unlayered, as upstream already drops it in every focus,
+/* Below Full 3D, and on Basic, which shares Flat Glass's shapes, upstream's 1px top
+   highlight inside the hairline thickened only its top run. Unlayered, as upstream already drops it in every focus,
    invalid and pressed state. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-glass-3d].dark[data-fork-theme="cool-darker"][data-fork-settings]
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  )[data-fork-settings]
   [data-slot$="popup"]
   :is(button, a):not(
     [data-slot="toggle"],

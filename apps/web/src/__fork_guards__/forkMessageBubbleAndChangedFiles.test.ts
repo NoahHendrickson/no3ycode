@@ -50,7 +50,7 @@ describe("fork guard: fork-changed-files-fold", () => {
     expect(card.split("allDirectoriesExpanded={false}").length - 1).toBe(2);
   });
 
-  it("rounds the folded header and draws one fill on Flat Glass", () => {
+  it("rounds the folded header and draws one fill on Flat Glass and Basic", () => {
     const scope = `${MARKER}:is(.dark, [data-fork-theme="basic"])`;
     expect(ruleBodyFor(rules, [scope, "[data-changed-files-header]:last-child"])).toContain(
       "border-radius: calc(var(--fork-card-radius) - 1px)",
@@ -59,7 +59,7 @@ describe("fork guard: fork-changed-files-fold", () => {
       rule.selector.replace(/\s+/gu, " ").endsWith("[data-changed-files-header] + div"),
     );
     expect(hairline?.selector.replace(/\s+/gu, "")).toContain(
-      ':not([data-fork-glass-3d="off"][data-fork-theme="cool-darker"])',
+      ':not([data-fork-glass-3d="off"][data-fork-theme="cool-darker"],[data-fork-theme="basic"])',
     );
   });
 });

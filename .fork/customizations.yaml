@@ -1779,10 +1779,15 @@
     shows through them; hovers, selections and lines stay translucent, as
     drawn. Menus open flat on the raised fill (no frost, which belongs to
     Glass), and so do dialogs, the command palette, toasts, the web context
-    menu and the floating glass pills: 8px corners, the 8% line, the menus'
-    quiet shadow, and a dialog scrim that dims without blurring. Page cards
-    (Settings groups, Usage, Automations) take the same 8px corners and 8% line,
-    and every tab strip draws the Figma tabs (fork-tabs).
+    menu and the floating glass pills: the 8% line, the menus' quiet shadow,
+    and a dialog scrim that dims without blurring. Page cards (Settings groups,
+    Usage, Automations) take the 8% line, and every tab strip draws the Figma
+    tabs (fork-tabs).
+    Basic shares every component shape with Flat Glass (fork-cool-darker-theme):
+    corners (rows, menus, popups, dialogs, cards, the model picker, Petals tiles),
+    rings, hairlines, edges and focus rings come from Flat Glass's rules, which
+    name Basic beside Flat Glass in theme.custom.palettes.css; Basic's sheet
+    sets colours (and the popups' shadow) only.
 
     Upstream's light/dark mode picks the tone, so under System Basic follows
     the OS; Basic stores no tone of its own. Retired values fall back to the
@@ -1822,10 +1827,7 @@
     Questions card fused to the prompt, attached banners, popup fill, the
     details and changed-files cards) to `:is(.dark, [data-fork-theme="basic"])`.
     Switches are green when on (emerald 600, for 3:1 against the white thumb and a
-    light page) with a white thumb in both states, and a switch whose scoped
-    settings disagree draws as off; aria-checked="mixed" still reports it. Focused
-    text fields take a full-strength edge instead of the outline
-    (fork-outset-focus-rings).
+    light page) with a white thumb in both states.
   tier: 2
   files:
     - apps/web/src/theme.custom.basic.css
@@ -5564,8 +5566,8 @@
     the bead ring (custom/beadRing: a line round a ring whose tail stretches
     into beads and merges back), or the same bead ring in white (the
     surface's text ink, so dark on Inlet Cream's frame and light themes).
-    Until one is picked, Inlet and Basic draw the
-    bead ring and every other palette the helix. The choice is device-local
+    Until one is picked, every fork palette (Basic, Glass, Inlet) draws the
+    bead ring, and an upstream theme the helix. The choice is device-local
     (localStorage), not a contracts setting, and Restore defaults clears it
     back to the palette's default. Each mark bakes one loop of frames into a
     mask once (rain and helix an SVG, the bead ring a canvas drawn once), and a single stepped transform
@@ -7608,9 +7610,7 @@
     itself (focus-visible:outline-*, the explicit -outline-offset-1/-2) move
     out the same way. A focus variant that sets ring-0 keeps no ring. A valid
     field keeps its resting border on focus; invalid fields keep upstream's
-    destructive one. Under Basic (the Figma kit) a focused valid text field (Input,
-    Textarea, InputGroup) shows its own 1px edge in --ring instead of the outline,
-    except under forced colours; invalid fields keep the outline. Checkbox and radio drop the inner gap that only existed
+    destructive one. Basic takes the same outline as every other theme. Checkbox and radio drop the inner gap that only existed
     for the inward ring, and the settings slider thumb takes the same outline.
     Scroll-area viewports, F6 workspace areas, and controls with no focus
     styling of their own keep upstream's inward ring, since their outside is

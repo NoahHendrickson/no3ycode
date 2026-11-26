@@ -1365,6 +1365,12 @@
   box-shadow: none;
 }
 
+/* Basic's light send keeps upstream's primary fill but drops its edge and shadow, as dark does. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-fork-composer-action="send"][data-fork-composer-send-tone="flat"] {
+  box-shadow: none;
+}
+
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-send-art] {
   display: none;
 }
@@ -2988,12 +2994,24 @@
 }
 
 /* Basic and Inlet open dialogs (dialog-glass) as unfrosted popups; each theme
-   sheet paints the fill and names --fork-dialog-radius. dialog-styles.ts inlines
-   rounded-2xl (@theme inline), so the radius is set here: at every width for the
-   command palette, which is never a phone sheet, and from sm up for the rest,
-   whose phone sheet stays square. A footer is set off by its line, not a band,
-   and the scrim dims without blurring the app. */
+   sheet paints the fill. A footer is set off by its line, not a band, and the
+   scrim dims without blurring the app. Basic keeps Flat Glass's corners. */
 :root[data-fork="noahhendrickson-t3code"]:is([data-fork-theme="basic"], [data-fork-theme="inlet"]) {
+  & .dialog-glass :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
+    background: transparent;
+    border-color: var(--border);
+  }
+
+  & .dialog-backdrop {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Inlet names --fork-dialog-radius. dialog-styles.ts inlines rounded-2xl (@theme inline), so
+   the radius is set here: at every width for the command palette, which is never a phone
+   sheet, and from sm up for the rest, whose phone sheet stays square. */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"] {
   /* design-lint-disable-next-line C1 -- dialog-styles.ts inlines rounded-2xl, so there is no radius token for the command dialog to read */
   & [data-slot="command-dialog-popup"].dialog-glass {
     border-radius: var(--fork-dialog-radius);
@@ -3003,16 +3021,6 @@
     & .dialog-glass {
       border-radius: var(--fork-dialog-radius);
     }
-  }
-
-  & .dialog-glass :is([data-slot$="dialog-footer"], [data-slot="command-footer"]) {
-    background: transparent;
-    border-color: var(--border);
-  }
-
-  & .dialog-backdrop {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
 }
 
@@ -3403,8 +3411,7 @@
 
    The header and the file tree under it share the card's fill, parted by a
    hairline on the tree's top: the card border is the line on its other three
-   sides. Flat Glass draws one fill with no hairline. Basic paints its own
-   raised well (theme.custom.basic.css). */
+   sides. Flat Glass and Basic draw one fill with no hairline. */
 :root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
   [data-changed-files-state] {
   --fork-card-radius: var(--radius-xl);
@@ -3427,8 +3434,9 @@
 }
 
 /* Rounded at the top too, so the hairline curves down into the card's sides. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"]):not(
-    [data-fork-glass-3d="off"][data-fork-theme="cool-darker"]
+:root[data-fork="noahhendrickson-t3code"].dark:not(
+    [data-fork-glass-3d="off"][data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
   )
   [data-changed-files-header]
   + div {

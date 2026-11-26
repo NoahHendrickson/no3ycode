@@ -92,7 +92,7 @@ describe("fork guard: fork-basic-theme", () => {
     const flat = bodyOf(`${BASIC} .dropdown-glass`, `${BASIC} .dialog-glass`);
     expect(flat).toMatch(/background:\s*var\(--popover\)/u);
     expect(flat).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
-    // The scrim and dialog radius are shared with Inlet (theme.custom.css).
+    // The scrim is shared with Inlet (theme.custom.css); the dialog radius is Inlet's alone.
     const shared = cssRules(readSibling("../theme.custom.css"));
     const scrim = shared.find(
       (rule) =>
@@ -100,10 +100,31 @@ describe("fork guard: fork-basic-theme", () => {
         rule.selector.includes(".dialog-backdrop"),
     );
     expect(scrim?.body).toMatch(/(^|[^-])backdrop-filter:\s*none/u);
-    expect(sheet).toMatch(/--fork-dialog-radius:\s*8px/u);
-    expect(bodyOf(BASIC, '[data-slot="settings-group"]', "[data-scheduled-card]")).toMatch(
-      /border-radius:\s*var\(--radius-lg\)/u,
+    // Dialogs and page cards keep Flat Glass's corners: upstream's 16px and 12px.
+    expect(sheet).not.toMatch(/--fork-dialog-radius/u);
+    expect(
+      shared.some(
+        (rule) =>
+          rule.selector.includes('[data-fork-theme="basic"]') &&
+          /border-radius:\s*var\(--fork-dialog-radius\)/u.test(rule.body),
+      ),
+    ).toBe(false);
+    expect(bodyOf(BASIC, '[data-slot="settings-group"]', "[data-scheduled-card]")).not.toMatch(
+      /border-radius/u,
     );
+  });
+
+  it("shares every Flat Glass shape and sets only colours", () => {
+    const flatOrBasic =
+      /:is\(\s*\[data-fork-glass-3d="off"\]\.dark\[data-fork-theme="cool-darker"\],\s*\[data-fork-theme="basic"\]\s*\)/u;
+    const shared = cssRules(palettes).filter((rule) => flatOrBasic.test(rule.selector));
+    // The corner system (rows, menus, popups, the model picker, Petals tiles), the header hairlines.
+    expect(shared.some((rule) => /--fork-flat-radius:\s*8px/u.test(rule.body))).toBe(true);
+    expect(shared.some((rule) => /--fork-flat-popup-radius:\s*12px/u.test(rule.body))).toBe(true);
+    expect(shared.some((rule) => rule.selector.includes("[data-fork-petals-grid]"))).toBe(true);
+    expect(shared.some((rule) => rule.selector.includes("[data-right-panel-tabbar]"))).toBe(true);
+    // Basic's own sheet draws no corners of its own that would fight them.
+    for (const rule of rules) expect(rule.body).not.toMatch(/radius|corner-shape/u);
   });
 
   it("draws switches green with a white thumb", () => {
@@ -114,9 +135,6 @@ describe("fork guard: fork-basic-theme", () => {
     expect(sheet).toMatch(/--fork-basic-switch-on: oklch\(59\.6% 0\.145 163\.225\);/u);
     expect(switches).toMatch(
       /& > \[data-slot="switch-thumb"\] \{\s*background-color: var\(--fork-white\);/u,
-    );
-    expect(switches).toMatch(
-      /&\[data-mixed\] > \[data-slot="switch-thumb"\] \{\s*translate: none;\s*opacity: 1;/u,
     );
   });
 

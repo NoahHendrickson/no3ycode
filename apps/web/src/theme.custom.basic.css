@@ -22,9 +22,6 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
-  /* Basic keeps upstream's popup and menu-row corners. */
-  --fork-menu-radius: var(--radius-lg);
-  --fork-menu-row-radius: var(--radius-sm);
   /* Tab strips (theme.custom.palettes.css): track, ink, hover, disabled hover, pick, line. */
   --fork-segmented-track: var(--basic-wash-2);
   --fork-segmented-ink: var(--basic-text);
@@ -173,8 +170,8 @@
    The drawn edges. Basic separates with hairlines rather than fills: under
    the tab strip, under the chat header once a thread has started (ChatView's
    data-fork-thread-started, off while it is still a local draft), round
-   the composer shell and the context chips. Corners are 8px throughout. The tab strip's and
-   header's line is drawn with Glass's (theme.custom.palettes.css). */
+   the new-agent composer. Every corner and other shape is Flat Glass's, and
+   the tab strip's and header's lines are drawn with Glass's (theme.custom.palettes.css). */
 
 /* A draft has no header: its breadcrumb and panel controls only mean something once the
    thread has started. The row stays (it is the window's drag strip) but paints nothing,
@@ -186,41 +183,17 @@
   background-color: transparent;
 }
 
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-composer-vessel] {
+/* The new-agent draft's vessel is ringed, as Flat Glass rings its own over the picture; the
+   Petal digests' and the scheduled editor's are Flat Glass's rule (theme.custom.palettes.css). */
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
+  [data-chat-composer-overlay="true"][data-draft-hero]
+  [data-fork-composer-vessel] {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border);
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip]) {
-  border: 1px solid var(--basic-wash-2);
-  border-radius: var(--radius-lg);
-  box-shadow: none;
-}
-
-/* The chips are buttons, whose ::before draws upstream's highlight edge; beside the
-   hairline it reads as a second, blurred border. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-composer-context-row]
-  :is(button, [data-slot="button"], [data-fork-context-chip])::before {
-  box-shadow: none;
-}
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-thread-row] {
-  border-radius: var(--radius-lg);
-}
-
-/* A Petals grid tile is a square-ish cell, which reads squarer: 4px rounder than a row. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-fork-petals-grid]
-  [data-fork-thread-row] {
-  border-radius: var(--radius-xl);
 }
 
 /* Switches (Figma kit): on is green and the thumb is white in both states, because a grey thumb
    reads as disabled. The green is emerald 600, not the success token's 500: the white thumb on it
-   and the track against a light page both need 3:1. Settings whose scopes disagree draw as off
-   rather than half-way; aria-checked="mixed" still tells a screen reader. */
+   and the track against a light page both need 3:1. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="switch"] {
   &[data-checked] {
     background-color: var(--fork-basic-switch-on);
@@ -229,18 +202,6 @@
   & > [data-slot="switch-thumb"] {
     background-color: var(--fork-white);
   }
-
-  &[data-mixed] > [data-slot="switch-thumb"] {
-    translate: none;
-    opacity: 1;
-  }
-}
-
-/* The changed-files well sits on the raised fill (Figma kit), not the composer's prompt. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  [data-changed-files-header]
-  ~ div {
-  background: var(--basic-raised);
 }
 
 /* The subagent card's well sits on the raised fill (Figma kit), not the composer's prompt. */
@@ -274,33 +235,15 @@
 }
 
 /* An unchecked box or radio is the surface it sits on, behind its line: upstream
-   fills it with the page and bevels it, which reads as a pale disc on a menu. */
-/* design-lint-disable-next-line C2 -- Basic's flat unchecked box drops upstream's bevel; Checkbox and Radio have no flat variant yet */
+   fills it with the page, which reads as a pale disc on a menu. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-slot="checkbox"], [data-slot="radio"])[data-unchecked]:not([aria-invalid="true"]) {
   background: transparent;
-  box-shadow: none;
 }
 
-/* design-lint-disable-next-line C2 -- Basic's flat unchecked box drops upstream's bevel; Checkbox and Radio have no flat variant yet */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
-  :is([data-slot="checkbox"], [data-slot="radio"])[data-unchecked]:not(
-    [aria-invalid="true"]
-  )::before {
-  box-shadow: none;
-}
-
-/* The music strip (fork-music-panel) floats over the sidebar like a popover: the
-   popover's fill, edge and shadow, which its open button shares so the two still
-   read as one piece. */
+/* The music strip (fork-music-panel) and its open button take the popover's fill. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-slot="sidebar-footer"] {
   --fork-music-card: var(--popover);
-
-  & [data-fork-music-strip] {
-    box-shadow:
-      inset 0 0 0 1px var(--basic-wash-2),
-      var(--basic-popup-shadow);
-  }
 }
 
 /* The new-agent screen draws the pixel texture (custom/BasicNewAgentBackdrop) behind the
@@ -325,8 +268,7 @@
    Floating surfaces outside the menus: dialogs, the command palette, the web
    context menu, toasts, glass tooltips and the floating pills. Upstream frosts
    each (dialog-glass, dropdown-glass, surface-glass); Basic opens them flat on
-   the raised fill behind the 8% line, with the menus' quiet shadow and 8px
-   corners. The phone sheet (below sm) keeps its square edge. */
+   the raised fill behind the 8% line, with the menus' quiet shadow. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] .dropdown-glass,
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] .dialog-glass,
@@ -347,28 +289,17 @@
   border-color: var(--basic-wash-3);
 }
 
-/* The find bars (InputGroup variant="popover") have no focus outline and mark focus only by
-   their border, which goes to full strength as every other text field's does. */
+/* A focused find bar (InputGroup variant="popover") takes the --input border every focused
+   field keeps (theme.custom.focus-rings.css), which the flat edge above would outrank. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   [data-slot="input-group"].dropdown-glass:has(:is(input, textarea):focus-visible) {
-  border-color: var(--ring);
+  border-color: var(--input);
 }
 
-/* Dialogs take the popups' 8px (theme.custom.css, --fork-dialog-radius). */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] {
-  --fork-dialog-radius: 8px;
-}
-
-/* The row hover card is a card, at the popups' 8px. */
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"] [data-fork-row-hover-card] {
-  border-radius: var(--radius-lg);
-}
-
-/* Cards on a page (Settings groups, Usage and Automations) take the 8% line and
-   8px corners, like the composer; upstream draws them at 12px on a fainter line. */
+/* Cards on a page (Settings groups, Usage and Automations) take the 8% line;
+   upstream draws them on a fainter one. */
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="basic"]
   :is([data-slot="settings-group"], [data-scheduled-card]) {
-  border-radius: var(--radius-lg);
   border-color: var(--basic-wash-2);
 }
 
