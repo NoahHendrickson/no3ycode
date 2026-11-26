@@ -3,7 +3,6 @@
 export declare const DESIGN_LINT_TSX_SCOPE: string[];
 export declare const DESIGN_LINT_CUSTOM_ONLY_SCOPE: string[];
 export declare const DESIGN_ARBITRARY_VALUE_ALLOW: string[];
-export declare const DESIGN_LINT_PENDING: Record<string, string[]>;
 export declare const DESIGN_LINT_OVERRIDES: Array<{
   files: string[];
   excludeFiles?: string[];

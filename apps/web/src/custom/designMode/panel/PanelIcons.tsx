@@ -6,67 +6,76 @@
  * Always stroked, never the fork palettes' filled weight: a filled counter reads as mud at
  * the 16px a dense properties panel uses (t3-fork file, page V2, node 193:9686).
  */
-import * as Hg from "@hugeicons/core-free-icons";
 import type { ComponentProps } from "react";
 
-import type { IconSvgElement } from "~/custom/icons/hugeiconsFill";
-import { HugeGlyph } from "~/custom/icons/lucide-hugeicons";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  FoldHorizontalIcon,
+  FoldVerticalIcon,
+  Link2,
+  type LucideIcon,
+  MaximizeIcon,
+  StrokeGlyphs as G,
+  TextIcon,
+  UnfoldVerticalIcon,
+} from "~/custom/icons/lucide-hugeicons";
 
-type GlyphProps = Omit<ComponentProps<typeof HugeGlyph>, "data" | "filled">;
+type GlyphProps = Omit<ComponentProps<LucideIcon>, "weight">;
 
 /** Pins the panel's stroke while leaving size to the caller's `size-*` class. */
-function glyph(data: IconSvgElement) {
-  const Wrapped = (props: GlyphProps) => <HugeGlyph {...props} data={data} filled={false} />;
+function glyph(Icon: LucideIcon) {
+  const Wrapped = (props: GlyphProps) => <Icon {...props} weight="stroke" />;
   Wrapped.displayName = "PanelGlyph";
   return Wrapped;
 }
 
 // Position — the align row and the absolute toggle.
-export const AlignHStartIcon = glyph(Hg.AlignLeftIcon);
-export const AlignHCenterIcon = glyph(Hg.AlignHorizontalCenterIcon);
-export const AlignHEndIcon = glyph(Hg.AlignRightIcon);
-export const AlignVStartIcon = glyph(Hg.AlignTopIcon);
-export const AlignVCenterIcon = glyph(Hg.AlignVerticalCenterIcon);
-export const AlignVEndIcon = glyph(Hg.AlignBottomIcon);
-export const AbsolutePositionIcon = glyph(Hg.PinIcon);
+export const AlignHStartIcon = glyph(G.AlignLeft);
+export const AlignHCenterIcon = glyph(G.AlignHorizontalCenter);
+export const AlignHEndIcon = glyph(G.AlignRight);
+export const AlignVStartIcon = glyph(G.AlignTop);
+export const AlignVCenterIcon = glyph(G.AlignVerticalCenter);
+export const AlignVEndIcon = glyph(G.AlignBottom);
+export const AbsolutePositionIcon = glyph(G.Pushpin);
 
-export const AutoLayoutIcon = glyph(Hg.GridViewIcon);
-export const DirectionRowIcon = glyph(Hg.ArrowRight02Icon);
-export const DirectionColumnIcon = glyph(Hg.ArrowDown02Icon);
-export const GapRowIcon = glyph(Hg.FoldHorizontalIcon);
-export const GapColumnIcon = glyph(Hg.FoldVerticalIcon);
-export const AspectLockedIcon = glyph(Hg.Link02Icon);
-export const AspectUnlockedIcon = glyph(Hg.Unlink05Icon);
-export const WrapIcon = glyph(Hg.CornerDownRightIcon);
-export const GrowIcon = glyph(Hg.ArrowExpandIcon);
-export const ShrinkIcon = glyph(Hg.ArrowShrinkIcon);
+export const AutoLayoutIcon = glyph(G.GridView);
+export const DirectionRowIcon = glyph(ArrowRightIcon);
+export const DirectionColumnIcon = glyph(ArrowDownIcon);
+export const GapRowIcon = glyph(FoldHorizontalIcon);
+export const GapColumnIcon = glyph(FoldVerticalIcon);
+export const AspectLockedIcon = glyph(Link2);
+export const AspectUnlockedIcon = glyph(G.Unlink05);
+export const WrapIcon = glyph(G.CornerDownRight);
+export const GrowIcon = glyph(G.ArrowExpand);
+export const ShrinkIcon = glyph(G.ArrowShrink);
 
 // Appearance.
-export const OpacityIcon = glyph(Hg.ContrastIcon);
-export const RadiusIcon = glyph(Hg.SquareRoundCornerIcon);
-export const PerCornerIcon = glyph(Hg.FullScreenIcon);
+export const OpacityIcon = glyph(G.Contrast);
+export const RadiusIcon = glyph(G.SquareRoundCorner);
+export const PerCornerIcon = glyph(MaximizeIcon);
 
 // Typography.
-export const FontSizeIcon = glyph(Hg.TextFontIcon);
-export const FontWeightIcon = glyph(Hg.TextBoldIcon);
-export const LineHeightIcon = glyph(Hg.UnfoldVerticalIcon);
-export const LetterSpacingIcon = glyph(Hg.LetterSpacingIcon);
-export const TextColorIcon = glyph(Hg.TextIcon);
-export const TextAlignLeftIcon = glyph(Hg.TextAlignLeftIcon);
-export const TextAlignCenterIcon = glyph(Hg.TextAlignCenterIcon);
-export const TextAlignRightIcon = glyph(Hg.TextAlignRightIcon);
-export const TextAlignJustifyIcon = glyph(Hg.TextAlignJustifyCenterIcon);
+export const FontSizeIcon = glyph(G.TextFont);
+export const FontWeightIcon = glyph(G.TextBold);
+export const LineHeightIcon = glyph(UnfoldVerticalIcon);
+export const LetterSpacingIcon = glyph(G.LetterSpacing);
+export const TextColorIcon = glyph(TextIcon);
+export const TextAlignLeftIcon = glyph(G.TextAlignLeft);
+export const TextAlignCenterIcon = glyph(G.TextAlignCenter);
+export const TextAlignRightIcon = glyph(G.TextAlignRight);
+export const TextAlignJustifyIcon = glyph(G.TextAlignJustifyCenter);
 
 // Canvas strip. Pinned like the rest of the panel: the strip sits inside it, and mixing
 // weights there reads as two different toolbars (PR #57 review).
-export const CanvasIcon = glyph(Hg.SquareDashedIcon);
-export const ScreenSizeIcon = glyph(Hg.ComputerIcon);
-export const ZoomOutIcon = glyph(Hg.MinusSignIcon);
-export const ZoomInIcon = glyph(Hg.PlusSignIcon);
-export const ZoomFitIcon = glyph(Hg.ArrowExpandIcon);
+export const CanvasIcon = glyph(G.SquareDashed);
+export const ScreenSizeIcon = glyph(G.Computer);
+export const ZoomOutIcon = glyph(G.MinusSign);
+export const ZoomInIcon = glyph(G.PlusSign);
+export const ZoomFitIcon = glyph(G.ArrowExpand);
 
 // Fill and stroke.
-export const FillIcon = glyph(Hg.PaintBucketIcon);
-export const StrokeWidthIcon = glyph(Hg.StrokeCenterIcon);
-export const StrokeStyleIcon = glyph(Hg.DashedLine01Icon);
-export const StrokeColorIcon = glyph(Hg.PaintBrush01Icon);
+export const FillIcon = glyph(G.PaintBucket);
+export const StrokeWidthIcon = glyph(G.StrokeCenter);
+export const StrokeStyleIcon = glyph(G.DashedLine01);
+export const StrokeColorIcon = glyph(G.PaintBrush01);

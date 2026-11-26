@@ -596,6 +596,59 @@ export const UnlinkIcon = icon("unlink", Hg.UnlinkIcon, "stroke");
 export const UserLockIcon = icon("user-lock", Hg.UserLockIcon, "themed");
 
 /**
+ * Fork glyphs drawn stroked in every theme: design mode's panel and layers rail, and the sidebar
+ * card's subagent count. Kept off `*Icon` exports, which the project icon picker lists
+ * (lucideIconByName).
+ */
+export const StrokeGlyphs = {
+  ChatBot: icon("chat-bot", Hg.ChatBotIcon, "stroke"),
+  // Layers rail.
+  Link01: icon("link-01", Hg.Link01Icon, "stroke"),
+  News: icon("news", Hg.NewsIcon, "stroke"),
+  CursorText: icon("cursor-text", Hg.CursorTextIcon, "stroke"),
+  InputText: icon("input-text", Hg.InputTextIcon, "stroke"),
+  LeftToRightListBullet: icon("left-to-right-list-bullet", Hg.LeftToRightListBulletIcon, "stroke"),
+  Cube: icon("cube", Hg.CubeIcon, "stroke"),
+  // Design panel.
+  AlignLeft: icon("align-left", Hg.AlignLeftIcon, "stroke"),
+  AlignHorizontalCenter: icon("align-horizontal-center", Hg.AlignHorizontalCenterIcon, "stroke"),
+  AlignRight: icon("align-right", Hg.AlignRightIcon, "stroke"),
+  AlignTop: icon("align-top", Hg.AlignTopIcon, "stroke"),
+  AlignVerticalCenter: icon("align-vertical-center", Hg.AlignVerticalCenterIcon, "stroke"),
+  AlignBottom: icon("align-bottom", Hg.AlignBottomIcon, "stroke"),
+  Pushpin: icon("pushpin", Hg.PinIcon, "stroke"),
+  GridView: icon("grid-view", Hg.GridViewIcon, "stroke"),
+  Unlink05: icon("unlink-05", Hg.Unlink05Icon, "stroke"),
+  CornerDownRight: icon("corner-down-right", Hg.CornerDownRightIcon, "stroke"),
+  ArrowExpand: icon("arrow-expand", Hg.ArrowExpandIcon, "stroke"),
+  ArrowShrink: icon("arrow-shrink", Hg.ArrowShrinkIcon, "stroke"),
+  Contrast: icon("contrast", Hg.ContrastIcon, "stroke"),
+  SquareRoundCorner: icon("square-round-corner", Hg.SquareRoundCornerIcon, "stroke"),
+  TextFont: icon("text-font", Hg.TextFontIcon, "stroke"),
+  TextBold: icon("text-bold", Hg.TextBoldIcon, "stroke"),
+  LetterSpacing: icon("letter-spacing", Hg.LetterSpacingIcon, "stroke"),
+  TextAlignLeft: icon("text-align-left", Hg.TextAlignLeftIcon, "stroke"),
+  TextAlignCenter: icon("text-align-center", Hg.TextAlignCenterIcon, "stroke"),
+  TextAlignRight: icon("text-align-right", Hg.TextAlignRightIcon, "stroke"),
+  TextAlignJustifyCenter: icon(
+    "text-align-justify-center",
+    Hg.TextAlignJustifyCenterIcon,
+    "stroke",
+  ),
+  SquareDashed: icon("square-dashed", Hg.SquareDashedIcon, "stroke"),
+  Computer: icon("computer", Hg.ComputerIcon, "stroke"),
+  MinusSign: icon("minus-sign", Hg.MinusSignIcon, "stroke"),
+  PlusSign: icon("plus-sign", Hg.PlusSignIcon, "stroke"),
+  PaintBucket: icon("paint-bucket", Hg.PaintBucketIcon, "stroke"),
+  StrokeCenter: icon("stroke-center", Hg.StrokeCenterIcon, "stroke"),
+  DashedLine01: icon("dashed-line-01", Hg.DashedLine01Icon, "stroke"),
+  PaintBrush01: icon("paint-brush-01", Hg.PaintBrush01Icon, "stroke"),
+} as const;
+
+/** Layers02's raw parts, for the background-work mark, which masks a fill per layer with them. */
+export const LAYERS_02_GLYPH: IconSvgElement = Hg.Layers02Icon;
+
+/**
  * lucide's escape hatch for one-off glyphs drawn from path data (upstream's
  * settings snap-shot entry uses it). There is no Hugeicons counterpart to swap
  * in, so this renders the lucide node list verbatim with lucide's default
