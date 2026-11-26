@@ -104,12 +104,19 @@ function ComboboxInput({
   );
 }
 
-function ComboboxSearchInput(props: React.ComponentProps<typeof ComboboxInput>) {
+/* fork:begin fork-full-width-search-divider — see .fork/customizations.yaml#fork-full-width-search-divider */
+function ComboboxSearchInput({
+  endAddon,
+  ...props
+}: React.ComponentProps<typeof ComboboxInput> & {
+  /** A control at the row's far end, such as a sort menu. */
+  endAddon?: React.ReactNode;
+}) {
   return (
-    /* fork:begin fork-full-width-search-divider — see .fork/customizations.yaml#fork-full-width-search-divider
-       The side padding sits inside the underline, so it runs edge to edge of the popup. */
+    // The side padding sits inside the underline, so it runs edge to edge of the popup.
+    // The underline stays divider-coloured on focus.
     <label className="block min-w-0 shrink-0 cursor-text pt-2.5">
-      <div className="relative -translate-y-px border-b border-border/70 px-3 pb-1.5 transition-colors focus-within:border-ring">
+      <div className="relative -translate-y-px border-b border-border/70 px-3 pb-1.5">
         <SearchIcon
           aria-hidden="true"
           className="pointer-events-none absolute top-1.5 left-3 size-4 shrink-0 text-muted-foreground/55"
@@ -117,11 +124,21 @@ function ComboboxSearchInput(props: React.ComponentProps<typeof ComboboxInput>) 
         {/* fork:end fork-full-width-search-divider */}
         <ComboboxInput
           {...props}
-          className="flex w-full [&_input]:h-6.5 [&_input]:ps-5 [&_input]:font-sans [&_input]:leading-6.5"
+          className={cn(
+            "flex w-full [&_input]:h-6.5 [&_input]:ps-5 [&_input]:font-sans [&_input]:leading-6.5",
+            /* fork:begin fork-full-width-search-divider */
+            endAddon !== undefined && "[&_input]:pe-7",
+            /* fork:end fork-full-width-search-divider */
+          )}
           showTrigger={false}
           size="sm"
           unstyled
         />
+        {/* fork:begin fork-full-width-search-divider */}
+        {endAddon !== undefined ? (
+          <div className="absolute top-px right-2 flex items-center">{endAddon}</div>
+        ) : null}
+        {/* fork:end fork-full-width-search-divider */}
       </div>
     </label>
   );

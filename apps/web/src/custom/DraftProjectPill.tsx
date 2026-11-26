@@ -4,9 +4,9 @@
 import { type ReactNode, type Ref, useLayoutEffect, useRef } from "react";
 
 import { Button } from "~/components/ui/button";
-import { Menu, MenuTrigger } from "~/components/ui/menu";
+import { ComboboxTrigger } from "~/components/ui/combobox";
 import type { DraftId } from "~/composerDraftStore";
-import { DraftProjectMenuPopup } from "./DraftProjectMenuPopup";
+import { DraftProjectPicker } from "./DraftProjectPicker";
 import { playDraftProjectPick } from "./draftProjectPickMotion";
 import { FolderIcon, FolderPlusIcon, MessageSquareDashedIcon } from "./icons/lucide-hugeicons";
 import {
@@ -103,8 +103,8 @@ export function DraftProjectPillView({
         ? selection.label
         : "Choose a project";
   return (
-    <Menu>
-      <MenuTrigger
+    <DraftProjectPicker choices={choices}>
+      <ComboboxTrigger
         ref={ref}
         render={
           <Button
@@ -129,8 +129,7 @@ export function DraftProjectPillView({
           <FolderIcon className="size-3 shrink-0 text-current" />
         )}
         <DraftProjectChipLabel>{label}</DraftProjectChipLabel>
-      </MenuTrigger>
-      <DraftProjectMenuPopup choices={choices} />
-    </Menu>
+      </ComboboxTrigger>
+    </DraftProjectPicker>
   );
 }

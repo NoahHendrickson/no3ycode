@@ -9,15 +9,13 @@ import { resolveEnvironmentMachineKind } from "@t3tools/contracts";
 import type { EnvironmentOption } from "~/components/BranchToolbar.logic";
 import { BranchToolbarEnvironmentSelector } from "~/components/BranchToolbarEnvironmentSelector";
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
-import { useScratchProject } from "~/hooks/useScratchProject";
 import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
 import { isUnassignedDraft } from "./newAgentDraft";
-import { moveUnassignedDraft, placeNewAgentDraftOnScratch } from "./useNewAgentDraft";
+import { moveUnassignedDraft } from "./useNewAgentDraft";
 
 export function DraftMachineChip({ draftId }: { readonly draftId: DraftId | null }) {
   const { environments } = useEnvironments();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
-  const { scratchWorkspaceRootFor, openScratchProject } = useScratchProject();
   const draftEnvironmentId = useComposerDraftStore((store) => {
     const session = draftId ? store.getDraftSession(draftId) : null;
     return isUnassignedDraft(session) && session?.promotedTo == null
@@ -50,11 +48,7 @@ export function DraftMachineChip({ draftId }: { readonly draftId: DraftId | null
       envLocked={false}
       environmentId={draftEnvironmentId}
       availableEnvironments={options}
-      onEnvironmentChange={(environmentId) => {
-        moveUnassignedDraft(draftId, environmentId);
-        // Its No project is per machine, so the draft follows to the new machine's.
-        void placeNewAgentDraftOnScratch(draftId, { scratchWorkspaceRootFor, openScratchProject });
-      }}
+      onEnvironmentChange={(environmentId) => moveUnassignedDraft(draftId, environmentId)}
     />
   );
 }

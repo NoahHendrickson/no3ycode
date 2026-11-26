@@ -76,14 +76,14 @@ it("the new-thread project picker follows the manual sidebar project order", asy
   const trigger = document.querySelector<HTMLElement>("[data-fork-draft-project-chip]");
   if (!trigger) throw new Error("The draft project picker did not render.");
   await userEvent.click(page.elementLocator(trigger));
-  // The fork menu lists projects as radio rows, without upstream's "Add project" option.
-  await expect.element(page.getByRole("menuitemradio", { name: "beta" })).toBeVisible();
+  // The fork picker lists projects as options; "Add a project" is a footer button, not an option.
+  await expect.element(page.getByRole("option", { name: "beta" })).toBeVisible();
 
-  // The draft's own project leads; the rest keep the sidebar's order.
+  // The draft's own project leads; with no recent activity the rest keep the sidebar's order.
   await vi.waitFor(() => {
     expect(
       page
-        .getByRole("menuitemradio")
+        .getByRole("option")
         .elements()
         .map((option) => option.textContent),
     ).toEqual([

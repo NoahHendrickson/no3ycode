@@ -3,8 +3,8 @@ import { EnvironmentId } from "@t3tools/contracts";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
-import { Menu, MenuTrigger } from "~/components/ui/menu";
-import { DraftProjectMenuPopup } from "~/custom/DraftProjectMenuPopup";
+import { ComboboxTrigger } from "~/components/ui/combobox";
+import { DraftProjectPicker } from "~/custom/DraftProjectPicker";
 import { FolderIcon } from "~/custom/icons/lucide-hugeicons";
 import { type DraftProjectMenuChoices, NO_PROJECT_VALUE } from "~/custom/useDraftProjectChoices";
 
@@ -15,9 +15,16 @@ const ENTRIES: DraftProjectMenuChoices["entries"] = (
     ["no3ycode", "violet"],
     ["marketing-site", "emerald"],
     ["dither-studio", "amber"],
+    ["portfolio", "rose"],
+    ["thinking-states", "sky"],
   ] as const
 ).map(([title, color]) => ({
-  group: { projectKey: title, displayName: title },
+  group: {
+    projectKey: title,
+    displayName: title,
+    pinned: title === "dither-studio",
+    memberProjects: [],
+  },
   targetProject: {
     environmentId,
     workspaceRoot: `/Users/story/${title}`,
@@ -35,17 +42,19 @@ function OpenMenu(props: { readonly noProject: boolean }) {
     value,
     pick: setValue,
     noProjectEnvironmentId: props.noProject ? environmentId : null,
+    recentKeys: ENTRIES.map((entry) => entry.group.projectKey),
+    canPin: () => true,
+    togglePin: () => {},
   };
   const label = ENTRIES.find((entry) => entry.group.projectKey === value)?.group.displayName;
   return (
     <div className="pt-64">
-      <Menu defaultOpen modal={false}>
-        <MenuTrigger render={<Button variant="ghost" size="sm" />}>
+      <DraftProjectPicker choices={choices} defaultOpen>
+        <ComboboxTrigger render={<Button variant="ghost" size="sm" />}>
           <FolderIcon />
           {value === NO_PROJECT_VALUE ? "No project" : label}
-        </MenuTrigger>
-        <DraftProjectMenuPopup choices={choices} />
-      </Menu>
+        </ComboboxTrigger>
+      </DraftProjectPicker>
     </div>
   );
 }
@@ -61,8 +70,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The draft's full project menu: No project, every pickable project with its favicon, and
-    Add a project. The checked row is the draft's project. */
+/** The draft's project picker: search, No project, pinned projects, then every pickable
+    project with its favicon, sorted by recent use or name, and Add a project. The filled row is
+    the draft's project. */
 export const Playground: Story = {};
 
 /** Where no environment can hold a project-less thread, No project is left out. */

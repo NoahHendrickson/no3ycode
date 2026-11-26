@@ -94,7 +94,10 @@ function MenuSearchInput({
     <label className="block min-w-0 shrink-0 cursor-text px-2 pt-1.5 pb-1">
       <div
         className={cn(
-          "relative -translate-y-px border-b border-border/70 pb-1.5 transition-colors focus-within:border-ring",
+          /* fork:begin fork-full-width-search-divider — see .fork/customizations.yaml#fork-full-width-search-divider
+             The underline stays divider-coloured on focus, like ComboboxSearchInput. */
+          "relative -translate-y-px border-b border-border/70 pb-1.5",
+          /* fork:end fork-full-width-search-divider */
           /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
           !underline && "border-b-0 pb-0",
           /* fork:end fork-sidebar-chrome */
