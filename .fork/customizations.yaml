@@ -3041,6 +3041,7 @@
   tier: 4
   files:
     - apps/web/src/custom/SidebarV2ChromeRows.tsx
+    - apps/web/src/custom/SidebarChromeButton.tsx
     - apps/web/src/custom/sidebarV2ProjectSort.ts
     - apps/web/src/custom/useScrollGutterWidth.ts
     - apps/web/src/custom/SidebarStageDitherArt.tsx
@@ -9639,31 +9640,47 @@
   verify:
     - apps/web/src/__fork_guards__/no3yPullRequestListBottomFilters.test.ts
 
-- id: fork-design-row-variants
+- id: fork-design-primitives
   intent: >
-    Primitive variants for dense rows, so fork code picks a look instead of
-    restyling the primitive with className (.fork/DESIGN-RULES.md B1). MenuItem
-    takes size "xs" (py-0, a regular label at the interface size: the model
-    picker's 32px rows) and tone "muted". Button takes variants "ghost-tint"
-    (ghost-muted with a foreground-tint hover, the sidebar's icon buttons) and
-    "chip" (the composer strip's muted chip trigger). InlineButton takes size
-    "xs" (the tab PR badge). PopoverTrigger takes focusRing "inset" and
-    RadioGroup density "compact". Every default is upstream's look, unchanged.
-    custom/ListItem.tsx is a row for lists that stay on screen (the new agent
-    launchpad, the music strip, the Petal threads panel), drawn as MenuItem's
-    row on Base UI's Button; themes style it with the menu rows.
+    What components/ui carries so fork UI can take its look from the
+    primitives instead of restyling them (.fork/DESIGN-RULES.md B1, C1). Theme
+    CSS sets primitive geometry through tokens the primitives read: popups
+    (menu, submenu, popover, select, combobox, autocomplete, preview card)
+    round from --fork-menu-radius (their 1px rims keep upstream's radius);
+    menu, select, combobox and autocomplete rows from --fork-menu-row-radius;
+    tooltips take --fork-tooltip-radius, -font-size, -line-height and
+    -padding-inline / -block. Every read falls back to upstream's own class
+    value, so a theme that sets none draws what upstream draws. MenuItem
+    takes tone "muted"; custom/ListItem, a row for lists that stay on screen
+    (the new agent launchpad, the music strip, the Petal threads panel), is
+    drawn as MenuItem's row. Variants several fork features pick: Button "ghost-tint" (the
+    sidebar's icon buttons), RadioGroup density "compact", TableRow
+    interactive={false}, TableCell tone and truncate. Every default is
+    upstream's look, unchanged. A look only one feature draws lives in that
+    feature's component, not here.
   tier: 4
   files:
     - apps/web/src/custom/ListItem.tsx
+    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
+    - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts
   shadows: []
   watch:
-    - apps/web/src/components/ui/menu.tsx
+    - apps/web/src/components/ui/autocomplete.tsx
     - apps/web/src/components/ui/button.tsx
+    - apps/web/src/components/ui/combobox.tsx
+    - apps/web/src/components/ui/menu.tsx
     - apps/web/src/components/ui/popover.tsx
+    - apps/web/src/components/ui/preview-card.tsx
     - apps/web/src/components/ui/radio-group.tsx
+    - apps/web/src/components/ui/select.tsx
+    - apps/web/src/components/ui/table.tsx
+    - apps/web/src/components/ui/tooltip.tsx
   verify:
+    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
+    - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts
     - apps/web/src/__fork_guards__/forkModelPicker.test.ts
     - apps/web/src/__fork_guards__/forkTouchAffordances.test.ts
+
 - id: fork-design-lint
   intent: >
     Fork UI takes its values from tokens and its controls from components/ui,
@@ -9716,66 +9733,6 @@
     - oxlint-plugin-t3code/rules/no-direct-icon-imports.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-primitives.test.ts
     - oxlint-plugin-t3code/rules/no-hand-built-status-marks.test.ts
-
-- id: fork-primitive-tokens
-  intent: >
-    Theme CSS sets the geometry of components/ui primitives through tokens the
-    primitives read, not by restyling their [data-slot] (DESIGN-RULES C1).
-    Popups (menu, submenu, popover, select, combobox, autocomplete, preview
-    card) round from --fork-menu-radius (their 1px rims keep upstream's radius); menu,
-    select, combobox and autocomplete rows from --fork-menu-row-radius;
-    tooltips take --fork-tooltip-radius, -font-size, -line-height and
-    -padding-inline / -block. Every read falls back to upstream's own
-    class value, so a theme that sets none draws what upstream draws.
-  tier: 4
-  files:
-    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
-  shadows: []
-  watch:
-    - apps/web/src/components/ui/autocomplete.tsx
-    - apps/web/src/components/ui/combobox.tsx
-    - apps/web/src/components/ui/menu.tsx
-    - apps/web/src/components/ui/popover.tsx
-    - apps/web/src/components/ui/preview-card.tsx
-    - apps/web/src/components/ui/select.tsx
-    - apps/web/src/components/ui/tooltip.tsx
-  verify:
-    - apps/web/src/__fork_guards__/forkPrimitiveTokens.test.ts
-
-- id: fork-design-variants
-  intent: >
-    Primitive variants that the sidebar chrome uses instead of restyling the
-    primitive with className (.fork/DESIGN-RULES.md B1). MenuRadioItem and
-    MenuCheckboxItem take size: "sm" (sm:text-xs, compact menus such as design
-    mode's screen sizes) and "chrome" (py-0 text-sm font-medium, the sidebar's
-    sort menus). SidebarGroup takes inset: "chrome" (px-2 pt-0 pb-0, the chrome
-    row groups) and "chrome-stack" (the same with gap-0.5, the action-row
-    stacks). Every default is upstream's look, unchanged.
-  tier: 4
-  files: []
-  shadows: []
-  watch:
-    - apps/web/src/components/ui/menu.tsx
-    - apps/web/src/components/ui/sidebar.tsx
-  verify:
-    - apps/web/src/__fork_guards__/forkDesignVariants.test.ts
-
-- id: fork-design-table-alert-variants
-  intent: >
-    Table and Alert carry the looks fork screens used to restyle them with
-    className (.fork/DESIGN-RULES.md B1): TableRow interactive={false} for rows
-    that only label or report (no hover wash), TableCell tone ("muted",
-    "destructive") and truncate, and Alert size="sm" (design mode's compact
-    result alert: 11px type, relaxed leading, tighter padding and description
-    gap). Every default is upstream's look, unchanged.
-  tier: 4
-  files: []
-  shadows: []
-  watch:
-    - apps/web/src/components/ui/table.tsx
-    - apps/web/src/components/ui/alert.tsx
-  verify:
-    - apps/web/src/__fork_guards__/forkDesignTableAlertVariants.test.ts
 
 - id: no3y-mobile-queue-default
   intent: >

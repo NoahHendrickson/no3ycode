@@ -871,8 +871,8 @@ function ThreadTab(props: {
           <ThreadPullRequestBadgeControl
             render={
               <InlineButton
-                size="xs"
-                className="pointer-events-auto relative flex items-center"
+                // oxlint-disable-next-line shadcn/no-restyle, shadcn/no-arbitrary-values -- the tab PR badge's 12px label on a 16px line, at the Interface font size
+                className="gap-1 [&>span]:text-[length:calc(0.75rem*var(--fork-interface-text-scale,1))] [&>span]:leading-4 pointer-events-auto relative flex items-center"
                 data-fork-sidebar-pr-badge
               />
             }

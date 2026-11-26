@@ -196,8 +196,9 @@ function isTypedCharacter(event: TypedKeyEvent): boolean {
   return event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
 }
 
-/** Every row is 32px; MenuItem size="xs" is the regular label. */
-const ROW_CLASS = "h-8 min-h-8 sm:min-h-8";
+/** Every row is 32px with a regular label at the interface size. */
+// oxlint-disable-next-line shadcn/no-restyle -- the picker's dense rows, which only this menu draws
+const ROW_CLASS = "py-0 text-base font-normal sm:text-base h-8 min-h-8 sm:min-h-8";
 
 /** Logos for the sub-providers a reseller (OpenCode, fx) routes through, keyed by lowercased name. */
 const SUB_PROVIDER_ICONS: Readonly<Record<string, Icon>> = {
@@ -755,7 +756,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               <p className="text-muted-foreground">{notice}</p>
               {providerUpdateChannelLags(entry.snapshot, searchQuery) ? null : (
                 <MenuItem
-                  size="xs"
                   className={cn(ROW_CLASS, "mt-1 -mx-2")}
                   onClick={() => {
                     props.onRequestClose?.();
@@ -831,7 +831,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
         // The host closes the menu on a pick, or keeps it open for what it
         // renders below the list.
         closeOnClick={false}
-        size="xs"
         className={cn(
           ROW_CLASS,
           // relative: contains the sr-only provider label inside the scrolling list.
@@ -1054,7 +1053,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           closeOnClick={false}
           disabled={unavailable}
           aria-expanded={unavailable ? undefined : section.isExpanded}
-          size="xs"
           className={cn(ROW_CLASS, unavailable && "data-disabled:pointer-events-auto")}
           onClick={() => toggleSubProviderSection(section.key)}
         >
@@ -1110,7 +1108,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 closeOnClick={false}
                 aria-expanded={showLegacy}
                 data-model-picker-legacy-toggle="true"
-                size="xs"
                 tone="muted"
                 className={ROW_CLASS}
                 onClick={() => setShowLegacy((shown) => !shown)}
@@ -1134,7 +1131,6 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
               {getProviderStatusMessage(entry.snapshot, messages)}
             </p>
             <MenuItem
-              size="xs"
               className={cn(ROW_CLASS, "mt-1 -mx-2")}
               onClick={() => {
                 props.onRequestClose?.();

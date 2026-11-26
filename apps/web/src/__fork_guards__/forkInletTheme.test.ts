@@ -443,7 +443,7 @@ describe("fork guard: fork-inlet-theme", () => {
     ).toBe(true);
     // Menus and popovers share one 10px corner.
     expect(inlet).toContain("--fork-inlet-menu-radius: 10px;");
-    // The popups read it as --fork-menu-radius (fork-primitive-tokens), rows 5px in.
+    // The popups read it as --fork-menu-radius (fork-design-primitives), rows 5px in.
     expect(inlet).toContain("--fork-menu-radius: var(--fork-inlet-menu-radius);");
     expect(inlet).toContain("--fork-menu-row-radius: var(--fork-inlet-menu-row-radius);");
   });

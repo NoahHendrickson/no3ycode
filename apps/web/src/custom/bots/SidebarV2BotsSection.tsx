@@ -7,14 +7,14 @@ import { PlusIcon } from "../icons/lucide-hugeicons";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
-import { SidebarGroup, SidebarMenuButton } from "~/components/ui/sidebar";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { cn } from "~/lib/utils";
 
 import { SettingsIcon } from "../icons/lucide-hugeicons";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
-import { CHROME_ROW_INSET, OptionCheckboxItem, PROJECTS_ROW_BUTTON } from "../SidebarV2ChromeRows";
+import { SidebarChromeButton, SidebarChromeGroup } from "../SidebarChromeButton";
+import { OptionCheckboxItem } from "../SidebarV2ChromeRows";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 
 import { BotMascot, BotMascotTile } from "./BotMascot";
@@ -211,7 +211,7 @@ export function SidebarV2BotsRow(props: {
   readonly naming: ReactNode;
 }) {
   return (
-    <SidebarGroup data-fork-bots-row="" inset="chrome" className={cn("mt-6", CHROME_ROW_INSET)}>
+    <SidebarChromeGroup data-fork-bots-row="" className="mt-6">
       <div className="flex min-h-8 items-center gap-1.5 px-3">
         <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
           <SidebarV2SectionLabel
@@ -229,11 +229,9 @@ export function SidebarV2BotsRow(props: {
                 render={
                   <MenuTrigger
                     render={
-                      <SidebarMenuButton
-                        size="sm"
-                        variant="chrome-icon"
+                      <SidebarChromeButton
+                        shape="icon"
                         type="button"
-                        className={PROJECTS_ROW_BUTTON}
                         aria-label="Petal view options"
                         data-testid="sidebar-v2-bots-options"
                         data-fork-tab-trigger=""
@@ -256,11 +254,9 @@ export function SidebarV2BotsRow(props: {
           <Tooltip>
             <TooltipTrigger
               render={
-                <SidebarMenuButton
-                  size="sm"
-                  variant="chrome-icon"
+                <SidebarChromeButton
+                  shape="icon"
                   type="button"
-                  className={PROJECTS_ROW_BUTTON}
                   aria-label="New petal"
                   data-testid="sidebar-v2-new-bot"
                   onClick={props.onNewBot}
@@ -296,6 +292,6 @@ export function SidebarV2BotsRow(props: {
           </ul>
         ) : null}
       </TooltipProvider>
-    </SidebarGroup>
+    </SidebarChromeGroup>
   );
 }

@@ -75,7 +75,9 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     // trailing column's fixed boxes: Button's icon sizes grow below sm, the column's offsets don't.
     expect(iconButton).toContain('variant="ghost-tint"');
     expect(iconButton).toContain('row: { size: "icon-xs", className: "size-6" }');
-    expect(iconButton).toContain('header: { size: "icon", className: "size-8 rounded-(--radius-sidebar-row)" }');
+    expect(iconButton).toContain(
+      'header: { size: "icon", className: "size-8 rounded-(--radius-sidebar-row)" }',
+    );
     // The fill makes the target legible, and a foreground tint stays a step off the row's own
     // hover and selected fills (accent is one of them in some themes).
     const tint = readSibling("../components/ui/button.tsx").split('"ghost-tint":')[1] ?? "";
@@ -185,7 +187,9 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(sidebarV2).toContain("SIDEBAR_V2_TRAILING_OFFSET.cardStatus");
     expect(trailingColumn).toContain("SIDEBAR_V2_TRAILING_OFFSET.slimActions");
     expect(groupHeader).toContain("SIDEBAR_V2_TRAILING_OFFSET.headerPlus");
-    expect(chromeRows).toContain("SIDEBAR_V2_TRAILING_OFFSET.chromeRow");
+    expect(readSibling("../custom/SidebarChromeButton.tsx")).toContain(
+      "SIDEBAR_V2_TRAILING_OFFSET.chromeRow",
+    );
     expect(chromeRows).toContain("SIDEBAR_V2_TRAILING_OFFSET.chromeStatus");
     expect(readSibling("../custom/SidebarV2StatusSectionHeader.tsx")).toContain(
       "SIDEBAR_V2_TRAILING_OFFSET.headerPlus",

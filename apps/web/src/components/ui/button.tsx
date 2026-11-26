@@ -67,13 +67,11 @@ const buttonVariants = cva(
           "border-transparent bg-secondary text-secondary-foreground [:active,[data-pressed]]:bg-secondary/80 [:hover,[data-pressed]]:bg-secondary/90",
         "warning-outline":
           "border-warning/32 bg-warning-surface text-warning-foreground shadow-xs/5 [:disabled,:active,[data-pressed]]:shadow-none [:hover,[data-pressed]]:border-warning/40 [:hover,[data-pressed]]:bg-warning/16 dark:[:hover,[data-pressed]]:bg-warning/24",
-        /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+        /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
         // ghost-muted with a foreground-tint hover: on surfaces whose own hover is the accent.
         "ghost-tint":
           "[--control-icon-color:currentColor] border-transparent text-muted-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent [:hover,[data-pressed]]:text-foreground [:hover,[data-pressed]]:bg-foreground/10",
-        // The composer context strip's chip trigger: a muted regular 12px label.
-        chip: "[--control-icon-color:var(--contrast-muted-foreground)] border-transparent text-foreground data-pressed:bg-accent [:hover,[data-pressed]]:bg-accent font-normal text-muted-foreground/70 hover:text-foreground/80",
-        /* fork:end fork-design-row-variants */
+        /* fork:end fork-design-primitives */
       },
     },
   },
@@ -122,12 +120,6 @@ const inlineButtonVariants = cva(
         picker:
           "gap-1 text-foreground decoration-from-font underline-offset-4 data-popup-open:underline",
       },
-      /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-      // A chip-sized label (the thread tab's PR badge): 12px on a 16px line.
-      size: {
-        xs: "gap-1 [&>span]:text-[length:calc(0.75rem*var(--fork-interface-text-scale,1))] [&>span]:leading-4",
-      },
-      /* fork:end fork-design-row-variants */
     },
   },
 );
@@ -136,16 +128,11 @@ export function InlineButton({
   className,
   tone,
   touchTarget,
-  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-  size,
-  /* fork:end fork-design-row-variants */
   render,
   ...props
 }: useRender.ComponentProps<"button"> & VariantProps<typeof inlineButtonVariants>) {
   const defaultProps = {
-    /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
-    className: cn(inlineButtonVariants({ tone, touchTarget, size }), className),
-    /* fork:end fork-design-row-variants */
+    className: cn(inlineButtonVariants({ tone, touchTarget }), className),
     "data-slot": "inline-button",
     type: render ? undefined : ("button" as const),
   };

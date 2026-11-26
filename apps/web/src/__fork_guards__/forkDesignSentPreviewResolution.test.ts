@@ -31,7 +31,7 @@ describe("fork guard: design-mode sent-preview resolution", () => {
     // somewhere no other surface could reuse or a unit test could reach.
     expect(panel).toContain("isMeasuredContradiction(measured.summary)");
     expect(panel).not.toMatch(/const\s+measuredFailure\s*=/);
-    expect(panel).toContain('<Alert variant="success"');
+    expect(panel).toMatch(/<Alert\s+variant="success"/u);
     expect(panel).toContain("View live changes");
 
     // Waiting folds into the invitation deliberately, which is what makes the report path's

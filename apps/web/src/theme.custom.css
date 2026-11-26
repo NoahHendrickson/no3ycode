@@ -3149,7 +3149,7 @@
   --fork-tooltip-padding-block: var(--spacing);
   --fork-tooltip-padding-inline: calc(var(--spacing) * 2.5);
 
-  /* design-lint-disable-next-line C1 -- the primitive's rim keeps upstream's radius (fork-primitive-tokens), so it is drawn to the corner here */
+  /* design-lint-disable-next-line C1 -- the primitive's rim keeps upstream's radius (fork-design-primitives), so it is drawn to the corner here */
   &::before {
     border-radius: calc(var(--fork-tooltip-radius) - 1px);
   }

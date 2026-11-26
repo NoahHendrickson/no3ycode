@@ -488,7 +488,7 @@
     --fork-menu-row-radius: 0.625rem;
   }
 
-  /* design-lint-disable-next-line C1 -- select-item reads no padding token (fork-primitive-tokens covers corners only) */
+  /* design-lint-disable-next-line C1 -- select-item reads no padding token (fork-design-primitives covers corners only) */
   &.dark[data-fork-theme="cool-darker"] [data-fork-glass-selection] [data-slot="select-item"] {
     padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
   }

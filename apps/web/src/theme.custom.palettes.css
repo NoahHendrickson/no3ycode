@@ -362,7 +362,7 @@
     border-radius: var(--fork-flat-radius);
   }
 
-  /* design-lint-disable-next-line C1 -- command-item reads no row-radius token yet (fork-primitive-tokens covers menu, select, combobox and autocomplete rows) */
+  /* design-lint-disable-next-line C1 -- command-item reads no row-radius token yet (fork-design-primitives covers menu, select, combobox and autocomplete rows) */
   &
     :is([data-sidebar-version="v2"], [data-app-modal])
     :is(
@@ -413,7 +413,7 @@
 
   /* The popover's and autocomplete's top highlight, and a padding="none" viewport, sit inside
      the popup's 1px edge. */
-  /* design-lint-disable-next-line C1 -- the primitives draw these rims at upstream's radius (fork-primitive-tokens keeps them), so they are drawn to the popup's corner here */
+  /* design-lint-disable-next-line C1 -- the primitives draw these rims at upstream's radius (fork-design-primitives keeps them), so they are drawn to the popup's corner here */
   & [data-slot="popover-popup"].dropdown-glass::before,
   & [data-slot="autocomplete-positioner"] > ::before,
   & [data-slot="popover-popup"].dropdown-glass > [data-slot="popover-viewport"] {

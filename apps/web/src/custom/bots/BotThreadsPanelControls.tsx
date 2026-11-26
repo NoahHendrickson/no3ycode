@@ -14,12 +14,12 @@ import {
   MenuItem,
   MenuPopup,
   MenuRadioGroup,
-  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
 } from "~/components/ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
+import { SidebarChromeRadioItem } from "../SidebarChromeButton";
 import { ScopeCheckboxItem } from "../SidebarV2ChromeRows";
 import { BOT_WORK_GROUPS, BOT_WORK_SORT_LABELS, BOT_WORK_SORTS, type BotWorkSort } from "./botWork";
 import {
@@ -175,15 +175,14 @@ export function BotThreadsPanelControls(props: {
             onValueChange={(value) => setBotThreadsSort(value as BotWorkSort)}
           >
             {BOT_WORK_SORTS.map((option) => (
-              <MenuRadioItem
+              <SidebarChromeRadioItem
                 key={option}
                 value={option}
                 closeOnClick
-                size="chrome"
                 className="h-8 min-h-8"
               >
                 {BOT_WORK_SORT_LABELS[option]}
-              </MenuRadioItem>
+              </SidebarChromeRadioItem>
             ))}
           </MenuRadioGroup>
         </MenuPopup>

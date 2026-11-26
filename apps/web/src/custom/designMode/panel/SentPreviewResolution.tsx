@@ -206,7 +206,12 @@ export function SentPreviewResolution({
      * user a choice between restoring everything and discarding everything. */
     const landed = measured?.summary.applied ?? 0;
     return (
-      <Alert variant="success" size="sm" data-fork-design-resolve-previews>
+      <Alert
+        variant="success"
+        // oxlint-disable-next-line shadcn/no-restyle -- design mode's compact result alert: 11px type in its dense panel
+        className="rounded-md px-2.5 py-2 text-2xs leading-relaxed [&_[data-slot=alert-description]]:gap-1.5"
+        data-fork-design-resolve-previews
+      >
         <AlertTitle>
           {comparing
             ? "Showing the live page — your previews are hidden."

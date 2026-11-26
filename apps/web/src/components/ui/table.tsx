@@ -30,24 +30,24 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
 
 function TableRow({
   className,
-  /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+  /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
   interactive = true,
-  /* fork:end fork-design-table-alert-variants */
+  /* fork:end fork-design-primitives */
   ...props
 }: React.ComponentProps<"tr"> & {
-  /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+  /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
   /** False for rows that only label or report (group headers, empty and error notices). */
   interactive?: boolean;
-  /* fork:end fork-design-table-alert-variants */
+  /* fork:end fork-design-primitives */
 }) {
   return (
     <tr
       data-slot="table-row"
       className={cn(
         "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
-        /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+        /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
         !interactive && "hover:bg-transparent",
-        /* fork:end fork-design-table-alert-variants */
+        /* fork:end fork-design-primitives */
         className,
       )}
       {...props}
@@ -68,36 +68,36 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   );
 }
 
-/* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+/* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
 const forkTableCellToneClassName = {
   default: "",
   muted: "text-muted-foreground",
   destructive: "text-destructive",
 } as const;
-/* fork:end fork-design-table-alert-variants */
+/* fork:end fork-design-primitives */
 
 function TableCell({
   className,
-  /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+  /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
   tone = "default",
   truncate = false,
-  /* fork:end fork-design-table-alert-variants */
+  /* fork:end fork-design-primitives */
   ...props
 }: React.ComponentProps<"td"> & {
-  /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+  /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
   tone?: keyof typeof forkTableCellToneClassName;
   truncate?: boolean;
-  /* fork:end fork-design-table-alert-variants */
+  /* fork:end fork-design-primitives */
 }) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
         "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
-        /* fork:begin fork-design-table-alert-variants — see .fork/customizations.yaml#fork-design-table-alert-variants */
+        /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
         truncate && "truncate",
         forkTableCellToneClassName[tone],
-        /* fork:end fork-design-table-alert-variants */
+        /* fork:end fork-design-primitives */
         className,
       )}
       {...props}

@@ -1,7 +1,7 @@
 // @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork guard — see `.fork/README.md` §4b and
- * `.fork/customizations.yaml#fork-primitive-tokens`.
+ * `.fork/customizations.yaml#fork-design-primitives`.
  *
  * Theme CSS sets the popups', rows', and tooltips' geometry through tokens these
  * primitives read (DESIGN-RULES C1). A sync that resolves one to upstream's side puts the literal
@@ -22,7 +22,7 @@ const POPUP = "rounded-(--fork-menu-radius,var(--radius-lg))";
 const ROW = "rounded-(--fork-menu-row-radius,var(--radius-sm))";
 const count = (text: string, needle: string) => text.split(needle).length - 1;
 
-describe("fork guard: fork-primitive-tokens", () => {
+describe("fork guard: fork-design-primitives", () => {
   it("rounds popups and their rows from the menu tokens", () => {
     expect(count(read("menu.tsx"), POPUP)).toBe(1);
     expect(count(read("menu.tsx"), ROW)).toBe(4);

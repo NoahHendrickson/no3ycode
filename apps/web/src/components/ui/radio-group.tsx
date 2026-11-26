@@ -5,23 +5,23 @@ import { cn } from "~/lib/utils";
 
 function RadioGroup({
   className,
-  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
   density,
-  /* fork:end fork-design-row-variants */
+  /* fork:end fork-design-primitives */
   ...props
 }: RadioGroupPrimitive.Props & {
-  /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+  /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
   /** `compact` stacks option rows 2px apart, as in a menu. */
   density?: "compact";
-  /* fork:end fork-design-row-variants */
+  /* fork:end fork-design-primitives */
 }) {
   return (
     <RadioGroupPrimitive
       className={cn(
         "flex flex-col gap-3",
-        /* fork:begin fork-design-row-variants — see .fork/customizations.yaml#fork-design-row-variants */
+        /* fork:begin fork-design-primitives — see .fork/customizations.yaml#fork-design-primitives */
         density === "compact" && "gap-0.5",
-        /* fork:end fork-design-row-variants */
+        /* fork:end fork-design-primitives */
         className,
       )}
       data-slot="radio-group"

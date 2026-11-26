@@ -223,12 +223,11 @@ describe("fork guard: fork-model-picker", () => {
   });
 
   it("renders models as 32px rows, pin on hover beside the effort, check at the far right", () => {
-    // 32px rows; MenuItem size="xs" is the regular label at the interface size.
-    expect(content).toContain('const ROW_CLASS = "h-8 min-h-8 sm:min-h-8";');
-    expect(content.split('size="xs"').length - 1).toBeGreaterThanOrEqual(5);
-    expect(readSibling("../components/ui/menu.tsx")).toContain(
-      'xs: "py-0 text-base font-normal sm:text-base"',
+    // 32px rows with a regular label at the interface size.
+    expect(content).toContain(
+      'const ROW_CLASS = "py-0 text-base font-normal sm:text-base h-8 min-h-8 sm:min-h-8";',
     );
+    expect(content.split("ROW_CLASS").length - 1).toBeGreaterThanOrEqual(6);
     expect(content).toContain('<CheckIcon className="size-4 shrink-0 text-foreground"');
     // An unpinned row's pin is hidden at rest; a pinned row shows a filled pin. Its click must
     // not also choose the row.

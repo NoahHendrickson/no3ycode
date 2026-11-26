@@ -35,6 +35,8 @@ const readPaneRect = (runtimeTabId: string) =>
 const TRUE_HEIGHT_STORAGE_KEY = "t3code:fork:design-true-height:v1";
 
 const FILL_VALUE = "fill";
+// oxlint-disable-next-line shadcn/no-restyle -- the screen-size menu's compact 28px rows with 12px labels
+const SIZE_ROW = "sm:text-xs min-h-7";
 
 /**
  * The canvas strip's screen-size picker: name a screen instead of dragging the viewport
@@ -148,11 +150,11 @@ export function ScreenSizeMenu({
           value={selectedValue}
           onValueChange={(value) => selectResolution(String(value))}
         >
-          <MenuRadioItem value={FILL_VALUE} size="sm" className="min-h-7">
+          <MenuRadioItem value={FILL_VALUE} className={SIZE_ROW}>
             Fill preview
           </MenuRadioItem>
           {CANVAS_RESOLUTIONS.map((resolution) => (
-            <MenuRadioItem key={resolution.id} value={resolution.id} size="sm" className="min-h-7">
+            <MenuRadioItem key={resolution.id} value={resolution.id} className={SIZE_ROW}>
               <span className="flex w-full items-center justify-between gap-4">
                 <span>{resolution.label}</span>
                 <span className="tabular-nums text-muted-foreground">
@@ -169,8 +171,7 @@ export function ScreenSizeMenu({
           checked={trueHeight}
           onCheckedChange={toggleTrueHeight}
           title="Frame the screen's real height instead of filling the preview area"
-          size="sm"
-          className="min-h-7"
+          className={SIZE_ROW}
         >
           True height
         </MenuCheckboxItem>

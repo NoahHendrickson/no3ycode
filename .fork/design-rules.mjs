@@ -151,6 +151,9 @@ export const DESIGN_LINT_ALLOWLIST = [
     // MusicStripCardView, Fork/Music strip.
     "music/MusicStrip.tsx": ["SidebarMusicStrip"],
   }),
+  ...b5Exempt("wrapper: the sidebar chrome's look on a primitive (Fork/Sidebar controls)", {
+    "SidebarChromeButton.tsx": ["SidebarChromeGroup", "SidebarChromeRadioItem"],
+  }),
   ...b5Exempt("wrapper around ComposerModelPicker", {
     "scheduled/ScheduledTaskModelPicker.tsx": ["ScheduledTaskModelPicker"],
   }),
