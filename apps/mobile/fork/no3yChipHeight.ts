@@ -9,8 +9,6 @@ const SYSTEM_TEXT_BOX = 1.1931;
 const MENLO_TEXT_BOX = 1.1640625;
 // Keeps a pill's own ceil() under the target despite small errors in these ratios.
 const CEIL_SLACK = 0.05;
-/** The subagent capsule's label sits this far under the code chip's scale. */
-const CAPSULE_LABEL_INSET = 0.05;
 
 /** React Native's RCTFont rounds a Dynamic Type-scaled size to a whole point. */
 function rctFontSize(size: number, fontScale: number): number {
@@ -23,21 +21,16 @@ export function no3yChipSizes(input: {
   readonly bodyFontSize: number;
   readonly chipFontScale: number;
   readonly fontScale: number;
-  /** The capsule's border. */
-  readonly hairlineWidth: number;
 }) {
-  const { bodyFontSize, chipFontScale, fontScale, hairlineWidth } = input;
+  const { bodyFontSize, chipFontScale, fontScale } = input;
   const body = rctFontSize(bodyFontSize, fontScale);
-  const capsuleLabelScale = chipFontScale - CAPSULE_LABEL_INSET;
   const codeBox = MENLO_TEXT_BOX * rctFontSize(bodyFontSize * chipFontScale, fontScale);
   const fileBox = SYSTEM_TEXT_BOX * body * chipFontScale;
-  const capsuleBox = SYSTEM_TEXT_BOX * body * capsuleLabelScale + 2 * hairlineWidth;
-  const height = Math.ceil(Math.max(codeBox, fileBox, capsuleBox));
+  const height = Math.ceil(Math.max(codeBox, fileBox));
   // enriched-markdown clamps pill padding at 0; no pill box exceeds the height, so none needs less.
   const pillPadding = (box: number) => Math.max(0, (height - box - CEIL_SLACK) / 2);
   return {
     code: { paddingVertical: (height - codeBox) / 2 },
     file: { paddingVertical: pillPadding(fileBox), fontScale: chipFontScale },
-    capsule: { paddingVertical: pillPadding(capsuleBox), fontScale: capsuleLabelScale },
   };
 }
