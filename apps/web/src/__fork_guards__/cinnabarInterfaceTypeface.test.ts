@@ -1,8 +1,8 @@
 // @effect-diagnostics nodeBuiltinImport:off
-/* Fork guard, see `.fork/customizations.yaml#cinnabar-sans-typeface`. Cinnabar Sans is the app's
-   default interface face: two bundled variable files (upright, italic) declared with @font-face in
-   the fork's theme layer and placed first in --fork-font-sans. Lose the files, a face, or the stack
-   position and the app silently falls back to Geist with no error anywhere. */
+/* Fork guard, see `.fork/customizations.yaml#cinnabar-interface-typeface`. Cinnabar Interface is
+   the app's default interface face: two bundled variable files (upright, italic) declared with
+   @font-face in the fork's theme layer and placed first in --fork-font-sans. Lose the files, a
+   face, or the stack position and the app silently falls back to Geist with no error anywhere. */
 
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
@@ -19,17 +19,20 @@ function readSibling(relativePath: string): string {
 
 const css = readSibling("../theme.custom.css");
 const cinnabarFaces = atRuleBodies(css, "@font-face").filter((body) =>
-  /font-family:\s*"Cinnabar Sans"/u.test(body),
+  /font-family:\s*"Cinnabar Interface"/u.test(body),
 );
 
-describe("fork guard: cinnabar-sans-typeface", () => {
+describe("fork guard: cinnabar-interface-typeface", () => {
   it("bundles the upright and italic variable files with their license", () => {
-    for (const file of ["CinnabarSans-Variable.woff2", "CinnabarSans-Italic-Variable.woff2"]) {
-      const bytes = NodeFS.readFileSync(siblingPath(`../custom/fonts/cinnabar-sans/${file}`));
+    for (const file of [
+      "CinnabarInterface-Variable.woff2",
+      "CinnabarInterface-Italic-Variable.woff2",
+    ]) {
+      const bytes = NodeFS.readFileSync(siblingPath(`../custom/fonts/cinnabar-interface/${file}`));
       // WOFF2 signature: a renamed or truncated file would 404 as a font, not as a build error.
       expect(bytes.subarray(0, 4).toString("latin1")).toBe("wOF2");
     }
-    expect(readSibling("../custom/fonts/cinnabar-sans/OFL.txt")).toContain(
+    expect(readSibling("../custom/fonts/cinnabar-interface/OFL.txt")).toContain(
       "SIL OPEN FONT LICENSE Version 1.1",
     );
   });
@@ -42,8 +45,8 @@ describe("fork guard: cinnabar-sans-typeface", () => {
     const italic = byStyle("italic");
     expect(upright).toMatch(/font-weight:\s*100 900;/u);
     expect(italic).toMatch(/font-weight:\s*100 900;/u);
-    expect(upright).toContain("cinnabar-sans/CinnabarSans-Variable.woff2");
-    expect(italic).toContain("cinnabar-sans/CinnabarSans-Italic-Variable.woff2");
+    expect(upright).toContain("cinnabar-interface/CinnabarInterface-Variable.woff2");
+    expect(italic).toContain("cinnabar-interface/CinnabarInterface-Italic-Variable.woff2");
   });
 
   // The stack's lead and scope are pinned in forkTypographySettings.test.ts.

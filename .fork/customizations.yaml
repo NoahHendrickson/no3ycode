@@ -3640,7 +3640,7 @@
     from the fork's own theme layer — web and Electron renderer only; mobile
     and marketing keep upstream's fonts. Geist Mono is the default code and
     terminal face; Geist backs the Geist interface preset and is the fallback
-    in the sans stack, whose value and lead family cinnabar-sans-typeface owns.
+    in the sans stack, whose value and lead family cinnabar-interface-typeface owns.
     Since upstream's v0.0.32 configurable-fonts work (Settings → Appearance:
     family, size, smoothing — applied as inline styles on the root by
     appearanceFonts.ts), the fork supplies the DEFAULT only: a user's explicit
@@ -3700,17 +3700,17 @@
   verify:
     - apps/web/src/__fork_guards__/geistTypography.test.ts
 
-- id: cinnabar-sans-typeface
+- id: cinnabar-interface-typeface
   intent: >
-    The app's default interface face is Cinnabar Sans, a fork-owned typeface:
+    The app's default interface face is Cinnabar Interface, a fork-owned typeface:
     Geist reshaped with Anthropic Sans as a visual reference, nothing traced (rounder bowls, a
     shorter-reading lowercase, lighter horizontals, a tailless u, a straight-tailed
     y, flat-cut S/s/a terminals, Inter's R and a), licensed OFL as a Modified
-    Version of Geist and Inter (custom/fonts/cinnabar-sans/OFL.txt). It ships as
+    Version of Geist and Inter (custom/fonts/cinnabar-interface/OFL.txt). It ships as
     two variable woff2 files — upright and italic, each weight 100..900 — declared
     with @font-face in theme.custom.css, so every weight and the italic are real
     faces, never synthesized. This entry owns the --fork-font-sans value: it
-    leads with FORK_DEFAULT_SANS_FAMILY ("Cinnabar Sans"), with Geist Variable
+    leads with FORK_DEFAULT_SANS_FAMILY ("Cinnabar Interface"), with Geist Variable
     (bundled by geist-typography) right behind it as the fallback. Settings →
     Appearance labels the empty preference with that same constant and offers
     Geist as a preset (fork-typography-settings). The font's sources and build
@@ -3718,15 +3718,15 @@
     are replaced wholesale, never hand-edited.
   tier: 1
   files:
-    - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2
-    - apps/web/src/custom/fonts/cinnabar-sans/CinnabarSans-Italic-Variable.woff2
-    - apps/web/src/custom/fonts/cinnabar-sans/OFL.txt
+    - apps/web/src/custom/fonts/cinnabar-interface/CinnabarInterface-Variable.woff2
+    - apps/web/src/custom/fonts/cinnabar-interface/CinnabarInterface-Italic-Variable.woff2
+    - apps/web/src/custom/fonts/cinnabar-interface/OFL.txt
     - apps/web/src/theme.custom.css
     - apps/web/src/custom/forkTypographyScale.ts
   shadows: []
   watch: []
   verify:
-    - apps/web/src/__fork_guards__/cinnabarSansTypeface.test.ts
+    - apps/web/src/__fork_guards__/cinnabarInterfaceTypeface.test.ts
 
 - id: fork-lint-cleanliness
   intent: >
@@ -9511,8 +9511,8 @@
 - id: fork-typography-settings
   intent: >
     Settings → Appearance → Typography offers the interface font as presets:
-    Cinnabar Sans (the fork default, an empty preference that the fork stack
-    fills, labelled with the bundled face — see cinnabar-sans-typeface), Geist
+    Cinnabar Interface (the fork default, an empty preference that the fork stack
+    fills, labelled with the bundled face — see cinnabar-interface-typeface), Geist
     (Geist Variable, the bundled face), Inter (bundled by upstream's main.tsx
     import) and System. Custom… opens upstream's
     any-installed-font field, and any value that matches no preset shows as
@@ -9915,8 +9915,8 @@
     or "1" for http://127.0.0.1:8765) and never runs in production builds
     (import.meta.env.DEV). The Studio announces each recompiled version over
     server-sent events at /live/events; custom/cinnabarLive fetches
-    /live/CinnabarSans.ttf and /live/CinnabarSans-Italic.ttf and swaps the
-    "Cinnabar Sans" FontFace objects in document.fonts, which outrank the
+    /live/CinnabarInterface.ttf and /live/CinnabarInterface-Italic.ttf and swaps
+    the "Cinnabar Interface" FontFace objects in document.fonts, which outrank the
     stylesheet's @font-face rules for the same descriptors. The fonts are fetched
     and built from ArrayBuffers on purpose: the desktop CSP allows http: in
     connect-src but not in font-src, and a buffer-built FontFace makes no font
@@ -9939,7 +9939,7 @@
     opens on the maintainer's working look, so agents' screenshots and checks
     start where the maintainer works: Flat Glass, Jolly Petal behind a new
     agent, the bead ring as the working mark, the default interface font
-    (Cinnabar Sans, an empty preference) at a 15px interface size and a 14px
+    (Cinnabar Interface, an empty preference) at a 15px interface size and a 14px
     sidebar. It applies once per window session before the theme
     initializers paint, so a reload keeps changes made since launch; a window
     reopened from the dock is a new session and gets it again. The side chat
@@ -10036,7 +10036,7 @@
   intent: >
     On the no3y iPhone (NO3Y_IPHONE), Settings → Appearance has a Font
     section above Text: System (SF Pro, the default) or Cinnabar Interface,
-    the face the desktop ships (its Settings calls it Cinnabar Sans). The
+    the face the desktop ships (its Settings uses the same name). The
     pick is the local `interfaceFont` mobile preference and applies live:
     installNo3yInterfaceFont rewrites the global.css font tokens (--font-sans,
     --font-medium, --font-bold) in every Uniwind theme, and the
@@ -10053,7 +10053,7 @@
     Cinnabar Interface build the web ships (Regular, Italic, Medium,
     MediumItalic, SemiBold, Bold — upright 800 falls to Bold, and with no
     SemiBoldItalic or BoldItalic face, bold italic draws MediumItalic); they come from
-    the cinnabar-sans repo's fonts/static and are replaced wholesale, never
+    the cinnabar-interface repo's fonts/static and are replaced wholesale, never
     hand-edited. A binary built before the faces were bundled draws the
     system font when Cinnabar Interface is picked. iPad and Android keep DM Sans
     and show no Font section.

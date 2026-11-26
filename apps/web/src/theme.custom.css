@@ -33,21 +33,22 @@
 @import "@fontsource-variable/geist/index.css";
 @import "@fontsource-variable/geist-mono/index.css";
 
-/* Cinnabar Sans — see `.fork/customizations.yaml#cinnabar-sans-typeface`. Both
+/* Cinnabar Interface — see `.fork/customizations.yaml#cinnabar-interface-typeface`. Both
    faces span 100..900, so no weight or the italic is ever synthesized. */
 @font-face {
-  font-family: "Cinnabar Sans";
+  font-family: "Cinnabar Interface";
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("./custom/fonts/cinnabar-sans/CinnabarSans-Variable.woff2") format("woff2-variations");
+  src: url("./custom/fonts/cinnabar-interface/CinnabarInterface-Variable.woff2")
+    format("woff2-variations");
 }
 @font-face {
-  font-family: "Cinnabar Sans";
+  font-family: "Cinnabar Interface";
   font-style: italic;
   font-weight: 100 900;
   font-display: swap;
-  src: url("./custom/fonts/cinnabar-sans/CinnabarSans-Italic-Variable.woff2")
+  src: url("./custom/fonts/cinnabar-interface/CinnabarInterface-Italic-Variable.woff2")
     format("woff2-variations");
 }
 
@@ -64,7 +65,7 @@
    renders — keeping that order would make shipping Geist Mono pointless. */
 :root[data-fork="noahhendrickson-t3code"] {
   --fork-font-sans:
-    "Cinnabar Sans", "Geist Variable", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Cinnabar Interface", "Geist Variable", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI",
     system-ui, sans-serif;
   /* "JetBrains Mono" is kept by name from the era its Fontsource face was
      bundled: a Linux user with it installed still gets it ahead of
