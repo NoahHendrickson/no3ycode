@@ -10013,3 +10013,22 @@
     - apps/mobile/src/native/T3ComposerEditor.ios.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yMobileInterfaceFont.test.ts
+
+- id: fork-dev-electron-no-startup-relaunch
+  intent: >
+    The desktop dev runner relaunches Electron after any abnormal exit. When
+    Electron dies during startup, a retry dies the same way, and the runner
+    looped forever (136 launches in about two minutes on Nov 26 2026). The
+    common cause is another worktree's dev app holding the shared t3code-dev
+    profile: upstream's single-instance lock (#19554) makes the new app quit,
+    and each attempt raises and focuses the other app's window, so the user
+    can't click anything. A crash within ten seconds of launch is now left
+    down with a message; a rebuild or a rerun of dev:desktop still relaunches it,
+    and so does a crash after the window was up.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/desktop/scripts/dev-electron.mjs
+  verify:
+    - apps/web/src/__fork_guards__/forkDevElectronNoStartupRelaunch.test.ts
