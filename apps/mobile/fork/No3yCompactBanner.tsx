@@ -1,7 +1,7 @@
 /**
- * The Mac's "Resume with less context · 525K tokens" notice on the no3y iPhone composer: one 44pt
- * glass pill in the thread header bubbles' style, stacked above the composer card (and the queued
- * banner), with Compact (sends `/compact` now) and an X that keeps the full history — see
+ * The Mac's "Resume with less context" notice (title over "525K tokens from an older session")
+ * on the no3y iPhone composer: one 49pt glass pill in the thread header bubbles' style, stacked
+ * above the composer card (and the queued banner), with Compact (sends `/compact` now) and an X that keeps the full history — see
  * `.fork/customizations.yaml#no3y-mobile-redesign` and fork/no3yResumeCompaction.ts.
  */
 import ArrowShrink02Icon from "@hugeicons/core-free-icons/ArrowShrink02Icon";
@@ -32,6 +32,8 @@ import {
 } from "./no3yResumeCompaction";
 
 const BUBBLE = NO3Y_CONTROL_SIZE;
+// Its two text lines (18 + 15) with 8pt above and below.
+const BANNER_HEIGHT = 18 + 15 + 8 * 2;
 const PILL_HEIGHT = 32;
 
 /** Compacts the thread now, as the Mac's Compact does: a standalone `/compact` on its model. */
@@ -99,38 +101,37 @@ export function No3yCompactBanner(props: {
       layout={NO3Y_LAYOUT}
       style={{
         ...NO3Y_PANEL_MARGIN,
-        height: BUBBLE,
+        height: BANNER_HEIGHT,
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
         paddingLeft: 14,
       }}
     >
-      <No3yGlassLayer radius={BUBBLE / 2} />
+      <No3yGlassLayer radius={BANNER_HEIGHT / 2} />
       <HugeIcon icon={ArrowShrink02Icon} size={18} color={palette.foreground} />
       <View
         accessible
         accessibilityLabel={`Resume with less context, ${tokens} from an older session`}
-        style={{ flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center" }}
+        style={{ flex: 1, minWidth: 0 }}
       >
         <Text
           numberOfLines={1}
-          style={{ flexShrink: 0, fontSize: 15, ...NO3Y_FONT.medium, color: palette.titleInk }}
+          style={{
+            fontSize: 14,
+            lineHeight: 18,
+            ...NO3Y_FONT.medium,
+            color: palette.titleInk,
+          }}
         >
           Resume with less context
         </Text>
-        {/* The token count gives way first when the row is short of room. */}
+        {/* Its own line, as the Mac's description: one row beside Compact and X has no room. */}
         <Text
           numberOfLines={1}
-          style={{
-            flexShrink: 1,
-            minWidth: 0,
-            fontSize: 15,
-            ...NO3Y_FONT.regular,
-            color: palette.metaInk,
-          }}
+          style={{ fontSize: 12, lineHeight: 15, ...NO3Y_FONT.regular, color: palette.metaInk }}
         >
-          {` · ${tokens}`}
+          {`${tokens} from an older session`}
         </Text>
       </View>
       <Pressable
@@ -157,7 +158,7 @@ export function No3yCompactBanner(props: {
         onPress={() => dismissNo3yResumeCompaction(offer.key)}
         style={({ pressed }) => ({
           width: BUBBLE - 4,
-          height: BUBBLE,
+          height: BANNER_HEIGHT,
           alignItems: "center",
           justifyContent: "center",
           opacity: pressed ? 0.6 : 1,
