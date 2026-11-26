@@ -2,7 +2,6 @@
  * A sidebar section's label and fold caret — the Bots and Threads rows (`fork-bots`) and the
  * status section headers (`sidebar-v2-status-grouping`) share them.
  */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "~/lib/utils";
@@ -50,7 +49,8 @@ export function SidebarV2SectionLabel(props: {
     );
   }
   return (
-    <ButtonPrimitive
+    <button
+      type="button"
       onClick={props.onToggle}
       aria-expanded={props.collapsed !== true}
       data-testid={props.testId}
@@ -61,6 +61,6 @@ export function SidebarV2SectionLabel(props: {
     >
       <span className="truncate">{props.children}</span>
       <SidebarV2SectionCaret collapsed={props.collapsed === true} className="size-3.5 shrink-0" />
-    </ButtonPrimitive>
+    </button>
   );
 }

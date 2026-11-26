@@ -2,7 +2,6 @@
  * The one-line live status — see `.fork/customizations.yaml#fork-working-row-last`.
  * The line stays mounted while its group is open, so the toggle keeps focus.
  */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { ChevronRightIcon } from "./icons/lucide-hugeicons";
 import { useMessages } from "gt-react";
 import { use, useEffect, useState, type ReactNode } from "react";
@@ -97,13 +96,14 @@ export function ForkLiveStatusLine({
       {groupId === undefined ? (
         <div className={lineClassName}>{content}</div>
       ) : (
-        <ButtonPrimitive
+        <button
+          type="button"
           aria-expanded={live?.expanded === true}
           className={`${lineClassName} cursor-pointer rounded-md hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70`}
           onClick={() => ctx.onToggleWorkGroup(groupId, row.id)}
         >
           {content}
-        </ButtonPrimitive>
+        </button>
       )}
       {trailing}
     </div>

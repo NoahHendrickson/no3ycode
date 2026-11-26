@@ -14,7 +14,6 @@ import {
  * flips the server immediately, the way the list's switch does.
  */
 import { useAtomValue } from "@effect/atom-react";
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftIcon, PlayIcon, Trash2Icon } from "../icons/lucide-hugeicons";
 import { useMemo, useRef, useState, type ReactNode } from "react";
@@ -747,7 +746,8 @@ function WebhookDeliveries(props: {
           <ul className="divide-y divide-border/60">
             {deliveries.map((delivery) => (
               <li key={delivery.id}>
-                <ButtonPrimitive
+                <button
+                  type="button"
                   className="flex w-full flex-wrap items-center gap-2 py-2 text-left text-sm hover:text-foreground"
                   onClick={() => setSelectedId(delivery.id)}
                 >
@@ -764,7 +764,7 @@ function WebhookDeliveries(props: {
                       {delivery.missingFields.length === 1 ? "" : "s"}
                     </span>
                   ) : null}
-                </ButtonPrimitive>
+                </button>
               </li>
             ))}
           </ul>

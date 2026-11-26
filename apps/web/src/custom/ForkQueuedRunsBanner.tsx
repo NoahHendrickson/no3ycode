@@ -1,4 +1,3 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { msg, useMessages } from "gt-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
@@ -700,13 +699,14 @@ function QueuedRowText(props: {
         {props.text}
       </span>
       {showChevron ? (
-        <ButtonPrimitive
+        <button
+          type="button"
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse queued message" : "Expand queued message"}
           className="flex size-4 shrink-0 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
         >
           <ChevronDownIcon className={cn("size-3.5", expanded && "rotate-180")} />
-        </ButtonPrimitive>
+        </button>
       ) : null}
     </ComposerBanner.Content>
   );

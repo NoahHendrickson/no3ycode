@@ -1,4 +1,3 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { useEffect, useLayoutEffect, useRef, type ReactElement, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckIcon, MicIcon, XIcon } from "../icons/lucide-hugeicons";
@@ -160,7 +159,8 @@ function DictationDoneButton(props: { dictation: ForkDictation }) {
     <DictationTooltip
       label={label}
       trigger={
-        <ButtonPrimitive
+        <button
+          type="button"
           data-fork-dictation-action="done"
           // Transcribing is inert but not dimmed; the check spins instead.
           className={cn(

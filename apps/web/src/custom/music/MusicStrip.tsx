@@ -21,7 +21,6 @@ import {
   Volume2,
   VolumeOff,
 } from "../icons/lucide-hugeicons";
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { type CSSProperties, memo, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -480,7 +479,8 @@ const CoverGrid = memo(function CoverGrid(props: {
     // oxlint-disable-next-line shadcn/no-arbitrary-values -- as many 7rem-min covers as fit the strip
     <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1 py-1">
       {rows.map((row) => (
-        <ButtonPrimitive
+        <button
+          type="button"
           className="flex min-w-0 cursor-pointer flex-col gap-1.5 rounded-md p-1.5 text-left outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           key={row.id}
           onClick={() => void openMusicRow(row, kind)}
@@ -500,7 +500,7 @@ const CoverGrid = memo(function CoverGrid(props: {
             />
           )}
           <span className="block w-full truncate text-xs font-medium">{row.name}</span>
-        </ButtonPrimitive>
+        </button>
       ))}
     </div>
   );

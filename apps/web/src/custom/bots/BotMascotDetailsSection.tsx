@@ -36,7 +36,6 @@ export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThrea
             <Tooltip key={shape}>
               <TooltipTrigger
                 render={
-                  // oxlint-disable-next-line t3code/no-hand-built-primitives -- a RadioGroup checks on every arrow key, and each check here is a server write
                   <button
                     type="button"
                     role="radio"

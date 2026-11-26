@@ -11,7 +11,6 @@
  * settled tail takes it in every grouping, so every group in the list reads the
  * same way; `section` is "pinned" or "settled" there.
  */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
@@ -49,7 +48,8 @@ export function SidebarV2StatusSectionHeader(props: {
         SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
       )}
     >
-      <ButtonPrimitive
+      <button
+        type="button"
         onClick={props.onToggleCollapsed}
         aria-expanded={!props.collapsed}
         data-testid="sidebar-v2-status-section-toggle"
@@ -62,7 +62,7 @@ export function SidebarV2StatusSectionHeader(props: {
           collapsed={props.collapsed}
           className="size-3.5 shrink-0"
         />
-      </ButtonPrimitive>
+      </button>
       {props.renderTrailing ? (
         <span
           data-fork-section-actions=""

@@ -22,7 +22,7 @@ export default defineRule({
     type: "problem",
     docs: {
       description:
-        "Disallow hand-built interactive primitives in fork code: styled raw buttons and host elements playing menu, listbox, dialog or tooltip.",
+        "Disallow host elements playing menu, listbox, dialog or tooltip in fork code: each rebuilds a primitive's focus and keyboard model.",
     },
   },
   create(context) {
@@ -32,13 +32,6 @@ export default defineRule({
         for (const attribute of node.attributes) {
           if (attribute.type !== "JSXAttribute" || attribute.name.type !== "JSXIdentifier")
             continue;
-          if (node.name.name === "button" && attribute.name.name === "className") {
-            context.report({
-              node,
-              message:
-                "A styled raw <button> rebuilds Button. Use Button (components/ui/button) with a variant and size, ListItem (custom/ListItem) for a list row, or Base UI's Button, Toggle or Radio for a feature's own control.",
-            });
-          }
           if (attribute.name.name !== "role") continue;
           const role = staticString(attribute.value);
           const primitive = role === null ? undefined : PRIMITIVE_FOR_ROLE[role];

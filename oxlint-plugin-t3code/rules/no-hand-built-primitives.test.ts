@@ -8,23 +8,14 @@ const rule = createOxlintRuleHarness("t3code/no-hand-built-primitives", {
 
 describe("t3code/no-hand-built-primitives", () => {
   rule.valid(
-    "allows the primitives, unstyled buttons and other roles",
+    "allows the primitives, buttons and other roles",
     `
       const a = <Button variant="ghost" size="sm">Save</Button>;
-      const b = <button type="submit">Save</button>;
+      const b = <button type="button" className="rounded-md px-2">Save</button>;
       const c = <div role="group" className="flex" />;
       const d = <MenuPopup role="menu" />;
+      const e = <button type="button" role="radio" aria-checked />;
     `,
-  );
-
-  rule.invalid(
-    "reports a styled raw button",
-    `const a = <button type="button" className="rounded-md px-2">Save</button>;`,
-  );
-
-  rule.invalid(
-    "reports a styled raw button passed to render",
-    `const a = <MenuTrigger render={<button className={cn("px-2")} />} />;`,
   );
 
   rule.invalid("reports a hand-built menu", `const a = <div role="menu">{items}</div>;`);

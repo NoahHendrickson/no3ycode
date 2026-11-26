@@ -2,7 +2,6 @@
  * Bottom half of the composer's split branch-and-workspace popup — see
  * `.fork/customizations.yaml#fork-composer-shell`.
  */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { Radio as RadioPrimitive } from "@base-ui/react/radio";
 import type { KeyboardEvent } from "react";
 
@@ -163,7 +162,8 @@ export function ComposerWorkspaceFooter(props: {
         </RadioPrimitive.Root>
       </RadioGroup>
       {showPreviousWorktree && previousWorktreeLabel ? (
-        <ButtonPrimitive
+        <button
+          type="button"
           className={cn(OPTION_CLASS, "h-auto py-1")}
           onClick={() => {
             onUsePreviousWorktree?.();
@@ -171,7 +171,7 @@ export function ComposerWorkspaceFooter(props: {
           }}
         >
           <PreviousWorktreeItemContent branch={previousWorktreeBranch} />
-        </ButtonPrimitive>
+        </button>
       ) : null}
     </div>
   );

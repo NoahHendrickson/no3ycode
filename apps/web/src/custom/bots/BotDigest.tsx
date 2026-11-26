@@ -1,7 +1,6 @@
 /**
  * A bot's digest above its composer — see `.fork/customizations.yaml#fork-bot-digest`.
  */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
@@ -244,7 +243,8 @@ export function BotDigestView(props: {
               {/* A dot per ask, the one on show a rounded dash; each opens its ask. */}
               <span className="flex items-center gap-1 px-0.5">
                 {askKeys.map((key, index) => (
-                  <ButtonPrimitive
+                  <button
+                    type="button"
                     key={key}
                     aria-label={`Ask ${index + 1} of ${askKeys.length}`}
                     aria-current={index === at ? "true" : undefined}

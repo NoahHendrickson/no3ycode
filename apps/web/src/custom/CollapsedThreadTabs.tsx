@@ -1,7 +1,6 @@
 /** Collapsed-sidebar thread tabs: Needs input, Completed and Working threads in a row above the
  * thread panes, filtered by project, the overflow behind More, New agent last. See
  * `.fork/customizations.yaml#fork-collapsed-thread-tabs`. Renders only while collapsed. */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { useAtomValue } from "@effect/atom-react";
 import {
   parseScopedThreadKey,
@@ -595,7 +594,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
               render={
                 <MenuTrigger
                   render={
-                    <ButtonPrimitive
+                    <button
+                      type="button"
                       aria-label={STATUS_MENU_LABEL}
                       data-fork-tab-trigger=""
                       data-fork-tab-strip-control=""
@@ -627,7 +627,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
         <Tooltip>
           <TooltipTrigger
             render={
-              <ButtonPrimitive
+              <button
+                type="button"
                 aria-label={newAgentLabel}
                 disabled={projectGroups.length === 0}
                 data-fork-tab-strip-control=""
@@ -693,7 +694,8 @@ function CollapsedThreadTabsStrip(props: { readonly paneThreadRefs: readonly Sco
           <Menu>
             <MenuTrigger
               render={
-                <ButtonPrimitive
+                <button
+                  type="button"
                   aria-label={`${row.overflow.length} more active threads`}
                   data-fork-tab-trigger=""
                   data-fork-tab-strip-control=""
@@ -810,14 +812,15 @@ function ThreadTab(props: {
     >
       {/* Stretched under the content so the PR badge can be its own link: the content
           ignores the pointer, and every press but the badge's reaches this button. */}
-      <ButtonPrimitive
+      <button
+        type="button"
         data-fork-split-drag-surface=""
         aria-current={props.routed ? "page" : undefined}
         className="absolute inset-0 cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         onClick={props.onOpen}
       >
         <span className="sr-only">{thread.title}</span>
-      </ButtonPrimitive>
+      </button>
       <span
         data-fork-tab-content=""
         className="pointer-events-none flex h-full min-w-0 flex-1 items-center gap-1.5 px-2.5"
@@ -920,14 +923,15 @@ function DraftTab(
       style={TAB_SHELL_STYLE}
     >
       {props.routed ? null : (
-        <ButtonPrimitive
+        <button
+          type="button"
           className="absolute inset-0 cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
           onClick={props.onOpen}
         >
           <span className="sr-only">
             <DraftTitle draftId={props.draftId} />
           </span>
-        </ButtonPrimitive>
+        </button>
       )}
       <span
         data-fork-tab-content=""

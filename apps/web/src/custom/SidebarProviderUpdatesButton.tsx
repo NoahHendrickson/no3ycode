@@ -1,4 +1,3 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import {
   type EnvironmentId,
   PROVIDER_DISPLAY_NAMES,
@@ -72,13 +71,14 @@ export function SidebarProviderUpdatesButtonView(props: {
       <Tooltip>
         <TooltipTrigger
           render={
-            <ButtonPrimitive
+            <button
+              type="button"
               aria-label="Update providers"
               className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-sidebar-control-surface text-sidebar-foreground outline-hidden ring-ring transition-colors hover:bg-sidebar-row-hover focus-visible:ring-2 focus-visible:ring-inset"
               onClick={props.onUpdate}
             >
               <PackageIcon className="size-4" />
-            </ButtonPrimitive>
+            </button>
           }
         />
         <TooltipPopup side="top">

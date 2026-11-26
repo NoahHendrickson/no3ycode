@@ -11,7 +11,6 @@
  * upstream's traits picker. Controlled editors supply their own options callback so scheduled
  * tasks can reuse the menu without a conversation draft.
  */
-import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import type { ProviderInstanceId, ProviderOptionDescriptor } from "@t3tools/contracts";
 import {
   applyClaudePromptEffortPrefix,
@@ -213,7 +212,7 @@ function EffortValue({
   const togglesOn = traits.toggles.filter((toggle) => toggle.checked);
   const valueLabel = traits.effort?.level?.label ?? "Options";
   return (
-    <ButtonPrimitive
+    <button
       {...rowButtonProps}
       ref={ref}
       aria-haspopup="menu"
@@ -239,14 +238,14 @@ function EffortValue({
       ))}
       <ChevronsUpDownIcon aria-hidden className="size-4 text-muted-foreground" />
       <span className="max-w-28 truncate">{valueLabel}</span>
-    </ButtonPrimitive>
+    </button>
   );
 }
 
 /** Another row's effort as a pick would set it; a click picks that model and opens its menu. */
 function EffortPreview(props: { label: string; onPickAndOpen: () => void }) {
   return (
-    <ButtonPrimitive
+    <button
       {...rowButtonProps}
       aria-label={`Pick with effort ${props.label}`}
       className={cn(EFFORT_VALUE_CLASS, "text-muted-foreground")}
@@ -259,7 +258,7 @@ function EffortPreview(props: { label: string; onPickAndOpen: () => void }) {
     >
       <ChevronsUpDownIcon aria-hidden className="size-4" />
       <span className="max-w-28 truncate">{props.label}</span>
-    </ButtonPrimitive>
+    </button>
   );
 }
 

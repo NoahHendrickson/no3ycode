@@ -234,13 +234,6 @@ export const DESIGN_LINT_OVERRIDES = [
     files: ["apps/web/src/custom/SidebarV2StatusIndicator.tsx"],
     rules: { "t3code/no-hand-built-status-marks": "off" },
   },
-  {
-    // Design mode's panel is the Forge editor's own dense control set (fields, steppers, swatches,
-    // canvas controls), sized and styled as one instrument; Button's press scale and hit area would
-    // break its 22px rows.
-    files: ["apps/web/src/custom/designMode/panel/**"],
-    rules: { "t3code/no-hand-built-primitives": "off" },
-  },
   ...Object.entries(DESIGN_LINT_PENDING).map(([rule, files]) => ({
     files,
     rules: { [rule]: "off" },
