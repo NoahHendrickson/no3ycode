@@ -719,8 +719,10 @@ describe("DesktopUpdates", () => {
   it.effect("marks the backend stop for an install as an update restart", () => {
     let markersAtStop: ReadonlyArray<string> = [];
     let inProgressAtStop: string | undefined;
+    let stepsAtStop: ReadonlyArray<string> = [];
     const harness = makeHarness({
       stopBackend: Effect.sync(() => {
+        stepsAtStop = [...harness.installSteps];
         markersAtStop = [...harness.updateRestartMarkers];
         inProgressAtStop = harness.updateInProgressMarker();
       }),
@@ -745,6 +747,9 @@ describe("DesktopUpdates", () => {
           expiresAt: 61_000,
         });
         assert.isDefined(harness.updateInProgressMarker());
+        // The app closes on click; nobody watches its backends stop.
+        assert.deepEqual(stepsAtStop, ["hideWindows"]);
+        assert.notInclude(harness.installSteps, "revealWindow");
       }),
     ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
   });
@@ -832,6 +837,7 @@ describe("DesktopUpdates", () => {
           yield* Fiber.interrupt(installFiber);
           assert.equal(harness.updateRestartMarkers.size, 0);
           assert.isUndefined(harness.updateInProgressMarker());
+          assert.equal(harness.installSteps.at(-1), "revealWindow");
         }),
       ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
     }),
@@ -861,9 +867,11 @@ describe("DesktopUpdates", () => {
         assert.isTrue(result.accepted);
         assert.isFalse(yield* Ref.get(desktopState.quitting));
         assert.deepEqual(harness.installSteps, [
+          "hideWindows",
           "closeSshTunnels",
           "quitAndInstall",
           "startBackend",
+          "revealWindow",
         ]);
         assert.equal(harness.updateRestartMarkers.size, 0);
         assert.isUndefined(harness.updateInProgressMarker());
@@ -895,7 +903,12 @@ describe("DesktopUpdates", () => {
 
         const result = yield* updates.install;
         assert.equal(result.state.errorContext, "install");
-        assert.deepEqual(harness.installSteps, ["closeSshTunnels", "quitAndInstall"]);
+        assert.deepEqual(harness.installSteps, [
+          "hideWindows",
+          "closeSshTunnels",
+          "quitAndInstall",
+          "revealWindow",
+        ]);
         assert.isFalse((yield* (yield* pool.primary).snapshot).desiredRunning);
       }),
     ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
@@ -990,6 +1003,7 @@ describe("DesktopUpdates", () => {
         harness.emit("error", new Error("duplicate native installer error"));
         yield* flushCallbacks;
         assert.deepEqual(harness.installSteps, [
+          "hideWindows",
           "closeSshTunnels",
           "quitAndInstall",
           "startBackend",
@@ -998,6 +1012,7 @@ describe("DesktopUpdates", () => {
         yield* Deferred.succeed(releaseRecovery, undefined);
         const failedResult = yield* Fiber.join(failedInstall);
         assert.equal(failedResult.state.errorContext, "install");
+        assert.equal(harness.installSteps.at(-1), "revealWindow");
 
         const retry = yield* updates.install;
         assert.isTrue(retry.accepted);

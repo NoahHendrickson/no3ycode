@@ -399,6 +399,11 @@ export const make = Effect.gen(function* () {
   const installRunningBackendsRef = yield* Ref.make<
     ReadonlyArray<DesktopBackendPool.DesktopBackendInstance>
   >([]);
+  /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+  const installHiddenWindowsRef = yield* Ref.make<
+    Effect.Success<ElectronWindow.ElectronWindow["Service"]["hideAll"]>
+  >([]);
+  /* fork:end fork-update-install-hide */
   const finishedUpdateActions = yield* PubSub.unbounded<UpdateAction>();
   const updaterConfiguredRef = yield* Ref.make(false);
   const lastLoggedDownloadMilestoneRef = yield* Ref.make(-1);
@@ -844,9 +849,23 @@ export const make = Effect.gen(function* () {
       })),
     );
 
+  /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+  // A failed or interrupted install must not leave the app running with every window hidden.
+  const revealInstallHiddenWindows = Ref.getAndSet(installHiddenWindowsRef, []).pipe(
+    Effect.flatMap((windows) =>
+      Effect.forEach(windows, (window) => electronWindow.reveal(window).pipe(Effect.ignoreCause), {
+        discard: true,
+      }),
+    ),
+  );
+
+  /* fork:end fork-update-install-hide */
   const resetInstallAction = Effect.all(
     [
       finishUpdateAction("install"),
+      /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+      revealInstallHiddenWindows,
+      /* fork:end fork-update-install-hide */
       Ref.set(desktopState.quitting, false),
       Ref.set(installRunningBackendsRef, []),
       removeUpdateRestartMarker,
@@ -887,7 +906,11 @@ export const make = Effect.gen(function* () {
       Effect.catchCause(() =>
         logUpdaterError("Desktop update install recovery failed unexpectedly."),
       ),
-      Effect.ensuring(finishUpdateAction("install-recovery")),
+      /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+      Effect.ensuring(
+        Effect.andThen(revealInstallHiddenWindows, finishUpdateAction("install-recovery")),
+      ),
+      /* fork:end fork-update-install-hide */
     );
   });
 
@@ -931,6 +954,10 @@ export const make = Effect.gen(function* () {
         yield* Ref.set(installRunningBackendsRef, []);
 
         return yield* Effect.gen(function* () {
+          /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+          // Close the app on click; stopping backends and staging the update run behind it.
+          yield* Ref.set(installHiddenWindowsRef, yield* electronWindow.hideAll);
+          /* fork:end fork-update-install-hide */
           yield* writeUpdateRestartMarker;
           yield* writeUpdateInProgressMarker;
           const { downloadedVersion } = yield* Ref.get(updateStateRef);

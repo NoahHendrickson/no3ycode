@@ -554,7 +554,7 @@ function SidebarUpdateControl() {
             <ForkUpdateDownloadRing percent={state?.downloadPercent ?? null} />
           ) : null}
           {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
-          Update
+          {iconStatus === "downloaded" ? "Install" : "Update"}
         </>
       ) : (
         statusIcon
