@@ -1,11 +1,13 @@
 /**
- * The app icon's pixel leaf (assets/fork/app-icon.icon/Assets/mark.svg) on its 21-cell grid: the
- * one source for the launch overlay and its splash PNG (.fork/export-launch-leaf.ts).
+ * The launch screen's pixel leaf on its 21-cell grid: the one source for the launch overlay and its
+ * splash PNG (.fork/export-launch-leaf.ts). It follows the app icon's shape and fills
+ * (assets/fork/app-icon.icon/Assets/mark.svg) but not its #182E26 outline: the outline is
+ * NO3Y_LAUNCH_GREEN, so keep it when resyncing from the icon.
  */
 export const NO3Y_LEAF_GRID = 21;
 const CENTRE = 10;
-/** The left leaf's green, darkened; also the launch page, so the outer outline melts into it. */
-export const NO3Y_LEAF_OUTLINE = "#005236";
+/** The left leaf's green, darkened: the leaf outlines and the launch page they melt into. */
+export const NO3Y_LAUNCH_GREEN = "#005236";
 
 // The top leaf, whole: "#" outline, "f" fill, "h" highlight. The others are it a quarter turn on.
 const LEAF = [
@@ -75,7 +77,7 @@ function buildLeaf(spec: LeafSpec): No3yLeaf {
     }),
   );
   for (const [row, col, kind] of spec.patch ?? []) kinds.set(row * NO3Y_LEAF_GRID + col, kind);
-  const colorOf = { "#": NO3Y_LEAF_OUTLINE, f: spec.fill, h: spec.highlight };
+  const colorOf = { "#": NO3Y_LAUNCH_GREEN, f: spec.fill, h: spec.highlight };
   const cells = [...kinds].map(([key, kind]) => ({
     row: Math.floor(key / NO3Y_LEAF_GRID),
     col: key % NO3Y_LEAF_GRID,

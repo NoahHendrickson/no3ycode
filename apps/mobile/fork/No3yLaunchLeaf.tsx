@@ -20,13 +20,13 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { NO3Y_SPLASH_BACKGROUND, NO3Y_SPLASH_IMAGE_WIDTH } from "./identity";
+import { NO3Y_SPLASH_IMAGE_WIDTH } from "./identity";
 import {
   createNo3yLaunchGate,
   NO3Y_LAUNCH_OUTRO_MS,
   NO3Y_LAUNCH_SPIN_DELAY_MS,
 } from "./no3yLaunch";
-import { NO3Y_LEAF_GRID, NO3Y_LEAVES, type No3yLeaf } from "./no3yLeafMark";
+import { NO3Y_LAUNCH_GREEN, NO3Y_LEAF_GRID, NO3Y_LEAVES, type No3yLeaf } from "./no3yLeafMark";
 
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 const EASE_IN_OUT = Easing.bezier(0.77, 0, 0.175, 1);
@@ -115,7 +115,7 @@ function LaunchOverlay(props: { readonly onDone: (done: true) => void }) {
         StyleSheet.absoluteFill,
         {
           zIndex: 1000,
-          backgroundColor: NO3Y_SPLASH_BACKGROUND,
+          backgroundColor: NO3Y_LAUNCH_GREEN,
           alignItems: "center",
           justifyContent: "center",
         },
