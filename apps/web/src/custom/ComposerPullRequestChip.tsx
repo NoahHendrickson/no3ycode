@@ -1,6 +1,4 @@
-import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import type { EnvironmentId, PullRequestRef, ScopedThreadRef } from "@t3tools/contracts";
-import { useAtomValue } from "@effect/atom-react";
+import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import type { MouseEvent } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
@@ -11,7 +9,6 @@ import {
 } from "~/components/ThreadStatusIndicators";
 import { usePullRequestActionRunner } from "~/components/pullRequest/usePullRequestActions";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
-import { pullRequestEnvironment } from "~/state/pullRequests";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentQuery } from "~/state/query";
 import { useRightPanelStore } from "~/rightPanelStore";
@@ -19,7 +16,7 @@ import { vcsEnvironment } from "~/state/vcs";
 
 import { BanIcon, GitMergeIcon } from "./icons/lucide-hugeicons";
 import { resolvePullRequestChipState } from "./composerPullRequestChip.logic";
-import { type ThreadAutoMergeState, useThreadAutoMerge } from "./threadAutoMerge";
+import { type ThreadAutoMerge, useThreadAutoMerge } from "./threadAutoMerge";
 
 /** The thread's PR as a chip above the composer (fork-composer-shell), resolved the way
  * BranchToolbarBranchSelector resolved it in the context row. Renders nothing without a PR. An
@@ -58,12 +55,7 @@ export function ComposerPullRequestChip(props: {
     pr: pr.pr,
     pullRequests: thread?.pullRequests ?? [],
   });
-  const autoMerge = useThreadAutoMerge(
-    threadRef.environmentId,
-    thread?.projectId,
-    thread?.pullRequests ?? [],
-  );
-  const autoMergeUrl = pr.currentLink?.url;
+  const autoMerge = useThreadAutoMerge(threadRef.environmentId, thread?.projectId, pr.currentLink);
   return (
     <>
       <ThreadPullRequestBadgeControl
@@ -86,12 +78,10 @@ export function ComposerPullRequestChip(props: {
           if (url) openPrLink(event, url);
         }}
       />
-      {autoMerge.state !== "off" && autoMerge.reference !== null && autoMergeUrl ? (
+      {autoMerge !== null && autoMerge !== "unknown" ? (
         <ComposerAutoMergeChip
           environmentId={threadRef.environmentId}
-          reference={autoMerge.reference}
-          state={autoMerge.state}
-          url={autoMergeUrl}
+          autoMerge={autoMerge}
           onOpen={openPrLink}
         />
       ) : null}
@@ -102,38 +92,34 @@ export function ComposerPullRequestChip(props: {
 /** Auto-merge armed on the thread's PR: the label opens the PR, the ban button turns auto-merge off. */
 function ComposerAutoMergeChip(props: {
   readonly environmentId: EnvironmentId;
-  readonly reference: PullRequestRef;
-  readonly state: Exclude<ThreadAutoMergeState, "off">;
-  readonly url: string;
+  readonly autoMerge: ThreadAutoMerge;
   readonly onOpen: (event: MouseEvent<HTMLElement>, url: string) => void;
 }) {
-  const canWrite = useAtomValue(
-    pullRequestEnvironment.runAction.permissionAtom(props.environmentId),
-  );
+  const { reference, url, terminology, canDisable } = props.autoMerge;
   const { actionPending, perform } = usePullRequestActionRunner({
     environmentId: props.environmentId,
-    reference: props.reference,
-    terminology: (
-      sourceControlClients.findByChangeRequestUrl(props.url) ?? sourceControlClients.get(undefined)
-    ).changeRequest,
+    reference,
+    terminology,
   });
-  const stoppable = props.state === "stoppable" && canWrite;
   return (
     <span data-fork-composer-status-chip="auto-merge" className="inline-flex min-w-0 items-center">
       <ComposerControl
         size="xs"
         data-fork-status-chip-main=""
-        {...(stoppable ? {} : { "data-fork-status-chip-solo": "" })}
+        {...(canDisable ? {} : { "data-fork-status-chip-solo": "" })}
         // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
-        title="Auto-merge is on: the host merges this PR once it's ready"
-        onClick={(event) => props.onOpen(event, props.url)}
-        onAuxClick={(event) => props.onOpen(event, props.url)}
+        title="Auto-merge is on: the host merges it once it's ready"
+        onClick={(event) => props.onOpen(event, url)}
+        // Middle-click opens it in the browser, as on the PR chip; right-click is the menu's.
+        onAuxClick={(event) => {
+          if (event.button === 1) props.onOpen(event, url);
+        }}
       >
         <GitMergeIcon aria-hidden />
         {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
         Auto-merge
       </ComposerControl>
-      {stoppable ? (
+      {canDisable ? (
         <ComposerControl
           size="xs"
           data-fork-status-chip-stop=""

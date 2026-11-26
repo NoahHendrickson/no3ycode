@@ -20,6 +20,7 @@ import {
   type PickedComposerNextStep,
 } from "@t3tools/client-runtime/fork-composer-next-step";
 import { forgetComposerHabit, useComposerHabitSuggestion } from "./composerHabits";
+import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import { useThreadAutoMerge } from "./threadAutoMerge";
 import {
   GitMergeIcon,
@@ -63,7 +64,12 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
   );
   const previous = props.messages === null ? null : lastOwnerPrompt(props.messages);
   const habit = useComposerHabitSuggestion(previous);
-  const autoMerge = useThreadAutoMerge(props.environmentId, props.projectId, props.pullRequests);
+  // The link pickComposerNextStep reads, so Merge holds for the PR its rule is about.
+  const autoMerge = useThreadAutoMerge(
+    props.environmentId,
+    props.projectId,
+    resolveThreadCurrentPullRequestLink(props.pullRequests),
+  );
   if (!props.settled || draftHasContent || props.messages === null) return null;
   const step = pickComposerNextStep({
     lastOwnerPrompt: previous,
@@ -72,7 +78,7 @@ export const ComposerNextStepPill = memo(function ComposerNextStepPill(props: {
     branchPullRequest: null,
     gitStatus: status ?? null,
     habit,
-    autoMergeEnabled: autoMerge.state !== "off",
+    autoMergeEnabled: autoMerge === "unknown" ? null : autoMerge !== null,
   });
   if (step === null) return null;
   return (

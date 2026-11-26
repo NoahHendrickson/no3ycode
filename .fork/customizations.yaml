@@ -7115,8 +7115,9 @@
     agent-sent turns don't count): after a sol loop with unmerged work off the
     default branch → Open PR; an open PR nothing has watched → Babysit; one
     whose watch ended mergeable with checks passing → Merge, unless web read
-    that its auto-merge is armed (then nothing shows; Babysit still does, since
-    auto-merge waits on failures rather than fixing them; iOS doesn't read it);
+    that its auto-merge is armed or hasn't read it yet (then nothing shows;
+    Babysit still does, since auto-merge waits on failures rather than fixing
+    them; iOS doesn't read it and passes false);
     a PR merged right
     after the owner asked to merge it ("merge it", "lets merge", not negated),
     in this fork's repository only → Cut release. A watched PR, or a watch that

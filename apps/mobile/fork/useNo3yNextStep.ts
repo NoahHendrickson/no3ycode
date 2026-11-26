@@ -115,6 +115,8 @@ export function useNo3yNextStep(input: {
           branchPullRequest: input.pullRequest,
           gitStatus: status ?? null,
           habit,
+          // iOS doesn't read auto-merge; web reads it from the PR's detail.
+          autoMergeEnabled: false,
         });
   return {
     step,
