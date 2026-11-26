@@ -5,7 +5,7 @@
  * Every subagent, alone or in a batch, renders here in place of upstream's
  * lifecycle row and `V2SubagentGroup`. A batch keeps its list-tree lead line
  * ("Kicked off N subagents", the status summary and the batch's elapsed span)
- * above one line per member. A line reads "Started <title> on <model> · <effort> · 1m 41s ›",
+ * above one line per member. A line reads "Started <title> with <model> <effort> · 1m 41s ›",
  * led by the provider's mark with the status mark in its corner, and opens the subagent's thread;
  * its completion notice is the same line, "<title> finished · 1m 41s ›".
  *
@@ -144,7 +144,10 @@ export function ForkSubagentStartLineView(props: {
 }) {
   const { member } = props;
   const remote = member.remote;
-  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" · ");
+  const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" ");
+  const runsOn = [spec ? `with ${spec}` : null, remote ? `on ${remote.label}` : null]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <ForkSubagentLine
       root={{ "data-fork-subagent-start": member.id }}
@@ -162,11 +165,7 @@ export function ForkSubagentStartLineView(props: {
       <span id={props.titleId} className="min-w-0 truncate text-foreground">
         {member.title}
       </span>
-      {spec || remote !== undefined ? (
-        <span className="shrink-0">
-          {`on ${[spec, remote?.label].filter(Boolean).join(" · ")}`}
-        </span>
-      ) : null}
+      {runsOn ? <span className="shrink-0">{runsOn}</span> : null}
     </ForkSubagentLine>
   );
 }

@@ -5886,8 +5886,9 @@
   intent: >
     Every subagent in the transcript, alone or in a batch, renders as one
     muted start line instead of upstream's lifecycle row or its V2SubagentGroup
-    (avatar stack, chevron, bordered member box): "Started <title> on <model> ·
-    <effort> · 1m 41s ›" in the "Worked for" row's type, the title in body ink.
+    (avatar stack, chevron, bordered member box): "Started <title> with <model>
+    <effort> · 1m 41s ›" (a linked machine adds "· on <machine>") in the "Worked
+    for" row's type, the title in body ink.
     It leads with the provider's mark (Claude's mascot, Codex's cloud, else the
     avatar) badged with the sidebar status mark, and the whole line opens the
     subagent's thread when it has one, here or in a linked environment
