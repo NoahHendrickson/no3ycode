@@ -3,6 +3,9 @@
 // contour contains fill, detail wholly inside is masked out, parts reaching outside stay stroked.
 // A glyph with nothing (or only a minor piece) to fill, or unmeasurable geometry, stays stroked.
 
+import { filledBody, KNOCKOUT_WIDTH, knockout, SEAM_WIDTH } from "./glyphCuts";
+import { HAND_DRAWN } from "./handDrawnSolids";
+
 type Attributes = { readonly [key: string]: string | number };
 export type IconSvgElement = ReadonlyArray<readonly [string, Attributes]>;
 type Element = IconSvgElement[number];
@@ -26,8 +29,6 @@ export interface GlyphDrawing {
   readonly plain: IconSvgElement;
 }
 
-/** At 12px a 1.5-unit cut is under a pixel, so cuts are at least 2 units wide. */
-const KNOCKOUT_WIDTH = 2;
 /** A filled body smaller than this share of the glyph's extent reads as a different icon. */
 const MIN_BODY_SHARE = 0.15;
 /** Half a stroke: a detail touching a body's outline still counts as inside it. */
@@ -39,8 +40,6 @@ const MIN_FILL_BOX = 4;
 const CUT_REACH = 0.25;
 /** Width of the edge a hole may not cut into: half a stroke, the outline glyph's inner rim. */
 const RIM_WIDTH = 0.75;
-/** Two bodies whose outlines meet (a server's stacked racks) are parted by a one-stroke seam. */
-const SEAM_WIDTH = 1.5;
 
 type Matrix = readonly [number, number, number, number, number, number];
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
@@ -412,16 +411,22 @@ function seams(a: Shape, b: Shape): Element[] {
   }
   return runs
     .filter((points) => points.length > 1)
-    .map((points, i) => [
-      "path",
-      {
-        key: `seam-${i}`,
-        d: "M" + points.map(([x, y]) => `${x} ${y}`).join("L"),
-        stroke: "black",
-        fill: "none",
-        strokeWidth: SEAM_WIDTH,
-      },
-    ]);
+    .map((points, i) =>
+      knockout(
+        ["path", { key: `seam-${i}`, d: "M" + points.map(([x, y]) => `${x} ${y}`).join("L") }],
+        SEAM_WIDTH,
+      ),
+    );
+}
+
+/** A detail running to a body's outline (a grid line), or spanning it end to end (a page's
+ * fold, which stops within a stroke of it), cuts through the edge rather than sitting inside. */
+function cutsThroughEdge(shape: Shape, parts: ReadonlyArray<Shape>): boolean {
+  const near = (point: Point, body: Shape, reach: number) => outlineDistance(point, body) <= reach;
+  if (shape.points.some((point) => parts.some((body) => near(point, body, CUT_REACH)))) return true;
+  if (shape.closed || shape.outlined) return false;
+  const ends = [shape.points[0]!, shape.points.at(-1)!];
+  return parts.some((body) => ends.every((end) => near(end, body, EDGE_TOLERANCE)));
 }
 
 function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
@@ -459,16 +464,10 @@ function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
     }
     const cut: Element = shape.outlined
       ? [tag, { ...attrs, fill: "black" }]
-      : [tag, { ...attrs, stroke: "black", fill: "none", strokeWidth: KNOCKOUT_WIDTH }];
-    const reach = Math.min(
-      ...shape.points.flatMap((point) => parts.map((body) => outlineDistance(point, body))),
-    );
-    (reach <= CUT_REACH ? knockouts : holes).push(cut);
+      : knockout([tag, attrs], KNOCKOUT_WIDTH);
+    (cutsThroughEdge(shape, parts) ? knockouts : holes).push(cut);
   }
-  const filledBodies = parts.map((body): Element => {
-    const [tag, attrs] = hoisted(body.element);
-    return [tag, { ...attrs, fill: "currentColor", stroke: "none" }];
-  });
+  const filledBodies = parts.map((body) => filledBody(hoisted(body.element)));
   if (holes.length > 0) {
     for (const [tag, attrs] of filledBodies) {
       holes.push([
@@ -498,7 +497,7 @@ function strokeDrawing(icon: IconSvgElement): GlyphDrawing {
 }
 
 function fillDrawing(icon: IconSvgElement): GlyphDrawing | null {
-  if (!fillCache.has(icon)) fillCache.set(icon, deriveFill(icon));
+  if (!fillCache.has(icon)) fillCache.set(icon, HAND_DRAWN.get(icon) ?? deriveFill(icon));
   return fillCache.get(icon) ?? null;
 }
 
