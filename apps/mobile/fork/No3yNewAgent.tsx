@@ -20,20 +20,22 @@ import {
 import { GlassContainer } from "expo-glass-effect";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, View, type LayoutChangeEvent, type ViewStyle } from "react-native";
+import { KeyboardController, useKeyboardState } from "react-native-keyboard-controller";
 import Animated, {
   Easing,
   Extrapolation,
   interpolate,
   interpolateColor,
   ReduceMotion,
+  type AnimatedStyle,
   type SharedValue,
+  useAnimatedScrollHandler,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { KeyboardController, useKeyboardState } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
@@ -61,8 +63,8 @@ import { useRemoteConnectionStatus } from "../src/state/use-remote-environment-r
 import { useNo3ySentChats } from "./no3yChatTagging";
 import {
   flatGlassPalette,
-  NO3Y_BOTTOM_NAV_CLEARANCE,
   NO3Y_FONT,
+  no3yDraftHeroBottomInset,
   type FlatGlassPalette,
 } from "./flatGlassTheme";
 import { HugeIcon, type HugeIconData } from "./HugeIcon";
@@ -72,7 +74,6 @@ import { No3yGlassLayer } from "./No3yGlass";
 import { NO3Y_GLASS_IN, NO3Y_LAYOUT, useNo3yToggleProgress } from "./no3yMotion";
 import { No3yNewAgentHeader } from "./No3yScreenHeader";
 import {
-  isNo3yProjectPickerExpanded,
   no3yCollapsedRowTranslateY,
   no3yExpandScrollOffset,
   no3yRowVisibleForCollapse,
@@ -93,8 +94,28 @@ const MORPH_TIMING = {
   easing: Easing.bezier(0.23, 1, 0.32, 1),
   reduceMotion: ReduceMotion.System,
 } as const;
+const TRAILING_SLOT_STYLE: ViewStyle = {
+  width: 20,
+  height: 20,
+  marginLeft: 10,
+  alignItems: "center",
+  justifyContent: "center",
+};
 
 type PickerPhase = "expanded" | "collapsing" | "collapsed" | "expanding";
+
+interface ProjectRowModel {
+  readonly key: string;
+  readonly label: string;
+  readonly leading: ReactNode;
+  readonly selected: boolean;
+  readonly disabled: boolean;
+  readonly scope: HomeProjectScope | null;
+}
+
+const tick = () => {
+  void Haptics.selectionAsync().catch(() => {});
+};
 
 // The header and the tiles are published separately into the thread screen, so they share search
 // through this store rather than props.
@@ -103,6 +124,9 @@ const searchListeners = new Set<() => void>();
 function setSearch(patch: Partial<typeof search>) {
   search = { ...search, ...patch };
   for (const listener of searchListeners) listener();
+}
+function clearHiddenSearchQuery() {
+  if (!search.searching && search.searchQuery.length > 0) setSearch({ searchQuery: "" });
 }
 function subscribeSearch(listener: () => void) {
   searchListeners.add(listener);
@@ -127,22 +151,82 @@ function NewAgentHeader() {
   );
 }
 
-function ProjectRow(props: {
-  readonly rowIndex: number;
+/** Shared pill face for both expanded project rows and the collapsed top dropdown. */
+function ProjectRowFace(props: {
   readonly label: string;
   readonly leading: ReactNode;
-  readonly selected: boolean;
+  readonly trailing?: ReactNode;
   readonly disabled: boolean;
   readonly palette: FlatGlassPalette;
-  readonly phase: PickerPhase;
-  readonly participatesInCollapse: boolean;
-  readonly collapse: SharedValue<number>;
-  readonly anchorScrollY: SharedValue<number>;
+  readonly accessibilityLabel?: string;
+  readonly accessibilityHint?: string;
+  readonly accessibilityState: {
+    readonly selected?: boolean;
+    readonly expanded?: boolean;
+    readonly disabled: boolean;
+  };
+  readonly glassMorph?: { readonly active: boolean };
+  readonly overlay?: ReactNode;
+  readonly contentStyle?: AnimatedStyle<ViewStyle>;
   readonly onPress: () => void;
 }) {
-  const { palette, rowIndex, selected, participatesInCollapse, collapse, anchorScrollY } = props;
-  // The picked row brightens and shows its hairline over the glass while expanded, easing out as
-  // it settles into the collapsed dropdown pill.
+  const { palette } = props;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={props.accessibilityLabel ?? props.label}
+      accessibilityHint={props.accessibilityHint}
+      accessibilityState={props.accessibilityState}
+      disabled={props.disabled}
+      onPress={props.onPress}
+      style={({ pressed }) => ({
+        height: ROW_HEIGHT,
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        transform: [{ scale: pressed ? 0.98 : 1 }],
+      })}
+    >
+      <No3yGlassLayer radius={ROW_HEIGHT / 2} morph={props.glassMorph} />
+      {props.overlay}
+      <Animated.View
+        style={[
+          { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 10 },
+          props.contentStyle,
+        ]}
+      >
+        {props.leading}
+        <Text
+          numberOfLines={1}
+          style={{
+            flex: 1,
+            ...NO3Y_FONT.medium,
+            fontSize: 16,
+            lineHeight: 20,
+            color: palette.titleInk,
+          }}
+        >
+          {props.label}
+        </Text>
+      </Animated.View>
+      {props.trailing}
+    </Pressable>
+  );
+}
+
+function ProjectRow(props: {
+  readonly rowIndex: number;
+  readonly row: ProjectRowModel;
+  readonly palette: FlatGlassPalette;
+  readonly phase: PickerPhase;
+  readonly collapse: SharedValue<number>;
+  readonly scrollY: SharedValue<number>;
+  readonly viewportHeight: SharedValue<number>;
+  readonly onPress: () => void;
+}) {
+  const { palette, rowIndex, row, collapse, scrollY, viewportHeight } = props;
+  const { selected } = row;
+  // The picked row brightens and shows its hairline while expanded, easing out into the dropdown.
   const lift = useNo3yToggleProgress(selected);
   const liftStyle = useAnimatedStyle(() => {
     const strength = lift.get() * (1 - collapse.get());
@@ -157,27 +241,44 @@ function ProjectRow(props: {
   });
   const rowStyle = useAnimatedStyle(() => {
     const progress = collapse.get();
-    if (!participatesInCollapse || progress === 0) {
-      return { transform: [{ translateY: 0 }, { scaleX: 1 }, { scaleY: 1 }] };
+    const visible =
+      selected ||
+      no3yRowVisibleForCollapse({
+        rowIndex,
+        scrollY: scrollY.get(),
+        headerOffset: LIST_HEADER_OFFSET,
+        rowPitch: ROW_PITCH,
+        viewportHeight: viewportHeight.get(),
+      });
+    if (!visible || progress === 0) {
+      return NATIVE_LIQUID_GLASS_SUPPORTED
+        ? { transform: [{ translateY: 0 }, { scaleX: 1 }, { scaleY: 1 }] }
+        : { opacity: 1, transform: [{ translateY: 0 }, { scaleX: 1 }, { scaleY: 1 }] };
     }
     const deltaY = no3yCollapsedRowTranslateY({
       rowIndex,
-      scrollY: anchorScrollY.get(),
+      scrollY: scrollY.get(),
       headerOffset: LIST_HEADER_OFFSET,
       rowPitch: ROW_PITCH,
     });
     if (selected) {
-      return { transform: [{ translateY: progress * deltaY }, { scaleX: 1 }, { scaleY: 1 }] };
+      return NATIVE_LIQUID_GLASS_SUPPORTED
+        ? { transform: [{ translateY: progress * deltaY }, { scaleX: 1 }, { scaleY: 1 }] }
+        : {
+            opacity: 1,
+            transform: [{ translateY: progress * deltaY }, { scaleX: 1 }, { scaleY: 1 }],
+          };
     }
-    return {
-      transform: [
-        { translateY: progress * deltaY },
-        { scaleX: interpolate(progress, [0, 1], [1, 0.94], Extrapolation.CLAMP) },
-        { scaleY: interpolate(progress, [0, 1], [1, 0.86], Extrapolation.CLAMP) },
-      ],
-    };
+    const transform = [
+      { translateY: progress * deltaY },
+      { scaleX: interpolate(progress, [0, 1], [1, 0.94], Extrapolation.CLAMP) },
+      { scaleY: interpolate(progress, [0, 1], [1, 0.86], Extrapolation.CLAMP) },
+    ];
+    // Never fade an ancestor of UIGlassEffect; on non-glass fallback, fade out smoothly with collapse.
+    return NATIVE_LIQUID_GLASS_SUPPORTED
+      ? { transform }
+      : { opacity: interpolate(progress, [0, 0.7], [1, 0], Extrapolation.CLAMP), transform };
   });
-  // Only sibling content fades — never an ancestor of No3yGlassLayer, or UIGlassEffect drops out.
   const contentStyle = useAnimatedStyle(() => ({
     opacity: selected ? 1 : interpolate(collapse.get(), [0, 0.45], [1, 0], Extrapolation.CLAMP),
   }));
@@ -190,104 +291,132 @@ function ProjectRow(props: {
       { rotate: `${interpolate(collapse.get(), [0.45, 1], [-90, 0], Extrapolation.CLAMP)}deg` },
     ],
   }));
+
   return (
     <Animated.View
       layout={props.phase === "expanded" ? NO3Y_LAYOUT : undefined}
       style={{ zIndex: selected && props.phase !== "expanded" ? 20 : 1 }}
     >
       <Animated.View style={rowStyle}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={props.label}
-          accessibilityState={{ selected, disabled: props.disabled }}
-          disabled={props.disabled}
+        <ProjectRowFace
+          label={row.label}
+          leading={row.leading}
+          disabled={row.disabled}
+          palette={palette}
+          accessibilityState={{ selected, disabled: row.disabled }}
+          glassMorph={{ active: selected || props.phase !== "collapsing" }}
+          contentStyle={contentStyle}
           onPress={props.onPress}
-          style={({ pressed }) => ({
-            height: ROW_HEIGHT,
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 16,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
-          })}
-        >
-          <No3yGlassLayer
-            radius={ROW_HEIGHT / 2}
-            active={selected || props.phase !== "collapsing"}
-          />
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              {
-                position: "absolute",
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                borderRadius: ROW_HEIGHT / 2,
-                borderWidth: 1,
-              },
-              liftStyle,
-            ]}
-          />
-          <Animated.View
-            style={[
-              { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 10 },
-              contentStyle,
-            ]}
-          >
-            {props.leading}
-            <Text
-              numberOfLines={1}
-              style={{
-                flex: 1,
-                ...NO3Y_FONT.medium,
-                fontSize: 16,
-                lineHeight: 20,
-                color: palette.titleInk,
-              }}
-            >
-              {props.label}
-            </Text>
-          </Animated.View>
-          {selected ? (
-            <View
-              style={{
-                width: 20,
-                height: 20,
-                marginLeft: 10,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  { position: "absolute", alignItems: "center", justifyContent: "center" },
-                  tickStyle,
-                ]}
-              >
-                <HugeIcon icon={Tick02Icon} size={16} color={palette.metaInk} strokeWidth={2} />
-              </Animated.View>
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  { position: "absolute", alignItems: "center", justifyContent: "center" },
-                  chevronStyle,
-                ]}
-              >
-                <HugeIcon
-                  icon={ArrowDown01Icon}
-                  size={18}
-                  color={palette.metaInk}
-                  strokeWidth={2}
-                />
-              </Animated.View>
-            </View>
-          ) : null}
-        </Pressable>
+          overlay={
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                {
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  left: 0,
+                  borderRadius: ROW_HEIGHT / 2,
+                  borderWidth: 1,
+                },
+                liftStyle,
+              ]}
+            />
+          }
+          trailing={
+            selected ? (
+              <View style={TRAILING_SLOT_STYLE}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    { position: "absolute", alignItems: "center", justifyContent: "center" },
+                    tickStyle,
+                  ]}
+                >
+                  <HugeIcon icon={Tick02Icon} size={16} color={palette.metaInk} strokeWidth={2} />
+                </Animated.View>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    { position: "absolute", alignItems: "center", justifyContent: "center" },
+                    chevronStyle,
+                  ]}
+                >
+                  <HugeIcon
+                    icon={ArrowDown01Icon}
+                    size={18}
+                    color={palette.metaInk}
+                    strokeWidth={2}
+                  />
+                </Animated.View>
+              </View>
+            ) : null
+          }
+        />
       </Animated.View>
     </Animated.View>
   );
+}
+
+function useNo3yProjectPickerMorph(input: {
+  readonly expanded: boolean;
+  readonly selectedIndex: number;
+  readonly expandScrollY: number;
+}) {
+  const { expanded, selectedIndex, expandScrollY } = input;
+  const reducedMotion = useReducedMotion();
+  const [settled, setSettled] = useState(expanded);
+  const collapse = useSharedValue(expanded ? 0 : 1);
+  const scrollY = useSharedValue(0);
+  const viewportHeight = useSharedValue(0);
+
+  const phase: PickerPhase =
+    expanded === settled
+      ? expanded
+        ? "expanded"
+        : "collapsed"
+      : expanded
+        ? "expanding"
+        : "collapsing";
+
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.set(Math.max(0, event.contentOffset.y));
+    },
+  });
+
+  // Never leave an invisible search query active if the picker unmounts mid-collapse.
+  useEffect(() => clearHiddenSearchQuery, []);
+
+  useEffect(() => {
+    if (expanded === settled) return;
+    const settle = () => {
+      if (!expanded) scrollY.set(0);
+      setSettled(expanded);
+      if (!expanded) clearHiddenSearchQuery();
+    };
+    if (reducedMotion || (!expanded && selectedIndex < 0)) {
+      collapse.set(expanded ? 0 : 1);
+      if (expanded) scrollY.set(expandScrollY);
+      settle();
+      return;
+    }
+    if (expanded && collapse.get() >= 0.99) {
+      scrollY.set(expandScrollY);
+    }
+    collapse.set(
+      withTiming(expanded ? 0 : 1, MORPH_TIMING, (finished) => {
+        if (finished) {
+          scheduleOnRN(settle);
+        } else if (!expanded) {
+          scheduleOnRN(clearHiddenSearchQuery);
+        }
+      }),
+    );
+  }, [collapse, expandScrollY, expanded, reducedMotion, scrollY, selectedIndex, settled]);
+
+  return { phase, collapse, scrollY, viewportHeight, onScroll };
 }
 
 function ProjectTiles(props: {
@@ -300,29 +429,35 @@ function ProjectTiles(props: {
   const { searching: searchOpen, searchQuery } = useNewAgentSearch();
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
-  const reducedMotion = useReducedMotion();
   const threads = useAtomValue(steadyNavigationThreadShellsAtom);
   const serverConfigs = useServerConfigs();
   const { connectedEnvironments } = useRemoteConnectionStatus();
   const openScratch = useAtomCommand(projectEnvironment.openScratch, { reportFailure: false });
   const sentChatKeys = useNo3ySentChats();
+  const keyboardVisible = useKeyboardState((state) => state.isVisible);
+  const insets = useSafeAreaInsets();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const pickingScratchRef = useRef(false);
+  const pickVersionRef = useRef(0);
+
   const scopes = pickableProjectGroups(flow.projectScopes).filter(
     (scope) =>
       !scope.projects.every((project) =>
         isScratchProject(project, serverConfigs.get(project.environmentId)?.scratchWorkspaceRoot),
       ),
   );
-  const picked = !props.requirePick || flow.selectedProjectKey !== null;
+  const picked =
+    flow.selectedProject !== null && (!props.requirePick || flow.selectedProjectKey !== null);
   const selected = !picked || flow.isScratchDraft ? null : flow.selectedProject;
-  const selectedScope =
+  const selectedScopeKey =
     selected === null
       ? null
       : (scopes.find((scope) =>
           scope.projectRefs.some(
             (ref) => ref.environmentId === selected.environmentId && ref.projectId === selected.id,
           ),
-        ) ?? null);
-  const selectedScopeKey = selectedScope?.key ?? null;
+        )?.key ?? null);
   const tiles = rankNo3yProjectTiles({
     scopes,
     threads,
@@ -347,112 +482,6 @@ function ProjectTiles(props: {
       ? null
       : scratchOption;
 
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const expanded = isNo3yProjectPickerExpanded({ picked, pickerOpen, searchOpen });
-  const [phase, setPhase] = useState<PickerPhase>(() => (expanded ? "expanded" : "collapsed"));
-  const collapse = useSharedValue(expanded ? 0 : 1);
-  const anchorScrollY = useSharedValue(0);
-  const scrollYRef = useRef(0);
-  const pickingScratchRef = useRef(false);
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const [expandScrollY, setExpandScrollY] = useState(0);
-  const [transitionScrollY, setTransitionScrollY] = useState(0);
-  const prevExpandedRef = useRef(expanded);
-
-  const rowOffset = noProjectRow === null ? 0 : 1;
-  const rowCount = rowOffset + tiles.length;
-  const selectedIndex = !picked
-    ? -1
-    : flow.isScratchDraft
-      ? noProjectRow === null
-        ? -1
-        : 0
-      : selectedScopeKey === null
-        ? -1
-        : (() => {
-            const tileIndex = tiles.findIndex((tile) => tile.scope.key === selectedScopeKey);
-            return tileIndex < 0 ? -1 : tileIndex + rowOffset;
-          })();
-
-  useEffect(() => {
-    if (expanded === prevExpandedRef.current) return;
-    prevExpandedRef.current = expanded;
-    if (!expanded) {
-      if (reducedMotion || selectedIndex < 0) {
-        collapse.set(1);
-        scrollYRef.current = 0;
-        // oxlint-disable-next-line react/set-state-in-effect -- settles immediately under Reduce Motion or when the selected project is outside the current list
-        setPhase("collapsed");
-        if (search.searchQuery.length > 0) setSearch({ searchQuery: "" });
-        return;
-      }
-      const capturedScroll = scrollYRef.current;
-      anchorScrollY.set(capturedScroll);
-      setTransitionScrollY(capturedScroll);
-      setPhase("collapsing");
-      return;
-    }
-    const targetScroll =
-      phase === "collapsing"
-        ? scrollYRef.current
-        : searchOpen
-          ? 0
-          : no3yExpandScrollOffset({
-              selectedIndex,
-              rowCount,
-              rowPitch: ROW_PITCH,
-              topPadding: TOP_FADE,
-              headerOffset: LIST_HEADER_OFFSET,
-              bottomInset: props.bottomInset,
-              viewportHeight,
-            });
-    scrollYRef.current = targetScroll;
-    anchorScrollY.set(targetScroll);
-    setExpandScrollY(targetScroll);
-    setTransitionScrollY(targetScroll);
-    if (reducedMotion) {
-      collapse.set(0);
-      setPhase("expanded");
-      return;
-    }
-    setPhase("expanding");
-  }, [
-    anchorScrollY,
-    collapse,
-    expanded,
-    phase,
-    props.bottomInset,
-    reducedMotion,
-    rowCount,
-    searchOpen,
-    selectedIndex,
-    viewportHeight,
-  ]);
-
-  useEffect(() => {
-    const finishCollapse = () => {
-      scrollYRef.current = 0;
-      setPhase("collapsed");
-      if (search.searchQuery.length > 0) setSearch({ searchQuery: "" });
-    };
-    const finishExpand = () => {
-      setPhase("expanded");
-    };
-    if (phase === "collapsing") {
-      collapse.set(
-        withTiming(1, MORPH_TIMING, (finished) => {
-          if (finished) scheduleOnRN(finishCollapse);
-        }),
-      );
-    } else if (phase === "expanding") {
-      collapse.set(
-        withTiming(0, MORPH_TIMING, (finished) => {
-          if (finished) scheduleOnRN(finishExpand);
-        }),
-      );
-    }
-  }, [collapse, phase]);
-
   const closePickerAfterPick = () => {
     setPickerOpen(false);
     // Close the search bar immediately while keeping searchQuery until the collapse settles so
@@ -462,7 +491,8 @@ function ProjectTiles(props: {
 
   const pickScope = (scope: HomeProjectScope) => {
     if (locked) return;
-    void Haptics.selectionAsync().catch(() => {});
+    tick();
+    pickVersionRef.current += 1;
     if (!picked || scope.key !== selectedScopeKey) {
       flow.setProject(
         getProjectScopeSelectionTarget(scope, flow.selectedEnvironmentId, connectedIds),
@@ -473,7 +503,8 @@ function ProjectTiles(props: {
 
   const pickNoProject = async () => {
     if (!scratchOption?.ready || locked || pickingScratchRef.current) return;
-    void Haptics.selectionAsync().catch(() => {});
+    tick();
+    const version = ++pickVersionRef.current;
     if (picked && flow.isScratchDraft) {
       closePickerAfterPick();
       return;
@@ -481,6 +512,8 @@ function ProjectTiles(props: {
     pickingScratchRef.current = true;
     const result = await openScratch({ environmentId: scratchOption.environmentId, input: {} });
     pickingScratchRef.current = false;
+    // Ignore a slow No-project response if the user picked another project in the meantime.
+    if (version !== pickVersionRef.current) return;
     if (result._tag === "Success") {
       flow.setProject(result.value);
       closePickerAfterPick();
@@ -495,9 +528,68 @@ function ProjectTiles(props: {
 
   const reopenPicker = () => {
     if (locked) return;
-    void Haptics.selectionAsync().catch(() => {});
+    tick();
+    clearHiddenSearchQuery();
     void KeyboardController.dismiss({ animated: true });
     setPickerOpen(true);
+  };
+
+  const rows: ReadonlyArray<ProjectRowModel> = [
+    ...(noProjectRow === null
+      ? []
+      : [
+          {
+            key: "__no_project__",
+            label: "No project",
+            leading: <HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />,
+            selected: picked && flow.isScratchDraft,
+            disabled: locked || !noProjectRow.ready,
+            scope: null,
+          },
+        ]),
+    ...tiles.map((tile) => ({
+      key: tile.scope.key,
+      label: tile.scope.title,
+      leading: (
+        <ProjectFavicon
+          environmentId={tile.scope.representative.environmentId}
+          faviconPath={tile.scope.representative.faviconPath}
+          projectIcon={tile.scope.representative.projectIcon}
+          projectTitle={tile.scope.title}
+          workspaceRoot={tile.scope.representative.workspaceRoot}
+          size={20}
+        />
+      ),
+      selected: tile.scope.key === selectedScopeKey,
+      disabled: locked,
+      scope: tile.scope,
+    })),
+  ];
+
+  const selectedIndex = rows.findIndex((row) => row.selected);
+  const selectedRow = selectedIndex >= 0 ? (rows[selectedIndex] ?? null) : null;
+  const expanded = selectedRow === null || pickerOpen || searchOpen;
+  const expandScrollY =
+    !searchOpen && selectedIndex >= 0
+      ? no3yExpandScrollOffset({
+          selectedIndex,
+          rowCount: rows.length,
+          rowPitch: ROW_PITCH,
+          rowGap: ROW_GAP,
+          topPadding: TOP_FADE,
+          headerOffset: LIST_HEADER_OFFSET,
+          bottomInset: props.bottomInset,
+          viewportHeight,
+        })
+      : 0;
+
+  const morph = useNo3yProjectPickerMorph({ expanded, selectedIndex, expandScrollY });
+  const { phase, collapse } = morph;
+
+  const handleViewportLayout = (event: LayoutChangeEvent) => {
+    const height = event.nativeEvent.layout.height;
+    morph.viewportHeight.set(height);
+    setViewportHeight(height);
   };
 
   const sectionLabelStyle = useAnimatedStyle(() => ({
@@ -513,105 +605,30 @@ function ProjectTiles(props: {
     ],
   }));
 
-  const selectedLabel = flow.isScratchDraft
-    ? "No project"
-    : (selectedScope?.title ?? flow.selectedProject?.title ?? "Project");
-  const selectedLeading = flow.isScratchDraft ? (
-    <HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />
-  ) : flow.selectedProject ? (
-    <ProjectFavicon
-      environmentId={
-        selectedScope?.representative.environmentId ?? flow.selectedProject.environmentId
-      }
-      faviconPath={selectedScope?.representative.faviconPath ?? flow.selectedProject.faviconPath}
-      projectIcon={selectedScope?.representative.projectIcon ?? flow.selectedProject.projectIcon}
-      projectTitle={selectedLabel}
-      workspaceRoot={
-        selectedScope?.representative.workspaceRoot ?? flow.selectedProject.workspaceRoot
-      }
-      size={20}
+  const heroBottomInset = no3yDraftHeroBottomInset({
+    bottomInset: props.bottomInset,
+    safeBottom: insets.bottom,
+    keyboardVisible,
+  });
+  const showHero =
+    selectedRow !== null &&
+    viewportHeight > 0 &&
+    viewportHeight - (TOP_FADE + ROW_HEIGHT) - heroBottomInset >= 40;
+  const heroAccessible = phase === "collapsed";
+
+  const listRows = rows.map((row, rowIndex) => (
+    <ProjectRow
+      key={row.key}
+      rowIndex={rowIndex}
+      row={row}
+      palette={palette}
+      phase={phase}
+      collapse={collapse}
+      scrollY={morph.scrollY}
+      viewportHeight={morph.viewportHeight}
+      onPress={() => (row.scope === null ? void pickNoProject() : pickScope(row.scope))}
     />
-  ) : (
-    <HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />
-  );
-
-  const keyboardVisible = useKeyboardState((state) => state.isVisible);
-  const insets = useSafeAreaInsets();
-  // When the keyboard is up, KeyboardStickyView moves the composer over the dock band that
-  // bottomInset still counts, so subtract that overlap when centring the prompt above it.
-  const heroBottomInset = keyboardVisible
-    ? Math.max(0, props.bottomInset - (insets.bottom + NO3Y_BOTTOM_NAV_CLEARANCE))
-    : props.bottomInset;
-  const availableHeroHeight =
-    viewportHeight > 0 ? viewportHeight - (TOP_FADE + ROW_HEIGHT) - heroBottomInset : 120;
-  const showHero = picked && availableHeroHeight >= 40;
-
-  const listRows = (
-    <>
-      {noProjectRow === null ? null : (
-        <ProjectRow
-          rowIndex={0}
-          label="No project"
-          leading={<HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />}
-          selected={picked && flow.isScratchDraft}
-          disabled={locked || !noProjectRow.ready}
-          palette={palette}
-          phase={phase}
-          participatesInCollapse={
-            (picked && flow.isScratchDraft) ||
-            no3yRowVisibleForCollapse({
-              rowIndex: 0,
-              scrollY: transitionScrollY,
-              headerOffset: LIST_HEADER_OFFSET,
-              rowPitch: ROW_PITCH,
-              viewportHeight,
-            })
-          }
-          collapse={collapse}
-          anchorScrollY={anchorScrollY}
-          onPress={() => void pickNoProject()}
-        />
-      )}
-      {tiles.map((tile, index) => {
-        const rowIndex = index + rowOffset;
-        const isSelected = tile.scope.key === selectedScopeKey;
-        return (
-          <ProjectRow
-            key={tile.scope.key}
-            rowIndex={rowIndex}
-            label={tile.scope.title}
-            leading={
-              <ProjectFavicon
-                environmentId={tile.scope.representative.environmentId}
-                faviconPath={tile.scope.representative.faviconPath}
-                projectIcon={tile.scope.representative.projectIcon}
-                projectTitle={tile.scope.title}
-                workspaceRoot={tile.scope.representative.workspaceRoot}
-                size={20}
-              />
-            }
-            selected={isSelected}
-            disabled={locked}
-            palette={palette}
-            phase={phase}
-            participatesInCollapse={
-              isSelected ||
-              no3yRowVisibleForCollapse({
-                rowIndex,
-                scrollY: transitionScrollY,
-                headerOffset: LIST_HEADER_OFFSET,
-                rowPitch: ROW_PITCH,
-                viewportHeight,
-              })
-            }
-            collapse={collapse}
-            anchorScrollY={anchorScrollY}
-            onPress={() => pickScope(tile.scope)}
-          />
-        );
-      })}
-    </>
-  );
+  ));
 
   return (
     // The list runs to the screen bottom, under the composer (whose scrim fades it) and the
@@ -621,6 +638,8 @@ function ProjectTiles(props: {
       {showHero ? (
         <Animated.View
           pointerEvents="none"
+          accessibilityElementsHidden={!heroAccessible}
+          importantForAccessibility={heroAccessible ? "auto" : "no-hide-descendants"}
           style={[
             {
               position: "absolute",
@@ -650,10 +669,10 @@ function ProjectTiles(props: {
         </Animated.View>
       ) : null}
 
-      {phase === "collapsed" ? (
+      {phase === "collapsed" && selectedRow !== null ? (
         <View
           pointerEvents="box-none"
-          onLayout={(event) => setViewportHeight(event.nativeEvent.layout.height)}
+          onLayout={handleViewportLayout}
           style={{
             position: "absolute",
             top: props.topInset,
@@ -664,43 +683,29 @@ function ProjectTiles(props: {
             paddingTop: TOP_FADE,
           }}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Project: ${selectedLabel}`}
+          <ProjectRowFace
+            label={selectedRow.label}
+            leading={selectedRow.leading}
+            trailing={
+              <View style={TRAILING_SLOT_STYLE}>
+                <HugeIcon
+                  icon={ArrowDown01Icon}
+                  size={18}
+                  color={palette.metaInk}
+                  strokeWidth={2}
+                />
+              </View>
+            }
+            disabled={locked}
+            palette={palette}
+            accessibilityLabel={`Project: ${selectedRow.label}`}
             accessibilityHint="Opens the project list"
             accessibilityState={{ expanded: false, disabled: locked }}
-            disabled={locked}
             onPress={reopenPicker}
-            style={({ pressed }) => ({
-              height: ROW_HEIGHT,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-              paddingHorizontal: 16,
-              transform: [{ scale: pressed ? 0.98 : 1 }],
-            })}
-          >
-            <No3yGlassLayer radius={ROW_HEIGHT / 2} />
-            {selectedLeading}
-            <Text
-              numberOfLines={1}
-              style={{
-                flex: 1,
-                ...NO3Y_FONT.medium,
-                fontSize: 16,
-                lineHeight: 20,
-                color: palette.titleInk,
-              }}
-            >
-              {selectedLabel}
-            </Text>
-            <View style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center" }}>
-              <HugeIcon icon={ArrowDown01Icon} size={18} color={palette.metaInk} strokeWidth={2} />
-            </View>
-          </Pressable>
+          />
         </View>
       ) : (
-        <ScrollView
+        <Animated.ScrollView
           style={{ position: "absolute", top: props.topInset, bottom: 0, left: 0, right: 0 }}
           contentOffset={{ x: 0, y: expandScrollY }}
           contentContainerStyle={{
@@ -710,10 +715,8 @@ function ProjectTiles(props: {
             paddingTop: TOP_FADE,
             paddingBottom: props.bottomInset,
           }}
-          onLayout={(event) => setViewportHeight(event.nativeEvent.layout.height)}
-          onScroll={(event) => {
-            scrollYRef.current = Math.max(0, event.nativeEvent.contentOffset.y);
-          }}
+          onLayout={handleViewportLayout}
+          onScroll={morph.onScroll}
           scrollEventThrottle={16}
           scrollEnabled={phase === "expanded"}
           keyboardDismissMode="on-drag"
@@ -748,7 +751,7 @@ function ProjectTiles(props: {
           ) : (
             <View style={{ gap: ROW_GAP }}>{listRows}</View>
           )}
-          {tiles.length === 0 && noProjectRow === null ? (
+          {rows.length === 0 ? (
             <Text
               style={{
                 ...NO3Y_FONT.regular,
@@ -761,7 +764,7 @@ function ProjectTiles(props: {
               {searching ? "No matching projects" : "No projects yet"}
             </Text>
           ) : null}
-        </ScrollView>
+        </Animated.ScrollView>
       )}
       {/* Rows scroll out under the header through a fade, not a cut. */}
       <View
