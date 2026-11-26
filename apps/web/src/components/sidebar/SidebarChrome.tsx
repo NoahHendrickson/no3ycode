@@ -43,6 +43,9 @@ import { SidebarUpdateArchitectureWarning, SidebarUpdatePill } from "./SidebarUp
 import { SidebarMusicButton } from "../../custom/music/SidebarMusicButton";
 import { SidebarMusicStrip } from "../../custom/music/MusicStrip";
 /* fork:end fork-music-panel */
+/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
+import { SidebarModeTabs } from "../../custom/SidebarModeTabs";
+/* fork:end fork-chat-mode */
 /* fork:begin fork-separate-provider-updates — see .fork/customizations.yaml#fork-separate-provider-updates */
 import { SidebarProviderUpdatesButton } from "~/custom/SidebarProviderUpdatesButton";
 /* fork:end fork-separate-provider-updates */
@@ -149,9 +152,11 @@ export function SidebarBrandWidthProbe({
       ref={observeWidth}
     >
       {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-          The fork header is [toggle][back/forward on desktop], with no brand: the controls
-          inset, then the trigger's box plus the history pair's two. The pill is not
-          counted — it hides under the 15rem container query before it could clip. */}
+          The fork header is [toggle][back/forward on desktop] … [Code / Chat switch], with no
+          brand: the controls inset, the trigger's box plus the history pair's two, then the
+          switch and its trailing margin, measured from a hidden copy so every theme's strip
+          counts. The pill is not counted — it hides under the 15rem container query before it
+          could clip. */}
       {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the inset is a runtime variable, not a scale value */}
       <div className="flex items-center gap-2 pl-[var(--workspace-controls-left)]">
         <span className="flex shrink-0">
@@ -159,6 +164,9 @@ export function SidebarBrandWidthProbe({
           {isElectron ? (
             <span className="w-[calc(2*var(--workspace-titlebar-control-size))] shrink-0" />
           ) : null}
+        </span>
+        <span className="mr-3 flex shrink-0">
+          <SidebarModeTabs mode="code" onModeChange={() => {}} />
         </span>
       </div>
       {/* fork:end fork-sidebar-chrome */}
