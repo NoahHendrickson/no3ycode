@@ -21,7 +21,7 @@ type SpacedRow = MessagesTimelineRow & { readonly forkGapTop: number };
 
 // Mirrors upstream's paddings, each pinned by the fork-transcript-spacing guard:
 // TimelineRowContent's pb-* chain, WorkLogBlock's pb-*, a reply's or ungrouped
-// WorkLogRow's py-0.5, a reasoning trace's and subagent tree's py-1, the line's pt-1.
+// WorkLogRow's and a subagent tree's py-0.5, a reasoning trace's py-1, the line's pt-1.
 function boxOf(row: MessagesTimelineRow): Box {
   switch (row.kind) {
     case "message": {
@@ -55,8 +55,9 @@ function boxOf(row: MessagesTimelineRow): Box {
       // The fold leaves it last, so nothing reads its bottom.
       return { spacing: "live", top: 4, bottom: 0 };
     case "event":
+      // A subagent's start line is spaced as a tool row: WorkLogBlock's pb-2 around its py-0.5.
       return row.projectedItem.item.type === "subagent"
-        ? { spacing: "other", top: 4, bottom: (row.continuesWorkLog ? 0 : 8) + 4 }
+        ? { spacing: "work", top: 2, bottom: (row.continuesWorkLog ? 0 : 8) + 2 }
         : { spacing: "other", top: 0, bottom: 8 };
     case "turn-fold":
       return { spacing: "other", top: 0, bottom: 6 };

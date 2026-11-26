@@ -21,6 +21,9 @@ import { ForkLiveTasksCtx, forkLiveTaskSteps } from "~/custom/forkLiveTasks";
 /* fork:begin fork-transcript-spacing — see .fork/customizations.yaml#fork-transcript-spacing */
 import { forkSpaceTranscript, forkTranscriptGapStyle } from "~/custom/forkTranscriptSpacing";
 /* fork:end fork-transcript-spacing */
+/* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */
+import { ForkTurnDiffStat } from "~/custom/ForkTurnDiffStat";
+/* fork:end fork-inline-turn-diff */
 import { TimelinePendingApprovalRow } from "./TimelinePendingApprovalRow";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
 import { deriveTimelineMinimapItems } from "./timelineMinimapItems";
@@ -1997,11 +2000,21 @@ function TurnFoldTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "turn-
             <ChevronRightIcon className="size-3.5" />
           )}
         </button>
-        <TimelineRowTimestamp
-          createdAt={row.createdAt}
-          timestampFormat={ctx.timestampFormat}
-          className="ms-auto"
-        />
+        {/* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */}
+        {/* The diff stat holds the far right; the hover timestamp shows beside it. */}
+        <span className="ms-auto flex items-center">
+          {/* fork:end fork-inline-turn-diff */}
+          <TimelineRowTimestamp
+            createdAt={row.createdAt}
+            timestampFormat={ctx.timestampFormat}
+            className="ms-auto"
+          />
+          {/* fork:begin fork-inline-turn-diff — see .fork/customizations.yaml#fork-inline-turn-diff */}
+          {row.turnDiffSummary && ctx.onOpenTurnDiff ? (
+            <ForkTurnDiffStat summary={row.turnDiffSummary} onOpenTurnDiff={ctx.onOpenTurnDiff} />
+          ) : null}
+        </span>
+        {/* fork:end fork-inline-turn-diff */}
       </div>
       {loading ? <WorkHistorySkeleton /> : null}
     </div>

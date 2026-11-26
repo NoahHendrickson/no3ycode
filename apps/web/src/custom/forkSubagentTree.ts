@@ -3,13 +3,12 @@
  * `.fork/customizations.yaml#fork-subagent-spawn-card`.
  *
  * Takes the projected subagent items of one spawn batch plus the thread's
- * live subagent roster (upstream's projection keeps status, progress, result,
- * model and timing current there) and returns what the tree paints: the lead
+ * live subagent roster (upstream's projection keeps status, model and timing
+ * current there) and returns what the tree paints: the lead
  * line, the status summary, the batch's elapsed span, and one row per member
- * with the sidebar's status vocabulary. Lead, summary and the
- * progress-or-result preference are upstream's shared helpers; what is the
- * fork's own here is the mark vocabulary, the one-line markdown strip and the
- * model spelling. Kept out of the component so the rules are testable without
+ * with the sidebar's status vocabulary. Lead and summary are upstream's shared
+ * helpers; what is the fork's own here is the mark vocabulary, the one-line
+ * markdown strip (an untitled task's ask becomes its title) and the model spelling. Kept out of the component so the rules are testable without
  * rendering.
  */
 import type {
@@ -37,7 +36,7 @@ export interface ForkSubagentTreeRow {
   readonly id: string;
   /** Its own title, else the task it was given, else "Subagent". */
   readonly title: string;
-  /** Whether the record named it; an untitled card may borrow its child thread's title. */
+  /** Whether the record named it; an untitled task may borrow its child thread's title. */
   readonly titled: boolean;
   readonly status: ForkSubagentStatus;
   /** The sidebar mark: working, idle, done, failed or stopped. */
@@ -52,17 +51,8 @@ export interface ForkSubagentTreeRow {
   readonly remote: OrchestrationV2RemoteTaskChild | undefined;
   readonly driver: ProviderDriverKind;
   readonly providerInstanceId: ProviderInstanceId;
-  /** The card's status line: "Running", "Completed", "Stopped". */
+  /** The status in words, for screen readers and the composer: "Running", "Completed", "Stopped". */
   readonly statusLabel: string;
-  /** The task it was given, as one plain paragraph; null when the server withheld it. */
-  readonly prompt: string | null;
-  /** What it is doing now while it works, its result once settled; null when it has said nothing. */
-  readonly activity: {
-    readonly label: "Now" | "Result";
-    readonly text: string;
-    /** A bare path (no spaces) truncates in the middle, so it keeps its filename. */
-    readonly shape: "path" | "prose";
-  } | null;
 }
 
 /** The batch's one elapsed span, in the shape `AgentElapsed` ticks. */
@@ -88,7 +78,7 @@ export interface ForkSubagentTree {
   readonly rows: ReadonlyArray<ForkSubagentTreeRow>;
 }
 
-/** Each status as the card shows it: the sidebar mark and the word under the title. */
+/** Each status as a row shows it: the sidebar mark and its word. */
 const STATUS_PRESENTATION: Record<
   ForkSubagentStatus,
   { readonly mark: ForkSubagentMark; readonly word: string }
@@ -102,9 +92,6 @@ const STATUS_PRESENTATION: Record<
   cancelled: { mark: "stopped", word: "Stopped" },
   interrupted: { mark: "stopped", word: "Stopped" },
 };
-
-/** The server's placeholder when a child ends without output; the mark already says it. */
-const GENERIC_CHILD_END = /^Child task ended with status\b/iu;
 
 /** One line of a markdown result: drop heading marks, list bullets, emphasis, code ticks, and
     link targets. Emphasis is only `*` at word edges outside code, so dunders and globs survive. */
@@ -144,24 +131,6 @@ export function formatForkSubagentModel(model: string | null): string | null {
   );
 }
 
-/** The card's well: live progress while it works, its result once settled, whole rather than one
-    line. Never one standing in for the other, and nothing when the one that applies says nothing. */
-function resolveActivity(input: {
-  readonly active: boolean;
-  readonly progress: string | undefined;
-  readonly result: string | null;
-}): ForkSubagentTreeRow["activity"] {
-  const raw = (input.active ? input.progress : input.result)?.trim();
-  if (!raw || GENERIC_CHILD_END.test(raw)) return null;
-  const text = plainDetail(raw);
-  if (!text) return null;
-  return {
-    label: input.active ? "Now" : "Result",
-    text,
-    shape: text.includes("/") && !text.includes(" ") ? "path" : "prose",
-  };
-}
-
 function isoOrNull(value: DateTime.Utc | null | undefined): string | null {
   return value ? DateTime.formatIso(value) : null;
 }
@@ -183,8 +152,6 @@ type ForkSubagentRowSource = { readonly id: string } & Pick<
   | "status"
   | "startedAt"
   | "completedAt"
-  | "progress"
-  | "result"
   | "prompt"
   | "title"
   | "childThreadId"
@@ -200,8 +167,6 @@ function resolveRow(
   const status = live?.status ?? item.status;
   const startedAt = live?.startedAt ?? item.startedAt;
   const completedAt = live?.completedAt ?? item.completedAt;
-  const progress = live?.progress ?? item.progress;
-  const result = live?.result ?? item.result;
   const { mark, word } = STATUS_PRESENTATION[status];
   // A deduped live record carries prompt: "" (promptOmitted), so an empty one defers to the item.
   const prompt = plainDetail(live?.prompt || item.prompt);
@@ -221,12 +186,18 @@ function resolveRow(
     driver: item.driver,
     providerInstanceId: item.providerInstanceId,
     statusLabel: word,
-    prompt: prompt || null,
-    activity: resolveActivity({ active: mark === "working", progress, result }),
   };
 }
 
-/** A subagent's card row from its live record alone, for the completion notice it posts. */
+/** One transcript subagent's row, preferring its live record from the thread's roster. */
+export function resolveForkSubagentRow(
+  item: ForkSubagentItem,
+  live: OrchestrationV2Subagent | null,
+): ForkSubagentTreeRow {
+  return resolveRow(item, live ?? undefined);
+}
+
+/** A subagent's row from its live record alone, for the completion notice it posts. */
 export function forkSubagentRowFromAgent(agent: OrchestrationV2Subagent): ForkSubagentTreeRow {
   // The record is the live side too: the model is read from the live record alone.
   return resolveRow(agent, agent);

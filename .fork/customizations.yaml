@@ -5871,40 +5871,41 @@
 
 - id: fork-subagent-spawn-card
   intent: >
-    Every subagent in the transcript, alone or in a batch, renders as the
-    Basic UI kit's subagent card (Figma kUDQTOR0ndxERlBCqgy3nk 89:704) instead
-    of upstream's lifecycle row or its V2SubagentGroup (avatar stack, chevron,
-    bordered member box). A card is the changed-files card's shape: the card
-    fill, a 1px border, 12px corners. Its header holds the provider's mark in a
-    32px tile with the sidebar status mark in a badge at its corner, the title
-    over its model and reasoning effort ("Opus 5.5 · High", upstream's
-    formatSubagentEffort; the status word only when neither is reported), the elapsed time, a
-    chevron, and an open-thread arrow; under it a well (the composer's prompt fill; --basic-raised under
-    Basic) lists the task the
-    subagent was given, what it is doing now (its live progress) or, once
-    settled, its result. The well starts folded whatever the
-    status: the strip (tile through the chevron, one button) opens and folds it. The arrow
-    button after it opens the subagent's thread when it has one, here or in a linked
-    environment (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow;
-    keep the two in step on a sync). One fenced branch in TimelineV2EventRow takes
-    every subagent item; a lone card selects only its own agent. A batch keeps its list-tree lead line ("Kicked off N
-    subagents", the status summary, the batch's elapsed span) above one card
-    per member.
+    Every subagent in the transcript, alone or in a batch, renders as one
+    muted start line instead of upstream's lifecycle row or its V2SubagentGroup
+    (avatar stack, chevron, bordered member box): "Started <title> on <model> ·
+    <effort> · 1m 41s ›" in the "Worked for" row's type, the title in body ink.
+    It leads with the provider's mark (Claude's mascot, Codex's cloud, else the
+    avatar) badged with the sidebar status mark, and the whole line opens the
+    subagent's thread when it has one, here or in a linked environment
+    (useOpenSubagentThread mirrors upstream's SubagentLifecycleRow; keep the two
+    in step on a sync). The model and effort are upstream's formatSubagentEffort
+    words; the task and live progress live in the thread, not the line. It is
+    spaced as a tool row (fork-transcript-spacing's boxOf), so reply text sits
+    24px from it. One fenced branch in TimelineV2EventRow takes every subagent
+    item; a lone line selects only its own agent. A batch keeps its list-tree
+    lead line ("Kicked off N subagents", the status summary, the batch's
+    elapsed span) above one line per member. The composer's background-work
+    list draws the same identity as a tile over two lines (ForkSubagentIdentity,
+    in ComposerBackgroundWork.tsx). Every subagent mark picks its logo through
+    ForkProviderMarkOr (the model picker's marks, else the avatar or icon).
 
-    A subagent's completion notice (upstream's SubagentNotificationLink, swapped
-    for ForkSubagentNotice in a fenced branch of TimelineWorkEntryRow) is drawn
-    as the same card, folded, from the live record (forkSubagentRowFromAgent),
-    so a finished subagent's report reads like its card. An untitled record
+    A subagent's start line stays where it was launched once it settles: the turn
+    fold never hides a subagent item (fenced in MessagesTimeline.logic.ts), so
+    it is not swapped for a second one further down. Its completion notice
+    (upstream's SubagentNotificationLink, swapped for ForkSubagentNotice in a
+    fenced branch of TimelineWorkEntryRow) is one muted line in the "Worked for"
+    row's type, "<title> finished · 1m 41s ›" (failed / stopped by outcome), led by
+    the provider's mark as the start line draws it, without the status badge, that opens the subagent's thread. A notice that wakes the agent sits above that
+    turn's "Worked for" row, where a prompt would. An untitled record
     (completion notices often are) takes its child thread's title, else its
-    task, before "Subagent". Its chevron choice is
-    kept in the work-group view state under the notice's entry id and reports to
-    the group it sits in. A question or progress notice (outcome updated or
+    task, before "Subagent". A question or progress notice (outcome updated or
     unknown), one whose agent resumed after it, and one whose agent is not on the
     roster keep upstream's row.
 
     It reads the thread's live subagent roster the way upstream's group does;
     lead, summary and the model's name come from upstream's shared helpers,
-    and the fork owns the card, the status vocabulary and the one-line
+    and the fork owns the line, the status vocabulary and the one-line
     markdown strip. The shared provider avatar takes a size for the tile
     (fenced in V2LifecycleRow). Upstream's V2SubagentGroup stays in its file,
     unused, so the next sync merges it instead of re-adding it.
@@ -5913,12 +5914,10 @@
     - apps/web/src/custom/ForkSubagentGroup.tsx
     - apps/web/src/custom/forkSubagentTree.ts
     - apps/web/src/custom/forkSubagentTree.test.ts
-    - apps/web/src/theme.custom.css
-    - apps/web/src/theme.custom.basic.css
   shadows: []
   watch:
     - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
-    # Upstream's completion-notice test clicks the card's arrow (fenced).
+    # Upstream's completion-notice test clicks the notice line (fenced).
     - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
     # Fenced import, the swapped render at the batch call site, and the
     # unused-marker on upstream's V2SubagentGroup.
@@ -5926,8 +5925,11 @@
     # Fenced: the grouped-batch cases no longer click a collapsed group open.
     - apps/web/src/components/chat/MessagesTimeline.browser.test.tsx
     - apps/web/src/components/chat/TimelineV2EventRow.tsx
-    # Fenced: the shared subagent avatar takes a size for the card's tile.
+    # Fenced: the shared subagent avatar takes a size for the composer's tile.
     - apps/web/src/components/chat/V2LifecycleRow.tsx
+    # Fenced: the turn fold keeps settled subagent lines, and two tests expect it.
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    - apps/web/src/components/chat/MessagesTimeline.logic.test.ts
   verify:
     - apps/web/src/__fork_guards__/forkSubagentSpawnCard.test.ts
 
@@ -8727,7 +8729,7 @@
     alias). Foundations read tokens from the CSS itself (the @theme inline
     registrations, Basic's ramp swept across every tone), so a token added
     upstream appears without a story edit. Fork/ stories draw fork components
-    through view exports that take plain props (ForkSubagentCardView,
+    through view exports that take plain props (ForkSubagentStartLineView,
     BotThreadsRowView,
     PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, the
     working-mark forms, BotDigestView, BotDigestAskCardView,
@@ -9530,7 +9532,8 @@
     (mobile: sized as a file chip by fork/no3yChipHeight.ts), toned by the child's provider
     (Claude orange, Codex violet, Antigravity teal: a 12% light / 16% dark wash of the hue with a
     darker / lighter ink; other providers a neutral wash in body ink). It leads with the
-    provider's logo (web ProviderInstanceIcon, mobile modelChipIcon), then
+    provider's logo (web: the model picker's own mark where the fork draws one, Claude's
+    mascot and Codex's cloud, else ProviderInstanceIcon; mobile modelChipIcon), then
     the child's short title (the head before ": ", so "Sol review r2: composer status
     chips" reads "Sol review r2"), and the child's live status as the Threads list's /
     sidebar's mark in its colour, from the sidebar's own mark set with nothing moving inside a
@@ -10049,6 +10052,23 @@
     - apps/mobile/src/native/T3ComposerEditor.ios.tsx
   verify:
     - apps/web/src/__fork_guards__/no3yMobileInterfaceFont.test.ts
+
+- id: fork-inline-turn-diff
+  intent: >
+    Desktop and web follow the mobile pattern for a turn's diff: a finished
+    turn's "Worked for" row carries the turn's `+N −M ›` stat at its far
+    right, and the stat opens the turn's diff. The reply below then drops its
+    changed-files card. A turn with no "Worked for" row (no folded work) keeps
+    the card on its reply. The hover timestamp shows beside the stat.
+  tier: 4
+  files:
+    - apps/web/src/custom/ForkTurnDiffStat.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+  verify:
+    - apps/web/src/__fork_guards__/forkInlineTurnDiff.test.ts
 
 - id: fork-dev-electron-no-startup-relaunch
   intent: >

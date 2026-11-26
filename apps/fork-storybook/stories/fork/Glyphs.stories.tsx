@@ -11,6 +11,7 @@ import type { IconSvgElement } from "~/custom/icons/hugeiconsFill";
 import { HugeGlyph } from "~/custom/icons/lucide-hugeicons";
 import {
   ForkProviderMark,
+  ForkProviderMarkOr,
   ModelPickerProviderGlyph,
 } from "~/custom/icons/ModelPickerProviderGlyph";
 import { ShieldOffFilledIcon } from "~/custom/icons/ShieldOffFilledIcon";
@@ -120,6 +121,16 @@ export const ProviderMarks: Story = {
           >
             <ForkProviderMark driver={driver} />
           </span>
+        ))}
+      </Row>
+      <Row label="Mark or fallback">
+        {[CLAUDE, CODEX, CURSOR, null].map((driver) => (
+          <ForkProviderMarkOr
+            key={driver ?? "linked"}
+            driver={driver}
+            size="1.25rem"
+            fallback={<span className="size-5 rounded-full bg-muted" />}
+          />
         ))}
       </Row>
       <Row label="Picker glyph">

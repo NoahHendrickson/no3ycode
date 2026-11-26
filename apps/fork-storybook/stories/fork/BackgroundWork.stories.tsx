@@ -31,8 +31,6 @@ const SUBAGENT: ForkSubagentTreeRow = {
   driver: ProviderDriverKind.make("claudeAgent"),
   providerInstanceId: ProviderInstanceId.make("claudeAgent"),
   statusLabel: "Running",
-  prompt: "Research how jellyfish sleep.",
-  activity: null,
 };
 
 const TASKS: ComposerBackgroundWorkViewProps["items"] = [
