@@ -35,7 +35,9 @@ describe("fork guard: fork-cinnabar-live", () => {
   it("builds the faces from fetched bytes, not a URL", () => {
     // The desktop CSP allows http: for connect-src but not font-src.
     expect(source).toContain("await response.arrayBuffer()");
-    expect(source).toMatch(/new FontFace\(FAMILY, await response\.arrayBuffer\(\)/u);
+    expect(source).toMatch(
+      /new FontFace\(FORK_DEFAULT_SANS_FAMILY, await response\.arrayBuffer\(\)/u,
+    );
     expect(source).not.toMatch(/new FontFace\([^)]*url\(/u);
   });
 });

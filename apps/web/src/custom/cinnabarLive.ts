@@ -14,8 +14,9 @@
  * @font-face rules for the same family and descriptors, so they win.
  */
 
+import { FORK_DEFAULT_SANS_FAMILY } from "./forkTypographyScale";
+
 const DEFAULT_STUDIO_URL = "http://127.0.0.1:8765";
-const FAMILY = "Cinnabar Interface";
 const FILES = [
   { file: "CinnabarInterface.ttf", style: "normal" },
   { file: "CinnabarInterface-Italic.ttf", style: "italic" },
@@ -42,7 +43,7 @@ export function startCinnabarLive(): void {
       FILES.map(async ({ file, style }) => {
         const response = await fetch(`${studio}/live/${file}?v=${version}`, { cache: "no-store" });
         if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
-        const face = new FontFace(FAMILY, await response.arrayBuffer(), {
+        const face = new FontFace(FORK_DEFAULT_SANS_FAMILY, await response.arrayBuffer(), {
           style,
           weight: "100 900",
         });
