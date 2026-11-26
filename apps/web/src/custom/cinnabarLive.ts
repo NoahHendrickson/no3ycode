@@ -2,7 +2,7 @@
  * Cinnabar Studio live font — see `.fork/customizations.yaml#fork-cinnabar-live`.
  *
  * Dev builds only, and only when the dev server is started with VITE_CINNABAR_LIVE set (a Studio
- * URL, or "1" for http://127.0.0.1:8765). The Studio (the font's editor, in the cinnabar-sans repo)
+ * URL, or "1" for http://127.0.0.1:8765). The Studio (the font's editor, in the cinnabar-interface repo)
  * recompiles a preview of the font after every edit and announces each version over server-sent
  * events. Each time, this fetches the new upright and italic files and swaps the
  * "Cinnabar Interface" faces in place, so the whole app re-renders in the edited font with no

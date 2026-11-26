@@ -10042,7 +10042,7 @@
     Cinnabar Interface build the web ships (Regular, Italic, Medium,
     MediumItalic, SemiBold, Bold — upright 800 falls to Bold, and with no
     SemiBoldItalic or BoldItalic face, bold italic draws MediumItalic); they come from
-    the cinnabar-sans repo's fonts/static and are replaced wholesale, never
+    the cinnabar-interface repo's fonts/static and are replaced wholesale, never
     hand-edited. A binary built before the faces were bundled draws the
     system font when Cinnabar Interface is picked. iPad and Android keep DM Sans
     and show no Font section.
