@@ -29,7 +29,7 @@ import type { FC, ReactElement, SVGProps } from "react";
 import { createElement, useId } from "react";
 
 import { forkPaletteFillsIcons, useActiveForkPalette } from "../forkActivePalette";
-import { GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
+import { FILLED_TRANSFORM, GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
 
 /** `stroke` never fills, `themed` fills under the fork palettes, `fill` always fills. */
 type FillPolicy = "stroke" | "themed" | "fill";
@@ -83,17 +83,8 @@ export function HugeGlyph({
 }: Omit<LucideCompatProps, "weight"> & { data: IconSvgElement; filled: boolean }) {
   const maskId = `fork-icon-${useId().replace(/[^\w-]/g, "")}`;
   const { bodies, knockouts, plain } = glyphDrawing(data, filled);
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size ?? "1em"}
-      height={size ?? "1em"}
-      viewBox="0 0 24 24"
-      fill="none"
-      {...GLYPH_STROKE}
-      {...props}
-    >
-      {alt ? <title>{alt}</title> : null}
+  const glyph = (
+    <>
       {knockouts.length > 0 ? (
         <>
           <defs>
@@ -108,6 +99,20 @@ export function HugeGlyph({
         bodies.map(draw)
       )}
       {plain.map(draw)}
+    </>
+  );
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size ?? "1em"}
+      height={size ?? "1em"}
+      viewBox="0 0 24 24"
+      fill="none"
+      {...GLYPH_STROKE}
+      {...props}
+    >
+      {alt ? <title>{alt}</title> : null}
+      {bodies.length > 0 ? <g transform={FILLED_TRANSFORM}>{glyph}</g> : glyph}
     </svg>
   );
 }

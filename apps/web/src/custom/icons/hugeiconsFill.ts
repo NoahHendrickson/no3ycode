@@ -31,6 +31,10 @@ const MIN_BODY_SHARE = 0.15;
 /** Half a stroke: a detail touching a body's outline still counts as inside it. */
 const EDGE_TOLERANCE = 0.75;
 
+/** A filled glyph is drawn one stroke smaller, centred: its bodies keep their stroke (knockouts
+    and joints are tuned to it), so the shrink puts the outer edge back on the drawn outline. */
+export const FILLED_TRANSFORM = "matrix(0.9375 0 0 0.9375 0.75 0.75)";
+
 type Matrix = readonly [number, number, number, number, number, number];
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
 
@@ -405,8 +409,7 @@ function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
   }
   const filledBodies = [...bodies].map((body): Element => {
     const [tag, attrs] = hoisted(body.element);
-    // Unstroked: a stroke would grow the solid shape half a stroke past the drawn outline.
-    return [tag, { ...attrs, fill: "currentColor", stroke: "none" }];
+    return [tag, { ...attrs, fill: "currentColor" }];
   });
   return { bodies: filledBodies, knockouts, plain };
 }

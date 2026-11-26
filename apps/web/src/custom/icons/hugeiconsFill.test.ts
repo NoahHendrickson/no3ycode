@@ -21,10 +21,6 @@ const counts = (icon: IconSvgElement) => {
 describe("glyphDrawing", () => {
   it("fills the enclosing shape and cuts the detail inside it out", () => {
     expect(counts(CheckmarkCircle02Icon)).toEqual({ bodies: 1, knockouts: 1, plain: 0 });
-    expect(glyphDrawing(CheckmarkCircle02Icon, true).bodies[0]?.[1]).toMatchObject({
-      fill: "currentColor",
-      stroke: "none",
-    });
   });
 
   it("fills a closed contour that shares its path with an open one", () => {
