@@ -1528,9 +1528,23 @@
   --fork-context-chip-bg: var(--fork-glass-picture-tint);
   --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
-  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
+  &
+    :is(
+      [data-fork-composer-vessel],
+      [data-fork-composer-status-chip],
+      [data-fork-draft-launchpad-card]
+    ) {
     -webkit-backdrop-filter: var(--fork-glass-picture-blur);
     backdrop-filter: var(--fork-glass-picture-blur);
+  }
+
+  & [data-fork-composer-status-chip] {
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+  }
+
+  & [data-fork-composer-status-chip]:is(a, button):hover {
+    background-color: var(--fork-glass-picture-tint-hover);
+    background-image: none;
   }
 
   & [data-fork-draft-launchpad-card] {
@@ -1551,6 +1565,7 @@
     :is(
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
+      [data-fork-composer-status-chip],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
     color: var(--fork-white);
@@ -2112,9 +2127,18 @@
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
       [data-chat-provider-model-picker-traits],
+      [data-fork-composer-status-chip],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
     color: var(--fork-white);
+  }
+
+  & [data-fork-composer-status-chip] {
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+  }
+
+  & [data-fork-composer-status-chip] {
+    box-shadow: inset 0 0 0 1px var(--fork-white-16);
   }
 
   & [data-fork-draft-launchpad-card] {
@@ -2143,15 +2167,20 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+    [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
     [data-fork-draft-launchpad-card]
   ) {
-  background: var(--fork-composer-vessel-bg);
+  background-color: var(--fork-composer-vessel-bg);
   clip-path: none;
   -webkit-backdrop-filter: blur(50px);
   backdrop-filter: blur(50px);
 
   &::before {
     content: none;
+  }
+
+  &[data-fork-composer-status-chip]:is(a, button):hover {
+    background-image: linear-gradient(var(--fork-black-16), var(--fork-black-16));
   }
 }
 
@@ -2189,12 +2218,24 @@
   [data-chat-composer-overlay="true"][data-draft-hero] {
   --fork-composer-vessel-bg: transparent;
 
-  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
-    background: transparent;
+  &
+    :is(
+      [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card],
+      [data-fork-composer-status-chip]
+    ) {
+    background-color: transparent;
     border-color: transparent;
     box-shadow: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+  }
+
+  & [data-fork-composer-status-chip]:is(a, button):hover {
+    background-image: linear-gradient(
+      var(--fork-composer-control-hover),
+      var(--fork-composer-control-hover)
+    );
   }
 
   & [data-fork-composer-vessel]::after {

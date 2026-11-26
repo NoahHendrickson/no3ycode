@@ -101,9 +101,13 @@
     --fork-context-chip-bg: var(--fork-inlet-black-frost);
     --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
 
-    & [data-fork-composer-vessel] {
+    & :is([data-fork-composer-vessel], [data-fork-composer-status-chip]) {
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
+    }
+
+    & [data-fork-composer-status-chip] {
+      --contrast-muted-foreground: var(--fork-inlet-black-vessel-ink);
     }
   }
 

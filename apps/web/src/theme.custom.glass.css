@@ -346,6 +346,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     ) {
@@ -375,6 +376,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     ):is(:focus-visible, :has(:focus-visible:not([data-testid="composer-editor"]))) {
@@ -387,6 +389,7 @@
     [data-chat-column-maximized-away][data-fork-draft-hero]
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+      [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     )::before {
@@ -416,6 +419,26 @@
     [data-fork-composer-vessel] {
     --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
     --fork-glass-frost-radius: var(--fork-composer-radius);
+  }
+
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-composer-stack="true"]
+    [data-fork-composer-status-chip] {
+    --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
+    --fork-glass-frost-radius: var(--radius-lg);
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+  }
+
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-composer-stack="true"]
+    [data-fork-composer-status-chip]:is(a, button):hover {
+    --fork-glass-frost-wash: var(--fork-context-chip-bg-hover);
   }
 
   :root[data-fork="noahhendrickson-t3code"]:where(
@@ -513,6 +536,7 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+    [data-fork-composer-stack="true"] [data-fork-composer-status-chip],
     [data-fork-draft-launchpad-card],
     [data-chat-header] [data-fork-pill]
   ),

@@ -188,7 +188,11 @@ function buildCardPopupMask(
 function readDraftCardElements(chatView: Element): HTMLElement[] {
   const hero = chatView.querySelector('[data-chat-composer-overlay="true"][data-draft-hero]');
   if (hero === null) return [];
-  const selectors = ["[data-fork-composer-vessel]", "[data-fork-draft-launchpad-card]"];
+  const selectors = [
+    "[data-fork-composer-vessel]",
+    "[data-fork-draft-launchpad-card]",
+    "[data-fork-composer-status-chip]",
+  ];
   const elements: HTMLElement[] = [];
   for (const selector of selectors) {
     for (const el of hero.querySelectorAll<HTMLElement>(selector)) {

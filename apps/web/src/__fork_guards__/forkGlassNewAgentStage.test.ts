@@ -49,9 +49,9 @@ const FROSTED = "[data-fork-glass-frost]";
 const TOKENS = `:is(${ROOT},${FROSTED})`;
 const POPUP = `body.dropdown-glass${FROSTED}`;
 const SUPPORTS = ["@supports (anchor-name: --fork-glass-card)"];
-// The three frost hosts, as the sheet lists them inside one :is().
+// The frost hosts, as the sheet lists them inside one :is().
 const HOSTS =
-  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-draft-launchpad-card],[data-chat-header][data-fork-pill])';
+  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-composer-stack="true"][data-fork-composer-status-chip],[data-fork-draft-launchpad-card],[data-chat-header][data-fork-pill])';
 
 const sheet = readSibling("../theme.custom.glass.css");
 const rules = cssRules(sheet);
@@ -390,6 +390,12 @@ describe("fork guard: fork-glass-new-agent-stage", () => {
     expect(flat(find(`${GLASS}${STACK}[data-fork-composer-vessel]`)?.body)).toBe(
       "--fork-glass-frost-wash: var(--fork-composer-vessel-bg); --fork-glass-frost-radius: var(--fork-composer-radius);",
     );
+    expect(flat(find(`${GLASS}${STACK}[data-fork-composer-status-chip]`)?.body)).toBe(
+      "--fork-glass-frost-wash: var(--fork-composer-vessel-bg); --fork-glass-frost-radius: var(--radius-lg); --contrast-muted-foreground: rgb(255 255 255 / 92%);",
+    );
+    expect(
+      flat(find(`${GLASS}${STACK}[data-fork-composer-status-chip]:is(a,button):hover`)?.body),
+    ).toBe("--fork-glass-frost-wash: var(--fork-context-chip-bg-hover);");
     expect(flat(find(`${GLASS}${DRAFT}[data-fork-draft-launchpad-card]`)?.body)).toBe(
       "--fork-glass-frost-wash: var(--fork-composer-vessel-bg); --fork-glass-frost-radius: var(--fork-composer-radius); border-color: var(--fork-composer-border);",
     );
