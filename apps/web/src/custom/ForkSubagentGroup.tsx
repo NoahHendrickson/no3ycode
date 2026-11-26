@@ -144,7 +144,6 @@ export function ForkSubagentStartLineView(props: {
 }) {
   const { member } = props;
   const remote = member.remote;
-  // "with Opus 5.5 High": the model and effort read as one phrase; a linked machine is "on" it.
   const spec = [formatForkSubagentModel(member.model), props.effort].filter(Boolean).join(" ");
   const runsOn = [spec ? `with ${spec}` : null, remote ? `on ${remote.label}` : null]
     .filter(Boolean)
