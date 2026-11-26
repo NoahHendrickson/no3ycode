@@ -9,6 +9,17 @@ import * as NodeModule from "node:module";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 
+import {
+  compounds,
+  loadStylesheet,
+  simpleSelectors,
+  splitTopLevel,
+  stripFunctions,
+  subjectCompound,
+} from "./design-lint/css.mjs";
+
+export { loadStylesheet } from "./design-lint/css.mjs";
+
 const FORK_DIR = NodePath.dirname(NodeURL.fileURLToPath(import.meta.url));
 const REPO_ROOT = NodePath.resolve(FORK_DIR, "..");
 const WEB_SRC = "apps/web/src";
@@ -213,213 +224,6 @@ const forkTsxFiles = (root, dirs) =>
     walk(root, `${WEB_SRC}/${dir}`, (path) => /\.tsx?$/u.test(path) && !isTestFile(path)),
   );
 
-const countLines = (text) => text.split("\n").length - 1;
-
-/** Split on `separator` outside (), [] and strings. */
-export function splitTopLevel(text, separator) {
-  const parts = [];
-  let depth = 0;
-  let quote = null;
-  let start = 0;
-  for (let index = 0; index < text.length; index++) {
-    const char = text[index];
-    if (quote) {
-      if (char === "\\") index++;
-      else if (char === quote) quote = null;
-    } else if (char === '"' || char === "'") quote = char;
-    else if (char === "(" || char === "[") depth++;
-    else if (char === ")" || char === "]") depth--;
-    else if (char === separator && depth === 0) {
-      parts.push(text.slice(start, index));
-      start = index + 1;
-    }
-  }
-  parts.push(text.slice(start));
-  return parts.map((part) => part.trim()).filter(Boolean);
-}
-
-function resolveNesting(children, parents) {
-  if (!parents) return children;
-  const out = [];
-  for (const child of children) {
-    for (const parent of parents) {
-      out.push(child.includes("&") ? child.replaceAll("&", parent) : `${parent} ${child}`);
-    }
-  }
-  return out;
-}
-
-/**
- * Rules in source order. A style rule is `{ kind: "style", selectors, declarations, line,
- * endLine, atRules, keyframes }`; declarations straight inside an at-rule (@theme, @property,
- * @font-face) are `{ kind: "at", name, prelude, … }`.
- */
-export function parseCss(text) {
-  const rules = [];
-  const comments = [];
-  const stack = [];
-  let buffer = "";
-  let bufferLine = 1;
-  let line = 1;
-  let depth = 0;
-
-  const flushStatement = () => {
-    const statement = buffer.trim();
-    buffer = "";
-    const frame = stack.at(-1);
-    if (!statement || statement.startsWith("@") || !frame) return;
-    const colon = statement.indexOf(":");
-    if (colon <= 0) return;
-    const rawProperty = statement.slice(0, colon).trim();
-    const property = rawProperty.startsWith("--") ? rawProperty : rawProperty.toLowerCase();
-    const value = statement
-      .slice(colon + 1)
-      .replace(/!important\s*$/iu, "")
-      .trim();
-    frame.declarations.push({ property, value, line: bufferLine });
-  };
-
-  const open = () => {
-    const prelude = buffer.trim().replace(/\s+/gu, " ");
-    buffer = "";
-    const atRules = stack.filter((frame) => frame.kind === "at").map((frame) => frame.prelude);
-    const keyframes = stack.some(
-      (frame) => frame.kind === "at" && /^@(?:-\w+-)?keyframes\b/u.test(frame.prelude),
-    );
-    if (prelude.startsWith("@")) {
-      // A conditional block nested in a style rule (CSS nesting) styles that rule's elements.
-      const host = stack.at(-1)?.selectors ? stack.at(-1) : null;
-      stack.push({
-        kind: "at",
-        name: /^@([\w-]+)/u.exec(prelude)?.[1] ?? "",
-        prelude,
-        declarations: [],
-        line: bufferLine,
-        atRules,
-        ...(host && !host.keyframes ? { selectors: host.selectors } : {}),
-      });
-      return;
-    }
-    const parent = stack.findLast((frame) => frame.kind === "style");
-    stack.push({
-      kind: "style",
-      selectors: keyframes
-        ? [prelude]
-        : resolveNesting(
-            splitTopLevel(prelude, ","),
-            parent?.keyframes ? undefined : parent?.selectors,
-          ),
-      declarations: [],
-      line: bufferLine,
-      atRules,
-      keyframes,
-    });
-  };
-
-  const close = () => {
-    flushStatement();
-    const frame = stack.pop();
-    if (!frame) return;
-    if (frame.kind === "style" || frame.declarations.length > 0) {
-      rules.push({ ...frame, endLine: line });
-    }
-  };
-
-  for (let index = 0; index < text.length; index++) {
-    const char = text[index];
-    if (char === "/" && text[index + 1] === "*") {
-      const end = text.indexOf("*/", index + 2);
-      const stop = end === -1 ? text.length : end + 2;
-      const body = text.slice(index + 2, end === -1 ? text.length : end);
-      comments.push({ text: body, line, endLine: line + countLines(body) });
-      line += countLines(text.slice(index, stop));
-      index = stop - 1;
-      continue;
-    }
-    if (char === '"' || char === "'") {
-      let end = index + 1;
-      while (end < text.length && text[end] !== char) end += text[end] === "\\" ? 2 : 1;
-      const literal = text.slice(index, end + 1);
-      if (!buffer.trim()) bufferLine = line;
-      buffer += literal;
-      line += countLines(literal);
-      index = end;
-      continue;
-    }
-    if (char === "(") depth++;
-    else if (char === ")") depth = Math.max(0, depth - 1);
-    if (depth === 0 && char === "{") open();
-    else if (depth === 0 && char === ";") flushStatement();
-    else if (depth === 0 && char === "}") close();
-    else {
-      if (!buffer.trim() && !/\s/u.test(char)) bufferLine = line;
-      buffer += char;
-    }
-    if (char === "\n") line++;
-  }
-  return { rules, comments };
-}
-
-/** Compounds of one complex selector, combinators dropped. */
-export function compounds(selector) {
-  const out = [];
-  let depth = 0;
-  let quote = null;
-  let current = "";
-  for (const char of selector) {
-    if (quote) {
-      current += char;
-      if (char === quote) quote = null;
-      continue;
-    }
-    if (char === '"' || char === "'") quote = char;
-    if (char === "(" || char === "[") depth++;
-    if (char === ")" || char === "]") depth--;
-    if (depth === 0 && /[\s>+~]/u.test(char)) {
-      if (current) out.push(current);
-      current = "";
-      continue;
-    }
-    current += char;
-  }
-  if (current) out.push(current);
-  return out;
-}
-
-/** Simple selectors of one compound: `.a`, `[x="y"]`, `:not(…)`, `::before`, `div`. */
-function simpleSelectors(compound) {
-  const out = [];
-  let index = 0;
-  while (index < compound.length) {
-    const start = index;
-    const char = compound[index];
-    if (char === "[") {
-      let depth = 0;
-      for (; index < compound.length; index++) {
-        if (compound[index] === "[") depth++;
-        else if (compound[index] === "]" && --depth === 0) break;
-      }
-      index++;
-    } else if (char === ":") {
-      index += compound[index + 1] === ":" ? 2 : 1;
-      while (index < compound.length && /[\w-]/u.test(compound[index])) index++;
-      if (compound[index] === "(") {
-        let depth = 0;
-        for (; index < compound.length; index++) {
-          if (compound[index] === "(") depth++;
-          else if (compound[index] === ")" && --depth === 0) break;
-        }
-        index++;
-      }
-    } else {
-      index++;
-      while (index < compound.length && /[\w\\-]/u.test(compound[index])) index++;
-    }
-    out.push(compound.slice(start, index));
-  }
-  return out;
-}
-
 const AND = (results) =>
   results.includes(false) ? false : results.includes("maybe") ? "maybe" : true;
 const OR = (results) =>
@@ -480,8 +284,6 @@ export function themesFor(selector) {
     (theme) => theme.id,
   );
 }
-
-const subjectCompound = (selector) => compounds(selector).at(-1) ?? "";
 
 /** The root compound without its theme qualifiers, so theme variants of one rule compare equal. */
 function themeKey(selector) {
@@ -586,20 +388,6 @@ const TYPE_TOKEN_NAME = /(?:font-size|text-size|line-height|leading)/u;
 const GEOMETRY_PROPERTY =
   /^(?:(?:min-|max-)?(?:width|height|block-size|inline-size)|padding(?:-[\w-]+)?|border(?:-[\w-]+)?-radius|font-size)$/u;
 
-/** fork:begin/fork:end line ranges in an upstream file. */
-function fenceRanges(text) {
-  const ranges = [];
-  let start = null;
-  text.split("\n").forEach((content, index) => {
-    if (/fork:begin\s/u.test(content) && start === null) start = index + 1;
-    else if (/fork:end\s/u.test(content) && start !== null) {
-      ranges.push([start, index + 1]);
-      start = null;
-    }
-  });
-  return ranges;
-}
-
 /** A rule that only sets custom properties under a root selector (or in @theme) is a token block. */
 const isTokenBlock = (rule) =>
   rule.declarations.length > 0 &&
@@ -607,14 +395,6 @@ const isTokenBlock = (rule) =>
   (rule.selectors
     ? rule.selectors.every((selector) => rootCompound(selector) !== null)
     : rule.kind === "at");
-
-export function loadStylesheet(path, text, { fenced = false } = {}) {
-  const { rules, comments } = parseCss(text);
-  const ranges = fenced ? fenceRanges(text) : null;
-  const owns = (line) =>
-    ranges === null || ranges.some(([start, end]) => line >= start && line <= end);
-  return { path, text, rules, comments, owns };
-}
 
 function finding(rule, file, line, message, extra = {}) {
   return { rule, file, line, message, ...extra };
@@ -636,25 +416,10 @@ export function primitiveSlots(root = REPO_ROOT) {
 /** Does the subject compound style a primitive? A slot only inside :not(…) or :has(…) does not. */
 const stylesPrimitive = (selector, slots) =>
   [
-    ...stripNot(subjectCompound(selector), [":not(", ":has("]).matchAll(
+    ...stripFunctions(subjectCompound(selector), [":not(", ":has("]).matchAll(
       /\[\s*data-slot\s*=\s*["']?([\w-]+)/gu,
     ),
   ].some((match) => slots.has(match[1]));
-
-function stripNot(compound, functions = [":not("]) {
-  let out = compound;
-  for (const fn of functions)
-    for (let index = out.indexOf(fn); index !== -1; index = out.indexOf(fn)) {
-      let depth = 0;
-      let end = index + 4;
-      for (; end < out.length; end++) {
-        if (out[end] === "(") depth++;
-        else if (out[end] === ")" && --depth === 0) break;
-      }
-      out = out.slice(0, index) + out.slice(end + 1);
-    }
-  return out;
-}
 
 export function checkStylesheet(sheet, slots = new Set()) {
   const out = [];
