@@ -7,6 +7,9 @@ import {
 import {
   forkLiveStatusRows,
   forkStatusLineAdvance,
+  forkStatusLineDwellEnd,
+  forkStatusLineDwellReconcile,
+  forkStatusLineDwellStart,
   forkStatusLineReconcile,
   forkStatusLineRotates,
   forkStatusLineStart,
@@ -319,11 +322,14 @@ describe("the status line rotation", () => {
     expect(forkStatusLineReconcile(beat, voices(null, "old")).voice).toBe("word");
   });
 
-  it("gives a voice that takes over between beats a full beat", () => {
+  it("hands a tool that settles between beats back to the thought, with a full beat", () => {
     const line = forkStatusLineStart(voices("vp", "old"));
     const settled = forkStatusLineReconcile(line, voices(null, "old"));
-    expect(settled.voice).toBe("word");
+    expect(settled.voice).toBe("thought");
     expect(settled.arrival).toBe(line.arrival + 1);
+    expect(
+      forkStatusLineReconcile(forkStatusLineStart(voices("vp", null)), voices(null, null)).voice,
+    ).toBe("word");
   });
 
   it("treats a thought that is still streaming as the same arrival", () => {
@@ -341,6 +347,24 @@ describe("the status line rotation", () => {
     expect(thought.voice).toBe("thought");
     expect(thought.arrival).toBe(line.arrival + 1);
     expect(forkStatusLineReconcile(line, voices("a", "old"))).toBe(line);
+  });
+
+  it("holds each label for its dwell, letting only a growing thought through", () => {
+    const thought = forkStatusLineDwellStart("checking", true);
+    const waiting = forkStatusLineDwellReconcile(thought, "run vp", false);
+    expect(waiting).toBe(thought);
+    const grown = forkStatusLineDwellReconcile(thought, "checking the tests", true);
+    expect([grown.label, grown.arrival]).toEqual(["checking the tests", thought.arrival]);
+    const tool = forkStatusLineDwellStart("run vp", false);
+    expect(forkStatusLineDwellReconcile(tool, "run vp then more", true)).toBe(tool);
+    const ended = forkStatusLineDwellEnd(grown, grown.arrival);
+    const taken = forkStatusLineDwellReconcile(ended, "run vp", false);
+    expect([taken.label, taken.dwelling, taken.arrival]).toEqual([
+      "run vp",
+      true,
+      grown.arrival + 1,
+    ]);
+    expect(forkStatusLineDwellEnd(taken, grown.arrival)).toBe(taken);
   });
 
   it("says the pinned label, else the voice showing, with a fresh word each lap", () => {
@@ -366,7 +390,12 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     completedAt: isWorking ? null : at(9),
     ...(isWorking ? {} : { turnEnded: true }),
   });
-  const rowsFor = (entries: Entries, isWorking: boolean, waitingOnUser = false) =>
+  const rowsFor = (
+    entries: Entries,
+    isWorking: boolean,
+    waitingOnUser = false,
+    expandedWorkGroupIds?: ReadonlySet<string>,
+  ) =>
     forkLiveStatusRows(
       deriveMessagesTimelineRows({
         timelineEntries: entries,
@@ -377,6 +406,7 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
         supportsConversationRollback: false,
         forkHoldLiveReplies: true,
         forkShowLatestHeldReply: waitingOnUser,
+        ...(expandedWorkGroupIds ? { expandedWorkGroupIds } : {}),
       }),
     );
   const turn = [
@@ -386,8 +416,31 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     command("second", 5, "inProgress"),
   ];
 
-  it("folds steps and replies alike into the one status line", () => {
-    expect(kinds(rowsFor(turn, true))).toEqual(["working"]);
+  it("closes the steps before the newest reply into one row and folds the rest into the line", () => {
+    expect(kinds(rowsFor(turn, true))).toEqual(["work-toggle", "working"]);
+    expect(kinds(rowsFor(turn.slice(0, 3), true))).toEqual(["work-toggle", "working"]);
+    expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
+  });
+
+  it("keeps an opened status line open when the next reply lands", () => {
+    const reply = (n: number, second: number) => {
+      const entry = commentary(second);
+      return {
+        ...entry,
+        id: `reply-${n}-entry`,
+        message: { ...entry.message, id: `reply-${n}` as never },
+      };
+    };
+    const first = [command("a", 2, "completed"), reply(1, 3), command("b", 4, "inProgress")];
+    const opened = statusLine(rowsFor(first, true))?.groupId;
+    expect(opened).toBeDefined();
+    const next = [
+      ...first.slice(0, 2),
+      command("b", 4, "completed"),
+      reply(2, 5),
+      command("c", 6, "inProgress"),
+    ];
+    expect(statusLine(rowsFor(next, true, false, new Set([opened!])))?.expanded).toBe(true);
   });
 
   it("settles a thought whose only follower is a held reply", () => {

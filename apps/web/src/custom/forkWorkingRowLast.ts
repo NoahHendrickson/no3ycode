@@ -200,7 +200,8 @@ export function forkStatusLineStart(voices: ForkStatusLineVoices): ForkStatusLin
 
 /**
  * Brings the line up to date in render. A new tool or thought takes it at once; the voice
- * showing going quiet hands over. Either starts a fresh beat. Returns `line` if unchanged.
+ * showing going quiet hands back to the thought, else moves on. Either starts a fresh beat.
+ * Returns `line` if unchanged.
  */
 export function forkStatusLineReconcile(
   line: ForkStatusLineState,
@@ -219,7 +220,12 @@ export function forkStatusLineReconcile(
         : null;
   if (arrived !== null) return { ...seen, voice: arrived, arrival: line.arrival + 1 };
   if (speaks(seen, seen.voice)) return seen;
-  return { ...forkStatusLineAdvance(seen), arrival: line.arrival + 1 };
+  // A tool that ends between beats returns the line to the update it was part of.
+  const next =
+    seen.voice !== "thought" && speaks(seen, "thought")
+      ? { ...seen, voice: "thought" as const }
+      : forkStatusLineAdvance(seen);
+  return { ...next, arrival: line.arrival + 1 };
 }
 
 /** Whether the line needs a beat: nothing pins it and it has more than the word to say. */
@@ -237,4 +243,40 @@ export function forkStatusLineText(
   if (line.voice === "tool" && voices.tool !== null) return voices.tool.label;
   if (line.voice === "thought" && voices.thought !== null) return voices.thought;
   return forkThinkingWord(line.lap === 0 ? wordSeed : `${wordSeed}:${line.lap}`);
+}
+
+/** The label on the line, held for a dwell so a burst of arrivals never flickers through. */
+export interface ForkStatusLineDwell {
+  readonly label: string;
+  /** The label is the thought voice, which may grow through its dwell while it streams. */
+  readonly thought: boolean;
+  readonly dwelling: boolean;
+  /** Bumped by each label that takes the line; its dwell ends only its own hold. */
+  readonly arrival: number;
+}
+
+export function forkStatusLineDwellStart(label: string, thought: boolean): ForkStatusLineDwell {
+  return { label, thought, dwelling: true, arrival: 0 };
+}
+
+/**
+ * A new label waits out the dwell of the one showing, then takes the line with a dwell of its
+ * own. A thought that only grows passes through on its first deadline. Returns `shown` if unchanged.
+ */
+export function forkStatusLineDwellReconcile(
+  shown: ForkStatusLineDwell,
+  label: string,
+  thought: boolean,
+): ForkStatusLineDwell {
+  if (label === shown.label) return shown;
+  if (thought && shown.thought && label.startsWith(shown.label)) return { ...shown, label };
+  if (shown.dwelling) return shown;
+  return { label, thought, dwelling: true, arrival: shown.arrival + 1 };
+}
+
+export function forkStatusLineDwellEnd(
+  shown: ForkStatusLineDwell,
+  arrival: number,
+): ForkStatusLineDwell {
+  return shown.arrival === arrival && shown.dwelling ? { ...shown, dwelling: false } : shown;
 }

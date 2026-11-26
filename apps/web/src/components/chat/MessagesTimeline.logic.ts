@@ -1520,25 +1520,20 @@ export function liveAnswerPreview(entries: ReadonlyArray<TimelineEntry>): string
 }
 
 /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-   The replies Zen holds back while answering, narrowed to the run still going;
+   The replies Zen holds back while answering, narrowed to the run still going, in order;
    a guard (forkQuietLiveTurn) pins it to Zen's rule. */
-function forkHeldLiveReplyIds(
+function forkLiveReplyIds(
   input: Pick<
     MessagesTimelineRowsInput,
-    | "timelineEntries"
-    | "isWorking"
-    | "latestRun"
-    | "runningRunId"
-    | "revealedMessageId"
-    | "forkShowLatestHeldReply"
+    "timelineEntries" | "isWorking" | "latestRun" | "runningRunId" | "revealedMessageId"
   >,
-): ReadonlySet<string> {
-  const held = new Set<string>();
+): ReadonlyArray<string> {
+  const replies: string[] = [];
   const answeringRunId =
     input.isWorking && input.latestRun?.turnEnded !== true
       ? deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null)
       : null;
-  if (answeringRunId === null) return held;
+  if (answeringRunId === null) return replies;
   const entries = input.timelineEntries;
   const steerAnswerIds = deriveInFlightSteerAnswerIds(entries);
   const retainedReplyIds = retainedAssistantReplyEntryIds(entries);
@@ -1552,12 +1547,10 @@ function forkHeldLiveReplyIds(
       !steerAnswerIds.has(entry.message.id) &&
       !retainedReplyIds.has(entry.id)
     ) {
-      held.add(entry.id);
+      replies.push(entry.id);
     }
   }
-  // While the turn waits on the user, the reply that led to the request explains it.
-  if (input.forkShowLatestHeldReply === true) held.delete([...held].at(-1) ?? "");
-  return held;
+  return replies;
 }
 /* fork:end fork-quiet-live-turn */
 
@@ -1589,9 +1582,13 @@ function timelineRowEntries(
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     | "forkHoldLiveReplies"
-    | "forkShowLatestHeldReply"
     /* fork:end fork-quiet-live-turn */
   >,
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+  forkLiveReplies: ReadonlyArray<string> = input.forkHoldLiveReplies === true
+    ? forkLiveReplyIds(input)
+    : [],
+  /* fork:end fork-quiet-live-turn */
 ) {
   const visibility = input.toolCallVisibility ?? "showAll";
   const entries = input.timelineEntries;
@@ -1643,9 +1640,11 @@ function timelineRowEntries(
      Zen's rule in every mode: a running turn's replies wait for it to end; the status line reads
      them. Held after settling, so a thought followed only by a held reply still reads settled. */
   const settled = settleSupersededReasoning(shown);
-  const held = input.forkHoldLiveReplies === true ? forkHeldLiveReplyIds(input) : null;
+  // The newest stays in the entries: deriveMessagesTimelineRows draws no row for it, but it
+  // splits the turn, so the steps before it close into one summary row that grows each update.
+  const held = new Set(forkLiveReplies.slice(0, -1));
   return withoutSubagentDelegationRows(
-    held !== null && held.size > 0 ? settled.filter((entry) => !held.has(entry.id)) : settled,
+    held.size > 0 ? settled.filter((entry) => !held.has(entry.id)) : settled,
   );
   /* fork:end fork-quiet-live-turn */
 }
@@ -1708,7 +1707,7 @@ export function deriveMessagesTimelineRows(
     hideQuietBotWakes?: boolean;
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
-    /** Outside Zen, a running turn's replies stay out of the rows until it ends, as Zen's do. */
+    /** Outside Zen, a running turn's replies stay out of the rows until it ends, as Zen's do; the newest still splits its steps. */
     forkHoldLiveReplies?: boolean;
     /** While the turn waits on the user, the latest held reply shows. */
     forkShowLatestHeldReply?: boolean;
@@ -1716,7 +1715,14 @@ export function deriveMessagesTimelineRows(
   },
   resolve: MessageResolver = m,
 ): MessagesTimelineRow[] {
-  const timelineEntries = timelineRowEntries(input);
+  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+     Upstream: timelineRowEntries(input). While the turn waits on the user, the newest reply
+     shows, since it explains the request. */
+  const forkLiveReplies = input.forkHoldLiveReplies === true ? forkLiveReplyIds(input) : [];
+  const timelineEntries = timelineRowEntries(input, forkLiveReplies);
+  const forkUnshownReplyId =
+    input.forkShowLatestHeldReply === true ? null : (forkLiveReplies.at(-1) ?? null);
+  /* fork:end fork-quiet-live-turn */
   const embeddedResultRunIds = new Set<RunId>();
   for (const entry of timelineEntries) {
     if ((entry.kind === "html-render" || entry.kind === "mcp-app") && entry.runId !== null) {
@@ -1878,7 +1884,14 @@ export function deriveMessagesTimelineRows(
   const activeWorkRow =
     activeWorkAnchor && latestVisibleToolEntry && !latestToolFailed
       ? (() => {
-          const groupId = workGroupId(activeWorkAnchor.id);
+          /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+             Upstream: workGroupId(activeWorkAnchor.id). Each newest reply moves the live
+             group's first step, so the run names it and an opened status line stays open. */
+          const groupId =
+            input.forkHoldLiveReplies === true && unsettledRunId !== null
+              ? workGroupId(`fork-live:${unsettledRunId}`)
+              : workGroupId(activeWorkAnchor.id);
+          /* fork:end fork-quiet-live-turn */
           return {
             kind: "work-live" as const,
             id: latestToolKeepsActivityLive
@@ -2374,6 +2387,9 @@ export function deriveMessagesTimelineRows(
       continue;
     }
 
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    if (timelineEntry.id === forkUnshownReplyId) continue;
+    /* fork:end fork-quiet-live-turn */
     const compactionRunId = timelineEntry.message.runId;
     const compactionRun =
       compactionRunId !== null && isCompactionCommandMessage(timelineEntry.message);

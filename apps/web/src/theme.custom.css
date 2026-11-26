@@ -3910,13 +3910,16 @@
   }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  /* ForkLiveStatusLine phases each mount to the clock, so a remount never restarts a sweep. */
   :root[data-fork="noahhendrickson-t3code"] [data-fork-status-line] .live-activity-focus {
     animation-name: fork-status-line-flash;
     animation-timing-function: steps(23);
+    animation-delay: var(--fork-shimmer-phase, 0ms);
   }
   :root[data-fork="noahhendrickson-t3code"] [data-fork-status-line] .live-activity-focus-counter {
     animation-name: fork-status-line-flash-counter;
     animation-timing-function: steps(23);
+    animation-delay: var(--fork-shimmer-phase, 0ms);
   }
 }
 /* fork:end fork-working-row-last */
