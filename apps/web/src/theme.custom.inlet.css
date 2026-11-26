@@ -440,13 +440,17 @@
   }
 }
 
-/* The open row (a card, or the slim row a settled thread takes) is inked as
-   the panel is, since it sits on the panel's fill rather than the frame's.
+/* The open row (a card, or the slim row a settled thread takes) and a chrome
+   row lit for its open page are inked as the panel is, since they sit on the
+   panel's fill rather than the frame's.
    Tailwind's text-sidebar-foreground resolves at :root, hence the color. */
 
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
   [data-fork-thread-row][aria-current="page"],
+:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
+  [data-sidebar-version="v2"]
+  [data-fork-chrome-row][data-active="true"],
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
   [data-sidebar-version="v2"]
   li[data-fork-split-pair][data-active],
@@ -825,16 +829,6 @@
 :root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"][data-fork-inlet-color="cream"][data-fork-has-stage-card]
   [data-slot="sidebar-inset"] {
   background: var(--fork-inlet-frame);
-}
-
-/* A chrome row lit for its open page is the panel's
-   colour, like the open thread's row, so it takes the panel's ink. */
-
-:root[data-fork="noahhendrickson-t3code"][data-fork-theme="inlet"]
-  [data-sidebar-version="v2"]
-  [data-fork-chrome-row][data-active="true"] {
-  --contrast-foreground: var(--fork-inlet-panel-foreground);
-  color: var(--fork-inlet-panel-foreground);
 }
 
 /* Beside a docked sidebar the page's panel sits flush against it and the lit

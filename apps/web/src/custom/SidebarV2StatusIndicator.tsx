@@ -391,18 +391,14 @@ function SidebarV2WorkingBeadRing({
   );
 }
 
-/** The bead ring in the surface's text ink: white on dark surfaces, dark where white would vanish. */
-function SidebarV2WorkingWhiteBeadRing(props: WorkingMarkProps) {
-  return <SidebarV2WorkingBeadRing {...props} ink="bg-foreground" />;
-}
-
 /** @public — every working form by name; Storybook's Fork/Status mark story maps over it. */
 export const SIDEBAR_V2_WORKING_MARK_FORMS: Record<
   ForkWorkingMark,
   (props: WorkingMarkProps) => JSX.Element
 > = {
   bead: SidebarV2WorkingBeadRing,
-  "bead-white": SidebarV2WorkingWhiteBeadRing,
+  // The surface's text ink: white on dark surfaces, dark where white would vanish.
+  "bead-white": (props) => <SidebarV2WorkingBeadRing {...props} ink="bg-foreground" />,
   helix: SidebarV2WorkingHelix,
   rain: SidebarV2WorkingRain,
 };
