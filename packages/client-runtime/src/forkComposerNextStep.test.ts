@@ -74,6 +74,7 @@ const step = (input: Partial<Parameters<typeof pickComposerNextStep>[0]>) =>
     branchPullRequest: null,
     gitStatus: null,
     habit: null,
+    autoMergeEnabled: false,
     ...input,
   })?.kind ?? null;
 
@@ -110,6 +111,24 @@ describe("pickComposerNextStep", () => {
     expect(step({ links: [link(1, { watch: "ended", checksState: "failing" })], habit })).toBe(
       null,
     );
+    // Auto-merge not read yet: Merge waits rather than flashing before the read lands.
+    expect(
+      step({
+        links: [link(1, { watch: "ended", checksState: "passing" })],
+        autoMergeEnabled: null,
+        habit,
+      }),
+    ).toBe(null);
+    // Auto-merge is armed: the host merges it, so no Merge. Babysit still offers, since auto-merge
+    // waits on failing checks and review feedback rather than fixing them.
+    expect(step({ links: [link(1)], autoMergeEnabled: true })).toBe("babysit");
+    expect(
+      step({
+        links: [link(1, { watch: "ended", checksState: "passing" })],
+        autoMergeEnabled: true,
+        habit,
+      }),
+    ).toBe(null);
   });
 
   it("leaves everything else to learned habits", () => {

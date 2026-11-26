@@ -54,7 +54,7 @@ interface NextStepPullRequest {
   readonly watching: boolean;
   /** A watch ran on it and ended. */
   readonly watchedBefore: boolean;
-  /** Not a draft, checks pass, mergeable, and no changes requested. */
+  /** Not a draft, checks pass, mergeable, no changes requested, and no auto-merge to do it. */
   readonly ready: boolean;
   readonly releasable: boolean;
 }
@@ -106,6 +106,7 @@ function resolveComposerNextStep(input: ComposerNextStepInput): ComposerNextStep
 /** The thread's current PR, as the PR chip resolves it (a stack's top layer), for the next step. */
 function nextStepPullRequestFromLinks(
   links: ReadonlyArray<ThreadPullRequestLink>,
+  autoMergeEnabled: boolean | null,
 ): NextStepPullRequest | null {
   const link = resolveThreadCurrentPullRequestLink(links);
   if (!link) return null;
@@ -123,7 +124,8 @@ function nextStepPullRequestFromLinks(
       !snapshot.isDraft &&
       snapshot.checksState === "passing" &&
       snapshot.mergeability === "mergeable" &&
-      snapshot.reviewDecision !== "changes-requested",
+      snapshot.reviewDecision !== "changes-requested" &&
+      autoMergeEnabled === false,
     releasable: isReleaseRepository(link.url),
   };
 }
@@ -178,6 +180,9 @@ export function pickComposerNextStep(input: {
   readonly branchPullRequest: BranchPullRequest | null;
   readonly gitStatus: NextStepGitStatus | null;
   readonly habit: HabitSuggestion | null;
+  /** Whether the linked PR has auto-merge armed; null until read, which holds Merge back. iOS
+   * doesn't read it and passes false. */
+  readonly autoMergeEnabled: boolean | null;
 }): PickedComposerNextStep | null {
   const status = input.gitStatus;
   // A checkout on another branch is not this thread's work.
@@ -191,7 +196,7 @@ export function pickComposerNextStep(input: {
   const step = resolveComposerNextStep({
     lastOwnerPrompt: input.lastOwnerPrompt,
     pullRequest:
-      nextStepPullRequestFromLinks(input.links) ??
+      nextStepPullRequestFromLinks(input.links, input.autoMergeEnabled) ??
       (unlinked == null ? null : unlinkedPullRequest(unlinked.url)),
     git:
       git === null

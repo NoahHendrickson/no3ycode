@@ -3804,7 +3804,11 @@
     vessel, in flow so the transcript ends above it, and hides when empty: the
     thread's PR (custom/ComposerPullRequestChip, resolved as the branch picker
     resolves it; open, merged and closed PRs fill with their state's colour
-    under a bright top rim, a draft stays neutral) and background work (subagents,
+    under a bright top rim, a draft stays neutral; an "Auto-merge" chip follows
+    it while the current open PR has auto-merge armed, read from the PR's detail
+    by custom/threadAutoMerge.ts because link snapshots don't carry it; its label
+    opens the PR and, where the host and viewer allow it, a ban button turns
+    auto-merge off) and background work (subagents,
     monitors; custom/ComposerBackgroundWork.tsx), whose label opens the task
     list (a subagent's row opens its thread; a command reads as its gist,
     without its cd lead-in or output redirects) and whose square stops it all.
@@ -3886,6 +3890,7 @@
     - apps/web/src/custom/ComposerBackgroundWork.tsx
     - apps/web/src/custom/BackgroundWorkLayersMark.tsx
     - apps/web/src/custom/ComposerPullRequestChip.tsx
+    - apps/web/src/custom/threadAutoMerge.ts
     - apps/web/src/custom/ComposerStashChip.tsx
     - apps/web/src/custom/composerBackgroundWork.logic.ts
     - apps/web/src/custom/composerBackgroundWork.logic.test.ts
@@ -7117,7 +7122,11 @@
     and the owner's latest typed message (scheduled tasks, watch wakes and
     agent-sent turns don't count): after a sol loop with unmerged work off the
     default branch → Open PR; an open PR nothing has watched → Babysit; one
-    whose watch ended mergeable with checks passing → Merge; a PR merged right
+    whose watch ended mergeable with checks passing → Merge, unless web read
+    that its auto-merge is armed or hasn't read it yet (then nothing shows;
+    Babysit still does, since auto-merge waits on failures rather than fixing
+    them; iOS doesn't read it and passes false);
+    a PR merged right
     after the owner asked to merge it ("merge it", "lets merge", not negated),
     in this fork's repository only → Cut release. A watched PR, or a watch that
     ended short of mergeable, is the owner's call: nothing shows. There is no

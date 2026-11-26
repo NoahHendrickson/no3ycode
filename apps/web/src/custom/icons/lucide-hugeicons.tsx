@@ -176,6 +176,7 @@ export const ChevronsLeftRightEllipsisIcon = icon(
 export const XIcon = icon("x", Hg.XIcon, "stroke");
 export const X = XIcon;
 export const CircleXIcon = icon("circle-x", Hg.CircleXIcon, "themed");
+export const BanIcon = icon("ban", Hg.BanIcon, "stroke");
 export const CheckIcon = icon("check", Hg.CheckIcon, "stroke");
 export const Check = CheckIcon;
 export const CircleCheckIcon = icon("circle-check", Hg.CircleCheckIcon, "themed");

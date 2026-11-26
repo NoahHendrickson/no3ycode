@@ -46,11 +46,13 @@
 }
 
 /* Two ComposerControls in one pill: the halves take the pill's height, ink and type. A learned
-   next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it. */
+   next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it.
+   Armed auto-merge too: its label, then the ban button that turns it off. */
 :root[data-fork="noahhendrickson-t3code"]
   :is(
     [data-fork-composer-status-chip="background-work"],
-    [data-fork-composer-status-chip="learned-step"]
+    [data-fork-composer-status-chip="learned-step"],
+    [data-fork-composer-status-chip="auto-merge"]
   ) {
   gap: 0;
   padding-inline: 0;
@@ -96,6 +98,15 @@
     width: calc(var(--spacing) * 2.5);
     height: calc(var(--spacing) * 2.5);
   }
+}
+
+/* Auto-merge stops with a ban sign, which reads at the label's icon size, not the bare ×'s. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="auto-merge"]
+  [data-fork-status-chip-stop]
+  svg {
+  width: calc(var(--spacing) * 3.5);
+  height: calc(var(--spacing) * 3.5);
 }
 
 :root[data-fork="noahhendrickson-t3code"]
