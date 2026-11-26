@@ -627,6 +627,23 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
     )
   ) : null;
 
+  const prMark = pr ? (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={prBadgeLabel ?? undefined}
+      hitSlop={6}
+      onPress={handleOpenPullRequests}
+      onLongPress={() => undefined}
+    >
+      <No3yPullRequestMark
+        pr={pr}
+        palette={palette}
+        gap={4}
+        textStyle={{ ...NO3Y_FONT.regular, fontSize: 12, lineHeight: 16 }}
+      />
+    </Pressable>
+  ) : null;
+
   const trailingMarks = (
     <>
       {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
@@ -654,6 +671,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
         return (
           <>
             <OneLineTitle title={thread.title} fontSize={14} color={palette.titleInk} />
+            {prMark}
             {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
             <Text
               style={{
@@ -761,22 +779,7 @@ export const No3yThreadRow = memo(function No3yThreadRow(props: {
                         {props.project?.title ?? "No project"}
                       </Text>
                     </View>
-                    {pr ? (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={prBadgeLabel ?? undefined}
-                        hitSlop={6}
-                        onPress={handleOpenPullRequests}
-                        onLongPress={() => undefined}
-                      >
-                        <No3yPullRequestMark
-                          pr={pr}
-                          palette={palette}
-                          gap={4}
-                          textStyle={{ ...NO3Y_FONT.regular, fontSize: 12, lineHeight: 16 }}
-                        />
-                      </Pressable>
-                    ) : null}
+                    {prMark}
                     {providerMark ? (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                         {providerMark}

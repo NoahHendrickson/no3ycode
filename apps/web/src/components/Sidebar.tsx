@@ -1756,12 +1756,6 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               variant === "card" &&
                 // oxlint-disable-next-line shadcn/no-restyle -- the card's 12px meta
                 "flex items-center gap-1 [&>span]:text-sidebar-meta",
-              // Settled history mutes its PR state at rest, like the favicon
-              // beside it; hovering or focusing the row brings the color back.
-              variant === "slim" &&
-                variantAction === "unsettle" &&
-                // oxlint-disable-next-line shadcn/no-restyle -- mutes the badge's state colour
-                "not-group-hover/v2-row:not-group-focus-within/v2-row:[&>span]:text-secondary-label",
             )}
             // The number takes the glyph's state ink (theme.custom.css).
             data-fork-sidebar-pr-badge
