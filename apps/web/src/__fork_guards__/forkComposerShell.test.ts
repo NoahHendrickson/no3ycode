@@ -352,9 +352,28 @@ describe("fork guard: fork-composer-shell", () => {
         rule.selector.includes("[data-fork-composer-prompt]") &&
         !rule.selector.includes('[data-testid="composer-editor"]'),
     );
-    // The cap holds 12.5rem of prompt over whatever block padding the prompt wears.
+    // The cap scales with the viewport over whatever block padding the prompt wears,
+    // staying tighter on touch phones where the virtual keyboard eats into dvh.
+    expect(theme).toMatch(/--fork-composer-prompt-max:\s*min\(45dvh,\s*36rem\)/u);
     expect(theme).toMatch(
-      /--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 2 \* var\(--fork-composer-prompt-pad-block, 4px\)\)/u,
+      /--fork-composer-prompt-cap:\s*calc\(\s*var\(--fork-composer-prompt-max\)\s*\+\s*2\s*\*\s*var\(--fork-composer-prompt-pad-block,\s*4px\)\s*\)/u,
+    );
+    const touchPhoneCap = rules.find(
+      (rule) =>
+        rule.atRules.some((atRule) =>
+          /@media\s*\(\s*width\s*<\s*40rem\s*\)\s*and\s*\(\s*pointer:\s*coarse\s*\)/u.test(atRule),
+        ) && rule.selector.includes("[data-fork-composer-prompt]"),
+    );
+    expect(touchPhoneCap?.body).toMatch(/--fork-composer-prompt-max:\s*min\(30dvh,\s*18rem\)/u);
+    const narrowEditorCap = rules.find(
+      (rule) =>
+        rule.atRules.some((atRule) => /@media\s*\(\s*width\s*<\s*40rem\s*\)/u.test(atRule)) &&
+        !rule.atRules.some((atRule) => /pointer:\s*coarse/u.test(atRule)) &&
+        rule.selector.includes("[data-fork-composer-prompt]") &&
+        rule.selector.includes('[data-testid="composer-editor"]'),
+    );
+    expect(narrowEditorCap?.body).toMatch(
+      /max-height:\s*calc\(var\(--fork-composer-prompt-max\)\s*\+\s*2\s*\*\s*var\(--spacing\)\)/u,
     );
     expect(scrollport?.body).toMatch(/max-height:\s*var\(--fork-composer-prompt-cap\)/u);
     expect(scrollport?.body).toMatch(/overflow-y:\s*auto/u);

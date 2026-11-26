@@ -3843,7 +3843,10 @@
     hand-drawn ShieldOffFilledIcon), its name in the tooltip and aria-label.
     Typed text defaults to 16px (text-base, so it still follows the interface
     size; a separate prompt size in Settings → Typography still wins:
-    appearanceFonts.ts). The control row, context row and status chips read
+    appearanceFonts.ts). The prompt grows up to min(45dvh, 36rem) before
+    scrolling (min(30dvh, 18rem) on coarse-pointer phones where the virtual
+    keyboard stays out of dvh), shared across the desktop wrapper scrollport,
+    the narrow-width editor and the live dictation preview. The control row, context row and status chips read
     --fork-composer-chip-text, a pixel under the interface size
     (calc(var(--text-base) - 1px); rem no longer moves), so they follow
     Settings → Typography too; their heights add fixed room around it.
@@ -3954,8 +3957,9 @@
     # Upstream reworking that className is what would silently un-mask it.
     - apps/web/src/components/chat/MessagesTimeline.tsx
     # min-h-17.5 on the prompt editor, the placeholder that has to track the
-    # prompt's type ramp, and the max-h-50 / overflow-y-auto cap the fork
-    # re-homes on the prompt wrapper at >=40rem by overriding — the classes
+    # prompt's type ramp, and the max-h-52 / overflow-y-auto cap the fork
+    # replaces with --fork-composer-prompt-max and re-homes on the prompt
+    # wrapper at >=40rem by overriding — the classes
     # themselves stay on the editor here. (Tiptap since upstream sync
     # 2026-10-02; ComposerPromptEditor.tsx is a thin wrapper around it.)
     - apps/web/src/components/ComposerPromptEditorTiptap.tsx

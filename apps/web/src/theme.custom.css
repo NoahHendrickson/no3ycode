@@ -1008,10 +1008,33 @@
   color: var(--muted-foreground);
 }
 
-/* The cap sits on the prompt, so it holds 12.5rem of prompt whatever block padding the compact
-   row gives it (the base 4px each side, or the compact centring above). */
+/* The cap sits on the prompt, so it holds up to --fork-composer-prompt-max of prompt
+   whatever block padding the compact row gives it (the base 4px each side, or the compact
+   centring above). Scales with the viewport so long typed or dictated prompts keep growing
+   before scrolling, while leaving room for the transcript and composer chrome. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
-  --fork-composer-prompt-cap: calc(12.5rem + 2 * var(--fork-composer-prompt-pad-block, 4px));
+  --fork-composer-prompt-max: min(45dvh, 36rem);
+  --fork-composer-prompt-cap: calc(
+    var(--fork-composer-prompt-max) + 2 * var(--fork-composer-prompt-pad-block, 4px)
+  );
+}
+
+/* On coarse-pointer phones the virtual keyboard claims the lower half of the viewport
+   without shrinking dvh, so cap the prompt lower there. */
+@media (width < 40rem) and (pointer: coarse) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
+    --fork-composer-prompt-max: min(30dvh, 18rem);
+  }
+}
+
+/* Below 40rem upstream's editor owns the scrollport, so carry the same growth cap there
+   (plus the editor's own 4px block padding) instead of snapping back to max-h-52. */
+@media (width < 40rem) {
+  :root[data-fork="noahhendrickson-t3code"]
+    [data-fork-composer-prompt]
+    [data-testid="composer-editor"] {
+    max-height: calc(var(--fork-composer-prompt-max) + 2 * var(--spacing));
+  }
 }
 
 /* The placeholder has to move with the prompt, or the two disagree about both
@@ -1024,9 +1047,8 @@
    The wrapper owns the cap; the editor stays unclamped and clips its ink so
    the parent does not inherit the same false overflow. Below 40rem the prompt
    stays on leading-relaxed and upstream's editor scroll behaviour is left
-   alone, apart from a live dictation preview, which shares this cap. 12.5rem matches upstream's max-h-52 less the editor's own 4px
-   padding; the extra 8px is the wrapper's compensating padding, so the
-   border-box cap holds the same 12.5rem of prompt. */
+   alone, apart from the raised cap above and a live dictation preview, which
+   shares --fork-composer-prompt-cap. */
 @media (width >= 40rem) {
   :root[data-fork="noahhendrickson-t3code"]
     [data-fork-composer-box]
