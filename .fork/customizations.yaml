@@ -9942,12 +9942,14 @@
     Regular and bold are the family name so RCTFont keeps an inherited
     italic or weight (bold inside italic); medium is the Medium face because
     chip links pass no weight, and the Swift composer's UIFont(name:) gets the
-    Regular face. The font comes from a derived atom over the preferences
+    Regular face (its chips keep the DMSans-Medium the Swift view hardcodes).
+    The font comes from a derived atom over the preferences
     atom (no3yInterfaceFontState.ts), so a save's optimistic patch moves the
     tokens and the families together. The fork's raw search TextInputs take
     font-sans. app.config.ts bundles six static faces of the same
     Cinnabar Interface build the web ships (Regular, Italic, Medium,
-    MediumItalic, SemiBold, Bold — upright 800 falls to Bold); they come from
+    MediumItalic, SemiBold, Bold — upright 800 falls to Bold, and with no
+    SemiBoldItalic or BoldItalic face, bold italic draws MediumItalic); they come from
     the cinnabar-sans repo's fonts/static and are replaced wholesale, never
     hand-edited. A binary built before the faces were bundled draws the
     system font when Cinnabar Interface is picked. iPad and Android keep DM Sans
