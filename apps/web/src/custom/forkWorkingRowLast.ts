@@ -2,7 +2,7 @@
  * Live status line — see `.fork/customizations.yaml#fork-working-row-last`.
  * The working row moves to the end. The live row folds into it iff it is the turn's
  * tail, so the tail is one line; a live row with a reply after it stays in place above
- * a plain Thinking line. A failed group's `thinking` row keeps its own upstream row.
+ * a plain Thinking line. A failed tool's grouped `thinking` row folds too, like any live row.
  */
 import {
   liveWorkEntryLabel,
@@ -81,12 +81,7 @@ function fold(rows: MessagesTimelineRow[], lineYields: boolean): MessagesTimelin
   // Upstream derives at most one live activity row, at the turn's tail.
   const liveIndex = rest.findLastIndex(isLive);
   const live = liveIndex < 0 ? undefined : (rest[liveIndex] as ForkLiveRow);
-  if (
-    lineYields ||
-    working.compacting === true ||
-    live === undefined ||
-    (live.kind === "thinking" && live.groupId !== undefined)
-  ) {
+  if (lineYields || working.compacting === true || live === undefined) {
     return workingIndex === rows.length - 1 ? rows : [...rest, working];
   }
   const shown = live.kind === "thinking" ? live : settled(live);

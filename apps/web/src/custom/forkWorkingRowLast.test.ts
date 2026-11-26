@@ -175,15 +175,16 @@ describe("forkLiveStatusRows", () => {
     expect(statusLine(result)?.kind).toBe("work-live");
   });
 
-  it("leaves a failed tool's grouped thinking row on its own line", () => {
-    const rows = derive([command("first", 5, "failed")]);
+  it("folds a failed tool's grouped thinking row into the line, which opens the group", () => {
+    const rows = derive([reasoning(4), command("first", 5, "failed")]);
     expect(rows.some((row) => row.kind === "thinking" && row.groupId !== undefined)).toBe(true);
     const result = forkLiveStatusRows(rows);
-    expect(result.at(-2)?.kind).toBe("thinking");
-    expect(statusLine(result)).toBeUndefined();
+    expect(kinds(result)).toEqual(["working"]);
+    const live = statusLine(result);
+    expect(live?.kind === "thinking" && live.groupId).toBeTruthy();
   });
 
-  it("adds no second Thinking line when a failed group follows a tool still running", () => {
+  it("folds a failed group into the one line while an earlier tool still runs", () => {
     const rows = derive([
       command("first", 5, "inProgress"),
       commentary(6),
@@ -192,8 +193,8 @@ describe("forkLiveStatusRows", () => {
     expect(rows.some((row) => row.kind === "work-live" && row.active)).toBe(true);
     expect(rows.some((row) => row.kind === "thinking" && row.groupId !== undefined)).toBe(true);
     const result = forkLiveStatusRows(rows);
-    expect(result.filter((row) => row.kind === "thinking")).toHaveLength(1);
-    expect(statusLine(result)).toBeUndefined();
+    expect(result.some((row) => row.kind === "thinking")).toBe(false);
+    expect(statusLine(result)?.kind).toBe("thinking");
   });
 
   it("keeps row identity while the stable rows are unchanged", () => {
@@ -416,13 +417,29 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     command("second", 5, "inProgress"),
   ];
 
-  it("closes the steps before the newest reply into one row and folds the rest into the line", () => {
+  it("closes each stretch before a held reply into its own row and folds the rest into the line", () => {
     expect(kinds(rowsFor(turn, true))).toEqual(["work-toggle", "working"]);
+    const later = {
+      ...commentary(6),
+      id: "later-entry",
+      message: { ...commentary(6).message, id: "later" as never },
+    };
+    const grown = rowsFor(
+      [
+        ...turn.slice(0, 3),
+        command("second", 5, "completed"),
+        later,
+        command("third", 7, "inProgress"),
+      ],
+      true,
+    );
+    expect(kinds(grown)).toEqual(["work-toggle", "work", "working"]);
+    expect(grown.some((row) => row.kind === "message")).toBe(false);
     expect(kinds(rowsFor(turn.slice(0, 3), true))).toEqual(["work-toggle", "working"]);
     expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
   });
 
-  it("keeps an opened status line open when the next reply lands", () => {
+  it("keeps an opened status line open when the next reply lands or its tool fails", () => {
     const reply = (n: number, second: number) => {
       const entry = commentary(second);
       return {
@@ -441,6 +458,8 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
       command("c", 6, "inProgress"),
     ];
     expect(statusLine(rowsFor(next, true, false, new Set([opened!])))?.expanded).toBe(true);
+    const failed = [...first.slice(0, 2), command("b", 4, "failed")];
+    expect(statusLine(rowsFor(failed, true, false, new Set([opened!])))?.expanded).toBe(true);
   });
 
   it("settles a thought whose only follower is a held reply", () => {

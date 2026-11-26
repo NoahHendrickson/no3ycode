@@ -11,7 +11,10 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
-import { deriveMessagesTimelineRows } from "../components/chat/MessagesTimeline.logic";
+import {
+  deriveMessagesTimelineRows,
+  timelineTurnFoldRunIdsByEntryId,
+} from "../components/chat/MessagesTimeline.logic";
 
 function readSibling(relativePath: string): string {
   return NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
@@ -76,6 +79,52 @@ describe("fork guard: fork-quiet-live-turn", () => {
       );
     expect(visible(false)).toEqual(visible(true));
     expect(visible(false)).toEqual(["earlier", "steer-answer", "final", "revealed"]);
+  });
+
+  it("folds the turn as soon as it ends, before the run settles", () => {
+    const command = (id: string, second: number) => ({
+      id,
+      kind: "work" as const,
+      createdAt: at(second),
+      entry: {
+        id,
+        createdAt: at(second),
+        runId: "turn-1",
+        label: "Ran command",
+        tone: "tool",
+        itemType: "command_execution",
+        toolLifecycleStatus: "completed",
+      },
+    });
+    const entries = [
+      message("ask", "user", 0),
+      message("step", "assistant", 1),
+      command("cmd-1", 2),
+      message("step-2", "assistant", 3),
+      command("cmd-2", 4),
+      message("final", "assistant", 5),
+    ] as unknown as Entries;
+    const input = {
+      timelineEntries: entries,
+      latestRun: {
+        runId: "turn-1" as never,
+        status: "running" as const,
+        startedAt: at(0),
+        completedAt: null,
+        turnEnded: true,
+      },
+      isWorking: true,
+      activeTurnStartedAt: at(0),
+      turnDiffSummaries: [],
+      supportsConversationRollback: false,
+      forkHoldLiveReplies: true,
+    };
+    const rows = deriveMessagesTimelineRows(input).flatMap((row) =>
+      row.kind === "working" ? [] : [row.id],
+    );
+    expect(rows).toEqual(["ask", "turn-fold:turn-1", "final"]);
+    // Citations open the fold the rows draw.
+    expect(timelineTurnFoldRunIdsByEntryId(input).get("step")).toBe("turn-1");
   });
 
   it("asks from the transcript, except while Find is open or a guest watches", () => {

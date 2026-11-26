@@ -1587,15 +1587,7 @@ function timelineRowEntries(
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
     | "hideQuietBotWakes"
     /* fork:end fork-bots */
-    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
-    | "forkHoldLiveReplies"
-    /* fork:end fork-quiet-live-turn */
   >,
-  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
-  forkLiveReplies: ReadonlyArray<string> = input.forkHoldLiveReplies === true
-    ? forkLiveReplyIds(input)
-    : [],
-  /* fork:end fork-quiet-live-turn */
 ) {
   const visibility = input.toolCallVisibility ?? "showAll";
   const entries = input.timelineEntries;
@@ -1643,18 +1635,23 @@ function timelineRowEntries(
     );
   }
   /* fork:end fork-bots */
-  /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-     Zen's rule in every mode: a running turn's replies wait for it to end; the status line reads
-     them. Held after settling, so a thought followed only by a held reply still reads settled. */
-  const settled = settleSupersededReasoning(shown);
-  // The newest stays in the entries: deriveMessagesTimelineRows draws no row for it, but it
-  // splits the turn, so the steps before it close into one summary row that grows each update.
-  const held = new Set(forkLiveReplies.slice(0, -1));
-  return withoutSubagentDelegationRows(
-    held.size > 0 ? settled.filter((entry) => !held.has(entry.id)) : settled,
-  );
-  /* fork:end fork-quiet-live-turn */
+  return withoutSubagentDelegationRows(settleSupersededReasoning(shown));
 }
+
+/* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+   Upstream unfolds every active run. Held replies drop when the provider turn ends, while the
+   run stays open until it settles; folding then keeps its steps from flashing open between. */
+function forkFoldableActiveRunIds(
+  activeRunIds: ReadonlySet<RunId>,
+  input: Pick<MessagesTimelineRowsInput, "latestRun" | "forkHoldLiveReplies">,
+): ReadonlyArray<RunId> {
+  const endedRunId =
+    input.forkHoldLiveReplies === true && input.latestRun?.turnEnded === true
+      ? input.latestRun.runId
+      : null;
+  return [...activeRunIds].filter((runId) => runId !== endedRunId);
+}
+/* fork:end fork-quiet-live-turn */
 
 function deriveTimelineTurnFolds(
   input: Pick<
@@ -1666,6 +1663,9 @@ function deriveTimelineTurnFolds(
     | "runningRunId"
     | "toolCallVisibility"
     | "revealedMessageId"
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    | "forkHoldLiveReplies"
+    /* fork:end fork-quiet-live-turn */
   >,
 ) {
   if (input.toolCallVisibility === "zen") return new Map<string, TurnFold>();
@@ -1681,7 +1681,13 @@ function deriveTimelineTurnFolds(
     timelineEntries,
     terminalAssistantMessageIds: deriveTerminalAssistantMessageIds(timelineEntries),
     latestRun: input.latestRun ?? null,
-    unfoldedRunIds: new Set([...activeVisualResponseRunIds, ...failedRunIds]),
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+       Upstream: activeVisualResponseRunIds, as the rows below. */
+    unfoldedRunIds: new Set([
+      ...forkFoldableActiveRunIds(activeVisualResponseRunIds, input),
+      ...failedRunIds,
+    ]),
+    /* fork:end fork-quiet-live-turn */
     runlessWorkActive: input.isWorking && input.runlessWorkActive === true,
     liveSubagentEntryIds: liveSubagentCardEntryIds(timelineEntries),
     retainedAssistantReplyEntryIds: retainedAssistantReplyEntryIds(timelineEntries),
@@ -1722,13 +1728,15 @@ export function deriveMessagesTimelineRows(
   },
   resolve: MessageResolver = m,
 ): MessagesTimelineRow[] {
+  const timelineEntries = timelineRowEntries(input);
   /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
-     Upstream: timelineRowEntries(input). While the turn waits on the user, the newest reply
-     shows, since it explains the request. */
+     Zen's rule in every mode: a running turn's replies draw no row until it ends; the status line
+     reads them. They stay in the entries, so each one still closes the steps before it into a row
+     of their own. While the turn waits on the user, the newest shows: it explains the request. */
   const forkLiveReplies = input.forkHoldLiveReplies === true ? forkLiveReplyIds(input) : [];
-  const timelineEntries = timelineRowEntries(input, forkLiveReplies);
-  const forkUnshownReplyId =
-    input.forkShowLatestHeldReply === true ? null : (forkLiveReplies.at(-1) ?? null);
+  const forkUnshownReplyIds = new Set(
+    input.forkShowLatestHeldReply === true ? forkLiveReplies.slice(0, -1) : forkLiveReplies,
+  );
   /* fork:end fork-quiet-live-turn */
   const embeddedResultRunIds = new Set<RunId>();
   for (const entry of timelineEntries) {
@@ -1787,7 +1795,13 @@ export function deriveMessagesTimelineRows(
           timelineEntries: timelineEntries,
           terminalAssistantMessageIds,
           latestRun: input.latestRun ?? null,
-          unfoldedRunIds: new Set([...activeVisualResponseRunIds, ...failedRunIds]),
+          /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+             Upstream: activeVisualResponseRunIds. */
+          unfoldedRunIds: new Set([
+            ...forkFoldableActiveRunIds(activeVisualResponseRunIds, input),
+            ...failedRunIds,
+          ]),
+          /* fork:end fork-quiet-live-turn */
           runlessWorkActive,
           liveSubagentEntryIds,
           retainedAssistantReplyEntryIds: retainedAssistantReplyIds,
@@ -2415,7 +2429,7 @@ export function deriveMessagesTimelineRows(
     }
 
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
-    if (timelineEntry.id === forkUnshownReplyId) continue;
+    if (forkUnshownReplyIds.has(timelineEntry.id)) continue;
     /* fork:end fork-quiet-live-turn */
     const compactionRunId = timelineEntry.message.runId;
     const compactionRun =
@@ -2534,7 +2548,14 @@ export function deriveMessagesTimelineRows(
   ) {
     const failedGroupAnchor = latestToolFailed ? activeWorkAnchor : undefined;
     if (failedGroupAnchor) {
-      const groupId = workGroupId(failedGroupAnchor.id);
+      /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+         Upstream: workGroupId(failedGroupAnchor.id). The status line folds this row too, so it
+         keeps the live group's run-named id and an opened line stays open when a tool fails. */
+      const groupId =
+        input.forkHoldLiveReplies === true && unsettledRunId !== null
+          ? workGroupId(`fork-live:${unsettledRunId}`)
+          : workGroupId(failedGroupAnchor.id);
+      /* fork:end fork-quiet-live-turn */
       const expanded = input.expandedWorkGroupIds?.has(groupId) ?? false;
       const groupedEntries = visibleActiveToolEntries.map((entry) => entry.entry);
       nextRows.push({
@@ -2677,6 +2698,9 @@ export function timelineTurnFoldRunIdsByEntryId(
     | "runningRunId"
     | "toolCallVisibility"
     | "revealedMessageId"
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    | "forkHoldLiveReplies"
+    /* fork:end fork-quiet-live-turn */
   >,
 ): ReadonlyMap<string, RunId> {
   const byEntryId = new Map<string, RunId>();
