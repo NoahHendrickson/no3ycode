@@ -41,7 +41,7 @@ import { allowlisted, applySuppressions } from "./design-lint/suppressions.mjs";
 export { loadStylesheet } from "./design-lint/css.mjs";
 export { checkDeadForkAttributes } from "./design-lint/rules/attributes.mjs";
 export { buildTokenIndex, checkThemeContract } from "./design-lint/rules/contract.mjs";
-export { checkFigmaStamps, storyHash } from "./design-lint/rules/figma.mjs";
+export { checkFigmaStamps, stampFigma, storyHash } from "./design-lint/rules/figma.mjs";
 export { checkDuplicatedThemeBlocks } from "./design-lint/rules/restated.mjs";
 export { exportedComponents, storyImports } from "./design-lint/rules/stories.mjs";
 export { checkStylesheet } from "./design-lint/rules/values.mjs";
@@ -100,9 +100,17 @@ export function collectFindings(root = REPO_ROOT) {
 function main() {
   const [mode, ...paths] = process.argv.slice(2);
   if (mode === "--figma-checked" && paths.length > 0) {
-    console.log(
-      `design-lint: stamped ${stampFigma(REPO_ROOT, paths)} story file(s) as checked against Figma.`,
-    );
+    try {
+      const { stamped, dropped } = stampFigma(REPO_ROOT, paths);
+      console.log(
+        `design-lint: stamped ${stamped} story file(s) as checked against Figma, dropped ${dropped} deleted story stamp(s).`,
+      );
+    } catch (error) {
+      console.error(
+        `design-lint: ${error instanceof Error ? error.message : error}. Nothing was stamped.`,
+      );
+      process.exit(2);
+    }
     return;
   }
   if (mode !== "--check" || paths.length > 0) {

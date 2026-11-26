@@ -9,6 +9,7 @@ export const REPO_ROOT = NodePath.resolve(
   "../..",
 );
 export const WEB_SRC = "apps/web/src";
+export const STORIES = "apps/fork-storybook/stories";
 
 export const read = (root, relative) => NodeFS.readFileSync(NodePath.join(root, relative), "utf8");
 
@@ -27,6 +28,13 @@ export function walk(root, relativeDir, keep) {
   }
   return out.sort();
 }
+
+/** Storybook sources: stories, docs pages and the fixtures they share (B5 reads them all). */
+export const storybookSources = (root) =>
+  walk(root, STORIES, (path) => /\.(?:tsx?|mdx)$/u.test(path));
+
+/** The story files themselves (B6 stamps each one). */
+export const storyFiles = (root) => walk(root, STORIES, (path) => /\.stories\.tsx?$/u.test(path));
 
 export const isTestFile = (path) =>
   /\.(?:test|spec|bench)\.[cm]?[jt]sx?$|\/__fork_guards__\//u.test(path);

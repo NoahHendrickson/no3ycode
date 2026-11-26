@@ -4,15 +4,12 @@ import * as NodeCrypto from "node:crypto";
 import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
 
-import { finding, read, walk } from "../sources.mjs";
+import { finding, read, STORIES, storyFiles } from "../sources.mjs";
 
-export const FIGMA_STAMPS = ".fork/figma-kit.json";
-const STORIES = "apps/fork-storybook/stories";
+const FIGMA_STAMPS = ".fork/figma-kit.json";
 
 export const storyHash = (text) =>
   NodeCrypto.createHash("sha256").update(text).digest("hex").slice(0, 16);
-
-const storyFiles = (root) => walk(root, STORIES, (path) => /\.stories\.tsx?$/u.test(path));
 
 function readStamps(root) {
   const path = NodePath.join(root, FIGMA_STAMPS);
@@ -44,16 +41,28 @@ export const checkFigma = (root) =>
     readStamps(root),
   );
 
-/** Records the kit as checked against these stories; a deleted story's stamp is dropped. */
+/** Records the kit as checked against these stories; a deleted story's stamp is dropped. Paths
+    resolve from the working directory, or from the repo root when that names no story. */
 export function stampFigma(root, paths) {
   const stamps = readStamps(root);
+  const stories = new Set(storyFiles(root));
+  const known = (path) => stories.has(path) || path in stamps;
+  let stamped = 0;
+  let dropped = 0;
   for (const path of paths) {
-    const relative = NodePath.relative(root, NodePath.resolve(path)).split(NodePath.sep).join("/");
-    const absolute = NodePath.join(root, relative);
-    if (NodeFS.existsSync(absolute)) stamps[relative] = storyHash(read(root, relative));
-    else delete stamps[relative];
+    const fromCwd = NodePath.relative(root, NodePath.resolve(path)).split(NodePath.sep).join("/");
+    const relative = known(fromCwd) ? fromCwd : NodePath.posix.normalize(path);
+    if (stories.has(relative)) {
+      stamps[relative] = storyHash(read(root, relative));
+      stamped++;
+    } else if (relative in stamps) {
+      delete stamps[relative];
+      dropped++;
+    } else {
+      throw new Error(`${path} is not a story under ${STORIES}`);
+    }
   }
   const sorted = Object.fromEntries(Object.entries(stamps).sort(([a], [b]) => a.localeCompare(b)));
   NodeFS.writeFileSync(NodePath.join(root, FIGMA_STAMPS), `${JSON.stringify(sorted, null, 2)}\n`);
-  return paths.length;
+  return { stamped, dropped };
 }

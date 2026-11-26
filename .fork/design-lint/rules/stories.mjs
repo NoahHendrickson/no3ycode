@@ -2,7 +2,7 @@
 
 import * as NodePath from "node:path";
 
-import { finding, isTestFile, read, walk, WEB_SRC } from "../sources.mjs";
+import { finding, isTestFile, read, storybookSources, walk, WEB_SRC } from "../sources.mjs";
 
 const EXPORTED_COMPONENT =
   /^export (?:default )?(?:function ([A-Z]\w*)|const ([A-Z]\w*)\s*(?::[^=]+)?=\s*(?:memo|forwardRef|React\.memo|function|\(|[a-z_$][\w$]*\s*=>))/gmu;
@@ -34,9 +34,7 @@ export function storyImports(text) {
 
 /** A component has a story when a story imports it, or a story file is named after it. */
 export function checkStories(root) {
-  const stories = walk(root, "apps/fork-storybook/stories", (path) =>
-    /\.(?:tsx?|mdx)$/u.test(path),
-  );
+  const stories = storybookSources(root);
   const storied = new Set([
     ...stories.flatMap((path) => [...storyImports(read(root, path))]),
     ...stories.map((path) => NodePath.basename(path).replace(/\.stories\.\w+$/u, "")),

@@ -1,9 +1,14 @@
+// @effect-diagnostics nodeBuiltinImport:off
 /**
  * Fork guard — see `.fork/customizations.yaml#fork-design-lint` and `.fork/DESIGN-RULES.md`.
  *
  * One passing and one failing case per CSS and cross-file rule in `.fork/design-lint.mjs`. The
  * TSX rules are oxlint rules with their own tests in oxlint-plugin-t3code/rules/.
  */
+
+import * as NodeFS from "node:fs";
+import * as NodeOS from "node:os";
+import * as NodePath from "node:path";
 
 import { describe, expect, it } from "vite-plus/test";
 
@@ -264,6 +269,29 @@ function Local() {}`;
       expect(findings(new Map([[STORY, "b"]]), stamps("a"))[0]?.message).toMatch(/changed since/);
       expect(findings(new Map([[STORY, "a"]]), {})[0]?.message).toMatch(/^new story/);
       expect(findings(new Map(), stamps("a"))[0]?.message).toMatch(/deleted story/);
+    });
+
+    it("stamps only story files and drops a deleted story's stamp", () => {
+      const root = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "figma-stamps-"));
+      try {
+        const write = (path: string, text: string) => {
+          NodeFS.mkdirSync(NodePath.dirname(NodePath.join(root, path)), { recursive: true });
+          NodeFS.writeFileSync(NodePath.join(root, path), text);
+        };
+        const gone = "apps/fork-storybook/stories/fork/Gone.stories.tsx";
+        write(STORY, "a");
+        write("README.md", "readme");
+        write(".fork/figma-kit.json", JSON.stringify({ [gone]: "0" }));
+        const stamped = () =>
+          JSON.parse(NodeFS.readFileSync(NodePath.join(root, ".fork/figma-kit.json"), "utf8"));
+
+        expect(() => DesignLint.stampFigma(root, ["README.md"])).toThrow(/is not a story/);
+        expect(stamped()).toEqual({ [gone]: "0" });
+        expect(DesignLint.stampFigma(root, [STORY, gone])).toEqual({ stamped: 1, dropped: 1 });
+        expect(stamped()).toEqual(stamps("a"));
+      } finally {
+        NodeFS.rmSync(root, { recursive: true, force: true });
+      }
     });
   });
 
