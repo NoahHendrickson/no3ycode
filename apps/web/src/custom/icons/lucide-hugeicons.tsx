@@ -29,7 +29,26 @@ import type { FC, ReactElement, SVGProps } from "react";
 import { createElement, useId } from "react";
 
 import { forkPaletteFillsIcons, useActiveForkPalette } from "../forkActivePalette";
-import { GLYPH_STROKE, glyphDrawing, type IconSvgElement } from "./hugeiconsFill";
+import {
+  ArchiveArrowUpSolid,
+  FolderClosedSolid,
+  FolderOpenSolid,
+  FoldersSolid,
+  HammerSolid,
+  PackageSolid,
+  PencilRulerSolid,
+  PipetteSolid,
+  ScrollTextSolid,
+  ServerSolid,
+  SmartphoneSolid,
+  UsersSolid,
+} from "./handDrawnSolids";
+import {
+  GLYPH_STROKE,
+  glyphDrawing,
+  type GlyphDrawing,
+  type IconSvgElement,
+} from "./hugeiconsFill";
 
 /** `stroke` never fills, `themed` fills under the fork palettes, `fill` always fills. */
 type FillPolicy = "stroke" | "themed" | "fill";
@@ -77,12 +96,18 @@ const draw = ([tag, attrs]: IconSvgElement[number]): ReactElement => createEleme
 export function HugeGlyph({
   data,
   filled,
+  solid,
   size,
   alt,
   ...props
-}: Omit<LucideCompatProps, "weight"> & { data: IconSvgElement; filled: boolean }) {
+}: Omit<LucideCompatProps, "weight"> & {
+  data: IconSvgElement;
+  filled: boolean;
+  /** A hand-drawn filled weight, drawn instead of the derived one. */
+  solid?: GlyphDrawing | undefined;
+}) {
   const maskId = `fork-icon-${useId().replace(/[^\w-]/g, "")}`;
-  const { bodies, knockouts, holes, plain } = glyphDrawing(data, filled);
+  const { bodies, knockouts, holes, plain } = filled && solid ? solid : glyphDrawing(data, filled);
   const mask = (suffix: string, content: IconSvgElement) => (
     <mask id={maskId + suffix} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
       {/* oxlint-disable-next-line shadcn/no-raw-colors -- mask luminance: white keeps the glyph */}
@@ -123,7 +148,12 @@ export function HugeGlyph({
  * icon rendered (e.g. `lucide-x` in MessagesTimeline.test.tsx). Names are the lucide export
  * kebab-cased. A lucide alias re-exports its canonical row, so a glyph can't drift between names.
  */
-function icon(lucideName: string, data: IconSvgElement, policy: FillPolicy): LucideIcon {
+function icon(
+  lucideName: string,
+  data: IconSvgElement,
+  policy: FillPolicy,
+  solid?: GlyphDrawing,
+): LucideIcon {
   const lucideClasses = withPascalKebabClass(`lucide lucide-${lucideName}`, lucideName);
   const Wrapped: LucideIcon = ({ weight, className, ...props }) => {
     const themed = forkPaletteFillsIcons(useActiveForkPalette());
@@ -135,6 +165,7 @@ function icon(lucideName: string, data: IconSvgElement, policy: FillPolicy): Luc
         {...props}
         data={data}
         filled={filled}
+        solid={solid}
         className={className ? `${lucideClasses} ${className}` : lucideClasses}
       />
     );
@@ -249,16 +280,21 @@ export const FileCode2Icon = icon("file-code-2", Hg.FileCodeIcon, "themed");
 export const FileSearchIcon = icon("file-search", Hg.FileSearchIcon, "themed");
 export const TextSearchIcon = icon("text-search", Hg.TextSearchIcon, "stroke");
 export const ClipboardList = icon("clipboard-list", Hg.ClipboardListIcon, "stroke");
-export const CopyIcon = icon("copy", Hg.CopyIcon, "themed");
+export const CopyIcon = icon("copy", Hg.Copy01Icon, "themed");
 export const ArchiveIcon = icon("archive", Hg.ArchiveIcon, "themed");
-export const ArchiveX = icon("archive-x", Hg.ArchiveArrowUpIcon, "themed");
+export const ArchiveX = icon("archive-x", Hg.ArchiveArrowUpIcon, "themed", ArchiveArrowUpSolid);
 export const Trash2Icon = icon("trash-2", Hg.Delete02Icon, "themed");
 export const Trash2 = Trash2Icon;
 export const FolderIcon = icon("folder", Hg.FolderIcon, "themed");
-export const FolderClosedIcon = icon("folder-closed", Hg.FolderClosedIcon, "themed");
-export const FolderOpenIcon = icon("folder-open", Hg.FolderOpenIcon, "themed");
+export const FolderClosedIcon = icon(
+  "folder-closed",
+  Hg.FolderClosedIcon,
+  "themed",
+  FolderClosedSolid,
+);
+export const FolderOpenIcon = icon("folder-open", Hg.FolderOpenIcon, "themed", FolderOpenSolid);
 export const FolderPlusIcon = icon("folder-plus", Hg.FolderPlusIcon, "themed");
-export const FoldersIcon = icon("folders", Hg.FoldersIcon, "themed");
+export const FoldersIcon = icon("folders", Hg.FoldersIcon, "themed", FoldersSolid);
 export const FolderGitIcon = icon("folder-git", Hg.FolderGitIcon, "stroke");
 export const FolderGit2Icon = icon("folder-git-2", Hg.FolderGit2Icon, "stroke");
 export const FolderTree = icon("folder-tree", Hg.FolderTreeIcon, "themed");
@@ -286,11 +322,11 @@ export const GitMergeIcon = icon("git-merge", Hg.GitMergeIcon, "stroke");
 export const TerminalIcon = icon("terminal", Hg.TerminalIcon, "stroke");
 export const TerminalSquare = icon("terminal-square", Hg.SquareTerminalIcon, "themed");
 export const Code2 = icon("code-2", Hg.SourceCodeIcon, "stroke");
-export const HammerIcon = icon("hammer", Hg.HammerIcon, "themed");
+export const HammerIcon = icon("hammer", Hg.HammerIcon, "themed", HammerSolid);
 export const WrenchIcon = icon("wrench", Hg.WrenchIcon, "themed");
 export const FlaskConicalIcon = icon("flask-conical", Hg.FlaskConicalIcon, "stroke");
 export const ContainerIcon = icon("container", Hg.ContainerIcon, "themed");
-export const ServerIcon = icon("server", Hg.ServerIcon, "themed");
+export const ServerIcon = icon("server", Hg.ServerIcon, "themed", ServerSolid);
 export const CloudIcon = icon("cloud", Hg.CloudIcon, "stroke");
 export const CloudUploadIcon = icon("cloud-upload", Hg.CloudUploadIcon, "stroke");
 export const GlobeIcon = icon("globe", Hg.GlobeIcon, "themed");
@@ -303,7 +339,7 @@ export const QrCodeIcon = icon("qr-code", Hg.QrCodeIcon, "stroke");
 export const KeyboardIcon = icon("keyboard", Hg.KeyboardIcon, "themed");
 export const MonitorIcon = icon("monitor", Hg.MonitorIcon, "themed");
 export const LaptopIcon = icon("laptop", Hg.LaptopIcon, "themed");
-export const SmartphoneIcon = icon("smartphone", Hg.SmartphoneIcon, "themed");
+export const SmartphoneIcon = icon("smartphone", Hg.SmartphoneIcon, "themed", SmartphoneSolid);
 export const ActivityIcon = icon("activity", Hg.ActivityIcon, "stroke");
 // Fork-only glyphs matching the iOS status pill and queue card.
 export const ComputerActivityIcon = icon("computer-activity", Hg.ComputerActivityIcon, "stroke");
@@ -369,16 +405,16 @@ export const Camera = icon("camera", Hg.CameraIcon, "themed");
 export const PaperclipIcon = icon("paperclip", Hg.PaperclipIcon, "stroke");
 export const SendIcon = icon("send", Hg.SendIcon, "themed");
 export const UserPlusIcon = icon("user-plus", Hg.UserPlusIcon, "themed");
-export const UsersIcon = icon("users", Hg.UsersIcon, "themed");
+export const UsersIcon = icon("users", Hg.UsersIcon, "themed", UsersSolid);
 export const LayersIcon = icon("layers", Hg.LayersIcon, "themed");
-export const PipetteIcon = icon("pipette", Hg.PipetteIcon, "themed");
+export const PipetteIcon = icon("pipette", Hg.PipetteIcon, "themed", PipetteSolid);
 export const PaletteIcon = icon("palette", Hg.PaletteIcon, "themed");
 export const PaintbrushIcon = icon("paintbrush", Hg.PaintbrushIcon, "themed");
 export const ScanIcon = icon("scan", Hg.ScanIcon, "stroke");
 export const FoldHorizontalIcon = icon("fold-horizontal", Hg.FoldHorizontalIcon, "stroke");
 export const Grid2x2Icon = icon("grid-2x2", Hg.Grid2x2Icon, "themed");
 export const Paintbrush = PaintbrushIcon;
-export const PencilRulerIcon = icon("pencil-ruler", Hg.PencilRulerIcon, "themed");
+export const PencilRulerIcon = icon("pencil-ruler", Hg.PencilRulerIcon, "themed", PencilRulerSolid);
 export const PenLineIcon = icon("pen-line", Hg.PenLineIcon, "themed");
 export const PenLine = PenLineIcon;
 export const SquarePenIcon = icon("square-pen", Hg.SquarePenIcon, "themed");
@@ -462,7 +498,7 @@ export const ShieldCheckIcon = icon("shield-check", Hg.ShieldCheckIcon, "themed"
 export const BlocksIcon = icon("blocks", Hg.BlocksIcon, "themed");
 export const XCircleIcon = CircleXIcon;
 
-export const PackageIcon = icon("package", Hg.PackageIcon, "themed");
+export const PackageIcon = icon("package", Hg.PackageIcon, "themed", PackageSolid);
 export const PackagePlusIcon = DownloadIcon;
 export const UserRoundIcon = icon("user-round", Hg.UserRoundIcon, "themed");
 export const Volume2 = icon("volume-2", Hg.VolumeHighIcon, "themed");
@@ -592,7 +628,7 @@ export const ReplyIcon = icon("reply", Hg.ReplyIcon, "stroke");
 export const ListPlusIcon = icon("list-plus", Hg.ListPlusIcon, "stroke");
 export const ListEndIcon = icon("list-end", Hg.ListEndIcon, "stroke");
 export const Table2Icon = Table2;
-export const ScrollTextIcon = icon("scroll-text", Hg.ScrollTextIcon, "themed");
+export const ScrollTextIcon = icon("scroll-text", Hg.ScrollTextIcon, "themed", ScrollTextSolid);
 export const OctagonXIcon = icon("octagon-x", Hg.OctagonXIcon, "themed");
 export const UnlinkIcon = icon("unlink", Hg.UnlinkIcon, "stroke");
 export const UserLockIcon = icon("user-lock", Hg.UserLockIcon, "themed");

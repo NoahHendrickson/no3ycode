@@ -3,6 +3,7 @@ import {
   CheckmarkCircle02Icon,
   ClipboardListIcon,
   FileIcon,
+  FilesIcon,
   FolderIcon,
   GlobeIcon,
   Grid2x2Icon,
@@ -44,9 +45,9 @@ describe("glyphDrawing", () => {
   });
 
   it("fills a closed contour that shares its path with an open one", () => {
-    // The page closes; the fold corner in the same path does not, and is cut out of the page
-    // without opening its edge.
-    expect(counts(FileIcon)).toMatchObject({ bodies: 1, plain: 0, rims: 1 });
+    // The page closes; the fold in the same path does not, and spans it end to end, so it
+    // cuts the dog-ear off through the edge.
+    expect(counts(FileIcon)).toMatchObject({ bodies: 1, knockouts: 1, plain: 0, rims: 1 });
     expect(counts(FileIcon).holes).toBeGreaterThan(0);
   });
 
@@ -54,6 +55,9 @@ describe("glyphDrawing", () => {
     // The grid's lines meet its frame, so they divide the body rather than sit inside it.
     expect(counts(Grid2x2Icon)).toMatchObject({ bodies: 1, holes: 0, rims: 0 });
     expect(counts(Grid2x2Icon).knockouts).toBeGreaterThan(0);
+    // The page fold stops short of the page's corner but spans it end to end, so it parts the
+    // dog-ear off rather than leaving a rim sliver along the corner.
+    expect(counts(FilesIcon)).toMatchObject({ bodies: 1, knockouts: 1 });
   });
 
   it("parts bodies whose outlines meet with a seam", () => {

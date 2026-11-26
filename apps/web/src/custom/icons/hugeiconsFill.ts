@@ -463,7 +463,13 @@ function deriveFill(icon: IconSvgElement): GlyphDrawing | null {
     const reach = Math.min(
       ...shape.points.flatMap((point) => parts.map((body) => outlineDistance(point, body))),
     );
-    (reach <= CUT_REACH ? knockouts : holes).push(cut);
+    // An open stroke ending within the rim at both ends (a page's fold) spans the body too.
+    const ends = [shape.points[0]!, shape.points[shape.points.length - 1]!];
+    const spans =
+      !shape.closed &&
+      !shape.outlined &&
+      ends.every((end) => parts.some((body) => outlineDistance(end, body) <= RIM_WIDTH));
+    (reach <= CUT_REACH || spans ? knockouts : holes).push(cut);
   }
   const filledBodies = parts.map((body): Element => {
     const [tag, attrs] = hoisted(body.element);

@@ -178,9 +178,9 @@ describe("fork guard: phosphor-duotone-icons", () => {
     expect(shim).toContain("`lucide lucide-${lucideName}`");
     // Every entry in the table has to carry a name, or its icon renders
     // unclassed while the rest stay covered.
-    expect([...shim.matchAll(/export const \w+ = icon\((.)/g)].filter((m) => m[1] !== '"')).toEqual(
-      [],
-    );
+    expect(
+      [...shim.matchAll(/export const \w+ = icon\(\s*(.)/g)].filter((m) => m[1] !== '"'),
+    ).toEqual([]);
   });
 
   it("keeps lucide-react installed only as the alias target's public name", () => {
