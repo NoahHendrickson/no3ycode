@@ -7367,12 +7367,15 @@
     chat link (--info-foreground), not upstream's per-kind chip accent, so all
     links in a message read as one color. Document icons keep their accent
     stroke. Only file and thread links: other chip kinds (PR state, skills)
-    keep upstream's accent ink, which carries meaning.
+    keep upstream's accent ink, which carries meaning. Mobile matches for
+    thread links: their chip in a message takes the message's link color.
   tier: 3
   files:
     - apps/web/src/theme.custom.css
   shadows: []
-  watch: []
+  watch:
+    # Mobile thread chips in a message take the message's link color.
+    - apps/mobile/src/native/useEnrichedLinkVariants.ts
   verify:
     - apps/web/src/__fork_guards__/forkFileLinkInk.test.ts
 

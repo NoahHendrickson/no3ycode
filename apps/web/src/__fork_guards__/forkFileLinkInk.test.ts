@@ -42,4 +42,9 @@ describe("fork-file-link-ink", () => {
     expect(chip).toContain("text-(--context-chip-ink)");
     expect(chip).toContain("[--document-icon-stroke:var(--context-chip-ink)]");
   });
+
+  it("inks mobile thread chips with the message's link color", () => {
+    const hook = readSibling("../../../mobile/src/native/useEnrichedLinkVariants.ts");
+    expect(hook).toMatch(/parseThreadLinkHref\(url\)\s*\?\s*textStyle\.linkColor/);
+  });
 });
