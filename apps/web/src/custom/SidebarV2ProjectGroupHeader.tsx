@@ -157,7 +157,7 @@ export function SidebarV2ProjectGroupHeader(props: {
           // Gap, padding and margins are all derived — see
           // custom/sidebarV2CardAlignment for the arithmetic this row shares
           // with the cards under it.
-          "relative flex min-h-8 w-full items-center rounded-[10px] text-left hover:bg-sidebar-row-hover",
+          "relative flex min-h-8 w-full items-center rounded-(--radius-sidebar-row) text-left hover:bg-sidebar-row-hover",
           SIDEBAR_V2_CARD_ALIGNMENT.headerPad,
           SIDEBAR_V2_CARD_ALIGNMENT.headerTrail,
           props.isFirst
@@ -183,7 +183,7 @@ export function SidebarV2ProjectGroupHeader(props: {
             onClick={props.onToggleCollapsed}
             {...(props.reorderable ? sortable.listeners : {})}
             className={cn(
-              "absolute inset-0 z-0 cursor-pointer rounded-[10px]",
+              "absolute inset-0 z-0 cursor-pointer rounded-(--radius-sidebar-row)",
               props.reorderable && "cursor-grab active:cursor-grabbing",
               "outline-none",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar",

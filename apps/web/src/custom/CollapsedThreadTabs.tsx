@@ -828,6 +828,7 @@ function ThreadTab(props: {
         <span className="relative flex h-full min-w-0 flex-1 items-center">
           {/* Stretched and pulled 4px into the padding so the hover mask, and the clip that
               keeps the marks off the PR badge on a minimum-width tab, spare the disc's shadow. */}
+          {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the mark and title fade under the hover actions: mask stops from the tab's end */}
           <span className="-ml-1 flex min-w-0 flex-1 items-center gap-1.5 self-stretch overflow-hidden pl-1 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-3.5rem),#0000_calc(100%-2.75rem))]">
             {/* The model picker's marks: the Claude Code mascot, the Codex cloud. */}
             {props.provider ? <TabProviderMark entry={props.provider} /> : null}
@@ -937,6 +938,7 @@ function DraftTab(
         {provider ? <TabProviderMark entry={provider} /> : null}
         {props.project ? <TabProjectMark project={props.project} /> : null}
         {/* Fades out under the discard button rather than sliding it in, so no tab moves. */}
+        {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the title fades under the discard button: mask stops from the tab's end */}
         <span className="flex min-w-0 flex-1 items-center gap-1.5 group-focus-within/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))] group-hover/tab:[mask-image:linear-gradient(to_right,#000_calc(100%-2rem),#0000_calc(100%-1.25rem))]">
           <DraftTitle draftId={props.draftId} />
           <SidebarV2StatusMark status={null} seed={props.draftId} idle="draft" />

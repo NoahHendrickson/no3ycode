@@ -150,6 +150,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
           <button
             type="button"
             aria-label={triggerAriaLabel}
+            // oxlint-disable-next-line shadcn/no-arbitrary-values -- design mode keeps the Forge panel's 3px swatch corners
             className="size-4 shrink-0 cursor-pointer rounded-[3px] border border-border/70"
             style={{ backgroundColor: seededHex ?? value }}
           />
@@ -167,6 +168,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
             {...svDrag}
           >
             <span
+              // oxlint-disable-next-line shadcn/no-arbitrary-values -- the picker handle's contrast ring, readable on any colour
               className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
               style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%` }}
             />
@@ -179,6 +181,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
             {...hueDrag}
           >
             <span
+              // oxlint-disable-next-line shadcn/no-arbitrary-values -- the picker handle's contrast ring, readable on any colour
               className="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.4)]"
               style={{ left: `${(hsv.h / 360) * 100}%`, backgroundColor: hueColor }}
             />
@@ -227,6 +230,7 @@ export function DesignColorPicker({ value, tokens, onPick, triggerAriaLabel }: P
                       }
                     }}
                     className={cn(
+                      // oxlint-disable-next-line shadcn/no-arbitrary-values -- design mode keeps the Forge panel's 3px swatch corners
                       "size-4 rounded-[3px] border border-border/50",
                       "transition-transform hover:scale-110",
                     )}

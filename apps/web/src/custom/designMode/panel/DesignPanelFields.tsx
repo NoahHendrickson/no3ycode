@@ -476,6 +476,7 @@ function SpacingTokenAffordance({
                 : "Pick from the spacing scale"
             }
             className={cn(
+              // oxlint-disable-next-line shadcn/no-arbitrary-values -- design mode's code chip: the Forge panel's 3px corners and 9px mono
               "me-1 shrink-0 rounded-[3px] px-1 font-mono text-[9px] leading-4 transition-colors",
               matched !== null
                 ? "bg-(--fork-design-accent-bg) text-(--fork-design-accent)"

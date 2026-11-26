@@ -308,6 +308,7 @@ function Transport(props: { state: ReadyState; volume: number; expanded: boolean
   return (
     // Equal side columns, so the transport centres on the card rather than between the cover and the
     // two buttons on the right. A sidebar too narrow for that (it goes down to 208px) drops the cover.
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- below a 14.5rem sidebar the strip drops its cover
     <div className="grid min-w-0 grid-cols-[1fr_auto_1fr] items-center gap-1 p-1.5 @max-[14.5rem]/strip:grid-cols-[auto_1fr]">
       <div className="@max-[14.5rem]/strip:hidden">
         <Artwork src={state.artwork} />
@@ -393,6 +394,7 @@ function SongRow(props: {
       // Rows off screen skip layout and paint; a library's list runs to hundreds.
       className={cn(
         ROW_CLASS,
+        // oxlint-disable-next-line shadcn/no-arbitrary-values -- an off-screen row's placeholder height for content-visibility
         "[contain-intrinsic-size:auto_2.75rem] [content-visibility:auto]",
         props.playing && "bg-accent",
       )}
@@ -475,6 +477,7 @@ const CoverGrid = memo(function CoverGrid(props: {
   const { rows, kind } = props;
   if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
   return (
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- as many 7rem-min covers as fit the strip
     <div className="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1 py-1">
       {rows.map((row) => (
         <ButtonPrimitive
@@ -507,6 +510,7 @@ const ArtistList = memo(function ArtistList({ rows }: { rows: ReadonlyArray<Musi
   if (rows.length === 0) return <Note>Nothing in here yet.</Note>;
   return rows.map((artist) => (
     <ListItem
+      // oxlint-disable-next-line shadcn/no-arbitrary-values -- an off-screen row's placeholder height for content-visibility
       className={cn(ROW_CLASS, "[contain-intrinsic-size:auto_2rem] [content-visibility:auto]")}
       key={artist.id}
       onClick={() => void openMusicRow(artist, "artists")}
@@ -563,6 +567,7 @@ const TABS: ReadonlyArray<{ readonly value: MusicTab; readonly label: string }> 
 
 /** Its colours live in theme.custom.css ([data-fork-music-strip]), beside its button's. */
 const CARD_CLASS = cn(
+  // oxlint-disable-next-line shadcn/no-arbitrary-values -- the strip card's drop shadow; no shadow token yet
   "@container/strip flex min-w-0 flex-col overflow-hidden rounded-xl text-foreground shadow-[0_12px_32px_-18px_rgb(0_0_0/45%)]",
   "transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0 motion-reduce:transition-none",
 );

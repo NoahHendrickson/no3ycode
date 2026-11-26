@@ -242,7 +242,8 @@ export function AlignMatrix({
                 className={cn(
                   "size-1 rounded-full transition-all",
                   active
-                    ? "bg-(--fork-design-accent) shadow-[0_0_6px_1px_var(--fork-design-accent-bg),0_0_2px_var(--fork-design-accent)]"
+                    ? // oxlint-disable-next-line shadcn/no-arbitrary-values -- the active alignment dot's glow in design mode's accent
+                      "bg-(--fork-design-accent) shadow-[0_0_6px_1px_var(--fork-design-accent-bg),0_0_2px_var(--fork-design-accent)]"
                     : "bg-muted-foreground/40 group-hover:bg-muted-foreground/70",
                 )}
               />

@@ -180,6 +180,9 @@
 :root[data-fork="noahhendrickson-t3code"] {
   /* One drawn px at the current Sidebar font size (the thread title, 14px by default). */
   --fork-sidebar-px: calc(var(--fork-sidebar-font-size, 14px) / 14);
+  /* The sidebar rows' corner (chrome rows, headers, their icon buttons): between rounded-lg and
+     rounded-xl, and fixed like the rows' other px metrics. */
+  --radius-sidebar-row: 10px;
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-sidebar-version="v2"] {

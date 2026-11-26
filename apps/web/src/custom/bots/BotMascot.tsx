@@ -58,6 +58,7 @@ export function BotMascotTile(props: {
   return (
     <span
       data-fork-bot-mascot-tile=""
+      // oxlint-disable-next-line shadcn/no-arbitrary-values -- the mascot tile's 24% rim; no rim token yet
       className="flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[inset_0_0_0_1px_rgb(0_0_0/0.24)] dark:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.24)]"
       style={{
         backgroundColor: `color-mix(in srgb, ${botMascotBaseColor(props.shape)} 50%, transparent)`,

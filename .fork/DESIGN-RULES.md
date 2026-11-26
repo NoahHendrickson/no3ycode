@@ -55,8 +55,9 @@ Only when the rule really doesn't fit, and always with a reason.
   a reason is reported (S1), and so is one with nothing to suppress (S2).
 - **TSX:** `// oxlint-disable-next-line shadcn/no-arbitrary-values -- reason` (in JSX,
   `{/* oxlint-disable-next-line … -- reason */}`). `t3code/require-suppression-reason` already
-  requires the reason. A value a token can't express goes in the A5 allowlist in
-  `design-rules.mjs`, with its reason.
+  requires the reason. A kind of value no token can express (a keyword, fr/minmax tracks, a viewport
+  clamp) goes in the A5 allowlist in `design-rules.mjs`, with its reason. A value only one
+  component uses takes a line suppression at its site instead.
 - **Whole selectors or components** (brand marks, B5 exceptions): a `DESIGN_LINT_ALLOWLIST`
   entry in `design-rules.mjs` with a `reason`. B5 lists components that are not atomic through `b5Exempt`,
   grouped by kind (route page, page layout, section, provider/host, backdrop, wrapper); the name

@@ -13,7 +13,7 @@ import { SIDEBAR_V2_SLIM_ROW_ACTION_CLASS } from "./sidebarV2TrailingColumn";
 const BOX = {
   // Button's icon sizes grow below sm; the trailing column's offsets are derived from fixed boxes.
   row: { size: "icon-xs", className: "size-6" },
-  header: { size: "icon", className: "size-8 rounded-[10px]" },
+  header: { size: "icon", className: "size-8 rounded-(--radius-sidebar-row)" },
   tab: { size: "icon-micro", className: "size-5 rounded-full" },
 } as const;
 

@@ -368,6 +368,7 @@ function SidebarV2WorkingBeadRing({ seed, still }: WorkingMarkProps) {
   return (
     <span
       aria-hidden
+      // oxlint-disable-next-line shadcn/no-arbitrary-values -- optical nudges that centre the film on the 12px marks
       className="relative -mx-[1.5px] -my-[0.5px] block size-3.75 shrink-0 overflow-hidden"
     >
       <FilmStrip
@@ -476,6 +477,7 @@ function SidebarV2MonitoringMark() {
 export function SidebarV2StillWorkingMark() {
   return (
     <span aria-hidden className={MARK_SLOT_CLASS}>
+      {/* oxlint-disable-next-line shadcn/no-arbitrary-values -- the working ring's 1.5px stroke */}
       <span className="size-3 rounded-full border-[1.5px] border-sidebar-v2-status-working" />
     </span>
   );

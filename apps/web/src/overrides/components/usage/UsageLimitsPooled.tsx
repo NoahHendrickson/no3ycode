@@ -134,6 +134,7 @@ function AccountName({
 
 function Row({ label, children }: { readonly label: string; readonly children: ReactNode }) {
   return (
+    // oxlint-disable-next-line shadcn/no-arbitrary-values -- the limits table's 4.5rem label column
     <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-3">
       <span className="text-muted-foreground">{label}</span>
       <span className="min-w-0 text-foreground tabular-nums">{children}</span>
@@ -538,6 +539,7 @@ function PoolSection({
         <span
           aria-hidden
           className={cn(
+            // oxlint-disable-next-line shadcn/no-arbitrary-values -- the status mark at 14px inside the popover's 16px slot
             "inline-flex size-4 shrink-0 items-center justify-center [--fork-mark-size:14px]",
             pool.driver === "claudeAgent" && "translate-y-px",
           )}

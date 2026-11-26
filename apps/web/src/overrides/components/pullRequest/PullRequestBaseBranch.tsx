@@ -131,6 +131,7 @@ export function PullRequestBaseBranch({
         pending={pending}
         onUpdate={onUpdate}
         iconClassName={iconClassName}
+        // oxlint-disable-next-line shadcn/no-arbitrary-values -- the branch names share the header row: a proportion, not a size
         className="max-w-[40%] shrink"
       >
         {label}
@@ -141,6 +142,7 @@ export function PullRequestBaseBranch({
     <Tooltip>
       <TooltipTrigger
         render={
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the branch names share the header row: a proportion, not a size
           <span className="inline-flex min-w-0 max-w-[40%] shrink items-center gap-1">{label}</span>
         }
       />

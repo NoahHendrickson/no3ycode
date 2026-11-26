@@ -447,6 +447,7 @@ export function ForkSubagentCardView(props: {
           id={wellId}
           hidden={!open}
           data-fork-subagent-well=""
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the well's top corners nest inside the card's 12px corner and 1px rim
           className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-t-[11px] bg-(--fork-composer-bg) px-3 py-2 text-xs leading-4.5 shadow-[inset_0_1px_0_var(--color-border)]"
         >
           {details.map(({ term, detail }) => (
