@@ -19,14 +19,21 @@ export const NO3Y_PANEL_MARGIN = { marginHorizontal: 16, marginVertical: 6 } as 
 export function No3yGlassLayer(props: {
   readonly radius: number;
   readonly tint?: string | undefined;
+  /** On iOS 26+, transitions UIGlassEffect between regular and none with the system morph. */
+  readonly active?: boolean | undefined;
 }) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
+  const active = props.active ?? true;
   if (NATIVE_LIQUID_GLASS_SUPPORTED) {
     return (
       <GlassView
         pointerEvents="none"
-        glassEffectStyle="regular"
+        glassEffectStyle={
+          props.active === undefined
+            ? "regular"
+            : { style: active ? "regular" : "none", animate: true, animationDuration: 0.2 }
+        }
         colorScheme={themeAppearance === "dark" ? "dark" : "light"}
         {...(props.tint === undefined ? {} : { tintColor: props.tint })}
         style={[StyleSheet.absoluteFill, { borderRadius: props.radius, overflow: "hidden" }]}
@@ -43,6 +50,7 @@ export function No3yGlassLayer(props: {
           overflow: "hidden",
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: palette.panelBorder,
+          opacity: active ? 1 : 0,
         },
       ]}
     >

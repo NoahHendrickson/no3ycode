@@ -9247,8 +9247,11 @@
     so a header search leaves it at rest under the keyboard and opening or
     closing search never moves it, fork/no3yKeyboardOwner.ts) (No3yGlassLayer, as
     the controls; only a 20pt icon and the name, 16pt, one line; the picked
-    one brightened with a hairline and a small check; growing in, never
-    fading, as glass does): "No project" (the No-project workspace, opened as
+    one brightened with a hairline and a small check; once picked, the rows
+    morph and collapse together on the UI thread inside GlassContainer into a
+    single top dropdown pill showing the selected project with a chevron to
+    reopen the list, and "What should we do?" centred below it; header search
+    reopens the list while active and closes on pick): "No project" (the No-project workspace, opened as
     the picker opens it) first, then every project, those with roster-visible
     threads newest activity first (as the Mac launchpad ranks, never by
     chats), then the rest in the scopes' own most-recently-updated order

@@ -7,7 +7,13 @@ import { describe, expect, it } from "vite-plus/test";
 
 import type { HomeProjectScope } from "../src/features/home/homeThreadList";
 import { makeThreadShellFixture } from "../src/test-fixtures";
-import { rankNo3yProjectTiles } from "./no3yProjectTiles";
+import {
+  isNo3yProjectPickerExpanded,
+  no3yCollapsedRowTranslateY,
+  no3yExpandScrollOffset,
+  no3yRowVisibleForCollapse,
+  rankNo3yProjectTiles,
+} from "./no3yProjectTiles";
 
 const ENV = EnvironmentId.make("env-1");
 
@@ -75,5 +81,71 @@ describe("no3y New agent project rows", () => {
 
   it("narrows to every match when searching", () => {
     expect(rank({ searchQuery: "d" })).toEqual(["d"]);
+  });
+
+  it("collapses once picked, and reopens for the dropdown or header search", () => {
+    expect(
+      isNo3yProjectPickerExpanded({ picked: false, pickerOpen: false, searchOpen: false }),
+    ).toBe(true);
+    expect(
+      isNo3yProjectPickerExpanded({ picked: true, pickerOpen: false, searchOpen: false }),
+    ).toBe(false);
+    expect(isNo3yProjectPickerExpanded({ picked: true, pickerOpen: true, searchOpen: false })).toBe(
+      true,
+    );
+    expect(isNo3yProjectPickerExpanded({ picked: true, pickerOpen: false, searchOpen: true })).toBe(
+      true,
+    );
+  });
+
+  it("maps any scrolled row to the top dropdown slot and bounds offscreen rows", () => {
+    expect(
+      no3yCollapsedRowTranslateY({ rowIndex: 0, scrollY: 0, headerOffset: 26, rowPitch: 56 }),
+    ).toBe(-26);
+    expect(
+      no3yCollapsedRowTranslateY({ rowIndex: 7, scrollY: 300, headerOffset: 26, rowPitch: 56 }),
+    ).toBe(-118);
+
+    expect(
+      no3yExpandScrollOffset({
+        selectedIndex: 2,
+        rowCount: 15,
+        rowPitch: 56,
+        topPadding: 20,
+        headerOffset: 26,
+        bottomInset: 260,
+        viewportHeight: 700,
+      }),
+    ).toBe(0);
+    expect(
+      no3yExpandScrollOffset({
+        selectedIndex: 8,
+        rowCount: 15,
+        rowPitch: 56,
+        topPadding: 20,
+        headerOffset: 26,
+        bottomInset: 260,
+        viewportHeight: 700,
+      }),
+    ).toBe(336);
+
+    expect(
+      no3yRowVisibleForCollapse({
+        rowIndex: 2,
+        scrollY: 0,
+        headerOffset: 26,
+        rowPitch: 56,
+        viewportHeight: 600,
+      }),
+    ).toBe(true);
+    expect(
+      no3yRowVisibleForCollapse({
+        rowIndex: 20,
+        scrollY: 0,
+        headerOffset: 26,
+        rowPitch: 56,
+        viewportHeight: 600,
+      }),
+    ).toBe(false);
   });
 });
