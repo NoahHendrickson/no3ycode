@@ -369,6 +369,25 @@ describe("fork guard: fork-composer-shell", () => {
     expect(editor?.body).toMatch(/max-height:\s*none/u);
     expect(editor?.body).toMatch(/overflow-y:\s*hidden/u);
 
+    // No inline-end overhang at any width, so every prompt scrollport's thumb sits in the
+    // content column instead of 4px out in the surface padding.
+    const unscoped = (rule: (typeof rules)[number]) =>
+      rule.atRules.length === 0 && rule.selector.replace(/\s+/gu, " ").startsWith(MARKER);
+    const overhang = rules.find(
+      (rule) =>
+        unscoped(rule) &&
+        /\[data-fork-composer-prompt\]$/u.test(rule.selector) &&
+        /(?:^|[;\s])margin:/u.test(rule.body),
+    );
+    expect(overhang?.body).toMatch(/margin-inline-end:\s*0/u);
+    expect(overhang?.body).toMatch(/padding-inline-end:\s*0/u);
+    const editorEnd = rules.find(
+      (rule) =>
+        unscoped(rule) &&
+        /\[data-fork-composer-prompt\]\s+\[data-testid="composer-editor"\]$/u.test(rule.selector),
+    );
+    expect(editorEnd?.body).toMatch(/margin-inline-end:\s*0/u);
+
     const placeholder = rules.find(
       (rule) =>
         isDesktop(rule) &&
