@@ -144,4 +144,27 @@ describe("useForkDraftLiquidGlass", () => {
     await vi.waitFor(() => expect(inside.hasAttribute("data-fork-draft-glass-popup")).toBe(true));
     expect(straddling.hasAttribute("data-fork-draft-glass-popup")).toBe(false);
   });
+
+  it("includes composer status chips in the native Liquid Glass cards and drops them on unmount", async () => {
+    const states: Array<{ readonly cards: ReadonlyArray<{ readonly cornerRadius: number }> }> = [];
+    const setDraftGlass = vi.fn((state: unknown) => {
+      if (state !== null) states.push(state as (typeof states)[number]);
+      return Promise.resolve(true);
+    });
+    using _window = stubLiquidGlassWindow(setDraftGlass);
+    await using screen = await render(<DraftStage />);
+    await vi.waitFor(() => expect(states.at(-1)?.cards).toHaveLength(1));
+
+    const overlay = screen.container.querySelector('[data-chat-composer-overlay="true"]')!;
+    const chip = document.createElement("button");
+    chip.setAttribute("data-fork-composer-status-chip", "stash");
+    chip.style.cssText = "width:72px;height:26px;border-radius:10px";
+    overlay.prepend(chip);
+
+    await vi.waitFor(() => expect(states.at(-1)?.cards).toHaveLength(2));
+    expect(states.at(-1)?.cards[1]?.cornerRadius).toBe(10);
+
+    chip.remove();
+    await vi.waitFor(() => expect(states.at(-1)?.cards).toHaveLength(1));
+  });
 });
