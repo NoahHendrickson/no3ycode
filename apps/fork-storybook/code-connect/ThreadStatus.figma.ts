@@ -4,7 +4,7 @@
 import figma from "figma";
 
 // A row hands its thread's top status here; each kit status is one kind of it. Working's rain
-// and bead frames are the same mark mid-animation.
+// and bead frames (green or white) are the same mark mid-animation.
 const status = figma.selectedInstance.getEnum("Status", {
   Completed: "done",
   "Needs attention": "input",
@@ -14,6 +14,9 @@ const status = figma.selectedInstance.getEnum("Status", {
   "Working · Bead 1": "working",
   "Working · Bead 2": "working",
   "Working · Bead 3": "working",
+  "Working · White bead 1": "working",
+  "Working · White bead 2": "working",
+  "Working · White bead 3": "working",
   "Working · Still": "still",
   Failed: "failed",
   Monitoring: "monitoring",

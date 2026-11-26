@@ -830,6 +830,10 @@
       "component": "InboxIcon"
     },
     {
+      "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=503-3",
+      "component": "InboxDownloadIcon"
+    },
+    {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=220-11712",
       "component": "FileTextIcon"
     },
@@ -1084,6 +1088,10 @@
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=220-12185",
       "component": "ListPlusIcon"
+    },
+    {
+      "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=503-50",
+      "component": "ListEndIcon"
     },
     {
       "url": "https://www.figma.com/design/kUDQTOR0ndxERlBCqgy3nk/no3y-code-%E2%80%94-Basic-UI-kit?node-id=220-12189",
