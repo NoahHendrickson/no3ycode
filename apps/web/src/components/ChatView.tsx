@@ -1803,37 +1803,29 @@ export default function ChatView(props: ChatViewProps) {
   const draftHeroDockRequested =
     activeThreadKey !== null && dockedDraftHeroThreadKey === activeThreadKey;
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-     A draft in a split is a plain empty thread, composer docked at the bottom. One with no
-     project yet (New agent beside a docked thread) keeps the hero: it holds the project picker. */
-  const splitDraftAsThread = splitPane.split && activeProject !== null;
-  /* fork:end fork-split-threads */
-  const isDraftHeroState =
-    /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
-    !splitDraftAsThread &&
+     Upstream's isDraftHeroState, kept whole: where a split draft lays out as a thread instead. */
+  const draftHeroEligible = resolveDraftHeroState({
     /* fork:end fork-split-threads */
-    resolveDraftHeroState({
-      isLocalDraftThread,
-      hasTimelineEntries: !timelineEmpty,
-      isWorking,
-      draftHeroDockRequested,
-      backgroundSubmissionPending,
-      hasWorktreeSetupCard: worktreeSetup !== null,
-    });
+    isLocalDraftThread,
+    hasTimelineEntries: !timelineEmpty,
+    isWorking,
+    draftHeroDockRequested,
+    backgroundSubmissionPending,
+    hasWorktreeSetupCard: worktreeSetup !== null,
+  });
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-     An empty split draft offers starters in place of upstream's empty-thread line. */
+     A draft in a split is a plain empty thread, composer docked at the bottom, offering starters
+     in place of upstream's empty-thread line. One with no project yet (New agent beside a docked
+     thread) keeps the hero: it holds the project picker. No starters while a send is pending. */
+  const splitDraftAsThread = splitPane.split && activeProject !== null;
+  const isDraftHeroState = !splitDraftAsThread && draftHeroEligible;
   const splitDraftStartersShown =
     splitDraftAsThread &&
-    isLocalDraftThread &&
-    draftId !== null &&
+    draftHeroEligible &&
+    !backgroundSubmissionPending &&
     !activeProjectIsScratch &&
     !isForkChatThread &&
-    timelineEmpty &&
-    !isWorking &&
-    worktreeSetup === null &&
     !threadDetailLoading;
-  const insertSplitDraftStarterStable = useStableCallback((prompt: string) => {
-    composerRef.current?.insertTextAtEnd(prompt, { ensureLeadingBoundary: true });
-  });
   /* fork:end fork-split-threads */
   const {
     transitionGroupRef: draftHeroTransitionGroupRef,
@@ -2027,11 +2019,9 @@ export default function ChatView(props: ChatViewProps) {
   const showComposerContextStrip =
     !embedded &&
     shouldShowComposerContextStrip({
-      isDraftHeroState:
-        isDraftHeroState ||
-        /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-           A split draft skips the hero but is still a new thread: it shows its workspace. */
-        (splitDraftAsThread && isLocalDraftThread),
+      /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
+         A split draft skips the hero but is still a new thread: it shows its workspace. */
+      isDraftHeroState: draftHeroEligible,
       /* fork:end fork-split-threads */
       persistInActiveThreads: settings.persistComposerContextStrip,
       hasActiveProject: activeProject !== null && !showProviderSubagentBar,
@@ -2150,6 +2140,25 @@ export default function ChatView(props: ChatViewProps) {
     scheduleComposerFocusStable();
   };
   const insertArtifactTemplateStable = useStableCallback(insertArtifactTemplate);
+  /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */
+  const insertSplitDraftStarter = (prompt: string) => {
+    const composer = composerRef.current;
+    if (!composer) return;
+    if (
+      !composer.getSendContext().prompt.includes(prompt) &&
+      !composer.insertTextAtEnd(prompt, { ensureLeadingBoundary: true })
+    ) {
+      toastManager.add({
+        type: "error",
+        title: gt("Unable to add to chat"),
+        description: gt("The composer is busy; try again once it is ready."),
+      });
+      return;
+    }
+    scheduleComposerFocusStable();
+  };
+  const insertSplitDraftStarterStable = useStableCallback(insertSplitDraftStarter);
+  /* fork:end fork-split-threads */
   const sendAppMessage = async (text: string) => {
     if (!isServerThread || activeThreadId === null) {
       throw new Error(gt("Messages from apps need a started thread."));
@@ -4278,12 +4287,10 @@ export default function ChatView(props: ChatViewProps) {
                 />
               </WorkspaceMutationIdContext>
               {/* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads */}
-              {splitDraftStartersShown && draftId ? (
+              {splitDraftStartersShown ? (
                 <SplitDraftStarters
-                  draftId={draftId}
                   bottomInset={composerReservedHeight}
-                  onInsert={insertSplitDraftStarterStable}
-                  onFocus={focusComposerStable}
+                  onPick={insertSplitDraftStarterStable}
                 />
               ) : null}
               {/* fork:end fork-split-threads */}

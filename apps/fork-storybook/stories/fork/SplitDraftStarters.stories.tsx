@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { DraftId } from "~/composerDraftStore";
 import { SplitDraftStarters } from "~/custom/splitThreads/SplitDraftStarters";
 
 const meta = {
@@ -8,10 +7,8 @@ const meta = {
   component: SplitDraftStarters,
   tags: ["autodocs"],
   args: {
-    draftId: DraftId.make("draft-split-story"),
     bottomInset: 0,
-    onInsert: () => {},
-    onFocus: () => {},
+    onPick: () => {},
   },
   // It fills the empty thread above the composer, so it needs a pane to centre in.
   decorators: [

@@ -122,8 +122,8 @@ export function HugeGlyph({
  * on every icon; theme.custom.css reads them, and upstream tests assert them to identify which
  * icon rendered (e.g. `lucide-x` in MessagesTimeline.test.tsx). Names are the lucide export
  * kebab-cased. A lucide alias re-exports its canonical row, so a glyph can't drift between names.
+ * @param filledData Drawn as is for the filled weight, instead of a fill derived from `data`.
  */
-/** `filledData`, when given, is drawn as is for the filled weight instead of a derived fill. */
 function icon(
   lucideName: string,
   data: IconSvgElement,

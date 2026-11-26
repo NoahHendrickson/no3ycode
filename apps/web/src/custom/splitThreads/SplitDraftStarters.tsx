@@ -1,10 +1,9 @@
 /** What an empty split draft offers in place of "Send a message to start the conversation"
  * (fork-split-threads): a card of starters for working beside the other agent on the same
- * branch. A row adds its prompt to the composer, which focuses; nothing sends until the user does. */
+ * branch. A row hands its prompt to ChatView, which adds it to the composer and focuses it. */
 import { msg, useMessages } from "gt-react";
 
-import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
-
+import { DEV_SERVER_SUGGESTION } from "../draftLaunchpadSuggestions";
 import { EyeIcon, PlayIcon } from "../icons/lucide-hugeicons";
 
 const STARTERS = [
@@ -17,24 +16,19 @@ const STARTERS = [
   },
   {
     key: "dev-server",
-    // The new-agent launchpad's wording (draftLaunchpadSuggestions.ts).
+    // The launchpad's title, marked for translation here.
     title: msg("Start the dev server"),
     Icon: PlayIcon,
-    prompt: "Start the dev server and give me a link.",
+    prompt: DEV_SERVER_SUGGESTION.prompt,
   },
 ] as const;
 
 export function SplitDraftStarters(props: {
-  readonly draftId: DraftId;
   /** Keeps the card centred in the space above the composer. */
   readonly bottomInset: number;
-  /** The composer's own insert, which focuses once the editor has the text. */
-  readonly onInsert: (prompt: string) => void;
-  readonly onFocus: () => void;
+  readonly onPick: (prompt: string) => void;
 }) {
-  const { draftId } = props;
   const m = useMessages();
-
   return (
     <div
       className="pointer-events-none absolute inset-0 flex items-center justify-center px-4"
@@ -49,12 +43,7 @@ export function SplitDraftStarters(props: {
             key={key}
             type="button"
             className="flex h-11 w-full min-w-0 cursor-pointer select-none items-center gap-2.5 px-3.5 text-left text-foreground text-sm outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground"
-            onClick={() => {
-              const written =
-                useComposerDraftStore.getState().getComposerDraft(draftId)?.prompt ?? "";
-              if (written.includes(prompt)) props.onFocus();
-              else props.onInsert(prompt);
-            }}
+            onClick={() => props.onPick(prompt)}
           >
             <Icon className="size-4 shrink-0 text-muted-foreground" />
             <span className="min-w-0 flex-1 truncate">{m(title)}</span>
