@@ -418,27 +418,35 @@ export const make = Effect.gen(function* () {
       }
     }),
     /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
-    hideAll: listWindows.pipe(
-      Effect.flatMap((windows) =>
-        Effect.try({
-          try: () =>
-            windows.filter((window) => {
-              if (window.isDestroyed() || !window.isVisible()) return false;
+    hideAll: Effect.gen(function* () {
+      const hidden: Electron.BrowserWindow[] = [];
+      for (const window of yield* listWindows) {
+        if (yield* isWindowDestroyed(window)) {
+          continue;
+        }
+        const exit = yield* Effect.exit(
+          Effect.try({
+            try: () => {
+              if (!window.isVisible()) return false;
               window.hide();
               return true;
-            }),
-          catch: (cause) =>
-            new ElectronWindowOperationError({
-              operation: "hide-window",
-              platform,
-              windowId: null,
-              channel: null,
-              cause,
-            }),
-        }),
-      ),
-      Effect.orDie,
-    ),
+            },
+            catch: (cause) =>
+              new ElectronWindowOperationError({
+                operation: "hide-window",
+                platform,
+                windowId: window.id,
+                channel: null,
+                cause,
+              }),
+          }),
+        );
+        if (Exit.isSuccess(exit) && exit.value) {
+          hidden.push(window);
+        }
+      }
+      return hidden;
+    }).pipe(Effect.withSpan("ElectronWindow.hideAll")),
     /* fork:end fork-update-install-hide */
     syncAllAppearance: Effect.fn("desktop.electron.window.syncAllAppearance")(function* <E, R>(
       sync: (

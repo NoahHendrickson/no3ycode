@@ -64,6 +64,10 @@ const CHANNEL_CHANGE_RETRIES = 30;
 const AUTO_UPDATE_STARTUP_DELAY = "15 seconds";
 const AUTO_UPDATE_POLL_INTERVAL = "4 hours";
 const UPDATE_CHECK_WAIT = Duration.seconds(90);
+/* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+// macOS quits only once Squirrel stages the build; past this, a hidden install has stalled.
+const INSTALL_STALL_TIMEOUT = Duration.minutes(2);
+/* fork:end fork-update-install-hide */
 
 type UpdateAction = "check" | "download" | "install" | "install-recovery" | "channel";
 
@@ -403,6 +407,8 @@ export const make = Effect.gen(function* () {
   const installHiddenWindowsRef = yield* Ref.make<
     Effect.Success<ElectronWindow.ElectronWindow["Service"]["hideAll"]>
   >([]);
+  const installAttemptRef = yield* Ref.make(0);
+  const serviceScope = yield* Effect.scope;
   /* fork:end fork-update-install-hide */
   const finishedUpdateActions = yield* PubSub.unbounded<UpdateAction>();
   const updaterConfiguredRef = yield* Ref.make(false);
@@ -862,10 +868,10 @@ export const make = Effect.gen(function* () {
   /* fork:end fork-update-install-hide */
   const resetInstallAction = Effect.all(
     [
-      finishUpdateAction("install"),
       /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
       revealInstallHiddenWindows,
       /* fork:end fork-update-install-hide */
+      finishUpdateAction("install"),
       Ref.set(desktopState.quitting, false),
       Ref.set(installRunningBackendsRef, []),
       removeUpdateRestartMarker,
@@ -956,7 +962,11 @@ export const make = Effect.gen(function* () {
         return yield* Effect.gen(function* () {
           /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
           // Close the app on click; stopping backends and staging the update run behind it.
-          yield* Ref.set(installHiddenWindowsRef, yield* electronWindow.hideAll);
+          yield* Effect.uninterruptible(
+            electronWindow.hideAll.pipe(
+              Effect.flatMap((windows) => Ref.set(installHiddenWindowsRef, windows)),
+            ),
+          );
           /* fork:end fork-update-install-hide */
           yield* writeUpdateRestartMarker;
           yield* writeUpdateInProgressMarker;
@@ -985,6 +995,18 @@ export const make = Effect.gen(function* () {
             isSilent: true,
             isForceRunAfter: true,
           });
+          /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+          const attempt = yield* Ref.updateAndGet(installAttemptRef, (count) => count + 1);
+          yield* Effect.sleep(INSTALL_STALL_TIMEOUT).pipe(
+            Effect.andThen(Ref.get(installAttemptRef)),
+            Effect.flatMap((current) =>
+              current === attempt
+                ? recoverFailedInstall("The update did not finish installing.")
+                : Effect.void,
+            ),
+            Effect.forkIn(serviceScope),
+          );
+          /* fork:end fork-update-install-hide */
           return { accepted: true, completed: false, failed: false };
         }).pipe(
           Effect.catchTags({

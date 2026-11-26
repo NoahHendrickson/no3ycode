@@ -17,13 +17,14 @@ const electronWindow = read("../../../desktop/src/electron/ElectronWindow.ts");
 
 describe("fork guard: fork-update-install-hide", () => {
   it("hides the windows before an install stops the backends", () => {
-    expect(electronWindow).toContain("hideAll: listWindows.pipe(");
-    const hide = desktopUpdates.indexOf("yield* electronWindow.hideAll");
+    expect(electronWindow).toContain('Effect.withSpan("ElectronWindow.hideAll")');
+    const hide = desktopUpdates.indexOf("electronWindow.hideAll.pipe(");
     expect(hide).toBeGreaterThan(-1);
     expect(hide).toBeLessThan(desktopUpdates.indexOf("instance.stop({ timeout:"));
   });
 
-  it("reveals them again when the install fails or is interrupted", () => {
+  it("reveals them again when the install fails, stalls or is interrupted", () => {
+    expect(desktopUpdates).toContain("Effect.sleep(INSTALL_STALL_TIMEOUT)");
     expect(desktopUpdates).toContain("Effect.andThen(revealInstallHiddenWindows,");
     expect(desktopUpdates).toMatch(
       /resetInstallAction = Effect\.all\(\s*\[[^\]]*revealInstallHiddenWindows/,

@@ -754,6 +754,28 @@ describe("DesktopUpdates", () => {
     ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
   });
 
+  it.effect("brings the app back when the installer never quits", () => {
+    const harness = makeHarness();
+
+    return Effect.scoped(
+      Effect.gen(function* () {
+        const desktopState = yield* DesktopState.DesktopState;
+        const updates = yield* DesktopUpdates.DesktopUpdates;
+        yield* updates.configure;
+        harness.emit("update-downloaded", { version: "1.2.4" });
+        yield* flushCallbacks;
+
+        assert.isTrue((yield* updates.install).accepted);
+        assert.notInclude(harness.installSteps, "revealWindow");
+
+        yield* TestClock.adjust(Duration.minutes(2));
+        assert.equal(harness.installSteps.at(-1), "revealWindow");
+        assert.isFalse(yield* Ref.get(desktopState.quitting));
+        assert.equal((yield* updates.getState).errorContext, "install");
+      }),
+    ).pipe(Effect.provide(Layer.merge(TestClock.layer(), harness.layer)));
+  });
+
   it.effect("records the version an install hands to the installer", () => {
     let recordsAtStop: ReadonlyArray<string> = [];
     const harness = makeHarness({

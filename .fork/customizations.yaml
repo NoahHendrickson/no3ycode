@@ -7666,7 +7666,10 @@
     quitAndInstall runs (auto-install-on-quit is off), so the app sat open
     for a long beat after the click while its own threads showed the Mac as
     disconnected. If the install fails or is interrupted, the windows it hid
-    come back with the error state.
+    come back with the error state. On macOS a successful quitAndInstall only
+    waits for Squirrel to stage the build, so if the app is still running two
+    minutes later the install is treated as failed: backends restart, the
+    windows come back, and the pill offers a retry.
   tier: 4
   files: []
   shadows: []
