@@ -6,9 +6,9 @@
  */
 import type { EnvironmentId, ScheduledTaskRun } from "@t3tools/contracts";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
-import { ProjectFavicon } from "~/components/ProjectFavicon";
+import { ProjectFavicon, type ProjectFaviconProject } from "~/components/ProjectFavicon";
 import { ThreadHoverCard, ThreadHoverCardPopup } from "~/components/ThreadHoverCard";
 import { cn } from "~/lib/utils";
 import { useProject } from "~/state/entities";
@@ -18,6 +18,7 @@ import { runPullRequest } from "./scheduled/scheduledPage.logic";
 import {
   SCHEDULED_RUN_ACTIVITY_MARKS,
   type ScheduledRunActivityEntry,
+  type ScheduledRunActivityKind,
 } from "./scheduledRunActivity";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "./sidebarV2CardAlignment";
 import { SidebarV2StatusMark } from "./SidebarV2StatusIndicator";
@@ -44,6 +45,23 @@ export function SidebarV2AutomationsHoverCard(props: {
     else byEnvironment.set(run.thread.environmentId, [run]);
   }
   return (
+    <SidebarV2AutomationsHoverCardView title={props.title} overflow={overflow}>
+      {[...byEnvironment].map(([environmentId, runs]) => (
+        <AutomationsEnvironmentRuns key={environmentId} environmentId={environmentId} runs={runs} />
+      ))}
+    </SidebarV2AutomationsHoverCardView>
+  );
+}
+
+/** @public — the card as drawn, around its run rows; Storybook renders it on its own. */
+export function SidebarV2AutomationsHoverCardView(props: {
+  readonly title: string;
+  /** Runs past the card's limit, counted in its footer. */
+  readonly overflow: number;
+  readonly children: ReactNode;
+}) {
+  const { overflow } = props;
+  return (
     <ThreadHoverCardPopup side="right" align="start" sideOffset={4} data-fork-row-hover-card="">
       <ThreadHoverCard
         title={props.title}
@@ -53,13 +71,7 @@ export function SidebarV2AutomationsHoverCard(props: {
           ) : null
         }
       >
-        {[...byEnvironment].map(([environmentId, runs]) => (
-          <AutomationsEnvironmentRuns
-            key={environmentId}
-            environmentId={environmentId}
-            runs={runs}
-          />
-        ))}
+        {props.children}
       </ThreadHoverCard>
     </ThreadHoverCardPopup>
   );
@@ -122,9 +134,33 @@ function AutomationsHoverCardRun(
     readonly historyRun: ScheduledTaskRun | undefined;
   },
 ) {
-  const { thread, taskTitle } = props;
+  const { thread } = props;
   const pullRequest = runPullRequest(props.historyRun?.messageId ?? null, thread);
   const project = useProject({ environmentId: thread.environmentId, projectId: thread.projectId });
+  return (
+    <SidebarV2AutomationsRunView
+      kind={props.kind}
+      seed={thread.id}
+      threadTitle={thread.title}
+      taskTitle={props.taskTitle}
+      project={project}
+      pullRequestNumber={pullRequest?.number ?? null}
+    />
+  );
+}
+
+/** @public — one run row as drawn; Storybook renders it on its own. */
+export function SidebarV2AutomationsRunView(props: {
+  readonly kind: ScheduledRunActivityKind;
+  /** The mark's seed: the run's thread id. */
+  readonly seed: string;
+  readonly threadTitle: string;
+  /** The automation's name, which leads the row over the thread's title when known. */
+  readonly taskTitle: string | undefined;
+  readonly project: ProjectFaviconProject | null;
+  readonly pullRequestNumber: number | null;
+}) {
+  const { taskTitle, project, pullRequestNumber } = props;
   return (
     <div className="flex min-w-0 items-start gap-2" data-testid="sidebar-v2-scheduled-hover-run">
       <span
@@ -133,14 +169,14 @@ function AutomationsHoverCardRun(
           SIDEBAR_V2_CARD_ALIGNMENT.statusBox,
         )}
       >
-        <SidebarV2StatusMark status={SCHEDULED_RUN_ACTIVITY_MARKS[props.kind]} seed={thread.id} />
+        <SidebarV2StatusMark status={SCHEDULED_RUN_ACTIVITY_MARKS[props.kind]} seed={props.seed} />
       </span>
       <div className="grid min-w-0 flex-1 gap-0.5">
-        <div className="min-w-0 truncate text-foreground">{taskTitle ?? thread.title}</div>
+        <div className="min-w-0 truncate text-foreground">{taskTitle ?? props.threadTitle}</div>
         {taskTitle !== undefined ? (
-          <div className="min-w-0 truncate text-foreground/75">{thread.title}</div>
+          <div className="min-w-0 truncate text-foreground/75">{props.threadTitle}</div>
         ) : null}
-        {project || pullRequest ? (
+        {project || pullRequestNumber !== null ? (
           <div className="flex min-w-0 items-center gap-1.5">
             {project ? (
               <>
@@ -148,8 +184,8 @@ function AutomationsHoverCardRun(
                 <div className="min-w-0 truncate text-foreground/75">{project.title}</div>
               </>
             ) : null}
-            {pullRequest ? (
-              <div className="shrink-0 tabular-nums">#{pullRequest.number}</div>
+            {pullRequestNumber !== null ? (
+              <div className="shrink-0 tabular-nums">#{pullRequestNumber}</div>
             ) : null}
           </div>
         ) : null}

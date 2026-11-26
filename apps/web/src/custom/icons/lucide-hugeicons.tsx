@@ -147,6 +147,7 @@ export function HugeGlyph({
  * on every icon; theme.custom.css reads them, and upstream tests assert them to identify which
  * icon rendered (e.g. `lucide-x` in MessagesTimeline.test.tsx). Names are the lucide export
  * kebab-cased. A lucide alias re-exports its canonical row, so a glyph can't drift between names.
+ * @param solid A hand-drawn filled weight, drawn instead of a fill derived from `data`.
  */
 function icon(
   lucideName: string,
@@ -455,6 +456,48 @@ export const PanelRightIcon = icon("panel-right", PanelRightHalf, "stroke");
 export const PanelBottomIcon = icon("panel-bottom", PanelBottomHalf, "stroke");
 export const PictureInPicture2 = icon("picture-in-picture-2", Hg.PictureInPictureIcon, "stroke");
 export const Columns2Icon = icon("columns-2", Hg.LayoutTwoColumnIcon, "themed");
+// Fork-only: Split agent's toggle, an agent with a second one splitting off its tail. Drawn in
+// Figma (no3y-code 84:2594, kit icon/split-agent) at 16px and scaled to this grid, so at size-4
+// both strokes are the drawing's 1.25px. The outline runs half a stroke inside the solid arrow,
+// so both weights share its edge; the filled weight is the drawing itself, not a derived fill.
+const SplitAgentTrail: IconSvgElement[number] = [
+  "path",
+  {
+    d: "M2.75 12.75L8.75 15.225L11.225 21.225",
+    stroke: "currentColor",
+    strokeWidth: "1.875",
+    key: "split",
+  },
+];
+const SplitAgent: IconSvgElement = [
+  [
+    "path",
+    {
+      d: "M20.454 3.546C20.149 3.242 19.641 3.061 18.371 3.292C17.102 3.523 15.392 4.102 12.974 4.927L9.723 6.035C7.866 6.668 6.552 7.118 5.676 7.531C5.241 7.737 4.976 7.906 4.824 8.041C4.752 8.105 4.719 8.149 4.706 8.171C4.699 8.182 4.697 8.188 4.697 8.19C4.677 8.32 4.687 8.462 4.733 8.605C4.735 8.612 4.76 8.689 4.946 8.825C5.139 8.967 5.448 9.128 5.921 9.315C6.872 9.689 8.263 10.079 10.218 10.624C10.992 10.84 11.661 11.006 12.18 11.438L12.38 11.619C12.444 11.683 12.505 11.75 12.563 11.819C12.887 12.209 13.06 12.682 13.218 13.221L13.757 15.144C14.114 16.405 14.404 17.366 14.685 18.079C14.871 18.552 15.033 18.861 15.174 19.054C15.243 19.147 15.297 19.199 15.334 19.229L15.395 19.266C15.538 19.311 15.68 19.323 15.809 19.304C15.812 19.302 15.818 19.301 15.829 19.294C15.851 19.281 15.895 19.248 15.959 19.176C16.094 19.024 16.263 18.759 16.468 18.323C16.882 17.447 17.331 16.134 17.964 14.276L19.073 11.026C19.897 8.608 20.477 6.897 20.708 5.629C20.939 4.359 20.758 3.85 20.454 3.546Z",
+      stroke: "currentColor",
+      strokeWidth: "1.875",
+      key: "agent",
+    },
+  ],
+  SplitAgentTrail,
+];
+const SplitAgentSolid: IconSvgElement = [
+  [
+    "path",
+    {
+      d: "M12.672 4.04C17.446 2.412 19.833 1.599 21.117 2.883C22.401 4.167 21.587 6.554 19.96 11.328L18.852 14.579C17.602 18.246 16.977 20.079 15.946 20.231C15.669 20.272 15.383 20.247 15.109 20.159C14.089 19.832 13.551 17.899 12.473 14.033C12.234 13.176 12.115 12.747 11.842 12.419C11.763 12.324 11.676 12.237 11.581 12.158C11.253 11.885 10.824 11.766 9.967 11.527C6.101 10.449 4.168 9.911 3.841 8.891C3.753 8.617 3.728 8.331 3.769 8.054C3.921 7.023 5.754 6.398 9.421 5.148L12.672 4.04Z",
+      fill: "currentColor",
+      key: "agent",
+    },
+  ],
+  SplitAgentTrail,
+];
+export const SplitAgentIcon = icon(
+  "split-agent",
+  SplitAgent,
+  "themed",
+  glyphDrawing(SplitAgentSolid, false),
+);
 // Fork-only (no lucide name): docks a thread as the column's right pane.
 export const DockRightIcon = icon("dock-right", Hg.LayoutRightIcon, "themed");
 export const Rows3Icon = icon("rows-3", Hg.Rows3Icon, "themed");
@@ -632,6 +675,71 @@ export const ScrollTextIcon = icon("scroll-text", Hg.ScrollTextIcon, "themed", S
 export const OctagonXIcon = icon("octagon-x", Hg.OctagonXIcon, "themed");
 export const UnlinkIcon = icon("unlink", Hg.UnlinkIcon, "stroke");
 export const UserLockIcon = icon("user-lock", Hg.UserLockIcon, "themed");
+
+/** One fork glyph, always stroked: no lucide classes and no palette subscription. */
+export type StrokeGlyph = (props: Omit<LucideCompatProps, "weight">) => ReactElement;
+const stroked =
+  (data: IconSvgElement): StrokeGlyph =>
+  (props) => <HugeGlyph {...props} data={data} filled={false} />;
+
+/**
+ * Fork glyphs drawn stroked in every theme: design mode's panel and layers rail, and the sidebar
+ * card's subagent count. Kept off `*Icon` exports, which the project icon picker lists
+ * (lucideIconByName).
+ */
+export const StrokeGlyphs = {
+  ChatBot: stroked(Hg.ChatBotIcon),
+  // Layers rail.
+  Link01: stroked(Hg.Link01Icon),
+  News: stroked(Hg.NewsIcon),
+  CursorText: stroked(Hg.CursorTextIcon),
+  InputText: stroked(Hg.InputTextIcon),
+  LeftToRightListBullet: stroked(Hg.LeftToRightListBulletIcon),
+  Cube: stroked(Hg.CubeIcon),
+  Text: stroked(Hg.TextIcon),
+  Image: stroked(Hg.ImageIcon),
+  Square: stroked(Hg.SquareIcon),
+  // Design panel.
+  AlignLeft: stroked(Hg.AlignLeftIcon),
+  AlignHorizontalCenter: stroked(Hg.AlignHorizontalCenterIcon),
+  AlignRight: stroked(Hg.AlignRightIcon),
+  AlignTop: stroked(Hg.AlignTopIcon),
+  AlignVerticalCenter: stroked(Hg.AlignVerticalCenterIcon),
+  AlignBottom: stroked(Hg.AlignBottomIcon),
+  Pushpin: stroked(Hg.PinIcon),
+  GridView: stroked(Hg.GridViewIcon),
+  Unlink05: stroked(Hg.Unlink05Icon),
+  CornerDownRight: stroked(Hg.CornerDownRightIcon),
+  ArrowExpand: stroked(Hg.ArrowExpandIcon),
+  ArrowShrink: stroked(Hg.ArrowShrinkIcon),
+  Contrast: stroked(Hg.ContrastIcon),
+  SquareRoundCorner: stroked(Hg.SquareRoundCornerIcon),
+  TextFont: stroked(Hg.TextFontIcon),
+  TextBold: stroked(Hg.TextBoldIcon),
+  LetterSpacing: stroked(Hg.LetterSpacingIcon),
+  TextAlignLeft: stroked(Hg.TextAlignLeftIcon),
+  TextAlignCenter: stroked(Hg.TextAlignCenterIcon),
+  TextAlignRight: stroked(Hg.TextAlignRightIcon),
+  TextAlignJustifyCenter: stroked(Hg.TextAlignJustifyCenterIcon),
+  SquareDashed: stroked(Hg.SquareDashedIcon),
+  Computer: stroked(Hg.ComputerIcon),
+  MinusSign: stroked(Hg.MinusSignIcon),
+  PlusSign: stroked(Hg.PlusSignIcon),
+  PaintBucket: stroked(Hg.PaintBucketIcon),
+  StrokeCenter: stroked(Hg.StrokeCenterIcon),
+  DashedLine01: stroked(Hg.DashedLine01Icon),
+  PaintBrush01: stroked(Hg.PaintBrush01Icon),
+  ArrowRight02: stroked(Hg.ArrowRight02Icon),
+  ArrowDown02: stroked(Hg.ArrowDown02Icon),
+  FoldHorizontal: stroked(Hg.FoldHorizontalIcon),
+  FoldVertical: stroked(Hg.FoldVerticalIcon),
+  UnfoldVertical: stroked(Hg.UnfoldVerticalIcon),
+  Link02: stroked(Hg.Link02Icon),
+  FullScreen: stroked(Hg.FullScreenIcon),
+} as const;
+
+/** Layers02's raw parts, for the background-work mark, which masks a fill per layer with them. */
+export const LAYERS_02_GLYPH: IconSvgElement = Hg.Layers02Icon;
 
 /**
  * lucide's escape hatch for one-off glyphs drawn from path data (upstream's

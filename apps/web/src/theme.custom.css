@@ -498,9 +498,8 @@
 }
 
 /* 10px + 46px puts the action row at y=56, matching the drawn frame. 54px
-   border-box: the wrapper wears 4px of padding on every side (the editor's
-   overhang, see the base prompt rule), so its 46px margin box is the drawn
-   height. */
+   border-box: the wrapper wears 4px of block padding (the editor's overhang,
+   see the base prompt rule), so its 46px margin box is the drawn height. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-chat-composer-overlay="true"][data-draft-hero]
   [data-fork-composer-prompt] {
@@ -551,14 +550,35 @@
 /* Tiptap's editor wears -m-1/p-1 so chip outlines and glyph ink land inside
    its own clip without moving the text. The wrapper takes the inverse — 4px
    of padding and the matching negative margin — so that overhang lands
-   inside its padding box. Layout-neutral: the text stays where it was and
-   the margin box is what the row and the draft grid lay out. Without it the
-   editor's border box overhangs the wrapper by 4px on every side, and the
-   desktop scrollport below turns that into a horizontal scrollbar thumb
-   under the prompt and a 4px vertical one beside it. */
+   inside its padding box, and the margin box is what the row and the draft
+   grid lay out. Without it the editor's border box overhangs the wrapper by
+   4px, and the desktop scrollport below turns that into a horizontal
+   scrollbar thumb under the prompt and a 4px vertical one beside it.
+   The inline-end side has no overhang. A scrollbar paints inside its
+   scrollport's end edge, and every prompt scrollport (the editor below 40rem,
+   the wrapper on desktop and under live dictation) would otherwise put the
+   thumb 4px out in the surface padding, past the column the text and the
+   send button share. The editor keeps its 4px end padding as the gap between
+   the text and the thumb, so the text wraps 4px short of that column. The
+   placeholder and the live dictation words take the same 4px, or they would
+   wrap at a different word than the typed text and touch the thumb. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
   margin: calc(var(--spacing) * -1);
+  margin-inline-end: 0;
   padding: calc(var(--spacing) * 1);
+  padding-inline-end: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-prompt]
+  [data-testid="composer-editor"] {
+  margin-inline-end: 0;
+}
+
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-prompt]
+  :is(:has(> [data-testid="composer-editor"]) ~ div, [data-fork-dictation-preview]) {
+  padding-inline-end: calc(var(--spacing) * 1);
 }
 
 /* The draft composer is narrower than the docked one: Figma 418:11501 draws
