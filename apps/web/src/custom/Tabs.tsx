@@ -1,6 +1,6 @@
 /**
- * The fork's tabs, in the shape of the sidebar's Code / Chat switch: a track in the sidebar's
- * control surface with the chosen tab raised. IconTab holds one glyph; Tab sizes to its word.
+ * The fork's tabs: a track in the sidebar's control surface with the chosen tab raised.
+ * IconTab holds one glyph, square or wide; Tab sizes to its word.
  * Both glide between choices through SegmentedTabs. Basic draws them to Figma t3-fork 740:1163
  * (theme.custom.basic.css); the other themes keep their own dressing.
  */
@@ -22,6 +22,8 @@ const TRACK = "shrink-0 rounded-xl bg-sidebar-control-surface p-0 dark:bg-sideba
 const TAB =
   "h-full rounded-xl border border-transparent text-sidebar-muted-foreground hover:text-sidebar-foreground data-pressed:border-sidebar-border data-pressed:bg-sidebar data-pressed:text-sidebar-foreground dark:data-pressed:bg-sidebar dark:data-pressed:text-sidebar-foreground";
 const ICON_TAB = `aspect-square px-0 ${TAB}`;
+/** The glyph with 10px either side, so the tab reads a little wider than tall. */
+const WIDE_ICON_TAB = `px-2.5 ${TAB}`;
 const WORD_TAB = `px-3 ${TAB}`;
 
 /** Set on the track, so every tab in a strip matches. */
@@ -40,13 +42,23 @@ export function Tab({ className, ...props }: ComponentProps<typeof SegmentedTab>
 /** A glyph alone, so it needs the name a screen reader reads (and a tooltip for sighted users). */
 export function IconTab({
   className,
+  shape = "square",
   ...props
-}: ComponentProps<typeof SegmentedTab> & { readonly "aria-label": string }) {
-  return <SegmentedTab data-fork-tab="icon" {...props} className={cn(ICON_TAB, className)} />;
+}: ComponentProps<typeof SegmentedTab> & {
+  readonly "aria-label": string;
+  readonly shape?: "square" | "wide";
+}) {
+  return (
+    <SegmentedTab
+      data-fork-tab="icon"
+      {...props}
+      className={cn(shape === "wide" ? WIDE_ICON_TAB : ICON_TAB, className)}
+    />
+  );
 }
 
 /** Icon tabs inside a menu (the Threads menu's Group by): its items join the menu's keyboard
-    navigation. The shape is the switch's at `sm`, with the pick cut from the menu's own surface
+    navigation. The shape is a square IconTab's at `sm`, with the pick cut from the menu's own surface
     and the track showing through its border; Basic draws every strip alike. */
 export function MenuTabs({
   className,
