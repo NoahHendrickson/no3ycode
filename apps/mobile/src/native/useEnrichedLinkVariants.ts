@@ -162,10 +162,10 @@ export function useEnrichedLinkVariants(
           url,
           link.chip
             ? /* fork:begin fork-file-link-ink — see .fork/customizations.yaml#fork-file-link-ink */
-              ((parseThreadLinkHref(url)
-                ? textStyle.linkColor
-                : /* fork:end fork-file-link-ink */
-                  contextChipAccent(link.chip.accent, theme, textStyle.color)) ?? textStyle.color)
+              parseThreadLinkHref(url)
+              ? textStyle.linkColor
+              : /* fork:end fork-file-link-ink */
+                (contextChipAccent(link.chip.accent, theme, textStyle.color) ?? textStyle.color)
             : undefined,
         ]),
       ),
