@@ -9051,9 +9051,10 @@
     on the composer, above the queued banner, in the thread header bubbles'
     style with its controls nested inside (fork/No3yCompactBanner.tsx, rising
     in): a shrink icon, "Resume with less context" over a muted second line
-    with the token count, as the Mac's description, a glass Compact pill that sends
-    `/compact` now as the Mac's compactContext does, and an X, Keep full
-    history, dismissing it for that thread and snapshot for the session. The
+    with the token count, as the Mac's description, a glass Compact pill
+    that sends `/compact` now as the Mac's compactContext does, and an X,
+    Keep full history, dismissing it for that thread and snapshot for the
+    session. The
     offer is client-runtime's compactBeforeSendTokens, which applies the Mac's
     shouldOfferResumeCompaction (fork/no3yResumeCompaction.ts), and a send on
     the no3y layout never compacts first (fenced in use-thread-composer-state, read from the dock-published layout flag in fork/no3yHomeTabs.ts).

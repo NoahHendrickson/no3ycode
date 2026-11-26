@@ -1,8 +1,7 @@
 /**
- * The Mac's "Resume with less context" notice (title over "525K tokens from an older session")
- * on the no3y iPhone composer: one 49pt glass pill in the thread header bubbles' style, stacked
- * above the composer card (and the queued banner), with Compact (sends `/compact` now) and an X that keeps the full history — see
- * `.fork/customizations.yaml#no3y-mobile-redesign` and fork/no3yResumeCompaction.ts.
+ * The Mac's "Resume with less context" notice on the no3y iPhone composer: a glass pill, title
+ * over "525K tokens from an older session", with Compact (sends `/compact` now) and an X that keeps
+ * the full history — see `.fork/customizations.yaml#no3y-mobile-redesign`.
  */
 import ArrowShrink02Icon from "@hugeicons/core-free-icons/ArrowShrink02Icon";
 import Cancel01Icon from "@hugeicons/core-free-icons/Cancel01Icon";
@@ -32,8 +31,10 @@ import {
 } from "./no3yResumeCompaction";
 
 const BUBBLE = NO3Y_CONTROL_SIZE;
-// Its two text lines (18 + 15) with 8pt above and below.
-const BANNER_HEIGHT = 18 + 15 + 8 * 2;
+const TITLE_LINE = 18;
+const DETAIL_LINE = 15;
+const TEXT_INSET = 8;
+const BANNER_HEIGHT = TITLE_LINE + DETAIL_LINE + TEXT_INSET * 2;
 const PILL_HEIGHT = 32;
 
 /** Compacts the thread now, as the Mac's Compact does: a standalone `/compact` on its model. */
@@ -74,7 +75,7 @@ export function No3yCompactBanner(props: {
     isDismissed: (key) => dismissals > 0 && isNo3yResumeCompactionDismissed(key),
   });
   if (offer === null) return null;
-  const tokens = `${formatTokens(offer.tokens)} tokens`;
+  const detail = `${formatTokens(offer.tokens)} tokens from an older session`;
   const compact = () => {
     if (compacting || !props.canCompact) return;
     setCompacting(true);
@@ -94,14 +95,15 @@ export function No3yCompactBanner(props: {
     );
   };
   return (
-    // The thread header's glass bubble: a 44pt pill with its controls nested inside, as the
+    // The thread header's glass bubble: a pill with its controls nested inside, as the
     // usage and ⋯ group nests its buttons.
     <Animated.View
       entering={NO3Y_GLASS_RISE_IN}
       layout={NO3Y_LAYOUT}
       style={{
         ...NO3Y_PANEL_MARGIN,
-        height: BANNER_HEIGHT,
+        // A floor, not a height: larger Dynamic Type sizes grow the pill instead of spilling out.
+        minHeight: BANNER_HEIGHT,
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
@@ -112,14 +114,14 @@ export function No3yCompactBanner(props: {
       <HugeIcon icon={ArrowShrink02Icon} size={18} color={palette.foreground} />
       <View
         accessible
-        accessibilityLabel={`Resume with less context, ${tokens} from an older session`}
-        style={{ flex: 1, minWidth: 0 }}
+        accessibilityLabel={`Resume with less context, ${detail}`}
+        style={{ flex: 1, minWidth: 0, paddingVertical: TEXT_INSET }}
       >
         <Text
           numberOfLines={1}
           style={{
             fontSize: 14,
-            lineHeight: 18,
+            lineHeight: TITLE_LINE,
             ...NO3Y_FONT.medium,
             color: palette.titleInk,
           }}
@@ -129,9 +131,14 @@ export function No3yCompactBanner(props: {
         {/* Its own line, as the Mac's description: one row beside Compact and X has no room. */}
         <Text
           numberOfLines={1}
-          style={{ fontSize: 12, lineHeight: 15, ...NO3Y_FONT.regular, color: palette.metaInk }}
+          style={{
+            fontSize: 12,
+            lineHeight: DETAIL_LINE,
+            ...NO3Y_FONT.regular,
+            color: palette.metaInk,
+          }}
         >
-          {`${tokens} from an older session`}
+          {detail}
         </Text>
       </View>
       <Pressable
@@ -158,7 +165,7 @@ export function No3yCompactBanner(props: {
         onPress={() => dismissNo3yResumeCompaction(offer.key)}
         style={({ pressed }) => ({
           width: BUBBLE - 4,
-          height: BANNER_HEIGHT,
+          alignSelf: "stretch",
           alignItems: "center",
           justifyContent: "center",
           opacity: pressed ? 0.6 : 1,
