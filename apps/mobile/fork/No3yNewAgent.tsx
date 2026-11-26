@@ -18,7 +18,6 @@ import {
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
 import { GlassContainer } from "expo-glass-effect";
-import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Pressable, View, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { KeyboardController, useKeyboardState } from "react-native-keyboard-controller";
@@ -112,10 +111,6 @@ interface ProjectRowModel {
   readonly disabled: boolean;
   readonly scope: HomeProjectScope | null;
 }
-
-const tick = () => {
-  void Haptics.selectionAsync().catch(() => {});
-};
 
 // The header and the tiles are published separately into the thread screen, so they share search
 // through this store rather than props.
@@ -362,17 +357,29 @@ function ProjectRow(props: {
 function useNo3yProjectPickerMorph(input: {
   readonly expanded: boolean;
   readonly selectedIndex: number;
-  readonly expandScrollY: number;
+  readonly openScrollY: number;
+  readonly onCollapseSettled: () => void;
 }) {
-  const { expanded, selectedIndex, expandScrollY } = input;
+  const { expanded, selectedIndex, openScrollY, onCollapseSettled } = input;
   const reducedMotion = useReducedMotion();
-  const [settled, setSettled] = useState(expanded);
+  const skipAnimation = Boolean(reducedMotion) || (!expanded && selectedIndex < 0);
+  const [prevExpanded, setPrevExpanded] = useState(expanded);
+  const [settled, setSettled] = useState<boolean | null>(expanded);
+  if (expanded !== prevExpanded) {
+    setPrevExpanded(expanded);
+    setSettled(skipAnimation ? expanded : null);
+  } else if (settled === null && skipAnimation) {
+    setSettled(expanded);
+  }
+  const targetRef = useRef(expanded);
+  const generationRef = useRef(0);
+  const onCollapseSettledRef = useRef(onCollapseSettled);
   const collapse = useSharedValue(expanded ? 0 : 1);
   const scrollY = useSharedValue(0);
   const viewportHeight = useSharedValue(0);
 
   const phase: PickerPhase =
-    expanded === settled
+    settled === expanded
       ? expanded
         ? "expanded"
         : "collapsed"
@@ -386,37 +393,65 @@ function useNo3yProjectPickerMorph(input: {
     },
   });
 
+  useEffect(() => {
+    onCollapseSettledRef.current = onCollapseSettled;
+  }, [onCollapseSettled]);
+
   // Never leave an invisible search query active if the picker unmounts mid-collapse.
   useEffect(() => clearHiddenSearchQuery, []);
 
   useEffect(() => {
-    if (expanded === settled) return;
-    const settle = () => {
-      if (!expanded) scrollY.set(0);
-      setSettled(expanded);
-      if (!expanded) clearHiddenSearchQuery();
+    if (expanded === targetRef.current) return;
+    targetRef.current = expanded;
+    const generation = ++generationRef.current;
+    const finish = (completedGeneration: number, targetExpanded: boolean) => {
+      if (completedGeneration !== generationRef.current) return;
+      if (!targetExpanded) {
+        scrollY.set(0);
+        onCollapseSettledRef.current();
+      }
+      setSettled(targetExpanded);
+      if (!targetExpanded) clearHiddenSearchQuery();
     };
-    if (reducedMotion || (!expanded && selectedIndex < 0)) {
+    if (skipAnimation) {
       collapse.set(expanded ? 0 : 1);
-      if (expanded) scrollY.set(expandScrollY);
-      settle();
+      if (expanded) {
+        scrollY.set(openScrollY);
+      } else {
+        scrollY.set(0);
+        onCollapseSettledRef.current();
+        clearHiddenSearchQuery();
+      }
       return;
     }
     if (expanded && collapse.get() >= 0.99) {
-      scrollY.set(expandScrollY);
+      scrollY.set(openScrollY);
     }
     collapse.set(
       withTiming(expanded ? 0 : 1, MORPH_TIMING, (finished) => {
         if (finished) {
-          scheduleOnRN(settle);
+          scheduleOnRN(finish, generation, expanded);
         } else if (!expanded) {
           scheduleOnRN(clearHiddenSearchQuery);
         }
       }),
     );
-  }, [collapse, expandScrollY, expanded, reducedMotion, scrollY, selectedIndex, settled]);
+  }, [collapse, expanded, openScrollY, scrollY, skipAnimation]);
 
   return { phase, collapse, scrollY, viewportHeight, onScroll };
+}
+
+function projectScopeLeading(scope: HomeProjectScope) {
+  return (
+    <ProjectFavicon
+      environmentId={scope.representative.environmentId}
+      faviconPath={scope.representative.faviconPath}
+      projectIcon={scope.representative.projectIcon}
+      projectTitle={scope.title}
+      workspaceRoot={scope.representative.workspaceRoot}
+      size={20}
+    />
+  );
 }
 
 function ProjectTiles(props: {
@@ -438,6 +473,7 @@ function ProjectTiles(props: {
   const insets = useSafeAreaInsets();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [openScrollY, setOpenScrollY] = useState(0);
   const pickingScratchRef = useRef(false);
   const pickVersionRef = useRef(0);
 
@@ -450,14 +486,15 @@ function ProjectTiles(props: {
   const picked =
     flow.selectedProject !== null && (!props.requirePick || flow.selectedProjectKey !== null);
   const selected = !picked || flow.isScratchDraft ? null : flow.selectedProject;
-  const selectedScopeKey =
+  const selectedScope =
     selected === null
       ? null
       : (scopes.find((scope) =>
           scope.projectRefs.some(
             (ref) => ref.environmentId === selected.environmentId && ref.projectId === selected.id,
           ),
-        )?.key ?? null);
+        ) ?? null);
+  const selectedScopeKey = selectedScope?.key ?? null;
   const tiles = rankNo3yProjectTiles({
     scopes,
     threads,
@@ -484,28 +521,33 @@ function ProjectTiles(props: {
 
   const closePickerAfterPick = () => {
     setPickerOpen(false);
-    // Close the search bar immediately while keeping searchQuery until the collapse settles so
-    // the rows on screen morph together instead of flashing the full list for one frame.
-    if (searchOpen) setSearch({ searching: false });
+    // Read the live search store so an async No-project pick still closes search opened mid-flight;
+    // the morph (or skip-animation path when filtered out) clears searchQuery once settled.
+    if (search.searching) setSearch({ searching: false });
   };
 
   const pickScope = (scope: HomeProjectScope) => {
     if (locked) return;
-    tick();
     pickVersionRef.current += 1;
-    if (!picked || scope.key !== selectedScopeKey) {
-      flow.setProject(
-        getProjectScopeSelectionTarget(scope, flow.selectedEnvironmentId, connectedIds),
-      );
+    const target = getProjectScopeSelectionTarget(scope, flow.selectedEnvironmentId, connectedIds);
+    if (
+      !picked ||
+      flow.selectedProject?.environmentId !== target.environmentId ||
+      flow.selectedProject?.id !== target.id
+    ) {
+      flow.setProject(target);
     }
     closePickerAfterPick();
   };
 
   const pickNoProject = async () => {
     if (!scratchOption?.ready || locked || pickingScratchRef.current) return;
-    tick();
     const version = ++pickVersionRef.current;
-    if (picked && flow.isScratchDraft) {
+    if (
+      picked &&
+      flow.isScratchDraft &&
+      flow.selectedProject?.environmentId === scratchOption.environmentId
+    ) {
       closePickerAfterPick();
       return;
     }
@@ -526,14 +568,6 @@ function ProjectTiles(props: {
     }
   };
 
-  const reopenPicker = () => {
-    if (locked) return;
-    tick();
-    clearHiddenSearchQuery();
-    void KeyboardController.dismiss({ animated: true });
-    setPickerOpen(true);
-  };
-
   const rows: ReadonlyArray<ProjectRowModel> = [
     ...(noProjectRow === null
       ? []
@@ -550,40 +584,75 @@ function ProjectTiles(props: {
     ...tiles.map((tile) => ({
       key: tile.scope.key,
       label: tile.scope.title,
-      leading: (
-        <ProjectFavicon
-          environmentId={tile.scope.representative.environmentId}
-          faviconPath={tile.scope.representative.faviconPath}
-          projectIcon={tile.scope.representative.projectIcon}
-          projectTitle={tile.scope.title}
-          workspaceRoot={tile.scope.representative.workspaceRoot}
-          size={20}
-        />
-      ),
+      leading: projectScopeLeading(tile.scope),
       selected: tile.scope.key === selectedScopeKey,
       disabled: locked,
       scope: tile.scope,
     })),
   ];
 
-  const selectedIndex = rows.findIndex((row) => row.selected);
-  const selectedRow = selectedIndex >= 0 ? (rows[selectedIndex] ?? null) : null;
-  const expanded = selectedRow === null || pickerOpen || searchOpen;
-  const expandScrollY =
-    !searchOpen && selectedIndex >= 0
-      ? no3yExpandScrollOffset({
-          selectedIndex,
-          rowCount: rows.length,
-          rowPitch: ROW_PITCH,
-          rowGap: ROW_GAP,
-          topPadding: TOP_FADE,
-          headerOffset: LIST_HEADER_OFFSET,
-          bottomInset: props.bottomInset,
-          viewportHeight,
-        })
-      : 0;
+  // Derived from the unfiltered selection so a hidden search filter can never trap the picker open.
+  const collapsedPill = !picked
+    ? null
+    : flow.isScratchDraft
+      ? {
+          label: "No project",
+          leading: <HugeIcon icon={Folder01Icon} size={20} color={palette.quietInk} />,
+        }
+      : selectedScope !== null
+        ? {
+            label: selectedScope.title,
+            leading: projectScopeLeading(selectedScope),
+          }
+        : null;
 
-  const morph = useNo3yProjectPickerMorph({ expanded, selectedIndex, expandScrollY });
+  const selectedIndex = rows.findIndex((row) => row.selected);
+  const expanded = collapsedPill === null || pickerOpen || searchOpen;
+
+  const reopenPicker = () => {
+    if (locked) return;
+    clearHiddenSearchQuery();
+    // Capture the opening offset once so picking a row later never overwrites the live scroll.
+    const unfilteredTiles =
+      searchQuery.length > 0
+        ? rankNo3yProjectTiles({ scopes, threads, sentChatKeys, searchQuery: "" })
+        : tiles;
+    const unfilteredOffset = scratchOption === null ? 0 : 1;
+    const tileIndex =
+      selectedScopeKey === null
+        ? -1
+        : unfilteredTiles.findIndex((tile) => tile.scope.key === selectedScopeKey);
+    const targetIndex = flow.isScratchDraft
+      ? scratchOption === null
+        ? -1
+        : 0
+      : tileIndex < 0
+        ? -1
+        : tileIndex + unfilteredOffset;
+    setOpenScrollY(
+      targetIndex >= 0
+        ? no3yExpandScrollOffset({
+            selectedIndex: targetIndex,
+            rowCount: unfilteredOffset + unfilteredTiles.length,
+            rowPitch: ROW_PITCH,
+            rowGap: ROW_GAP,
+            topPadding: TOP_FADE,
+            headerOffset: LIST_HEADER_OFFSET,
+            bottomInset: props.bottomInset,
+            viewportHeight,
+          })
+        : 0,
+    );
+    void KeyboardController.dismiss({ animated: true });
+    setPickerOpen(true);
+  };
+
+  const morph = useNo3yProjectPickerMorph({
+    expanded,
+    selectedIndex,
+    openScrollY,
+    onCollapseSettled: () => setOpenScrollY(0),
+  });
   const { phase, collapse } = morph;
 
   const handleViewportLayout = (event: LayoutChangeEvent) => {
@@ -611,7 +680,7 @@ function ProjectTiles(props: {
     keyboardVisible,
   });
   const showHero =
-    selectedRow !== null &&
+    collapsedPill !== null &&
     viewportHeight > 0 &&
     viewportHeight - (TOP_FADE + ROW_HEIGHT) - heroBottomInset >= 40;
   const heroAccessible = phase === "collapsed";
@@ -669,7 +738,7 @@ function ProjectTiles(props: {
         </Animated.View>
       ) : null}
 
-      {phase === "collapsed" && selectedRow !== null ? (
+      {phase === "collapsed" && collapsedPill !== null ? (
         <View
           pointerEvents="box-none"
           onLayout={handleViewportLayout}
@@ -684,8 +753,8 @@ function ProjectTiles(props: {
           }}
         >
           <ProjectRowFace
-            label={selectedRow.label}
-            leading={selectedRow.leading}
+            label={collapsedPill.label}
+            leading={collapsedPill.leading}
             trailing={
               <View style={TRAILING_SLOT_STYLE}>
                 <HugeIcon
@@ -698,7 +767,7 @@ function ProjectTiles(props: {
             }
             disabled={locked}
             palette={palette}
-            accessibilityLabel={`Project: ${selectedRow.label}`}
+            accessibilityLabel={`Project: ${collapsedPill.label}`}
             accessibilityHint="Opens the project list"
             accessibilityState={{ expanded: false, disabled: locked }}
             onPress={reopenPicker}
@@ -707,7 +776,7 @@ function ProjectTiles(props: {
       ) : (
         <Animated.ScrollView
           style={{ position: "absolute", top: props.topInset, bottom: 0, left: 0, right: 0 }}
-          contentOffset={{ x: 0, y: expandScrollY }}
+          {...(openScrollY > 0 ? { contentOffset: { x: 0, y: openScrollY } } : {})}
           contentContainerStyle={{
             flexGrow: 1,
             justifyContent: "flex-start",
