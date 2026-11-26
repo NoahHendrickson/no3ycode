@@ -3,9 +3,9 @@
 // component=ForkSubagentGroup
 import figma from "figma";
 
-// The timeline renders every subagent item through ForkSubagentGroup (TimelineV2EventRow), and the
-// card's status, open state, elapsed time and model all come from that row, so the snippet is the
-// call itself rather than a hand-built copy of the row.
+// The timeline renders every subagent item through ForkSubagentGroup (TimelineV2EventRow) as one
+// start line, whose status, elapsed time and model all come from that row, so the snippet is the
+// call itself rather than a hand-built copy of the row. The Figma node is still the kit's card.
 export default {
   example: figma.tsx`<ForkSubagentGroup row={row} environmentId={environmentId} onOpenThread={onOpenThread} />`,
   imports: ['import { ForkSubagentGroup } from "~/custom/ForkSubagentGroup";'],

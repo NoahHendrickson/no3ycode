@@ -1221,7 +1221,7 @@ function deriveTurnFolds(input: {
         timelineEntryIsPersistentResourceCard(entry) ||
         input.liveSubagentEntryIds.has(entry.id) ||
         /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
-        // A subagent's card stays where it was launched once it settles; its notice is one line.
+        // A subagent's start line stays where it was launched once it settles.
         (entry.kind === "event" && entry.projectedItem.item.type === "subagent") ||
         /* fork:end fork-subagent-spawn-card */
         input.retainedAssistantReplyEntryIds.has(entry.id)

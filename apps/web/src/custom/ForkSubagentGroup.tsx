@@ -164,9 +164,7 @@ export function ForkSubagentStartLineView(props: {
       </span>
       {spec || remote !== undefined ? (
         <span className="shrink-0">
-          {[spec ? `on ${spec}` : null, remote === undefined ? null : `on ${remote.label}`]
-            .filter(Boolean)
-            .join(" · ")}
+          {`on ${[spec, remote?.label].filter(Boolean).join(" · ")}`}
         </span>
       ) : null}
     </ForkSubagentLine>
@@ -263,7 +261,11 @@ function ForkSubagentLine(props: {
   return (
     <div {...props.root} className="flex min-w-0 max-w-full text-muted-foreground">
       {open === null ? (
-        <span className={line}>{content}</span>
+        <span className={line}>
+          {content}
+          {/* The marks are hidden, so the status reaches screen readers here. */}
+          {props.description ? <span className="sr-only">{`, ${props.description}`}</span> : null}
+        </span>
       ) : (
         <button
           type="button"
