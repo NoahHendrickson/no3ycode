@@ -126,7 +126,7 @@ describe("fork guard: fork-split-threads", () => {
     expect(chatView).not.toMatch(/const composerContextTrailing =[^;]*SplitAgent/u);
     // A draft in a split is a plain empty thread, not the new-agent screen.
     expect(chatView).toMatch(
-      /const draftHeroEligible = resolveDraftHeroState\([\s\S]*?const splitDraftAsThread = splitPane\.split && activeProject !== null;\s*const isDraftHeroState = !splitDraftAsThread && draftHeroEligible;/u,
+      /const draftHeroEligible = resolveDraftHeroState\([\s\S]*?const splitDraftAsThread = splitPane\.split && splitPane\.canSplit;\s*const isDraftHeroState = !splitDraftAsThread && draftHeroEligible;/u,
     );
     // ...that offers starters instead of the empty-thread line...
     expect(chatView).toMatch(/\{splitDraftStartersShown \? \(\s*<SplitDraftStarters\b/u);

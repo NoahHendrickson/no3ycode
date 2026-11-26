@@ -1814,10 +1814,10 @@ export default function ChatView(props: ChatViewProps) {
     hasWorktreeSetupCard: worktreeSetup !== null,
   });
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
-     A draft in a split is a plain empty thread, composer docked at the bottom, offering starters
-     in place of upstream's empty-thread line. One with no project yet (New agent beside a docked
-     thread) keeps the hero: it holds the project picker. No starters while a send is pending. */
-  const splitDraftAsThread = splitPane.split && activeProject !== null;
+     A draft in a split pair is a plain empty thread, composer docked at the bottom, offering
+     starters in place of upstream's empty-thread line. Beside a docked thread (canSplit is off
+     there) a draft keeps the hero and its project picker. No starters while a send is pending. */
+  const splitDraftAsThread = splitPane.split && splitPane.canSplit;
   const isDraftHeroState = !splitDraftAsThread && draftHeroEligible;
   const splitDraftStartersShown =
     splitDraftAsThread &&
