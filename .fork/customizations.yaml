@@ -5571,7 +5571,9 @@
     into beads and merges back), or the same bead ring in white (the
     surface's text ink, so dark on Inlet Cream's frame and light themes).
     Until one is picked, every fork palette (Basic, Glass, Inlet) draws the
-    bead ring, and an upstream theme the helix. The choice is device-local
+    bead ring, and an upstream theme the helix. A legacy v1 "helix" is read as no pick (v1
+    wrote it on reset too), so a Glass device holding only that now draws the
+    bead ring; that flip is intended. The choice is device-local
     (localStorage), not a contracts setting, and Restore defaults clears it
     back to the palette's default. Each mark bakes one loop of frames into a
     mask once (rain and helix an SVG, the bead ring a canvas drawn once), and a single stepped transform

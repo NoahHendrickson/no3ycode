@@ -404,18 +404,13 @@
     corner-shape: superellipse(1.6);
   }
 
-  /* The collapsed sidebar's tab strip, a started thread's header, a page's title and the right
-     panel's tab bar stand on a hairline. */
+  /* The collapsed sidebar's tab strip, a started thread's header and a page's title stand on a
+     hairline. The right panel's tab bar has its own border (fork-right-panel-tabbar-divider). */
   & [data-fork-thread-tabs] {
     box-shadow: inset 0 -1px 0 var(--fork-glass-tabs-line, var(--border));
   }
 
-  &
-    :is(
-      [data-fork-thread-started] [data-chat-header],
-      [data-fork-stage-card-title],
-      [data-right-panel-tabbar]
-    ) {
+  & :is([data-fork-thread-started] [data-chat-header], [data-fork-stage-card-title]) {
     box-shadow: inset 0 -1px 0 var(--border);
   }
 

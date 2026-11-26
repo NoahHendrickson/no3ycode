@@ -139,7 +139,9 @@ describe("fork guard: fork-basic-theme", () => {
           /border-radius:\s*var\(--fork-flat-radius\)/u.test(rule.body),
       ),
     ).toBe(true);
-    expect(shared.some((rule) => rule.selector.includes("[data-right-panel-tabbar]"))).toBe(true);
+    expect(shared.some((rule) => rule.selector.includes("[data-fork-stage-card-title]"))).toBe(
+      true,
+    );
     // No other rule draws a shape for Basic, and Basic's sheet adds only the popups' shadow.
     const shape =
       /(^|[;{\s])(border-radius|corner-shape|box-shadow|outline(-\w+)?|border(-(top|right|bottom|left))?(-width)?|padding[\w-]*|margin[\w-]*|gap|width|height)\s*:/u;
