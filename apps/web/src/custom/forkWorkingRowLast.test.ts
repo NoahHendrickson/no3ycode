@@ -439,7 +439,7 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
   });
 
-  it("keeps an opened status line open when the next reply lands", () => {
+  it("keeps an opened status line open when the next reply lands or its tool fails", () => {
     const reply = (n: number, second: number) => {
       const entry = commentary(second);
       return {
@@ -458,6 +458,8 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
       command("c", 6, "inProgress"),
     ];
     expect(statusLine(rowsFor(next, true, false, new Set([opened!])))?.expanded).toBe(true);
+    const failed = [...first.slice(0, 2), command("b", 4, "failed")];
+    expect(statusLine(rowsFor(failed, true, false, new Set([opened!])))?.expanded).toBe(true);
   });
 
   it("settles a thought whose only follower is a held reply", () => {

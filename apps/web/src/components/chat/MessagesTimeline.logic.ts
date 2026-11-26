@@ -2548,7 +2548,14 @@ export function deriveMessagesTimelineRows(
   ) {
     const failedGroupAnchor = latestToolFailed ? activeWorkAnchor : undefined;
     if (failedGroupAnchor) {
-      const groupId = workGroupId(failedGroupAnchor.id);
+      /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
+         Upstream: workGroupId(failedGroupAnchor.id). The status line folds this row too, so it
+         keeps the live group's run-named id and an opened line stays open when a tool fails. */
+      const groupId =
+        input.forkHoldLiveReplies === true && unsettledRunId !== null
+          ? workGroupId(`fork-live:${unsettledRunId}`)
+          : workGroupId(failedGroupAnchor.id);
+      /* fork:end fork-quiet-live-turn */
       const expanded = input.expandedWorkGroupIds?.has(groupId) ?? false;
       const groupedEntries = visibleActiveToolEntries.map((entry) => entry.entry);
       nextRows.push({
