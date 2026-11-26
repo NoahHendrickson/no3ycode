@@ -135,6 +135,18 @@ const dmSansFonts = {
   bold: "@expo-google-fonts/dm-sans/700Bold/DMSans_700Bold.ttf",
 } as const;
 
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+// Settings → Appearance → Font on the iPhone (fork/no3yInterfaceFont.ts).
+const cinnabarInterfaceFonts = [
+  "Regular",
+  "Italic",
+  "Medium",
+  "MediumItalic",
+  "SemiBold",
+  "Bold",
+].map((face) => `./fork/assets/fonts/cinnabar-interface/CinnabarInterface-${face}.ttf`);
+/* fork:end no3y-mobile-interface-font */
+
 const widgetsPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
   "expo-widgets",
   {
@@ -337,7 +349,14 @@ const config: ExpoConfig = {
       "expo-font",
       {
         ios: {
-          fonts: [dmSansFonts.regular, dmSansFonts.medium, dmSansFonts.bold],
+          fonts: [
+            dmSansFonts.regular,
+            dmSansFonts.medium,
+            dmSansFonts.bold,
+            /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+            ...cinnabarInterfaceFonts,
+            /* fork:end no3y-mobile-interface-font */
+          ],
         },
         android: {
           fonts: [

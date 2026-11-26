@@ -483,6 +483,7 @@ export const MessageSquareTextIcon = icon(
 );
 export const SquareIcon = Square;
 export const InboxIcon = icon("inbox", Hg.InboxIcon, "themed");
+export const InboxDownloadIcon = icon("inbox-download", Hg.InboxDownloadIcon, "stroke");
 
 export const FileTextIcon = icon("file-text", Hg.FileTextIcon, "themed");
 export const FileSpreadsheetIcon = icon("file-spreadsheet", Hg.FileSpreadsheetIcon, "themed");
@@ -589,6 +590,7 @@ export const Volume2Icon = Volume2;
 export const VolumeOffIcon = VolumeOff;
 export const ReplyIcon = icon("reply", Hg.ReplyIcon, "stroke");
 export const ListPlusIcon = icon("list-plus", Hg.ListPlusIcon, "stroke");
+export const ListEndIcon = icon("list-end", Hg.ListEndIcon, "stroke");
 export const Table2Icon = Table2;
 export const ScrollTextIcon = icon("scroll-text", Hg.ScrollTextIcon, "themed");
 export const OctagonXIcon = icon("octagon-x", Hg.OctagonXIcon, "themed");

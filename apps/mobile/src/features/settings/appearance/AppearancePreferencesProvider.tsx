@@ -37,6 +37,9 @@ import {
 } from "../../../../fork/no3yPageColor";
 import { NO3Y_IPHONE } from "../../../../fork/no3yIphone";
 /* fork:end no3y-mobile-redesign */
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+import { installNo3yInterfaceFont } from "../../../../fork/no3yInterfaceFontState";
+/* fork:end no3y-mobile-interface-font */
 import {
   createMobileThemePairPatch,
   createMobileThemeSelectionPatch,
@@ -199,9 +202,15 @@ export function installAppearanceRuntime(): () => void {
     }
   }
   /* fork:end no3y-mobile-redesign */
+  /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+  const unsubscribeFont = NO3Y_IPHONE ? installNo3yInterfaceFont(appAtomRegistry) : () => {};
+  /* fork:end no3y-mobile-interface-font */
   return () => {
     unsubscribeRuntime();
     releasePalettes();
+    /* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+    unsubscribeFont();
+    /* fork:end no3y-mobile-interface-font */
   };
 }
 

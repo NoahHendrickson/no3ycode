@@ -17,7 +17,6 @@ import type {
 } from "@t3tools/contracts";
 import {
   ArrowUpIcon,
-  BookmarkIcon,
   ChevronDownIcon,
   Clock3Icon,
   GripVerticalIcon,
@@ -38,7 +37,7 @@ import {
   ComposerCardRemoveButton,
   ComposerCardTitle,
 } from "./ComposerCardParts";
-import { ListNumberIcon, PencilEditIcon } from "./icons/lucide-hugeicons";
+import { InboxDownloadIcon, ListNumberIcon, PencilEditIcon } from "./icons/lucide-hugeicons";
 
 import { useAssetUrls } from "~/assets/assetUrls";
 import { m } from "~/i18n/messages";
@@ -629,7 +628,7 @@ export function ForkQueuedRunsBanner({
                               }
                               onClick={() => void stash(item)}
                             >
-                              <BookmarkIcon weight="stroke" />
+                              <InboxDownloadIcon />
                             </ComposerCardIconButton>
                           </TooltipTrigger>
                           <TooltipPopup>{item.stashBlockedReason ?? "Move to stash"}</TooltipPopup>

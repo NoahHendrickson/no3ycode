@@ -10,6 +10,10 @@ import { TerminalAppearanceSection } from "./appearance/sections/TerminalAppeara
 import { TextAppearanceSection } from "./appearance/sections/TextAppearanceSection";
 import { ThemeAppearanceSection } from "./appearance/sections/ThemeAppearanceSection";
 import { ToolCallsAppearanceSection } from "./appearance/sections/ToolCallsAppearanceSection";
+/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */
+import { No3yInterfaceFontSection } from "../../../fork/No3yInterfaceFontSection";
+import { NO3Y_IPHONE } from "../../../fork/no3yIphone";
+/* fork:end no3y-mobile-interface-font */
 
 export function SettingsAppearanceRouteScreen() {
   const gt = useGT();
@@ -28,6 +32,9 @@ export function SettingsAppearanceRouteScreen() {
       >
         <ThemeAppearanceSection />
         {Platform.OS === "android" ? <AndroidNavigationAppearanceSection /> : null}
+        {/* fork:begin no3y-mobile-interface-font — see .fork/customizations.yaml#no3y-mobile-interface-font */}
+        {NO3Y_IPHONE ? <No3yInterfaceFontSection /> : null}
+        {/* fork:end no3y-mobile-interface-font */}
         <TextAppearanceSection />
         <TerminalAppearanceSection />
         <CodeAppearanceSection />
