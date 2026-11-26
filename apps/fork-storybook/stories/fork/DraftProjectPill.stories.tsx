@@ -49,6 +49,7 @@ function Composer(props: { readonly selection: Selection; readonly pending?: boo
       setKind(next === NO_PROJECT_VALUE ? "no-project" : "project");
     },
     noProjectEnvironmentId: environmentId,
+    recentKeys: ENTRIES.map((entry) => entry.group.projectKey),
     selection:
       kind === "project"
         ? { kind, label: label ?? "no3ycode" }

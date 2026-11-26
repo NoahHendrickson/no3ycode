@@ -160,6 +160,12 @@ export function useDraftProjectChoices(props: {
     preferredProjectRef: activeProjectRef,
   });
   const entryByKey = new Map(entries.map((entry) => [entry.group.projectKey, entry] as const));
+  // The menu's "Recent" order: the project used last first, whatever the sidebar's own sort.
+  const recentKeys = sortLogicalProjectsForSidebar(
+    entries.map((entry) => entry.group),
+    threads,
+    "updated_at",
+  ).map((group) => group.projectKey);
   // A pick shows on the pill the moment it is made; the draft itself moves
   // once the project's defaults resolve, and Send waits for that (the
   // composer reads the same pending state).
@@ -239,6 +245,7 @@ export function useDraftProjectChoices(props: {
 
   return {
     entries,
+    recentKeys,
     recentEntries,
     selection,
     needsProject,
@@ -255,7 +262,7 @@ export type DraftProjectChoices = ReturnType<typeof useDraftProjectChoices>;
     and the dispatcher. */
 export type DraftProjectMenuChoices = Pick<
   DraftProjectChoices,
-  "value" | "pick" | "noProjectEnvironmentId"
+  "value" | "pick" | "noProjectEnvironmentId" | "recentKeys"
 > & {
   readonly entries: ReadonlyArray<{
     readonly group: Pick<

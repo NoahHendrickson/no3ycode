@@ -239,6 +239,19 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(menu).toMatch(
       /onValueChange=\{\(value\) => \{\s*if \(typeof value === "string"\) choices\.pick\(value\);/u,
     );
+    // The menu searches, pins and sorts its projects (custom/draftProjectPicker.logic).
+    expect(menu).toContain("<ComboboxSearchInput");
+    expect(menu).toContain("arrangeDraftProjectEntries({");
+    expect(menu).toContain("toggleDraftProjectPin(");
+    expect(menu).toMatch(
+      /endAddon=\{\s*<DraftProjectSortMenu sort=\{sort\} onSortChange=\{setSort\}/u,
+    );
+  });
+
+  it("starts a New agent draft with no project chosen, not on No project", () => {
+    const start = readSibling("../custom/useNewAgentDraft.ts");
+    const machineChip = readSibling("../custom/DraftMachineChip.tsx");
+    for (const source of [start, machineChip]) expect(source).not.toContain("openScratchProject");
   });
 
   it("centers the draft composer and grows its prompt until the thread starts", () => {

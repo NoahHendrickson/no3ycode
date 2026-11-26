@@ -22,4 +22,11 @@ describe("fork guard: fork-full-width-search-divider", () => {
     expect(combobox).toMatch(/border-b border-border\/70 px-3 pb-1\.5/u);
     expect(combobox).toContain("absolute top-1.5 left-3 size-4");
   });
+
+  it("keeps the underline divider-coloured on focus and offers an end control", () => {
+    expect(combobox).not.toMatch(
+      /border-b border-border\/70 px-3 pb-1\.5[^"]*focus-within:border-ring/u,
+    );
+    expect(combobox).toContain("endAddon?: React.ReactNode;");
+  });
 });
