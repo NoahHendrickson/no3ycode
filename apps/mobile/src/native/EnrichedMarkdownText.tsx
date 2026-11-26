@@ -350,7 +350,6 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
             bodyFontSize: props.textStyle.fontSize,
             chipFontScale: inlineCodeChip.fontScale,
             fontScale,
-            hairlineWidth: StyleSheet.hairlineWidth,
           })
         : undefined,
     [inlineCodeChip, props.textStyle.fontSize, fontScale],

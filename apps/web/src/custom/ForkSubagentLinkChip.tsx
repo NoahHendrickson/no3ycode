@@ -1,6 +1,6 @@
 /**
- * A subagent thread link in an assistant message as a neutral capsule with the sidebar's status
- * mark — see `.fork/customizations.yaml#no3y-subagent-link-chip`. A live child is always in the
+ * A subagent thread link in an assistant message as a code-style chip in its provider's colour, with
+ * the provider's logo and the sidebar's status mark — see `.fork/customizations.yaml#no3y-subagent-link-chip`. A live child is always in the
  * shell; an idle one is left out of it, so its row comes from one read of the message's thread
  * family.
  */
@@ -13,6 +13,7 @@ import {
 import { selectEnvironmentQueryData } from "@t3tools/client-runtime/state/runtime";
 import {
   isLiveSubagentShell,
+  ProviderDriverKind,
   type EnvironmentId,
   type ScopedThreadRef,
   type ThreadId,
@@ -26,18 +27,22 @@ import { Link } from "@tanstack/react-router";
 import * as Equal from "effect/Equal";
 import { Atom } from "effect/reactivity";
 import { useGT } from "gt-react";
-import { createContext, use, useEffect, type ReactNode } from "react";
+import { createContext, use, useEffect, type CSSProperties, type ReactNode } from "react";
+import { resolveProviderInstanceDisplayName } from "@t3tools/client-runtime/state/provider-instance-display";
 
 import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
 import { ThreadChipHoverCard } from "~/components/ThreadChipHoverCard";
+import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { ThreadHoverCardPopup } from "~/components/ThreadHoverCard";
 import { Tooltip, TooltipTrigger } from "~/components/ui/tooltip";
 import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { useProject } from "~/state/entities";
+import { serverEnvironment } from "~/state/server";
 import { environmentShell } from "~/state/shell";
 import { environmentThreadShells, threadFamilies } from "~/state/threads";
 import {
   dropPeriodAfterSubagentLinks,
+  FORK_SUBAGENT_LINK_TONES,
   forkSubagentLinkHrefs,
   forkSubagentLinkKind,
   forkSubagentLinkLabel,
@@ -84,6 +89,7 @@ const NO_HREFS_ATOM = Atom.make(NO_HREFS).pipe(Atom.withLabel("fork-subagent-lin
 const NO_LINK_ATOM = Atom.make<SubagentLink | null>(null).pipe(
   Atom.withLabel("fork-subagent-link:none"),
 );
+const NO_PROVIDERS_ATOM = Atom.make(null).pipe(Atom.withLabel("fork-subagent-link-providers:none"));
 // A stale read is refreshed once per row snapshot, so a server that disagrees cannot loop.
 const refreshedFamilies = new Set<string>();
 
@@ -181,7 +187,7 @@ export function SubagentLinkMark(props: {
   readonly seed: string;
 }) {
   return (
-    <span aria-hidden className="inline-flex shrink-0">
+    <span aria-hidden className="inline-flex shrink-0 [zoom:0.8]">
       {props.kind === "working" ? (
         <SidebarV2StillWorkingMark />
       ) : props.kind === "waiting" ? (
@@ -196,6 +202,19 @@ export function SubagentLinkMark(props: {
       )}
     </span>
   );
+}
+
+/** The capsule's tone for the child's provider driver; undefined keeps it neutral.
+    @public — Storybook draws it. */
+export function forkSubagentLinkToneStyle(driver: string | undefined): CSSProperties | undefined {
+  const tone = driver ? FORK_SUBAGENT_LINK_TONES[driver] : undefined;
+  return tone
+    ? ({
+        "--fork-chip-hue": tone.hue,
+        "--fork-chip-ink-dark": tone.inkDark,
+        "--fork-chip-ink-light": tone.inkLight,
+      } as CSSProperties)
+    : undefined;
 }
 
 /** The capsule inside an assistant message, where every thread link takes it; else upstream's chip. */
@@ -226,7 +245,19 @@ export function ForkSubagentLinkChip(props: {
   }, [staleKey, familyRef]);
   const projectId = link?.shell.projectId ?? null;
   const project = useProject(projectId ? scopeProjectRef(environmentId, projectId) : null);
+  const instanceId = link
+    ? (link.shell.runtime?.providerInstanceId ?? link.shell.modelSelection.instanceId)
+    : null;
+  // Selected down to strings, so a provider status push re-renders no chip.
+  const provider = useAtomValue(
+    instanceId === null ? NO_PROVIDERS_ATOM : serverEnvironment.providersValueAtom(environmentId),
+    (providers) => {
+      const match = providers?.find((candidate) => candidate.instanceId === instanceId);
+      return match ? `${match.driver}\n${resolveProviderInstanceDisplayName(match)}` : null;
+    },
+  );
   if (link === null) return props.children;
+  const [driver, providerName] = provider?.split("\n") ?? [];
   const status = statusLabel(link.kind, gt);
   const title = link.shell.title.trim() || props.title;
   return (
@@ -245,9 +276,18 @@ export function ForkSubagentLinkChip(props: {
             data-markdown-copy={props.copyMarkdown}
             data-fork-subagent-link=""
             shape="capsule"
+            style={forkSubagentLinkToneStyle(driver)}
           >
-            <SubagentLinkMark kind={link.kind} seed={key} />
+            {driver ? (
+              <ProviderInstanceIcon
+                driverKind={ProviderDriverKind.make(driver)}
+                displayName={providerName ?? driver}
+                className="z-auto [zoom:0.8]"
+                iconClassName="size-[1em]"
+              />
+            ) : null}
             <ContextChipLabel>{link.label || props.title}</ContextChipLabel>
+            <SubagentLinkMark kind={link.kind} seed={key} />
           </ContextChip>
         }
       />

@@ -16,6 +16,8 @@ import { useEffect } from "react";
 import type { ImageSourcePropType } from "react-native";
 
 import type { MarkdownLinkCustomization } from "../src/native/SelectableMarkdownText.types";
+import { modelChipIcon } from "../src/lib/contextChipIconSource";
+import { serverEnvironment } from "../src/state/server";
 import { useAppearancePreferences } from "../src/features/settings/appearance/AppearancePreferencesProvider";
 import { appAtomRegistry } from "../src/state/atom-registry";
 import { resolveThreadLink } from "../src/state/entities";
@@ -31,6 +33,7 @@ import {
   no3ySubagentChipHrefs,
   no3ySubagentChipKind,
   no3ySubagentChipLabel,
+  no3ySubagentChipTone,
   type No3ySubagentChipKind,
 } from "./no3ySubagentLinkChip";
 
@@ -38,6 +41,8 @@ interface SubagentLinkChip {
   readonly kind: No3ySubagentChipKind | null;
   /** Unset for an empty title, so the pill keeps the link's text. */
   readonly label: string | undefined;
+  /** "driver\niconUrl" of the child's provider, null while its environment's config is unknown. */
+  readonly provider: string | null;
 }
 
 interface SubagentLinkChips {
@@ -65,6 +70,17 @@ function markIcon(kind: No3ySubagentChipKind | null): ImageSourcePropType {
   if (kind === "approval" || kind === "input") return MARK_ICONS.half;
   return kind === null ? MARK_ICONS.idle : MARK_ICONS.dot;
 }
+
+// Narrowed to a string, so a provider status push does not rebuild the chips.
+const chipProviderAtom = Atom.family((key: string) => {
+  const [environmentId, instanceId] = JSON.parse(key) as [EnvironmentId, string];
+  return Atom.make((get): string | null => {
+    const provider = get(serverEnvironment.providersValueAtom(environmentId))?.find(
+      (candidate) => candidate.instanceId === instanceId,
+    );
+    return provider ? `${provider.driver}\n${provider.iconUrl ?? ""}` : null;
+  }).pipe(Atom.withLabel(`no3y-subagent-link-provider:${key}`));
+});
 
 const subagentLinkChipsAtom = Atom.family((key: string) => {
   const [environmentId, familyThreadId, hrefs] = JSON.parse(key) as [
@@ -105,6 +121,14 @@ const subagentLinkChipsAtom = Atom.family((key: string) => {
       chips.set(href, {
         kind: staleRow ? null : no3ySubagentChipKind(shell),
         label: shell.title.trim() ? no3ySubagentChipLabel(shell.title) : undefined,
+        provider: get(
+          chipProviderAtom(
+            JSON.stringify([
+              ref.environmentId,
+              shell.runtime?.providerInstanceId ?? shell.modelSelection.instanceId,
+            ]),
+          ),
+        ),
       });
     }
     return chips.size === 0 && staleKey === null ? NO_CHIPS : { chips, staleKey };
@@ -142,12 +166,21 @@ export function useNo3ySubagentLinkChips(
     customization: (href) => {
       const chip = chips.get(href);
       if (!chip) return undefined;
+      const [driver, iconUrl] = chip.provider?.split("\n") ?? [];
+      const tone = no3ySubagentChipTone(driver, themeAppearance);
+      // The native pill has one icon: the provider's logo once it is known, else the status mark.
+      const logo = driver ? modelChipIcon({ driver, iconUrl: iconUrl || undefined }) : null;
       return {
         label: chip.label,
-        icon: markIcon(chip.kind),
-        iconTintColor:
-          chip.kind === null ? palette.statusIdleBorder : flatGlassStatusColor(chip.kind, palette),
-        capsule: { surface: palette.controlSurface, border: palette.controlBorder },
+        icon: logo?.source ?? markIcon(chip.kind),
+        iconTintColor: logo
+          ? logo.tintsIcon
+            ? (tone?.ink ?? palette.foreground)
+            : undefined
+          : chip.kind === null
+            ? palette.statusIdleBorder
+            : flatGlassStatusColor(chip.kind, palette),
+        capsule: { surface: tone?.wash ?? palette.controlSurface, ink: tone?.ink },
       };
     },
   };
