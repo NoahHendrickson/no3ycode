@@ -125,6 +125,14 @@ describe("fork guard: no3y-subagent-link-chip wiring", () => {
     expect(assistantRows.split("<ForkSubagentLinkScope value=").length - 1).toBe(2);
   });
 
+  it("draws the model picker's provider marks in the capsule", () => {
+    const chip = readRepoFile("apps/web/src/custom/ForkSubagentLinkChip.tsx");
+    expect(chip).toContain("<SubagentLinkProviderIcon");
+    expect(chip).toMatch(
+      /<ForkProviderMarkOr\s+driver=\{props\.driver\}[\s\S]*?fallback=\{\s*<ProviderInstanceIcon/u,
+    );
+  });
+
   it("renders the capsule for assistant messages on mobile", () => {
     const threadFeed = readRepoFile("apps/mobile/src/features/threads/ThreadFeed.tsx");
     expect(threadFeed).toContain("subagentChips.customization(href) ??");

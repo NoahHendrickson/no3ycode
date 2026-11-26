@@ -118,6 +118,8 @@ composer: your recent projects are listed, **All projects** shows the rest, and 
 name (in a very short window, pick from the pill above the composer instead). The draft then
 takes its place under that project, and its pill appears above the composer;
 change the project from that pill before sending and the draft moves with it.
+The pill's menu searches projects by name, keeps pinned projects at the top, and sorts by
+recent use or by name.
 With more than one machine connected, a machine pill above the composer picks where the agent runs;
 choose the machine before the project, and "No project" and projects on several machines follow it.
 Clicking **New agent** again returns to the draft you left open.

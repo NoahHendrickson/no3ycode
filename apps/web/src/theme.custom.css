@@ -552,11 +552,10 @@
    of padding and the matching negative margin — so that overhang lands
    inside its padding box, and the margin box is what the row and the draft
    grid lay out. Without it the editor's border box overhangs the wrapper by
-   4px, and the desktop scrollport below turns that into a horizontal
-   scrollbar thumb under the prompt and a 4px vertical one beside it.
+   4px, and the scrollport below turns that into a horizontal scrollbar thumb
+   under the prompt and a 4px vertical one beside it.
    The inline-end side has no overhang. A scrollbar paints inside its
-   scrollport's end edge, and every prompt scrollport (the editor below 40rem,
-   the wrapper on desktop and under live dictation) would otherwise put the
+   scrollport's end edge, and the prompt scrollport would otherwise put the
    thumb 4px out in the surface padding, past the column the text and the
    send button share. The editor keeps its 4px end padding as the gap between
    the text and the thumb, so the text wraps 4px short of that column. The
@@ -1008,25 +1007,68 @@
   color: var(--muted-foreground);
 }
 
-/* The cap sits on the prompt, so it holds 12.5rem of prompt whatever block padding the compact
-   row gives it (the base 4px each side, or the compact centring above). */
+/* The prompt wrapper owns the single scrollport at every width, shared by typed text
+   and live dictation. The cap holds up to --fork-composer-prompt-max of prompt whatever
+   block padding the compact row gives it (the base 4px each side, or the compact centring
+   above), scaling with the viewport so long prompts grow before scrolling while leaving
+   room for the transcript and composer chrome. Moving the scrollport off the
+   contenteditable also prevents the desktop 16/24 line box's Geist ink from inflating
+   scrollHeight and painting a phantom thumb on a single line. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
-  --fork-composer-prompt-cap: calc(12.5rem + 2 * var(--fork-composer-prompt-pad-block, 4px));
+  --fork-composer-prompt-max: min(45dvh, 36rem);
+  --fork-composer-prompt-cap: calc(
+    var(--fork-composer-prompt-max) + 2 * var(--fork-composer-prompt-pad-block, 4px)
+  );
+  max-height: var(--fork-composer-prompt-cap);
+  overflow-y: auto;
 }
 
-/* The placeholder has to move with the prompt, or the two disagree about both
-   size and leading and the caret sits a couple of pixels off the text it is
-   supposed to be sitting in front of.
+/* On coarse-pointer touch devices (phones and tablets), cap the prompt lower so it
+   leaves room above the on-screen keyboard (iOS keeps dvh when the keyboard opens;
+   Android shrinks dvh via interactive-widget=resizes-content). */
+@media (pointer: coarse) {
+  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
+    --fork-composer-prompt-max: min(30dvh, 18rem);
+  }
+}
 
-   Desktop also moves the max-height scrollport off the contenteditable. The
-   16/24 line box lets Geist ink inflate scrollHeight on the editor itself, so
-   upstream's max-h + overflow-y:auto paints a phantom thumb on a single line.
-   The wrapper owns the cap; the editor stays unclamped and clips its ink so
-   the parent does not inherit the same false overflow. Below 40rem the prompt
-   stays on leading-relaxed and upstream's editor scroll behaviour is left
-   alone, apart from a live dictation preview, which shares this cap. 12.5rem matches upstream's max-h-52 less the editor's own 4px
-   padding; the extra 8px is the wrapper's compensating padding, so the
-   border-box cap holds the same 12.5rem of prompt. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-prompt]
+  [data-testid="composer-editor"] {
+  max-height: none;
+  overflow-y: hidden;
+}
+
+/* The placeholder sits beside the editor's wrapper, outside the editor's
+   clip. At 16/24 the placeholder's line box is a pixel taller than its
+   inset-0 box, and that pixel propagates through the absolutely-positioned
+   box into the wrapper's scrollable overflow — a phantom thumb that shows
+   only while the prompt is empty, because typing unmounts the placeholder.
+   Typed text already paints without that pixel.
+
+   `clip`, not `hidden`: setting an axis to hidden computes the other
+   axis's `visible` to `auto`, which turns this pure-paint element into a
+   scroll box — and the approval-state placeholder is server-supplied text
+   (paths, URLs, SHAs) with no break opportunity, so the reserved horizontal
+   scrollbar would eat the entire 16px line. And both axes, not just y: left
+   visible, that same unbreakable text propagates sideways overflow into the
+   wrapper — whose overflow-x computes to auto alongside its overflow-y —
+   and paints a 16px horizontal scrollbar there instead. clip contains the
+   element on both axes without creating a scroll container anywhere. The
+   editor above gets away with hidden only because pre-wrap +
+   wrap-break-word means it can never overflow horizontally. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-prompt]
+  :has(> [data-testid="composer-editor"])
+  ~ div {
+  overflow: clip;
+}
+
+/* The placeholder and live dictation preview have to move with the prompt's
+   desktop 16/24 line box, or they disagree about size and leading and the
+   caret sits a couple of pixels off the text it is supposed to be sitting
+   in front of. Below 40rem the prompt stays on leading-relaxed at 16px so
+   iOS does not zoom. */
 @media (width >= 40rem) {
   :root[data-fork="noahhendrickson-t3code"]
     [data-fork-composer-box]
@@ -1037,46 +1079,9 @@
     ) {
     /* The prompt size (16px by default, appearanceFonts.ts) on a 1.5 line. The 32px action
        slot sets the 48px compact row (8 + 32 + 8); the one-line prompt sits centred beside it,
-       and each wrapped line adds one more. Below sm the type stays 16px so iOS does not zoom. */
+       and each wrapped line adds one more. */
     font-size: var(--font-size-prompt, var(--text-base));
     line-height: var(--fork-composer-prompt-line);
-  }
-
-  :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-prompt] {
-    max-height: var(--fork-composer-prompt-cap);
-    overflow-y: auto;
-  }
-
-  :root[data-fork="noahhendrickson-t3code"]
-    [data-fork-composer-prompt]
-    [data-testid="composer-editor"] {
-    max-height: none;
-    overflow-y: hidden;
-  }
-
-  /* The placeholder sits beside the editor's wrapper, outside the editor's
-     clip. At 16/24 the placeholder's line box is a pixel taller than its
-     inset-0 box, and that pixel propagates through the absolutely-positioned
-     box into the wrapper's scrollable overflow — a phantom thumb that shows
-     only while the prompt is empty, because typing unmounts the placeholder.
-     Typed text already paints without that pixel.
-
-     `clip`, not `hidden`: setting an axis to hidden computes the other
-     axis's `visible` to `auto`, which turns this pure-paint element into a
-     scroll box — and the approval-state placeholder is server-supplied text
-     (paths, URLs, SHAs) with no break opportunity, so the reserved horizontal
-     scrollbar would eat the entire 16px line. And both axes, not just y: left
-     visible, that same unbreakable text propagates sideways overflow into the
-     wrapper — whose overflow-x computes to auto alongside its overflow-y —
-     and paints a 16px horizontal scrollbar there instead. clip contains the
-     element on both axes without creating a scroll container anywhere. The
-     editor above gets away with hidden only because pre-wrap +
-     wrap-break-word means it can never overflow horizontally. */
-  :root[data-fork="noahhendrickson-t3code"]
-    [data-fork-composer-prompt]
-    :has(> [data-testid="composer-editor"])
-    ~ div {
-    overflow: clip;
   }
 }
 
@@ -1594,7 +1599,7 @@
 }
 
 /* A PR badge's number takes its glyph's state ink, in the composer and the
-   sidebar. A settled slim row mutes the whole tone span, number included. */
+   sidebar. */
 :root[data-fork="noahhendrickson-t3code"]
   :is([data-fork-pr-chip], [data-fork-sidebar-pr-badge])
   .text-secondary-label {
@@ -3080,15 +3085,6 @@
   border-color: var(--fork-composer-border);
 }
 
-/* ── Subagent spawn tree (fork-subagent-spawn-card) ─────────────────────────
-   A card's buttons take the same 4% lift every outline action does, in the
-   spawn tree and on a completion notice, which sits outside any tree. */
-:root[data-fork="noahhendrickson-t3code"]:is(.dark, [data-fork-theme="basic"])
-  [data-fork-subagent-card]
-  :is(button[data-fork-subagent-toggle], button[data-fork-subagent-open]):hover {
-  background-color: var(--fork-outline-hover-bg);
-}
-
 /* ── Sidebar sweep badge (sidebar-v2-row-action-hit-area) ───────────────────
    Upstream's sweep-to-settle badge is a --primary tint with a --primary/40
    hairline: on the fork palettes --primary is the white action tone, so the
@@ -3276,13 +3272,6 @@
   @starting-style {
     opacity: 0;
   }
-}
-
-/* Live words share the prompt's scrollport, at every width. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-prompt]:has(> [data-fork-dictation-preview]) {
-  max-height: var(--fork-composer-prompt-cap);
-  overflow-y: auto;
 }
 
 /* Empty prompt: the words take the editor's place. It stays mounted and

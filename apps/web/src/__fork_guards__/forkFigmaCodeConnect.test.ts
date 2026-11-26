@@ -107,8 +107,6 @@ const CONNECTED_NODES = [
   "72-955",
   "72-1081",
   "91-738",
-  "99-768",
-  "99-774",
   "99-1032",
   "124-949",
   "242-178",
@@ -126,6 +124,9 @@ const CONNECTED_NODES = [
   "323-1260",
   "327-732",
   "327-886",
+  // Nov 26 sync: one Provider mark set for every provider, split draft starters.
+  "299-6887",
+  "507-12656",
 ];
 
 describe("fork guard: fork-figma-code-connect", () => {
@@ -144,8 +145,8 @@ describe("fork guard: fork-figma-code-connect", () => {
       "utf8",
     );
     // Every glyph on the kit's Icons page, each node once.
-    expect(batch.components).toHaveLength(275);
-    expect(new Set(batch.components.map((icon) => icon.url)).size).toBe(275);
+    expect(batch.components).toHaveLength(277);
+    expect(new Set(batch.components.map((icon) => icon.url)).size).toBe(277);
     for (const icon of batch.components) {
       expect(icon.url.startsWith(KIT_URL), icon.component).toBe(true);
       expect(exports(shim, icon.component), icon.component).toBe(true);

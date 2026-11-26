@@ -515,6 +515,11 @@
       padding-inline: calc(var(--spacing) * 1.5);
     }
 
+    /* The sidebar's Code / Chat switch sets its wide tabs closer together. */
+    &[data-fork-sidebar-mode-tabs] {
+      gap: calc(var(--spacing) * 0.25);
+    }
+
     /* A plain SegmentedTab has no border, so its line is drawn inside rather than adding one. */
     & > [data-fork-segmented-tab]:not([data-fork-tab])[data-pressed] {
       box-shadow: inset 0 0 0 1px var(--fork-segmented-line);
@@ -1609,16 +1614,28 @@
   --fork-context-chip-bg: var(--fork-glass-picture-tint);
   --fork-context-chip-bg-hover: var(--fork-glass-picture-tint-hover);
 
-  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
+  &
+    :is(
+      [data-fork-composer-vessel],
+      [data-fork-composer-status-chip="stash"],
+      [data-fork-draft-launchpad-card]
+    ) {
     -webkit-backdrop-filter: var(--fork-glass-picture-blur);
     backdrop-filter: var(--fork-glass-picture-blur);
+  }
+
+  & :is([data-fork-draft-launchpad-card], [data-fork-composer-status-chip="stash"]) {
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+  }
+
+  & [data-fork-composer-status-chip="stash"] {
+    --fork-composer-control-hover: var(--fork-black-8);
   }
 
   & [data-fork-draft-launchpad-card] {
     --card: var(--fork-glass-picture-tint);
     --contrast-border: var(--fork-composer-border);
     --contrast-foreground: #fff;
-    --contrast-muted-foreground: rgb(255 255 255 / 92%);
     --accent: var(--fork-composer-control-hover);
     --contrast-accent-foreground: #fff;
   }
@@ -1632,6 +1649,7 @@
     :is(
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
+      [data-fork-composer-status-chip="stash"],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
     color: var(--fork-white);
@@ -2108,16 +2126,25 @@
       [data-fork-composer-action="attach"],
       [data-fork-composer-action="dictate"],
       [data-chat-provider-model-picker-traits],
+      [data-fork-composer-status-chip="stash"],
       [data-fork-composer-control-row] :is(button, [data-slot="button"], [data-fork-context-chip])
     ) {
     color: var(--fork-white);
+  }
+
+  & :is([data-fork-draft-launchpad-card], [data-fork-composer-status-chip="stash"]) {
+    --contrast-muted-foreground: rgb(255 255 255 / 92%);
+  }
+
+  & [data-fork-composer-status-chip="stash"] {
+    --fork-composer-control-hover: var(--fork-black-16);
+    box-shadow: inset 0 0 0 1px var(--fork-white-16);
   }
 
   & [data-fork-draft-launchpad-card] {
     --card: rgb(0 0 0 / 16%);
     --contrast-border: rgb(255 255 255 / 12%);
     --contrast-foreground: #ffffff;
-    --contrast-muted-foreground: rgb(255 255 255 / 92%);
     /* Folder glyphs: the glass's quiet ink, so they tint with the picture under the card. */
     --contrast-icon-muted: rgb(255 255 255 / 65%);
     --accent: rgb(255 255 255 / 10%);
@@ -2139,6 +2166,7 @@
   [data-chat-column-maximized-away][data-fork-draft-hero]
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
+    [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
     [data-fork-draft-launchpad-card]
   ) {
   background: var(--fork-composer-vessel-bg);
@@ -2148,6 +2176,13 @@
 
   &::before {
     content: none;
+  }
+
+  &[data-fork-composer-status-chip="stash"]:hover {
+    background-image: linear-gradient(
+      var(--fork-composer-control-hover),
+      var(--fork-composer-control-hover)
+    );
   }
 }
 
@@ -2191,6 +2226,15 @@
     box-shadow: none;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+  }
+
+  & [data-fork-composer-status-chip="stash"] {
+    --fork-composer-control-hover: var(--fork-white-10);
+    background-color: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    scale: none;
   }
 
   & [data-fork-composer-vessel]::after {

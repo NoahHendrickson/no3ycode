@@ -80,6 +80,9 @@ function layerElectronWindow(destroyAll: Effect.Effect<void> = Effect.void) {
     reveal: () => Effect.void,
     sendAll: () => Effect.void,
     destroyAll,
+    /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+    hideAll: Effect.succeed([]),
+    /* fork:end fork-update-install-hide */
     syncAllAppearance: () => Effect.void,
   });
 }

@@ -21,7 +21,12 @@ const ENTRIES: DraftProjectPillViewChoices["entries"] = (
     ["marketing-site", "emerald"],
   ] as const
 ).map(([title, color]) => ({
-  group: { projectKey: title, displayName: title },
+  group: {
+    projectKey: title,
+    displayName: title,
+    pinned: title === "no3ycode",
+    memberProjects: [],
+  },
   targetProject: {
     environmentId,
     workspaceRoot: `/Users/story/${title}`,
@@ -49,6 +54,9 @@ function Composer(props: { readonly selection: Selection; readonly pending?: boo
       setKind(next === NO_PROJECT_VALUE ? "no-project" : "project");
     },
     noProjectEnvironmentId: environmentId,
+    recentKeys: ENTRIES.map((entry) => entry.group.projectKey),
+    canPin: () => true,
+    togglePin: () => {},
     selection:
       kind === "project"
         ? { kind, label: label ?? "no3ycode" }

@@ -3,7 +3,7 @@
    providers keep their instance icon. Hosts restyle the marks only through --fork-mark-ink,
    --fork-mark-cutout and --fork-mark-size (Codex's alone through --fork-codex-mark-size). */
 import { ProviderDriverKind } from "@t3tools/contracts";
-import type { CSSProperties, JSX } from "react";
+import type { CSSProperties, JSX, ReactNode } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { cn } from "~/lib/utils";
@@ -61,6 +61,27 @@ export function hasForkProviderMark(driver: ProviderDriverKind): boolean {
 export function ForkProviderMark(props: { readonly driver: ProviderDriverKind }) {
   const Mark = FORK_MARK_BY_DRIVER[props.driver];
   return Mark ? <Mark /> : null;
+}
+
+/** The fork's mark for `driver` at `size`, or `fallback` for a provider it draws none for. A null
+    driver (a linked environment's task names its driver only as a label) always takes the fallback. */
+export function ForkProviderMarkOr(props: {
+  readonly driver: ProviderDriverKind | null;
+  readonly size: string;
+  readonly fallback: ReactNode;
+  readonly className?: string | undefined;
+}) {
+  const Mark = props.driver === null ? undefined : FORK_MARK_BY_DRIVER[props.driver];
+  if (Mark === undefined) return props.fallback;
+  return (
+    <span
+      aria-hidden
+      className={cn("flex shrink-0 items-center justify-center", props.className)}
+      style={{ "--fork-mark-size": props.size } as CSSProperties}
+    >
+      <Mark />
+    </span>
+  );
 }
 
 /** The fork marks' brand colours, for a host that tints a surface behind them. */

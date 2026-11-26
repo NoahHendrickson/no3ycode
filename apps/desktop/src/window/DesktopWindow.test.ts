@@ -314,6 +314,9 @@ function layerTest(input: {
     reveal: (window) => Effect.sync(() => input.onReveal?.(window)),
     sendAll: () => Effect.void,
     destroyAll: input.destroyAll ?? Effect.void,
+    /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+    hideAll: Effect.succeed([]),
+    /* fork:end fork-update-install-hide */
     syncAllAppearance: (sync) =>
       input.appearanceWindows === undefined
         ? sync(input.window, { titleBarOverlay: true })
@@ -444,6 +447,9 @@ const makeSplashScenario = (createOutcomes: readonly (Electron.BrowserWindow | n
       reveal: (window) => Ref.update(revealedWindows, (windows) => [...windows, window]),
       sendAll: () => Effect.void,
       destroyAll: Effect.void,
+      /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+      hideAll: Effect.succeed([]),
+      /* fork:end fork-update-install-hide */
       syncAllAppearance: (sync) =>
         fallbackWindow ? sync(fallbackWindow, { titleBarOverlay: true }) : Effect.void,
     } satisfies ElectronWindow.ElectronWindow["Service"];

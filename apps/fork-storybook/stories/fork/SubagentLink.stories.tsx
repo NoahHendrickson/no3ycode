@@ -4,10 +4,13 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { ContextChip, ContextChipLabel } from "~/components/ContextChip";
-import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { ThreadContextChip } from "~/components/ThreadContextChip";
 import type { ForkSubagentLinkKind } from "~/custom/forkSubagentLinkLogic";
-import { forkSubagentLinkToneStyle, SubagentLinkMark } from "~/custom/ForkSubagentLinkChip";
+import {
+  forkSubagentLinkToneStyle,
+  SubagentLinkMark,
+  SubagentLinkProviderIcon,
+} from "~/custom/ForkSubagentLinkChip";
 
 import { Row, Stack } from "../Specimen.tsx";
 
@@ -54,11 +57,7 @@ function SubagentLink({
       shape="capsule"
       style={forkSubagentLinkToneStyle(provider)}
     >
-      <ProviderInstanceIcon
-        driverKind={ProviderDriverKind.make(provider)}
-        displayName={provider}
-        className="z-auto [zoom:0.8]"
-      />
+      <SubagentLinkProviderIcon driver={ProviderDriverKind.make(provider)} displayName={provider} />
       <ContextChipLabel>{title}</ContextChipLabel>
       <SubagentLinkMark kind={status === "idle" ? null : status} seed={threadId} />
     </ContextChip>

@@ -343,36 +343,44 @@ describe("fork guard: fork-composer-shell", () => {
     expect(frameOutline?.body).toMatch(/display:\s*none/u);
   });
 
-  it("moves the desktop scrollport to the prompt wrapper and clips its placeholder", () => {
-    const isDesktop = (rule: (typeof rules)[number]) =>
-      rule.atRules.some((atRule) => /@media\s*\(\s*width\s*>=\s*40rem\s*\)/u.test(atRule));
+  it("moves the scrollport to the prompt wrapper at every width and clips its placeholder", () => {
+    const unscoped = (rule: (typeof rules)[number]) =>
+      rule.atRules.length === 0 && rule.selector.replace(/\s+/gu, " ").startsWith(MARKER);
     const scrollport = rules.find(
       (rule) =>
-        isDesktop(rule) &&
-        rule.selector.includes("[data-fork-composer-prompt]") &&
-        !rule.selector.includes('[data-testid="composer-editor"]'),
+        unscoped(rule) &&
+        /\[data-fork-composer-prompt\]$/u.test(rule.selector) &&
+        rule.body.includes("max-height"),
     );
-    // The cap holds 12.5rem of prompt over whatever block padding the prompt wears.
-    expect(theme).toMatch(
-      /--fork-composer-prompt-cap:\s*calc\(12\.5rem \+ 2 \* var\(--fork-composer-prompt-pad-block, 4px\)\)/u,
+    // The cap scales with the viewport over whatever block padding the prompt wears,
+    // staying tighter on coarse-pointer touch devices (iOS keeps dvh when the keyboard opens).
+    expect(scrollport?.body).toMatch(/--fork-composer-prompt-max:\s*min\(45dvh,\s*36rem\)/u);
+    expect(scrollport?.body).toMatch(
+      /--fork-composer-prompt-cap:\s*calc\(\s*var\(--fork-composer-prompt-max\)\s*\+\s*2\s*\*\s*var\(--fork-composer-prompt-pad-block,\s*4px\)\s*\)/u,
     );
     expect(scrollport?.body).toMatch(/max-height:\s*var\(--fork-composer-prompt-cap\)/u);
     expect(scrollport?.body).toMatch(/overflow-y:\s*auto/u);
 
+    const touchCap = rules.find(
+      (rule) =>
+        rule.atRules.some((atRule) => /@media\s*\(\s*pointer:\s*coarse\s*\)/u.test(atRule)) &&
+        rule.selector.includes("[data-fork-composer-prompt]"),
+    );
+    expect(touchCap?.body).toMatch(/--fork-composer-prompt-max:\s*min\(30dvh,\s*18rem\)/u);
+
     const editor = rules.find(
       (rule) =>
-        isDesktop(rule) &&
+        unscoped(rule) &&
         rule.selector.includes("[data-fork-composer-prompt]") &&
         rule.selector.includes('[data-testid="composer-editor"]') &&
-        !/~\s*div/u.test(rule.selector),
+        !/~\s*div/u.test(rule.selector) &&
+        rule.body.includes("max-height"),
     );
     expect(editor?.body).toMatch(/max-height:\s*none/u);
     expect(editor?.body).toMatch(/overflow-y:\s*hidden/u);
 
-    // No inline-end overhang at any width, so every prompt scrollport's thumb sits in the
+    // No inline-end overhang at any width, so the prompt scrollport's thumb sits in the
     // content column instead of 4px out in the surface padding.
-    const unscoped = (rule: (typeof rules)[number]) =>
-      rule.atRules.length === 0 && rule.selector.replace(/\s+/gu, " ").startsWith(MARKER);
     const overhang = rules.find(
       (rule) =>
         unscoped(rule) &&
@@ -384,7 +392,8 @@ describe("fork guard: fork-composer-shell", () => {
     const editorEnd = rules.find(
       (rule) =>
         unscoped(rule) &&
-        /\[data-fork-composer-prompt\]\s+\[data-testid="composer-editor"\]$/u.test(rule.selector),
+        /\[data-fork-composer-prompt\]\s+\[data-testid="composer-editor"\]$/u.test(rule.selector) &&
+        rule.body.includes("margin-inline-end"),
     );
     expect(editorEnd?.body).toMatch(/margin-inline-end:\s*0/u);
     // The placeholder and live dictation words wrap at the editor's text column.
@@ -398,7 +407,7 @@ describe("fork guard: fork-composer-shell", () => {
 
     const placeholder = rules.find(
       (rule) =>
-        isDesktop(rule) &&
+        unscoped(rule) &&
         /:has\(>\s*\[data-testid="composer-editor"\]\)\s*~\s*div/u.test(rule.selector) &&
         rule.body.includes("overflow"),
     );

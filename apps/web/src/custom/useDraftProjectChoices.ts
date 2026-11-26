@@ -24,6 +24,7 @@ import { toastManager } from "~/components/ui/toast";
 
 import { type DraftId, useComposerDraftStore } from "~/composerDraftStore";
 import { useScratchProject } from "~/hooks/useScratchProject";
+import { useProjectPin } from "~/hooks/useProjectGroupUpdate";
 import { useClientSettings } from "~/hooks/useSettings";
 import {
   buildSidebarProjectPickerEntries,
@@ -160,6 +161,9 @@ export function useDraftProjectChoices(props: {
     preferredProjectRef: activeProjectRef,
   });
   const entryByKey = new Map(entries.map((entry) => [entry.group.projectKey, entry] as const));
+  // One ranking feeds the menu's "Recent" sort and the launchpad.
+  const recentRanking = rankRecentProjectEntries(entries, threads, entries.length);
+  const { canPinProjectGroup, toggleProjectGroupPin } = useProjectPin();
   // A pick shows on the pill the moment it is made; the draft itself moves
   // once the project's defaults resolve, and Send waits for that (the
   // composer reads the same pending state).
@@ -189,9 +193,7 @@ export function useDraftProjectChoices(props: {
   // No repository yet (unassigned, or No project): the launchpad offers the recent projects' work.
   const needsProject = selection.kind !== "project";
   const recentEntries =
-    needsProject && draftId !== null
-      ? rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)
-      : null;
+    needsProject && draftId !== null ? recentRanking.slice(0, QUICK_PICK_LIMIT) : null;
 
   const reportAssignFailure = (displayName: string, error: unknown) => {
     console.error(error);
@@ -239,7 +241,10 @@ export function useDraftProjectChoices(props: {
 
   return {
     entries,
+    recentKeys: recentRanking.map((entry) => entry.group.projectKey),
     recentEntries,
+    canPin: canPinProjectGroup,
+    togglePin: toggleProjectGroupPin,
     selection,
     needsProject,
     value,
@@ -255,12 +260,12 @@ export type DraftProjectChoices = ReturnType<typeof useDraftProjectChoices>;
     and the dispatcher. */
 export type DraftProjectMenuChoices = Pick<
   DraftProjectChoices,
-  "value" | "pick" | "noProjectEnvironmentId"
+  "value" | "pick" | "noProjectEnvironmentId" | "recentKeys" | "canPin" | "togglePin"
 > & {
   readonly entries: ReadonlyArray<{
     readonly group: Pick<
       DraftProjectChoices["entries"][number]["group"],
-      "projectKey" | "displayName"
+      "projectKey" | "displayName" | "pinned" | "memberProjects"
     >;
     readonly targetProject: ProjectFaviconProject;
   }>;

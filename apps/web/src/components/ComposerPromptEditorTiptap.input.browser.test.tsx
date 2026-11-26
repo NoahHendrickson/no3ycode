@@ -277,10 +277,7 @@ it.each([
     await using screen = await mountEditor(value);
     const { editor } = screen;
     const modB = isMacPlatform(navigator.platform) ? "{Meta>}b{/Meta}" : "{Control>}b{/Control}";
-    await act(async () => {
-      editor.commands.focus("end");
-    });
-    await vi.waitFor(() => expect(document.activeElement).toBe(editor.view.dom));
+    await focusAt(editor, "end");
     await act(async () => {
       editor.commands.setTextSelection({
         from: prefixText.length + 1,
@@ -294,8 +291,8 @@ it.each([
     expect(textWithMark(editor, "markdownSource")).toEqual(source);
     const depth = undoDepth(editor.state);
     await userEvent.keyboard("{End}");
+    await vi.waitFor(() => expect(textWithMark(editor, "bold")).toEqual([word]));
     expect(serializeEditorDoc(editor.state.doc).value).toBe(`${prefix}**${word}** it`);
-    expect(textWithMark(editor, "bold")).toEqual([word]);
     expect(textWithMark(editor, "code")).toEqual(code);
     expect(undoDepth(editor.state)).toBe(depth);
     await act(async () => {

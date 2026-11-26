@@ -1,16 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  EnvironmentId,
-  ProviderDriverKind,
-  ProviderInstanceId,
-  type ServerProvider,
-} from "@t3tools/contracts";
+import { EnvironmentId, type ServerProvider } from "@t3tools/contracts";
 import { type ComponentProps, useState } from "react";
 
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { UsageLimitsPooled } from "~/components/usage/UsageLimitsPooled";
 import { UsageCircleMeter, UsageMeter } from "~/custom/UsageMeter";
 
+import { serverProvider } from "../fixtures/serverProvider.ts";
 import { Row, Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
 
@@ -70,21 +66,11 @@ function provider(
   windows: NonNullable<ServerProvider["usageLimits"]>["windows"],
 ): ServerProvider {
   const checkedAt = new Date().toISOString();
-  return {
-    instanceId: ProviderInstanceId.make(driver),
-    driver: ProviderDriverKind.make(driver),
-    displayName,
-    enabled: true,
-    installed: true,
-    version: null,
-    status: "ready",
+  return serverProvider(driver, displayName, {
     auth: { status: "authenticated", email },
     checkedAt,
-    models: [],
-    slashCommands: [],
-    skills: [],
     usageLimits: { checkedAt, windows },
-  };
+  });
 }
 
 const PRESENTATIONS: ComponentProps<typeof UsageLimitsPooled>["presentations"] = new Map([

@@ -54,6 +54,11 @@ const remoteDebuggingPort = process.env.T3CODE_DESKTOP_REMOTE_DEBUGGING_PORT?.tr
 const hostPlatform = NodeOS.platform();
 const parentPid = process.ppid;
 const parentWatchIntervalMs = 1_000;
+// fork:begin fork-dev-electron-no-startup-relaunch — see .fork/customizations.yaml#fork-dev-electron-no-startup-relaunch
+// A startup failure repeats on every retry. When another worktree's dev app holds the shared
+// profile lock, each retry also pulls that app's window to the front, which steals focus.
+const startupFailureWindowMs = 10_000;
+// fork:end fork-dev-electron-no-startup-relaunch
 
 NodeChildProcess.execFileSync(
   process.execPath,
@@ -130,6 +135,9 @@ function startApp() {
   });
 
   currentApp = app;
+  // fork:begin fork-dev-electron-no-startup-relaunch — see .fork/customizations.yaml#fork-dev-electron-no-startup-relaunch
+  const launchedAt = Date.now();
+  // fork:end fork-dev-electron-no-startup-relaunch
 
   app.once("error", () => {
     if (currentApp === app) {
@@ -148,6 +156,16 @@ function startApp() {
 
     const exitedAbnormally = signal !== null || code !== 0;
     if (!shuttingDown && !expectedExits.has(app) && exitedAbnormally) {
+      // fork:begin fork-dev-electron-no-startup-relaunch — see .fork/customizations.yaml#fork-dev-electron-no-startup-relaunch
+      if (Date.now() - launchedAt < startupFailureWindowMs) {
+        console.error(
+          `[dev-electron] Electron exited during startup (code ${code}, signal ${signal}); not relaunching. ` +
+            "If another worktree's dev app is open, it holds the shared t3code-dev profile. " +
+            "Rebuilding the desktop bundle or rerunning dev:desktop tries again.",
+        );
+        return;
+      }
+      // fork:end fork-dev-electron-no-startup-relaunch
       scheduleRestart();
     }
   });

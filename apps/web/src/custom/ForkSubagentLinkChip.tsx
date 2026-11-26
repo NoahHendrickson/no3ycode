@@ -49,6 +49,7 @@ import {
   isForkSubagentLinkThread,
   type ForkSubagentLinkKind,
 } from "./forkSubagentLinkLogic";
+import { ForkProviderMarkOr } from "./icons/ModelPickerProviderGlyph";
 import { sidebarV2CardTopStatus } from "./sidebarV2CardStatus";
 import {
   SidebarV2StatusMark,
@@ -231,6 +232,34 @@ export function SubagentLinkMark(props: {
   );
 }
 
+/** The child's provider logo: the model picker's own mark where the fork draws one (Claude's
+    mascot, Codex's cloud), else its instance icon.
+    @public — Storybook draws it. */
+export function SubagentLinkProviderIcon(props: {
+  readonly driver: ProviderDriverKind;
+  readonly displayName: string;
+  readonly iconUrl?: string | undefined;
+}) {
+  return (
+    <ForkProviderMarkOr
+      driver={props.driver}
+      size="1em"
+      className="inline-flex"
+      fallback={
+        <ProviderInstanceIcon
+          driverKind={props.driver}
+          displayName={props.displayName}
+          acpRegistryIconUrl={props.iconUrl}
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo at the mark's 80% zoom
+          className="z-auto [zoom:0.8]"
+          // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo follows the chip's font size
+          iconClassName="size-[1em]"
+        />
+      }
+    />
+  );
+}
+
 /** The capsule's tone for the child's provider driver; undefined keeps it neutral.
     @public — Storybook draws it. */
 export function forkSubagentLinkToneStyle(driver: string | undefined): CSSProperties | undefined {
@@ -302,14 +331,10 @@ export function ForkSubagentLinkChip(props: {
             style={forkSubagentLinkToneStyle(provider?.driver)}
           >
             {provider ? (
-              <ProviderInstanceIcon
-                driverKind={provider.driver}
+              <SubagentLinkProviderIcon
+                driver={provider.driver}
                 displayName={provider.displayName}
-                acpRegistryIconUrl={provider.iconUrl}
-                // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo at the mark's 80% zoom
-                className="z-auto [zoom:0.8]"
-                // oxlint-disable-next-line shadcn/no-arbitrary-values -- the logo follows the chip's font size
-                iconClassName="size-[1em]"
+                iconUrl={provider.iconUrl}
               />
             ) : null}
             <ContextChipLabel>{link.label || props.title}</ContextChipLabel>

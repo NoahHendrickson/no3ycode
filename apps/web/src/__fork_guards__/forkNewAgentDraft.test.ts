@@ -216,7 +216,7 @@ describe("fork guard: fork-new-agent-draft", () => {
     // and the label pair collapses with the workspace and branch labels.
     const pill = readSibling("../custom/DraftProjectPill.tsx");
     const choices = readSibling("../custom/useDraftProjectChoices.ts");
-    const menu = readSibling("../custom/DraftProjectMenuPopup.tsx");
+    const menu = readSibling("../custom/DraftProjectPicker.tsx");
     expect(pill).toContain('data-testid="draft-project-pill"');
     expect(pill).toContain("data-composer-context-control");
     expect(pill).toContain("data-composer-label");
@@ -233,12 +233,30 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(choices).toContain(
       "isScratchProject(project, scratchWorkspaceRootFor(project.environmentId))",
     );
-    expect(menu).toContain('<span className="min-w-0 truncate">No project</span>');
+    expect(menu).toContain('{ value: NO_PROJECT_VALUE, label: "No project", entry: null }');
     expect(choices).toMatch(/const project = await openScratchProject\(noProjectEnvironmentId\);/u);
     // The chip and the quick picks share one menu, and every pick goes through one dispatcher.
     expect(menu).toMatch(
       /onValueChange=\{\(value\) => \{\s*if \(typeof value === "string"\) choices\.pick\(value\);/u,
     );
+    // The menu searches, sorts (custom/draftProjectPicker.logic) and pins with upstream's
+    // server-backed project pins, holding its order while open.
+    expect(menu).toContain("<ComboboxSearchInput");
+    expect(menu).toContain("orderDraftProjectEntries(choices.entries, sort, choices.recentKeys)");
+    expect(menu).toContain("<ProjectPinButton");
+    expect(menu).toContain("useOrderWhileOpen<PickerRow>(");
+    expect(choices).toContain(
+      "const { canPinProjectGroup, toggleProjectGroupPin } = useProjectPin();",
+    );
+    expect(menu).toMatch(
+      /endAddon=\{\s*<DraftProjectSortMenu sort=\{sort\} onSortChange=\{setSort\}/u,
+    );
+  });
+
+  it("starts a New agent draft with no project chosen, not on No project", () => {
+    const start = readSibling("../custom/useNewAgentDraft.ts");
+    const machineChip = readSibling("../custom/DraftMachineChip.tsx");
+    for (const source of [start, machineChip]) expect(source).not.toContain("openScratchProject");
   });
 
   it("centers the draft composer and grows its prompt until the thread starts", () => {

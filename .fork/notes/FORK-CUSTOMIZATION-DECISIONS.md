@@ -182,8 +182,8 @@ Related deep-dives that predate this file and stay where they are:
   `data-composer-prompt-scrollable` when `scrollHeight` cleared `max-h`. That needed a pure
   predicate, a sync helper, and three effect sites on the wrap latch — and still stranded a
   clamped→clamped draft switch with scrolling off (no resize, no second prompt effect). The
-  shipped answer deletes that machine: on `width >= 40rem` the existing
-  `data-fork-composer-prompt` wrapper owns `max-height: 12.5rem` + `overflow-y: auto`, and the
+  shipped answer deletes that machine: the existing `data-fork-composer-prompt` wrapper owns
+  `max-height: var(--fork-composer-prompt-cap)` + `overflow-y: auto` at every width, and the
   editor stays unclamped with `overflow-y: hidden` so Geist ink cannot inflate a scroll
   container. The guard's `not.toContain("data-composer-prompt-scrollable")` is a regression fence
   against bringing the toggle back, not an unexplained ban.

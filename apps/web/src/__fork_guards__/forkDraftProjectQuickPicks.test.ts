@@ -14,7 +14,9 @@ const launchpad = read("../custom/DraftLaunchpad.tsx");
 describe("fork guard: fork-draft-project-quick-picks", () => {
   it("ranks the launchpad's projects through the sidebar's own project order", () => {
     expect(choices).toContain("export const QUICK_PICK_LIMIT = 4;");
-    expect(choices).toContain("rankRecentProjectEntries(entries, threads, QUICK_PICK_LIMIT)");
+    // One ranking, shared with the project menu's Recent sort; the launchpad takes its head.
+    expect(choices).toContain("rankRecentProjectEntries(entries, threads, entries.length)");
+    expect(choices).toContain("recentRanking.slice(0, QUICK_PICK_LIMIT)");
     const logic = read("../components/Sidebar.logic.ts");
     const helperAt = logic.indexOf("export function rankRecentProjectEntries<");
     const helper = logic.slice(helperAt, logic.indexOf("fork:end", helperAt));

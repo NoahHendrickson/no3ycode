@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ProviderDriverKind, ProviderInstanceId, type ServerProvider } from "@t3tools/contracts";
+import { ProviderDriverKind } from "@t3tools/contracts";
 import type { CSSProperties } from "react";
 
 import { ComposerWorkspaceTriggerIcon } from "~/custom/ComposerWorkspaceFooter";
@@ -11,6 +11,7 @@ import type { IconSvgElement } from "~/custom/icons/hugeiconsFill";
 import { HugeGlyph } from "~/custom/icons/lucide-hugeicons";
 import {
   ForkProviderMark,
+  ForkProviderMarkOr,
   ModelPickerProviderGlyph,
 } from "~/custom/icons/ModelPickerProviderGlyph";
 import { ShieldOffFilledIcon } from "~/custom/icons/ShieldOffFilledIcon";
@@ -21,31 +22,17 @@ import { SidebarV2ProjectFolderMark } from "~/custom/SidebarV2ThreadCardMeta";
 import { StopSquareIcon } from "~/custom/StopSquareIcon";
 import { deriveProviderInstanceEntries } from "~/providerInstances";
 
+import { serverProvider } from "../fixtures/serverProvider.ts";
 import { Row, Stack } from "../Specimen.tsx";
 
 const CLAUDE = ProviderDriverKind.make("claudeAgent");
 const CODEX = ProviderDriverKind.make("codex");
 const CURSOR = ProviderDriverKind.make("cursor");
 
-const provider = (driver: ProviderDriverKind, displayName: string): ServerProvider => ({
-  instanceId: ProviderInstanceId.make(driver),
-  driver,
-  displayName,
-  enabled: true,
-  installed: true,
-  version: null,
-  status: "ready",
-  auth: { status: "authenticated" },
-  checkedAt: "2026-11-24T09:00:00.000Z",
-  models: [],
-  slashCommands: [],
-  skills: [],
-});
-
 const ENTRIES = deriveProviderInstanceEntries([
-  provider(CLAUDE, "Claude"),
-  provider(CODEX, "Codex"),
-  provider(CURSOR, "Cursor"),
+  serverProvider(CLAUDE, "Claude"),
+  serverProvider(CODEX, "Codex"),
+  serverProvider(CURSOR, "Cursor"),
 ]);
 
 // A folder in Hugeicons' data shape (the package is the app's, not this library's): a closed outline
@@ -134,6 +121,16 @@ export const ProviderMarks: Story = {
           >
             <ForkProviderMark driver={driver} />
           </span>
+        ))}
+      </Row>
+      <Row label="Mark or fallback">
+        {[CLAUDE, CODEX, CURSOR, null].map((driver) => (
+          <ForkProviderMarkOr
+            key={driver ?? "linked"}
+            driver={driver}
+            size="1.25rem"
+            fallback={<span className="size-5 rounded-full bg-muted" />}
+          />
         ))}
       </Row>
       <Row label="Picker glyph">

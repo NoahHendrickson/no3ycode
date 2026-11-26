@@ -74,6 +74,9 @@ const ElectronWindowOperation = Schema.Literals([
   "reveal-window",
   "send-window-message",
   "destroy-window",
+  /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+  "hide-window",
+  /* fork:end fork-update-install-hide */
 ]);
 
 export class ElectronWindowCreateError extends Schema.TaggedError<ElectronWindowCreateError>()(
@@ -127,6 +130,10 @@ export class ElectronWindow extends Context.Service<
     readonly reveal: (window: Electron.BrowserWindow) => Effect.Effect<void>;
     readonly sendAll: (channel: string, ...args: readonly unknown[]) => Effect.Effect<void>;
     readonly destroyAll: Effect.Effect<void>;
+    /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+    /** Hides every visible window and returns them, so a failed update install can reveal them. */
+    readonly hideAll: Effect.Effect<ReadonlyArray<Electron.BrowserWindow>>;
+    /* fork:end fork-update-install-hide */
     readonly syncAllAppearance: <E, R>(
       sync: (
         window: Electron.BrowserWindow,
@@ -410,6 +417,37 @@ export const make = Effect.gen(function* () {
         return yield* Effect.failCause(firstFailure);
       }
     }),
+    /* fork:begin fork-update-install-hide — see .fork/customizations.yaml#fork-update-install-hide */
+    hideAll: Effect.gen(function* () {
+      const hidden: Electron.BrowserWindow[] = [];
+      for (const window of yield* listWindows) {
+        if (yield* isWindowDestroyed(window)) {
+          continue;
+        }
+        const exit = yield* Effect.exit(
+          Effect.try({
+            try: () => {
+              if (!window.isVisible()) return false;
+              window.hide();
+              return true;
+            },
+            catch: (cause) =>
+              new ElectronWindowOperationError({
+                operation: "hide-window",
+                platform,
+                windowId: window.id,
+                channel: null,
+                cause,
+              }),
+          }),
+        );
+        if (Exit.isSuccess(exit) && exit.value) {
+          hidden.push(window);
+        }
+      }
+      return hidden;
+    }).pipe(Effect.withSpan("ElectronWindow.hideAll")),
+    /* fork:end fork-update-install-hide */
     syncAllAppearance: Effect.fn("desktop.electron.window.syncAllAppearance")(function* <E, R>(
       sync: (
         window: Electron.BrowserWindow,
