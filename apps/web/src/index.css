@@ -226,6 +226,11 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
   --text-sidebar-caption--line-height: calc(15 / 11);
   --text-sidebar-status: calc(var(--fork-sidebar-px, 1px) * 12);
   --text-sidebar-status--line-height: calc(14 / 12);
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+     Panel tab labels: one px under the Interface font size. */
+  --text-interface-label: calc(var(--text-base) - 1px);
+  --text-interface-label--line-height: calc(16 / 14);
+  /* fork:end fork-sprints */
   --spacing-sidebar-14: calc(var(--fork-sidebar-px, 1px) * 14);
   --spacing-sidebar-16: calc(var(--fork-sidebar-px, 1px) * 16);
   --spacing-sidebar-18: calc(var(--fork-sidebar-px, 1px) * 18);

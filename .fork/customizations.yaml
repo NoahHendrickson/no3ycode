@@ -5893,6 +5893,73 @@
   verify:
     - apps/web/src/__fork_guards__/forkGlassPreviewParking.test.ts
 
+- id: fork-thread-launch-cards
+  intent: >
+    Threads hang off the replies they belong to, as a light tree (maintainer's request,
+    2026-11-27, after Claude Projects' coordinator video): the threads a reply started hang under
+    it, one hooked row each, and a reply that a thread's work report started opens with that
+    thread's row. Any thread, sprint or Petal shows them.
+
+    Launches: session-logic lifts each `t3_thread_launch` call out of the work stream into a
+    "fork-thread-launch" entry (custom/threadLaunchCards/threadLaunch.logic: the wire keeps only
+    the result's threadId, so the title is the input's, and the call can be starting or failed);
+    MessagesTimeline.logic keeps it out of the superseded-attempt fold and stacks one run's
+    consecutive launches in one row; MessagesTimeline draws it. Not being a work entry, the
+    turn's "Worked for" fold never swallows it. placeLaunchesUnderReplies then moves a turn's
+    launches, as one group, onto the turn's last reply shown (forkLaunches), which draws them
+    between its text and its hover-only actions (TimelineAssistantRows), so the three hover as
+    one; a turn with no reply shown keeps them as a row where the calls happened.
+
+    Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
+    in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can
+    hold colons, so the row takes the longest known thread id the key starts with
+    (forkWorkReportThreadId). TimelineWorkEntryRow draws the notification as that thread's row,
+    title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
+
+    Questions and approvals: a report whose summary ends "has a question" / "needs an approval",
+    while its thread still waits on that request (the key ends with the shell's
+    pendingRuntimeRequest id), draws as the thread's row with its arm turned down (╭) over a card
+    (custom/threadLaunchCards/ForkThreadRequestCard): the question in the override's
+    ComposerPendingUserInputPanel, bordered and ruled into sections with only the question filled, a
+    typed answer as a third row under the options and Open thread at the end of the Submit row
+    (the override's afterOptions / afterActions slots); an approval in forkApprovalNoticeItem. The answer goes
+    straight to the thread. In a sprint it is also logged to ANSWERS.md in its folder
+    (sprintAnswerLine / withSprintAnswer, newest 20) with an owner-edits marker, so the sprint's
+    turn hook shows it on its next message; once settled the card stays, reading the question and
+    the answer back from ANSWERS.md (sprintAnswersFor), or the row says it asked when the answer
+    came from elsewhere. a sprint replies quietly to a question or approval report, and quietBotWakes then drops the turn but
+    keeps the report's card,
+    and a sprint's composer shows no digest asks (BotDigest), so the card is the only place.
+
+    A row (custom/threadLaunchCards/ForkThreadLaunchCards ForkThreadHookRow) reads the thread
+    live: a hook, the title, the sidebar's status mark, a failed thread's error, and a chip per
+    pull request (its links plus the linked and branch PR the composer chip shows), each followed
+    by its stage in muted text (threadPullRequestStage: the composer chip's open/draft/merged/closed,
+    an open PR's failing or running checks, and ready to merge as the next-step pill reads it;
+    nothing for an open PR with nothing to report or no snapshot yet). The row opens
+    the thread in a split beside the conversation (splitThreadStore.pair through
+    morphSplitPairs) where the window can split, else navigates to it; a chip opens its PR. A run
+    with more than THREAD_HISTORY_INLINE_WORK_ITEM_LIMIT work items defers its tool calls on the
+    wire, and a launch in it shows once that work is loaded. Web and desktop only.
+  tier: 4
+  files:
+    - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.ts
+    - apps/web/src/custom/threadLaunchCards/ForkThreadLaunchCards.tsx
+    - apps/web/src/custom/threadLaunchCards/ForkThreadRequestCard.tsx
+  shadows: []
+  watch:
+    - apps/web/src/session-logic.ts
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/custom/bots/quietBotWakes.ts
+    - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
+    - apps/web/src/custom/bots/BotDigest.tsx
+    - apps/web/src/components/chat/TimelineAssistantRows.tsx
+    - apps/web/src/overrides/components/chat/ComposerPendingUserInputPanel.tsx
+  verify:
+    - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts
+    - apps/web/src/custom/bots/quietBotWakes.test.ts
+    - apps/web/src/__fork_guards__/forkThreadLaunchCards.test.ts
 - id: fork-subagent-spawn-card
   intent: >
     Every subagent in the transcript, alone or in a batch, renders as one
@@ -8297,7 +8364,7 @@
     between the conversation and the right panel, never a right panel tab. It is the right panel's
     shell (PreviewPanelShell: left divider, resize handle, width remembered per bot, open and
     close motion), 320px by default and at least 280, with a header the height of the others
-    (36px on Inlet, fork-stage-header) whose bottom line meets theirs. Its yarn toggle sits after the details toggle, pressed while open, there and
+    (36px on Inlet, fork-stage-header) whose bottom line meets theirs. Its messages toggle (MessagesSquareIcon) sits after the details toggle, pressed while open, there and
     nowhere else. Its open state is one per bot, remembered on this device
     (botThreadsPanelStore), so it stays open as the owner moves between the bot's threads;
     opening a bot from its sidebar card while its work needs the owner opens it (Sidebar
@@ -8740,6 +8807,141 @@
   verify:
     - apps/web/src/custom/bots/botCrew.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+- id: fork-sprints
+  intent: >
+    A sprint is one long-running conversation the owner drives a piece of work through over
+    days, at a high level: it plans, starts threads that do the work, keeps track of them and
+    reports, and only acts when the owner or its own work speaks to it (maintainer's request,
+    2026-11-27, after Claude Projects' coordinator). It is a bot (tagged `bot`, then `sprint`,
+    custom/sprints/useCreateSprint), so the server links, briefs (CREW.md) and reports its work
+    exactly as a Petal's (fork-bot-work-threads, fork-bot-work-reports, fork-bot-crew-rules),
+    with no server change. isSprintThread needs both tags, since a subagent inherits `sprint`
+    without `bot`.
+
+    Unlike a Petal it belongs to a real project, picked when it starts (the New sprint dialog
+    off the Sprints row's plus, the open thread's project first), and launches its threads there
+    unless the work belongs to another project. Its folder sits under the No-project workspace
+    (sprints/<name>-<id>), out of the project's checkout, and is its working folder, so its
+    rules, hooks and memory work as a Petal's. Its seeded CLAUDE.md
+    (custom/sprints/sprintSeedFiles) keeps its turns to seconds (no builds, recordings, dev
+    servers or waiting on threads; every real job a thread), never creates scheduled tasks
+    unless asked in so many words, hands "after X, do Y" to the thread that owns X, and keeps
+    PLAN.md: a `Goal:` line the owner sets (optional at creation, no judge loop: the sprint
+    plans toward it, flags off-goal asks and says once when it looks met), a `Pace:` line
+    (check with me, or keep going: start the next step when a thread finishes), the
+    `Thread model` its threads run on (the owner's default for the project, at creation), and
+    phases. It has no JOB.md and no DIGEST.md. The dialog picks its own model with the
+    composer's model and effort menu (custom/sprints/SprintModelPicker; newest Sonnet at low
+    effort by default, any provider allowed, Ultrathink's prompt-prefix levels left out since
+    there is no prompt to carry them). Its rules reach Claude through CLAUDE.md and other
+    providers through AGENTS.md, which points at it. The dialog's optional "Also touches" menu
+    picks other projects on the same machine; CLAUDE.md lists them (title, id, path) so the sprint
+    plans across them from its first turn.
+
+    Its threads own their pull requests by default (the seeded CREW.md, new sprints only): open
+    one when the change is ready, link and watch it, fix failing checks and answer reviews, but
+    never merge, push to the default branch, delete, send or pay without the owner's approval;
+    CLAUDE.md says the same. CREW.md also gives threads the library's absolute path to save
+    reports and summaries in.
+
+    Its Threads panel has tabs (custom/sprints/SprintPanelTabs; the open tab per sprint in
+    sprintPanelState): Threads (the Petal list), Pull requests (custom/sprints/SprintPullRequests:
+    every PR of the threads the Threads tab lists, failing checks and merge-ready first, each
+    with its stage and thread; a row opens the PR; sprintPullRequests.logic), Goal
+    (custom/sprints/SprintGoal: the owner edits the goal and picks the Thread model with the
+    dialog's model menu; each save reads PLAN.md fresh and rewrites only its Goal or Thread
+    model line, withSprintGoal / withSprintThreadModel, and drops the PLAN.md owner-edit
+    marker), Library, Instructions and Memory, modelled on Claude Projects' one "Project
+    instructions" field and shared MEMORY.md (maintainer's request, 2026-11-27). Instructions is
+    CREW.md: the server adds it to every launched thread's first message, and CLAUDE.md imports
+    it with `@CREW.md`, so the sprint and its threads read one text and the generated rules stay
+    ours to update. Memory is MEMORY.md: CREW.md has each thread read it first and add dated
+    lines as it learns, and the turn hook shows the sprint its text whenever its checksum
+    changed. The file tabs are a plain editor (custom/sprints/SprintFileEditor) that reads
+    the file again when a run starts or ends, keeps the owner's draft and says when the sprint
+    rewrote the file under it (sprintFileEditor.logic). An Instructions save drops a marker in
+    .claude/owner-edits, and the turn hook shows the sprint that file's new text on its next
+    message, then removes the marker. The tabs sit in the panel header in place of its title: the open
+    tab shows its icon and name and names the panel, the others their icon alone with a tooltip;
+    on a switch the names open and close in place (a 0fr to 1fr grid column on the strip's own
+    240ms --ease-drawer glide, fade only under reduced motion).
+    On Threads, search, filter and sort sit beside the close button; a search replaces the tabs
+    until Escape. A sprint's panel starts at 380px (SPRINT_PANEL_DEFAULT_WIDTH) so they fit.
+    Its Threads list draws each thread on one line (BotThreadsRowView compact: mark, title, PR
+    mark, time), leaving the checkout to the thread.
+
+    A thread opened from a sprint opens in its panel, never in the main column or a split: the
+    panel's header turns into a back arrow and the thread's title, and its body is the thread's
+    own chat, composer included, embedded as a side chat is (custom/sprints/SprintChildConversation,
+    with ChatView's sideChatParentPanel, which ChatView hands BotThreadsPanel). openInSprintPanel
+    (sprintPanelState) does it for a Threads tab row, a thread or report row in the transcript
+    (fork-thread-launch-cards useOpenThreadBeside) and a thread link in the sprint's conversation
+    (ThreadContextChip, by the timeline row it sits in); back returns to the tabs.
+
+    The library, like a Claude Project's knowledge, holds files the owner adds in the dialog or
+    from the Library tab (custom/sprints/SprintContext, drop or Add files; a text file opens in
+    the same editor, an image or PDF says it cannot be shown) and outputs its threads save,
+    copied into context/ in its folder (the folder keeps its first name so existing sprints'
+    hooks and paths hold; custom/sprints/sprintContextFiles: text up to 1 MB as UTF-8, anything
+    else up to 20 MB as base64, through projects.writeFile's optional `encoding`, which the
+    server decodes, fenced in contracts project.ts and server WorkspaceFileSystem). A turn hook
+    lists their names with every message so files added between turns are seen. There is no
+    remove button: the server has no delete call, so the owner asks the sprint.
+
+    What the owner sends a sprint always steers into its running turn (ChatComposer
+    followUpBehavior), so a work report never makes them wait. Its conversation header keeps
+    only the details and Threads panel toggles (ChatView): no Float, Dock to right or Split
+    agent (SplitPaneHeaderControls paneActions; Unsplit stays while a launched thread is open
+    beside it), no terminal drawer or right panel toggle. It lists in its own Sprints
+    section above the Petals (custom/sprints/SidebarV2SprintsSection; folds like the Petals,
+    per device), as an ordinary thread card: isPetalThread keeps the mascot, its menu, the
+    Petals section and the Petal empty conversation for Petals alone. An empty sprint shows
+    starter chips instead (custom/sprints/SprintEmptyConversation, through BotEmptyConversation)
+    that write a prompt into the composer draft and never send it. Its Threads panel is the
+    Petal's, with tabs. Archiving a sprint wraps it up: its threads list again,
+    and unarchiving brings it back. Web and desktop only: the mobile app has no sprint support yet.
+  tier: 4
+  files:
+    - apps/web/src/custom/sprints/sprintThreads.ts
+    - apps/web/src/custom/sprints/sprintSeedFiles.ts
+    - apps/web/src/custom/sprints/useCreateSprint.ts
+    - apps/web/src/custom/sprints/useIsSprintThread.ts
+    - apps/web/src/custom/sprints/SidebarV2SprintsSection.tsx
+    - apps/web/src/custom/sprints/SprintGoal.tsx
+    - apps/web/src/custom/sprints/sprintModel.ts
+    - apps/web/src/custom/sprints/SprintModelPicker.tsx
+    - apps/web/src/custom/sprints/sprintContextFiles.ts
+    - apps/web/src/custom/sprints/useAddSprintContext.ts
+    - apps/web/src/custom/sprints/SprintContext.tsx
+    - apps/web/src/custom/sprints/sprintPanelState.ts
+    - apps/web/src/custom/sprints/SprintPanelTabs.tsx
+    - apps/web/src/custom/sprints/SprintFileEditor.tsx
+    - apps/web/src/custom/sprints/SprintChildConversation.tsx
+    - apps/web/src/custom/sprints/sprintFileEditor.logic.ts
+    - apps/web/src/custom/sprints/sprintPullRequests.logic.ts
+    - apps/web/src/custom/sprints/SprintPullRequests.tsx
+    - apps/web/src/custom/sprints/SprintEmptyConversation.tsx
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/chat/ChatComposer.tsx
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/ThreadContextChip.tsx
+    - apps/web/src/index.css
+    - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
+    - apps/web/src/custom/bots/botThreads.ts
+    - apps/web/src/custom/bots/BotThreadsPanel.tsx
+    - apps/web/src/custom/bots/BotMascot.tsx
+    - packages/contracts/src/project.ts
+    - apps/server/src/workspace/WorkspaceFileSystem.ts
+    - apps/server/src/workspace/WorkspaceFileSystem.test.ts
+  verify:
+    - apps/web/src/custom/sprints/sprintThreads.test.ts
+    - apps/web/src/custom/sprints/sprintPullRequests.logic.test.ts
+    - apps/server/src/workspace/WorkspaceFileSystem.test.ts
+    - apps/web/src/custom/sprints/sprintContextFiles.test.ts
+    - apps/web/src/custom/sprints/sprintFileEditor.logic.test.ts
+    - apps/web/src/__fork_guards__/forkSprints.test.ts
 - id: sidebar-v2-threads-fold
   intent: >
     When the thread list renders ungrouped (no status or project headers), the

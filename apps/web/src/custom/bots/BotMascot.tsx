@@ -16,8 +16,10 @@ import {
   botMascotBaseColor,
   botMascotSprite,
 } from "./botMascotArt";
+import { SprintEmptyConversation } from "../sprints/SprintEmptyConversation";
+import { isSprintThread } from "../sprints/sprintThreads";
 import { botMascotShape } from "./botMascotTags";
-import { isBotThread } from "./botThreads";
+import { isPetalThread } from "./botThreads";
 
 export function BotMascot(props: {
   readonly shape: BotMascotShape;
@@ -81,13 +83,18 @@ export function BotMascotLead(props: {
   );
 }
 
-/** A bot's empty conversation: its mascot, large, and what to say first. Other threads keep `fallback`. */
+/** A bot's empty conversation: a Petal's mascot, large, and what to say first, or a sprint's starter
+    prompts. Other threads keep `fallback`. */
 export function BotEmptyConversation(props: {
   readonly threadKey: string;
   readonly fallback: ReactNode;
 }) {
-  const shell = useQuietThreadShell(parseScopedThreadKey(props.threadKey));
-  if (shell === null || !isBotThread(shell.source)) return props.fallback;
+  const threadRef = parseScopedThreadKey(props.threadKey);
+  const shell = useQuietThreadShell(threadRef);
+  if (shell !== null && threadRef !== null && isSprintThread(shell.source)) {
+    return <SprintEmptyConversation sprintRef={threadRef} title={shell.title} />;
+  }
+  if (shell === null || !isPetalThread(shell.source)) return props.fallback;
   return (
     <div className="flex flex-col items-center gap-5" data-testid="bot-empty-conversation">
       <BotMascot shape={botMascotShape(shell.source)} mood="Idle" cell={6} />
@@ -99,6 +106,6 @@ export function BotEmptyConversation(props: {
 /** A bot's mascot before its title in the stage header. Other threads get nothing. */
 export function BotHeaderMascot(props: { readonly threadRef: ScopedThreadRef }) {
   const shell = useQuietThreadShell(props.threadRef);
-  if (shell === null || !isBotThread(shell.source)) return null;
+  if (shell === null || !isPetalThread(shell.source)) return null;
   return <BotMascot shape={botMascotShape(shell.source)} mood="Idle" fit={18} className="mr-2" />;
 }

@@ -42,7 +42,7 @@ export interface PanelLayoutControlsProps {
   onToggleThreadPanel: () => void;
   onToggleRightPanel: () => void;
   /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
-     The thread whose Threads panel the yarn toggle opens; it shows on a bot's conversation only. */
+     The thread whose Threads panel the messages toggle opens; it shows on a bot's conversation only. */
   botThreadsThreadRef?: ScopedThreadRef | null;
   /* fork:end fork-bot-work-threads */
 }

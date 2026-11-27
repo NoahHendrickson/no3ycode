@@ -8,6 +8,11 @@ import { isForkBotQuietReply } from "@t3tools/shared/forkBotTags";
 
 import type { TimelineEntry } from "~/session-logic";
 
+import {
+  forkWorkReportKey,
+  forkWorkReportRequestKind,
+} from "../threadLaunchCards/threadLaunch.logic";
+
 /** The run an entry belongs to, user messages and events included (unlike the fold helpers). */
 function entryOwningRunId(entry: TimelineEntry): RunId | null {
   switch (entry.kind) {
@@ -18,12 +23,24 @@ function entryOwningRunId(entry: TimelineEntry): RunId | null {
     case "html-render":
     case "mcp-app":
     case "sent-message":
+    case "fork-thread-launch":
       return entry.runId;
     case "work":
       return entry.entry.runId ?? null;
     case "event":
       return entry.projectedItem.item.runId;
   }
+}
+
+/** A work report of a thread's question or approval: it carries the card the owner answers on,
+    so it stays when the wake it started is quiet (fork-thread-launch-cards). */
+function isRequestReport(entry: TimelineEntry): boolean {
+  return (
+    entry.kind === "work" &&
+    entry.entry.itemType === "notification" &&
+    forkWorkReportKey(entry.id) !== null &&
+    forkWorkReportRequestKind(entry.entry.label) !== null
+  );
 }
 
 /** The owner answered or approved something in the run; the answer folds into this entry. */
@@ -94,6 +111,6 @@ export function withoutRuns(
   return entries.filter((entry, index) => {
     const runId = entryOwningRunId(entry);
     const start = runId === null ? undefined : startIndex.get(runId);
-    return start === undefined || index < start;
+    return start === undefined || index < start || isRequestReport(entry);
   });
 }

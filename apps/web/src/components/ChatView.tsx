@@ -477,6 +477,10 @@ import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 import { BotThreadsPanel } from "~/custom/bots/BotThreadsPanel";
 import { useBotThreadsPanelBot, useBotThreadsPanelOpen } from "~/custom/bots/useBotWorkOwner";
 /* fork:end fork-bot-work-threads */
+/* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+import { BotThreadsPanelToggle } from "~/custom/bots/BotThreadsPanelToggle";
+import { useIsSprintThread } from "~/custom/sprints/useIsSprintThread";
+/* fork:end fork-sprints */
 /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
 import { useStageHeaderParent } from "~/custom/stageColumns/stageHeaderParent";
 /* fork:end fork-stage-header */
@@ -1171,6 +1175,9 @@ export default function ChatView(props: ChatViewProps) {
      A bot reads like a chat: the composer alone, without project and checkout chips. */
   const isForkBotThread = useIsBotThread(activeThreadRef);
   /* fork:end fork-bots */
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+  const forkIsSprint = useIsSprintThread(activeThreadRef);
+  /* fork:end fork-sprints */
   const activeThreadKey = activeThreadRef ? scopedThreadKey(activeThreadRef) : null;
   const activeEnvironmentServerBrowser = useEnvironmentSupportsServerBrowser(
     activeThreadRef?.environmentId ?? null,
@@ -3882,7 +3889,22 @@ export default function ChatView(props: ChatViewProps) {
      One cluster, details toggle included, at the conversation header's end: not pinned to the
      window, and never split between the header and a panel. A maximized right panel hides the
      conversation, so the cluster moves into that panel's header. */
-  const panelToggleControls = <PanelLayoutControls {...panelToggleControlProps} />;
+  const panelToggleControls =
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+       A sprint only routes work: no terminal drawer or right panel, just details and its threads. */
+    forkIsSprint && activeThreadRef ? (
+      <>
+        <PanelLayoutControls
+          {...panelToggleControlProps}
+          showTerminalControl={false}
+          showRightPanelControl={false}
+        />
+        <BotThreadsPanelToggle threadRef={activeThreadRef} />
+      </>
+    ) : (
+      /* fork:end fork-sprints */
+      <PanelLayoutControls {...panelToggleControlProps} />
+    );
   /* fork:begin fork-split-threads — see .fork/customizations.yaml#fork-split-threads
      Split alone, pressed (Unsplit) in a split, just before the details toggle. The draft
      hero has no split to offer. */
@@ -3892,6 +3914,10 @@ export default function ChatView(props: ChatViewProps) {
     !embedded &&
     activeThreadRef &&
     activeProjectRef &&
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+       A sprint never starts a split; in one (a launched thread opened beside it) it keeps Unsplit. */
+    (!forkIsSprint || splitPane.split) &&
+    /* fork:end fork-sprints */
     // A provider-native subagent thread has no composer and never offers Split agent; inside a
     // pair it keeps Unsplit.
     splitAgentToggleShown(splitPane, isServerThread && composerMounted) ? (
@@ -3909,6 +3935,9 @@ export default function ChatView(props: ChatViewProps) {
       <SplitPaneHeaderControls
         panelToggleControls={panelToggleControls}
         splitAgentToggle={splitAgentToggle}
+        /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+        paneActions={!forkIsSprint}
+        /* fork:end fork-sprints */
         draftId={isLocalDraftThread ? draftId : null}
         threadRef={activeThreadRef}
       />
@@ -4804,6 +4833,9 @@ export default function ChatView(props: ChatViewProps) {
           rightPanelInline={inlineRightPanelOwnsTitleBar}
           animationsActive={panelAnimationsActive}
           animationDurationMs={panelAnimationDurationMs}
+          /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+          parentPanel={sideChatParentPanel}
+          /* fork:end fork-sprints */
         />
       ) : null}
       {/* fork:end fork-bot-work-threads */}

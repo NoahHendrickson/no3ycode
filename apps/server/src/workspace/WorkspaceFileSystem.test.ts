@@ -680,6 +680,34 @@ it.layer(layerTest, { excludeTestServices: true })("WorkspaceFileSystemLive", (i
       }),
     );
 
+    // fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+    it.effect("writes base64 contents as the bytes they encode, with no BOM added", () =>
+      Effect.gen(function* () {
+        const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;
+        const fileSystem = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const cwd = yield* makeTempDir;
+        // A BOM-led file being replaced: text saves keep the BOM, binary ones must not.
+        yield* fileSystem.writeFile(
+          path.join(cwd, "shot.png"),
+          Uint8Array.from([0xef, 0xbb, 0xbf]),
+        );
+        const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0x0a]);
+
+        yield* workspaceFileSystem.writeFile({
+          cwd,
+          relativePath: "shot.png",
+          contents: Buffer.from(png).toString("base64"),
+          encoding: "base64",
+        });
+
+        expect(Array.from(yield* fileSystem.readFile(path.join(cwd, "shot.png")))).toEqual(
+          Array.from(png),
+        );
+      }),
+    );
+    // fork:end fork-sprints
+
     it.effect("saves over an existing file without rescanning the workspace", () =>
       Effect.gen(function* () {
         const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;
