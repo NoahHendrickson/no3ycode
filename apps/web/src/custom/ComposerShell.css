@@ -242,9 +242,10 @@
   outline-offset: -2px;
 }
 
-/* The PR chip wears its state: a deep fill, soft glass rims (brighter along the top, fainter
-   along the bottom), and the state's ink on the glyph and number. A draft, or a PR whose state
-   is unknown, stays neutral. */
+/* The PR chip wears its state: a deep fill, the state's ink on the glyph and number, and an
+   edge. In dark mode the edge is soft glass rims (brighter along the top, fainter along the
+   bottom) and a halo; in light mode those blur to grey on the pale fill, so it is one hairline
+   in the ink. A draft, or a PR whose state is unknown, stays neutral. */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
   gap: calc(var(--spacing) * 1.5);
   padding-inline: calc(var(--spacing) * 2.25) calc(var(--spacing) * 2.5);
@@ -270,12 +271,7 @@
     [data-pr-state="closed"]
   ) {
   background: var(--fork-pr-chip-fill);
-  box-shadow:
-    inset 0 1.5px 2px -1px rgb(from var(--fork-pr-chip-ink) r g b / 32%),
-    inset 0 7px 8px -7px rgb(from var(--fork-pr-chip-ink) r g b / 18%),
-    inset 0 -1.5px 2px -1px rgb(from var(--fork-pr-chip-ink) r g b / 20%),
-    inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 8%),
-    0 0 2px 1px var(--fork-black-25);
+  box-shadow: var(--fork-pr-chip-edge);
 
   &:hover {
     background: var(--fork-pr-chip-fill-hover);
@@ -287,9 +283,11 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
+  --fork-pr-chip-edge: inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 22%);
+
   &[data-pr-state="open"] {
-    --fork-pr-chip-fill: #dcf5e6;
-    --fork-pr-chip-fill-hover: #cdeedb;
+    --fork-pr-chip-fill: #c8f2d6;
+    --fork-pr-chip-fill-hover: #b6ecc8;
     --fork-pr-chip-ink: #166534;
   }
   &[data-pr-state="merged"] {
@@ -305,6 +303,12 @@
 }
 
 :root[data-fork="noahhendrickson-t3code"].dark [data-fork-composer-status-chip="pull-request"] {
+  --fork-pr-chip-edge:
+    inset 0 1.5px 2px -1px rgb(from var(--fork-pr-chip-ink) r g b / 32%),
+    inset 0 7px 8px -7px rgb(from var(--fork-pr-chip-ink) r g b / 18%),
+    inset 0 -1.5px 2px -1px rgb(from var(--fork-pr-chip-ink) r g b / 20%),
+    inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 8%), 0 0 2px 1px var(--fork-black-25);
+
   &[data-pr-state="open"] {
     --fork-pr-chip-fill: #2f5e45;
     --fork-pr-chip-fill-hover: #31664f;
