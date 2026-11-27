@@ -10531,15 +10531,16 @@
     `message:delegated-task-question:<parent>:<request>`, source delegated_task; read by
     forkWorkReports forkDelegatedQuestionOf) renders, under any host, as the shared question card
     while that request is open, so the owner answers the child in place, and as the child's row
-    once answered; the coordinator keeps no ANSWERS.md (sprint-only). The server's notice tells
-    a parent to read the child's question with t3_pending_request and otherwise ask the user
-    itself; the rules overrule that for a coordinator (answer it only when the owner's
-    instructions settle it, never ask the owner it yourself), and a coordinator's own
-    message-mode question that only repeats a child question it read is dismissed as it appears
-    (custom/coordinator/coordinatorMirrors, useDismissCoordinatorMirrors in ChatView), so the
-    question shows inline only and nothing on the coordinator waits once the card is answered
-    (live test 2026-11-27: Codex coordinator re-asked a Claude child's AskUserQuestion). With no
-    host, an ordinary
+    once answered as the answered card (the question, a check and the answer), read from the
+    child's own answered user_input_request item (custom/coordinator/coordinatorAnswers; only an
+    answered card subscribes to its child, through a memoized atom), else the child's row; the
+    coordinator keeps no ANSWERS.md (sprint-only). The server's notice of a child's question
+    tells a parent to ask the user when the task does not settle it; for a coordinator parent
+    it says instead that the owner answers on the card and never to ask or restate it
+    (DelegatedTaskQuestionReactor, fenced; the tag is @t3tools/shared/forkBotTags
+    FORK_COORDINATOR_TAG, one spelling for server and web; live test 2026-11-27: a Codex
+    coordinator re-asked a Claude child's AskUserQuestion as its own question). With no host, an
+    ordinary
     thread draws the notice as before. Approvals do not wake the parent, so they wait in the
     child. Petals, sprints, subagents and side chats get no switch. Web-only: mobile has no
     switch or panel yet.
@@ -10551,8 +10552,7 @@
     - apps/web/src/custom/coordinator/CoordinatorPanel.tsx
     - apps/web/src/custom/coordinator/coordinatorThreadHost.tsx
     - apps/web/src/custom/coordinator/coordinatorDraft.ts
-    - apps/web/src/custom/coordinator/coordinatorMirrors.ts
-    - apps/web/src/custom/coordinator/useDismissCoordinatorMirrors.ts
+    - apps/web/src/custom/coordinator/coordinatorAnswers.ts
     - apps/web/src/custom/coordinator/SidebarV2CoordinatorsSection.tsx
     - apps/web/src/custom/SidebarV2ListSection.tsx
     - apps/web/src/custom/coordinator/CoordinatorDraftToggle.tsx
@@ -10563,6 +10563,9 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/custom/ComposerShell.css
+    - apps/server/src/orchestration-v2/DelegatedTaskQuestionReactor.ts
+    - apps/server/src/orchestration-v2/Orchestrator.control-reads.test.ts
+    - packages/shared/src/forkBotTags.ts
     - apps/web/src/components/Sidebar.logic.ts
     - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
     - apps/web/src/custom/sprints/SidebarV2SprintsSection.tsx
@@ -10585,7 +10588,8 @@
   verify:
     - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
     - apps/web/src/custom/coordinator/coordinatorDraft.test.ts
-    - apps/web/src/custom/coordinator/coordinatorMirrors.test.ts
+    - apps/web/src/custom/coordinator/coordinatorAnswers.test.ts
+    - apps/server/src/orchestration-v2/Orchestrator.control-reads.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
     - apps/web/src/__fork_guards__/forkSprints.test.ts
     - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts

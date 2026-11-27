@@ -158,9 +158,13 @@ describe("fork guard: fork-coordinator-threads", () => {
   });
 
   it("answers a delegated child's question on its card where the host answers inline", () => {
-    // ...and drops the coordinator's own re-ask of it, so it shows inline only.
-    expect(read("../components/ChatView.tsx")).toContain(
-      "useDismissCoordinatorMirrors(\n    forkCoordinatorRef,",
+    // A settled card keeps the question and its answer, read off the child.
+    const host = read("../custom/coordinator/coordinatorThreadHost.tsx");
+    expect(host).toContain("useChildQuestionAnswers(props.thread, props.reportKey, props.kind)");
+    expect(host).toContain("<ForkAnsweredRequestCard");
+    // The server words a coordinator's wake for the card, not for asking the owner itself.
+    expect(read("../../../server/src/orchestration-v2/DelegatedTaskQuestionReactor.ts")).toContain(
+      "isForkCoordinatorThread(parent.tags)",
     );
     const row = read("../components/chat/TimelineWorkEntryRow.tsx");
     expect(row).toContain(

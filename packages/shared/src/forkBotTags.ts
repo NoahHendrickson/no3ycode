@@ -28,6 +28,14 @@ export function isForkBotThread(tags: ReadonlyArray<string> | undefined): boolea
   return tags?.includes(FORK_BOT_THREAD_TAG) === true;
 }
 
+/** The tag that makes a thread a coordinator — see `.fork/customizations.yaml#fork-coordinator-threads`.
+    Here, beside the bot tags, so the server words its notices to one by the same spelling. */
+export const FORK_COORDINATOR_TAG = "coordinator";
+
+export function isForkCoordinatorThread(tags: ReadonlyArray<string> | undefined): boolean {
+  return tags?.includes(FORK_COORDINATOR_TAG) === true;
+}
+
 /** The tags a subagent inherits from its parent: every one but a bot's identity, so a bot's
     subagent is never another bot. */
 export function forkSubagentTags(

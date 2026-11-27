@@ -5,14 +5,18 @@
  * standing rules travel as the owner's message when it is switched on.
  */
 import { type OrchestrationV2ThreadShell, isListedThreadLineage } from "@t3tools/contracts";
-import { isForkBotThread } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_COORDINATOR_TAG,
+  isForkBotThread,
+  isForkCoordinatorThread,
+} from "@t3tools/shared/forkBotTags";
 
-export const FORK_COORDINATOR_TAG = "coordinator";
+export { FORK_COORDINATOR_TAG };
 
 export function isCoordinatorThread(shell: {
   readonly tags?: ReadonlyArray<string> | undefined;
 }): boolean {
-  return shell.tags?.includes(FORK_COORDINATOR_TAG) === true;
+  return isForkCoordinatorThread(shell.tags);
 }
 
 type CoordinatorShell = Pick<OrchestrationV2ThreadShell, "tags" | "lineage">;
