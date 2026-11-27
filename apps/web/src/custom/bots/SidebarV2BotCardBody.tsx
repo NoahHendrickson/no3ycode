@@ -15,7 +15,7 @@ import { BotCardStatusLine } from "./BotCardStatusLine";
 import { BotMascot, BotMascotTile } from "./BotMascot";
 import type { BotMascotMood } from "./botMascotArt";
 import { botMascotShape } from "./botMascotTags";
-import { type BotShell, isBotThread } from "./botThreads";
+import { type BotShell, isPetalThread } from "./botThreads";
 import type { BotWorkAttention } from "./botWork";
 
 /** How a list draws its cards: full, one line, or (Petals only) grid tiles. One value, so a
@@ -29,7 +29,7 @@ export function sidebarV2CardKind(
   shell: Pick<BotShell, "tags">,
   view: SidebarV2CardView,
 ): SidebarV2CardKind {
-  if (isBotThread(shell)) {
+  if (isPetalThread(shell)) {
     return view === "grid" ? "bot-grid" : view === "compact" ? "bot-compact" : "bot";
   }
   return view === "compact" ? "compact" : "card";

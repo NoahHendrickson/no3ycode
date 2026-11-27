@@ -28,6 +28,12 @@ import {
   mcpAppFromToolItem,
   sentMessageFromToolItem,
 } from "@t3tools/shared/toolOutput";
+/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+import {
+  type ForkThreadLaunch,
+  forkThreadLaunchFromToolItem,
+} from "./custom/threadLaunchCards/threadLaunch.logic";
+/* fork:end fork-thread-launch-cards */
 import {
   contextCompactionLabel,
   workEntryIndicatesToolFailure,
@@ -133,6 +139,15 @@ export type TimelineEntry = (
       readonly runId: RunId | null;
       readonly text: string;
     }
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  | {
+      readonly id: string;
+      readonly kind: "fork-thread-launch";
+      readonly createdAt: string;
+      readonly runId: RunId | null;
+      readonly launch: ForkThreadLaunch;
+    }
+  /* fork:end fork-thread-launch-cards */
   | {
       readonly id: string;
       readonly kind: "mcp-app";
@@ -722,6 +737,22 @@ export function deriveTimelineEntriesFromVisibleTurnItems(
       });
       continue;
     }
+
+    /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+    const forkLaunch =
+      item.type === "dynamic_tool" ? forkThreadLaunchFromToolItem(item) : undefined;
+    if (forkLaunch !== undefined) {
+      entries.push({
+        id: item.id,
+        kind: "fork-thread-launch",
+        createdAt,
+        runId: item.runId,
+        launch: forkLaunch,
+        ...attemptMetadata,
+      });
+      continue;
+    }
+    /* fork:end fork-thread-launch-cards */
 
     if (STANDALONE_V2_ITEM_TYPES.has(item.type)) {
       entries.push({

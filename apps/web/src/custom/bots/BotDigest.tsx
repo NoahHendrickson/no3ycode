@@ -35,6 +35,7 @@ import {
 } from "@t3tools/client-runtime/fork-bot-digest";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
 import { isListedBot } from "./botThreads";
+import { isSprintThread } from "../sprints/sprintThreads";
 import { BotChildApproval, BotChildQuestion } from "./BotChildRequests";
 import {
   BotDigestBanner,
@@ -63,8 +64,9 @@ const NO_DISMISSED: ReadonlyArray<string> = [];
     for any other thread, or while the bot has neither. */
 export function BotDigestAsks(props: { readonly threadRef: ScopedThreadRef | null }) {
   const bot = useQuietThreadShell(props.threadRef);
+  // A sprint answers its threads inline, on the card under the report (fork-thread-launch-cards).
   const botKey =
-    bot === null || !isListedBot(bot)
+    bot === null || !isListedBot(bot) || isSprintThread(bot.source)
       ? null
       : scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id));
   // Its answers are read off the conversation, so nothing draws until it loads.

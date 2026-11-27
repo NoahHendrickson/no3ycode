@@ -593,12 +593,19 @@ export const make = Effect.gen(function* () {
     const replacesFile = yield* fileSystem
       .exists(realTargetPath)
       .pipe(Effect.orElseSucceed(() => false));
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+    const binary = input.encoding === "base64";
+    /* fork:end fork-sprints */
     // readFile decodes the BOM away, so an editor save would otherwise drop it from the file.
     const keepsBom =
+      !binary &&
       replacesFile &&
       !input.contents.startsWith(UTF8_BOM) &&
       (yield* Effect.promise(() => startsWithUtf8Bom(realTargetPath)));
-    const contents = keepsBom ? UTF8_BOM + input.contents : input.contents;
+    const text = keepsBom ? UTF8_BOM + input.contents : input.contents;
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+    const contents = binary ? Buffer.from(input.contents, "base64") : text;
+    /* fork:end fork-sprints */
 
     yield* fileSystem.makeDirectory(path.dirname(realTargetPath), { recursive: true }).pipe(
       Effect.mapError(

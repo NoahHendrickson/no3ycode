@@ -555,6 +555,10 @@ export const ProjectWriteFileInput = Schema.Struct({
   cwd: TrimmedNonEmptyString,
   relativePath: Schema.NonEmptyString.check(Schema.isMaxLength(PROJECT_WRITE_FILE_PATH_MAX_LENGTH)),
   contents: Schema.String,
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+  /** `base64` carries binary contents (an image or a PDF); absent means UTF-8 text. */
+  encoding: Schema.optional(Schema.Literals(["utf8", "base64"])),
+  /* fork:end fork-sprints */
 });
 export type ProjectWriteFileInput = typeof ProjectWriteFileInput.Type;
 

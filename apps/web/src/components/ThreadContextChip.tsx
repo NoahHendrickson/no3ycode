@@ -1,6 +1,11 @@
 import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import type { ThreadContextRecord, ProjectId } from "@t3tools/contracts";
 import { Link, useNavigate } from "@tanstack/react-router";
+/* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+import { use } from "react";
+import { openInSprintPanel } from "~/custom/sprints/sprintPanelState";
+import { TimelineRowCtx } from "./chat/timelineRowContext";
+/* fork:end fork-sprints */
 import { MessagesSquareIcon } from "lucide-react";
 import { useGT } from "gt-react";
 
@@ -40,6 +45,10 @@ export function ThreadContextChip(props: {
   const project = useProject(projectId ? scopeProjectRef(environmentId, projectId) : null);
   const title = shell?.title?.trim() || metadata?.title.trim() || props.record.title;
   const navigate = useNavigate();
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+  // The conversation the chip is written in, when it is in one.
+  const forkRow = use(TimelineRowCtx) as { readonly threadRef: unknown } | null;
+  /* fork:end fork-sprints */
   return (
     <Tooltip>
       <TooltipTrigger
@@ -55,6 +64,20 @@ export function ThreadContextChip(props: {
                 to="/$environmentId/$threadId"
                 params={{ environmentId, threadId }}
                 onClick={(event) => {
+                  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+                     A thread linked in a sprint's conversation opens in the sprint's panel. */
+                  if (
+                    event.button === 0 &&
+                    !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) &&
+                    openInSprintPanel(
+                      (forkRow?.threadRef as Parameters<typeof openInSprintPanel>[0]) ?? null,
+                      { environmentId, threadId },
+                    )
+                  ) {
+                    event.preventDefault();
+                    return;
+                  }
+                  /* fork:end fork-sprints */
                   if (shell?.lineage.sideChat !== true || event.button !== 0) return;
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                   // A side chat opens as a tab beside its parent, not as its own page.

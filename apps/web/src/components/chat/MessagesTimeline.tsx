@@ -166,6 +166,9 @@ import { useForkTimelineRowsStamp } from "~/custom/forkStageStamps";
 import { BotEmptyConversation } from "~/custom/bots/BotMascot";
 import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
+/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+import { ForkThreadLaunchTimelineRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
+/* fork:end fork-thread-launch-cards */
 
 function timelineListStateFor(identity: string): {
   readonly identity: string;
@@ -1823,6 +1826,9 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
       {row.kind === "proposed-plan" ? <ProposedPlanTimelineRow row={row} /> : null}
       {row.kind === "html-render" ? <HtmlRenderTimelineRow row={row} /> : null}
       {row.kind === "sent-message" ? <SentMessageTimelineRow row={row} /> : null}
+      {/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */}
+      {row.kind === "fork-thread-launch" ? <ForkThreadLaunchTimelineRow row={row} /> : null}
+      {/* fork:end fork-thread-launch-cards */}
       {row.kind === "viewed-images" ? <ViewedImagesTimelineRow row={row} /> : null}
       {row.kind === "mcp-app" ? <McpAppTimelineRow row={row} /> : null}
       {row.kind === "working" ? <WorkingTimelineRow row={row} /> : null}

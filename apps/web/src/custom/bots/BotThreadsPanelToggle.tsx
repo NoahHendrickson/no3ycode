@@ -3,7 +3,7 @@
  * see `.fork/customizations.yaml#fork-bot-work-threads`.
  */
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { YarnIcon } from "../icons/lucide-hugeicons";
+import { MessagesSquareIcon } from "../icons/lucide-hugeicons";
 
 import { Toggle } from "~/components/ui/toggle";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
@@ -44,7 +44,7 @@ export function BotThreadsPanelToggleView(props: {
           size="sm"
           variant="ghost"
         >
-          <YarnIcon className="size-4" />
+          <MessagesSquareIcon className="size-4" />
         </Toggle>
       </TooltipTrigger>
       <TooltipPopup side="bottom">Toggle threads panel</TooltipPopup>

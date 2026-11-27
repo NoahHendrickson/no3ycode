@@ -152,6 +152,33 @@ describe("quiet bot wakes", () => {
     expect(messageTexts(rowsFor(errored))).toContain("Nothing to report.");
   });
 
+  it("drops a quiet wake a thread's question or approval started, all but its card", () => {
+    const report = (summary: string): TimelineEntry => ({
+      id: `turn-item:message:${encodeURIComponent("message:fork-bot-work-report:work-1:request-1")}`,
+      kind: "work",
+      createdAt: at(3),
+      entry: {
+        id: "report",
+        createdAt: at(3),
+        runId: "wake-1" as RunId,
+        label: summary,
+        tone: "info",
+        itemType: "notification",
+      },
+    });
+    const kept = (summary: string) => {
+      const entries = [
+        wake("wake-1", 2),
+        report(summary),
+        reply("wake-1", 4, "Nothing to report."),
+      ];
+      return withoutRuns(entries, quietBotWakeRunIds(entries, none)).map((entry) => entry.kind);
+    };
+    expect(kept("Rate limiting has a question")).toEqual(["work"]);
+    expect(kept("Rate limiting needs an approval")).toEqual(["work"]);
+    expect(kept("Rate limiting finished")).toEqual([]);
+  });
+
   it("drops a quiet wake from its prompt on, keeping a resumed subagent card in the earlier turn", () => {
     const card = item("wake-1", 2, { type: "subagent", status: "completed" });
     const entries = [
