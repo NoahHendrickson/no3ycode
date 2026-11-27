@@ -836,8 +836,11 @@ describe("fork guard: no3y-mobile-redesign", () => {
     expect(newAgent).toContain("picksProjectInPlace: true,");
     expect(newAgent).not.toContain("NewTaskProject");
     expect(newAgent).toContain("rankNo3yProjectTiles({");
-    // Projects as one column of glass rows: favicon and name only.
-    expect(newAgent).toContain("<No3yGlassLayer radius={ROW_HEIGHT / 2} />");
+    // Projects as one column of glass rows: favicon and name only, collapsing into a top
+    // dropdown with "What should we do?" below once picked.
+    expect(newAgent).toContain("<No3yGlassLayer radius={ROW_HEIGHT / 2}");
+    expect(newAgent).toContain("useNo3yProjectPickerMorph({");
+    expect(newAgent).toContain("What should we do?");
     // The list runs to the screen bottom and pads its end: its frame never follows the keyboard.
     expect(newAgent).toContain(
       'style={{ position: "absolute", top: props.topInset, bottom: 0, left: 0, right: 0 }}',

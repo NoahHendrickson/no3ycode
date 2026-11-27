@@ -7,7 +7,12 @@ import { describe, expect, it } from "vite-plus/test";
 
 import type { HomeProjectScope } from "../src/features/home/homeThreadList";
 import { makeThreadShellFixture } from "../src/test-fixtures";
-import { rankNo3yProjectTiles } from "./no3yProjectTiles";
+import {
+  no3yCollapsedRowTranslateY,
+  no3yExpandScrollOffset,
+  no3yRowVisibleForCollapse,
+  rankNo3yProjectTiles,
+} from "./no3yProjectTiles";
 
 const ENV = EnvironmentId.make("env-1");
 
@@ -75,5 +80,59 @@ describe("no3y New agent project rows", () => {
 
   it("narrows to every match when searching", () => {
     expect(rank({ searchQuery: "d" })).toEqual(["d"]);
+  });
+
+  it("maps any scrolled row to the top dropdown slot, clamps expand scroll, and bounds offscreen rows", () => {
+    expect(
+      no3yCollapsedRowTranslateY({ rowIndex: 0, scrollY: 0, headerOffset: 26, rowPitch: 56 }),
+    ).toBe(-26);
+    expect(
+      no3yCollapsedRowTranslateY({ rowIndex: 7, scrollY: 300, headerOffset: 26, rowPitch: 56 }),
+    ).toBe(-118);
+
+    const expand = (selectedIndex: number, rowCount = 15) =>
+      no3yExpandScrollOffset({
+        selectedIndex,
+        rowCount,
+        rowPitch: 56,
+        rowGap: 8,
+        topPadding: 20,
+        headerOffset: 26,
+        bottomInset: 260,
+        viewportHeight: 700,
+      });
+    expect(expand(2)).toBe(0);
+    expect(expand(8)).toBe(336);
+    // Binding clamp near the end of the list excludes a trailing gap after the last row:
+    // 20 + 26 + (10 * 56 - 8) + 260 - 700 = 158.
+    expect(expand(9, 10)).toBe(158);
+
+    expect(
+      no3yRowVisibleForCollapse({
+        rowIndex: 2,
+        scrollY: 0,
+        headerOffset: 26,
+        rowPitch: 56,
+        viewportHeight: 600,
+      }),
+    ).toBe(true);
+    expect(
+      no3yRowVisibleForCollapse({
+        rowIndex: 20,
+        scrollY: 0,
+        headerOffset: 26,
+        rowPitch: 56,
+        viewportHeight: 600,
+      }),
+    ).toBe(false);
+    expect(
+      no3yRowVisibleForCollapse({
+        rowIndex: 0,
+        scrollY: 0,
+        headerOffset: 26,
+        rowPitch: 56,
+        viewportHeight: 0,
+      }),
+    ).toBe(false);
   });
 });
