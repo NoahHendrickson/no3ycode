@@ -22,6 +22,28 @@ function canCoordinate(shell: CoordinatorShell): boolean {
   return !isForkBotThread(shell.tags) && isListedThreadLineage(shell.lineage);
 }
 
+/** A coordinator the sidebar's Coordinators section lists, and so none of its thread groups. */
+export function isListedCoordinator(thread: {
+  readonly archivedAt: string | null;
+  readonly lineage: CoordinatorShell["lineage"];
+  readonly source: { readonly tags?: ReadonlyArray<string> | undefined };
+}): boolean {
+  return (
+    thread.archivedAt === null &&
+    isCoordinatorThread(thread.source) &&
+    canCoordinate({ tags: thread.source.tags, lineage: thread.lineage })
+  );
+}
+
+/** The Coordinators section's threads, oldest first so a coordinator keeps its place. */
+export function listSidebarCoordinators<
+  T extends Parameters<typeof isListedCoordinator>[0] & { readonly createdAt: string },
+>(threads: ReadonlyArray<T>): T[] {
+  return threads
+    .filter(isListedCoordinator)
+    .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
+}
+
 /** Where the menu would offer "Make coordinator": a thread that can coordinate and does not yet. */
 export function canStartCoordinating(shell: CoordinatorShell): boolean {
   return canCoordinate(shell) && !isCoordinatorThread(shell);

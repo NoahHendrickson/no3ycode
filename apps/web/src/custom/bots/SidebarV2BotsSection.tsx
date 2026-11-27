@@ -22,10 +22,12 @@ import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascotArt";
 import { PetalLayout, PetalLayoutPicker } from "./PetalLayoutPicker";
 import type { SidebarV2CardView } from "./SidebarV2BotCardBody";
 
-export type SidebarV2ListSection = "bots" | "sprints" | "threads";
+export type SidebarV2ListSection = "bots" | "sprints" | "coordinators" | "threads";
 
 const COLLAPSED_SECTIONS_STORAGE_KEY = "t3code:fork:sidebar-v2-collapsed-list-sections:v1";
-const CollapsedSections = Schema.Array(Schema.Literals(["bots", "sprints", "threads"]));
+const CollapsedSections = Schema.Array(
+  Schema.Literals(["bots", "sprints", "coordinators", "threads"]),
+);
 const NONE_COLLAPSED: ReadonlyArray<SidebarV2ListSection> = [];
 
 /** Which of the two sections are folded, per device like the other collapse stores. */

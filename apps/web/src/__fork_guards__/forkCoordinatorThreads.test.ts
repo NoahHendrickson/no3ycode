@@ -7,6 +7,7 @@ import { ThreadId } from "@t3tools/contracts";
 import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
+import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import {
   canStartCoordinating,
   coordinatorMenuItems,
@@ -14,7 +15,10 @@ import {
   coordinatorMessage,
   FORK_COORDINATOR_TAG,
   isCoordinatorMenuId,
+  listSidebarCoordinators,
 } from "../custom/coordinator/coordinatorThreads";
+import { makeThreadFixture } from "../test-fixtures";
+import type { Thread } from "../types";
 
 const read = (path: string) =>
   NodeFS.readFileSync(NodeURL.fileURLToPath(new URL(path, import.meta.url)), "utf8");
@@ -43,6 +47,36 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(canStartCoordinating({ tags: [FORK_BOT_THREAD_TAG], lineage: root })).toBe(false);
     expect(canStartCoordinating({ tags: [], lineage: subagent })).toBe(false);
     expect(canStartCoordinating({ tags: [], lineage: { ...root, sideChat: true } })).toBe(false);
+  });
+
+  it("lists coordinators in their own sidebar section, never in the thread groups", () => {
+    const thread = (id: string, tags: ReadonlyArray<string>, archivedAt: string | null = null) => {
+      const base = makeThreadFixture({ id: id as Thread["id"] });
+      return { ...base, archivedAt, source: { ...base.source, tags } };
+    };
+    const plain = thread("plain", []);
+    const coordinator = thread("coordinator", [FORK_COORDINATOR_TAG]);
+    const archived = thread("archived", [FORK_COORDINATOR_TAG], "2026-11-27T00:00:00.000Z");
+    const petal = thread("petal", [FORK_BOT_THREAD_TAG, FORK_COORDINATOR_TAG]);
+    const threads = [plain, coordinator, archived, petal];
+    expect(listSidebarCoordinators(threads).map((row) => row.id)).toEqual(["coordinator"]);
+    expect(filterSidebarV2VisibleThreads(threads, null, new Set()).map((row) => row.id)).toEqual([
+      "plain",
+    ]);
+    // "Stop coordinating" drops the tag: it leaves the section and is back among the threads.
+    const stopped = { ...coordinator, source: { ...coordinator.source, tags: [] } };
+    expect(listSidebarCoordinators([plain, stopped])).toEqual([]);
+    expect(
+      filterSidebarV2VisibleThreads([plain, stopped], null, new Set()).map((row) => row.id),
+    ).toEqual(["plain", "coordinator"]);
+
+    const sidebar = read("../components/Sidebar.tsx");
+    expect(sidebar).toContain("<SidebarV2CoordinatorsRow");
+    expect(sidebar).toContain("coordinatorThreads.length === 0 ? null : (");
+    expect(sidebar).toContain('toggleListSectionCollapsed("coordinators")');
+    expect(read("../custom/coordinator/SidebarV2CoordinatorsSection.tsx")).toContain(
+      'label="Coordinators"',
+    );
   });
 
   it("starts a new thread as a coordinator from the draft's toggle, rules before the task", () => {

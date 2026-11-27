@@ -10492,8 +10492,18 @@
     are `/coordinate` in the composer (a built-in slash command: on a draft it turns the toggle
     on, on a thread the menu would offer "Make coordinator" it switches coordinating on; hidden
     elsewhere and once coordinating) and the thread menu in the sidebar or the chat header
-    ("Make coordinator", and "Stop coordinating" to switch back). A coordinator keeps its own
-    checkout and branch and hands the work to delegate_task children there, so several chunks
+    ("Make coordinator", and "Stop coordinating" to switch back). The sidebar lists coordinators
+    in their own Coordinators section (maintainer, 2026-11-27; custom/coordinator/
+    SidebarV2CoordinatorsSection on the frame it shares with Sprints, custom/SidebarV2ListSection),
+    after the Petals in Code and after New chat in Chat, the open mode's only: listed, unarchived,
+    tagged, no Petal or sprint (coordinatorThreads listSidebarCoordinators), oldest first, as
+    ordinary thread cards with their usual menu. It folds per device with the other list sections
+    (SidebarV2BotsSection's fold store), keeps the open coordinator's card while folded, has no
+    plus, and is hidden while there are none. A coordinator lists only there: Sidebar.logic's
+    filterSidebarV2VisibleThreads keeps it out of every thread group, so "Stop coordinating"
+    puts it back among them; its delegate_task children stay under it as before.
+    A coordinator keeps its own checkout and branch and hands the work to delegate_task
+    children there, so several chunks
     of one branch run while it stays free to talk; a sprint (fork-sprints) is the separate home
     for work across branches and projects.
     It stays as light as possible (maintainer, 2026-11-27): no default thread model, model
@@ -10531,6 +10541,8 @@
     - apps/web/src/custom/coordinator/CoordinatorPanel.tsx
     - apps/web/src/custom/coordinator/coordinatorThreadHost.tsx
     - apps/web/src/custom/coordinator/coordinatorDraft.ts
+    - apps/web/src/custom/coordinator/SidebarV2CoordinatorsSection.tsx
+    - apps/web/src/custom/SidebarV2ListSection.tsx
     - apps/web/src/custom/coordinator/CoordinatorDraftToggle.tsx
     - apps/web/src/custom/CheckboxPill.tsx
     - apps/web/src/custom/CheckboxPill.css
@@ -10539,6 +10551,9 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/components/Sidebar.logic.ts
+    - apps/web/src/custom/bots/SidebarV2BotsSection.tsx
+    - apps/web/src/custom/sprints/SidebarV2SprintsSection.tsx
     - apps/web/src/theme.custom.palettes.css
     - apps/web/src/theme.custom.glass.css
     - apps/web/src/theme.custom.inlet-black.css
@@ -10559,4 +10574,5 @@
     - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
     - apps/web/src/custom/coordinator/coordinatorDraft.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+    - apps/web/src/__fork_guards__/forkSprints.test.ts
     - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts

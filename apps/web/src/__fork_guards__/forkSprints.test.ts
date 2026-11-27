@@ -18,6 +18,10 @@ import { describe, expect, it } from "vite-plus/test";
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import { isPetalThread, listSidebarBots } from "../custom/bots/botThreads";
 import { botThreadsPanelBotId } from "../custom/bots/botWork";
+import {
+  FORK_COORDINATOR_TAG,
+  listSidebarCoordinators,
+} from "../custom/coordinator/coordinatorThreads";
 import { sidebarV2CardKind } from "../custom/bots/SidebarV2BotCardBody";
 import { SPRINT_CONTEXT_DIRECTORY } from "../custom/sprints/sprintContextFiles";
 import { SPRINT_PANEL_TABS } from "../custom/sprints/sprintPanelState";
@@ -111,8 +115,13 @@ describe("fork guard: fork-sprints", () => {
 
   it("keeps a sprint and its work off the thread list, in its Threads panel", () => {
     const mine = makeThreadFixture({ id: "mine" as Thread["id"] });
-    const visible = filterSidebarV2VisibleThreads([mine, sprint, sprintWork], null, new Set());
+    // A coordinator has its own section too, and is never a sprint.
+    const coordinator = tagged("coordinator", [FORK_COORDINATOR_TAG]);
+    const threads = [mine, sprint, sprintWork, coordinator];
+    const visible = filterSidebarV2VisibleThreads(threads, null, new Set());
     expect(visible.map((thread) => thread.id)).toEqual(["mine"]);
+    expect(listSidebarSprints(threads).map((thread) => thread.id)).toEqual(["sprint"]);
+    expect(listSidebarCoordinators(threads).map((thread) => thread.id)).toEqual(["coordinator"]);
     expect(botThreadsPanelBotId(sprintWork, sprint)).toBe("sprint");
     expect(botThreadsPanelBotId(sprint, null)).toBe("sprint");
   });

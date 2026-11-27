@@ -29,16 +29,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useScratchProject } from "~/hooks/useScratchProject";
-import { cn } from "~/lib/utils";
 import { useProjects } from "~/state/entities";
 
 import { ChevronDownIcon, PlusIcon, XIcon } from "../icons/lucide-hugeicons";
 import { scheduledTaskDraftSelection } from "../scheduled/scheduledTaskModel.logic";
-import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
-import { SidebarChromeButton, SidebarChromeGroup } from "../SidebarChromeButton";
-import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
+import { SidebarChromeButton } from "../SidebarChromeButton";
+import { SidebarV2ListSection } from "../SidebarV2ListSection";
 import { sprintDefaultModel } from "./sprintModel";
 import { SprintModelPicker } from "./SprintModelPicker";
 import { type NewSprint, useCreateSprint } from "./useCreateSprint";
@@ -53,49 +51,41 @@ export function SidebarV2SprintsRow(props: {
 }) {
   const [creating, setCreating] = useState(false);
   return (
-    <SidebarChromeGroup data-fork-sprints-row="" className="mt-6">
-      <div className="flex min-h-8 items-center gap-1.5 px-3">
-        <span role="heading" aria-level={2} className="min-w-0 flex-1 truncate text-left">
-          <SidebarV2SectionLabel
-            collapsed={props.collapsed}
-            onToggle={props.onToggleCollapsed}
-            testId="sidebar-v2-sprints-section-toggle"
+    <SidebarV2ListSection
+      data-fork-sprints-row=""
+      label="Sprints"
+      testId="sidebar-v2-sprints-section-toggle"
+      collapsed={props.collapsed}
+      onToggleCollapsed={props.onToggleCollapsed}
+      actions={
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <SidebarChromeButton
+                shape="icon"
+                type="button"
+                aria-label="New sprint"
+                data-testid="sidebar-v2-new-sprint"
+                onClick={() => setCreating(true)}
+              />
+            }
           >
-            Sprints
-          </SidebarV2SectionLabel>
-        </span>
-        <div className="-me-3 flex shrink-0 items-center">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <SidebarChromeButton
-                  shape="icon"
-                  type="button"
-                  aria-label="New sprint"
-                  data-testid="sidebar-v2-new-sprint"
-                  onClick={() => setCreating(true)}
-                />
-              }
-            >
-              <PlusIcon className="size-4 shrink-0" />
-            </TooltipTrigger>
-            <TooltipPopup side="right">New sprint</TooltipPopup>
-          </Tooltip>
-        </div>
-      </div>
-      {/* The thread list's tooltip timing, so a sprint card's hover card opens like a thread's. */}
-      <TooltipProvider delay={150} closeDelay={0} timeout={400}>
-        <ul
-          role="presentation"
-          className={cn("mt-1 flex flex-col empty:mt-0", SIDEBAR_V2_CARD_ALIGNMENT.listGap)}
-        >
-          {props.children}
-        </ul>
-      </TooltipProvider>
-      {creating ? (
-        <NewSprintDialog defaultProject={props.defaultProject} onDone={() => setCreating(false)} />
-      ) : null}
-    </SidebarChromeGroup>
+            <PlusIcon className="size-4 shrink-0" />
+          </TooltipTrigger>
+          <TooltipPopup side="right">New sprint</TooltipPopup>
+        </Tooltip>
+      }
+      after={
+        creating ? (
+          <NewSprintDialog
+            defaultProject={props.defaultProject}
+            onDone={() => setCreating(false)}
+          />
+        ) : null
+      }
+    >
+      {props.children}
+    </SidebarV2ListSection>
   );
 }
 
