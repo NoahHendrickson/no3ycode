@@ -3,7 +3,7 @@ import {
   fullAccessOverrideExplanation,
 } from "@t3tools/client-runtime/state/thread-requests";
 import { ShieldIcon } from "./icons/lucide-hugeicons";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { ComposerPendingApprovalActions } from "~/components/chat/ComposerPendingApprovalActions";
 import type { ComposerBannerStackItem } from "~/components/chat/ComposerBannerStack";
@@ -38,6 +38,11 @@ export function forkApprovalNoticeItem(input: {
   readonly disabled: boolean;
   readonly isResponding: boolean;
   readonly onRespondToApproval: ForkApprovalResponder;
+  /** Under the actions: a Petal's copy of a work thread's approval names that thread. */
+  readonly source?: ReactNode;
+  /** A Petal's copy, outside the composer: focus on its actions or detail never expands the
+      collapsed phone composer (isInsideComposerAside). */
+  readonly aside?: boolean;
 }): ComposerBannerStackItem {
   const { approval } = input;
   const label = APPROVAL_LABEL[approval.requestKind];
@@ -62,7 +67,11 @@ export function forkApprovalNoticeItem(input: {
       </span>
     ),
     description: (
-      <span className="flex w-full min-w-0 flex-col gap-1.5" data-fork-approval-notice="true">
+      <span
+        className="flex w-full min-w-0 flex-col gap-1.5"
+        data-fork-approval-notice="true"
+        data-fork-composer-aside={input.aside ? "true" : undefined}
+      >
         {/* No detail means nothing new to show; echoing the title read as a duplicate line. */}
         {approval.detail ? (
           <Detail
@@ -113,6 +122,7 @@ export function forkApprovalNoticeItem(input: {
             onRespondToApproval={input.onRespondToApproval}
           />
         </span>
+        {input.source}
       </span>
     ),
   };

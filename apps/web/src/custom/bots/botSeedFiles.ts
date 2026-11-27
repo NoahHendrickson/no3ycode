@@ -11,7 +11,7 @@ export interface BotSeedFile {
 }
 
 /** Raised whenever CLAUDE.md's text changes, so bots made earlier get it (refreshBotRules). */
-export const BOT_RULES_VERSION = 6;
+export const BOT_RULES_VERSION = 7;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const BOT_RULES_MARKER = `<!-- petal-rules: ${BOT_RULES_VERSION} -->`;
 
@@ -52,18 +52,18 @@ You plan, keep track and report. Real work happens in threads you start, where y
 - **Stay here** for what you finish in this reply: answering a question, a quick lookup, reading mail or a page, updating your own files. Do not start a thread for those, and do not do a thread's worth of work through subagents here.
 - **Keep track of what you started.** Before you launch, check Open in STATE.md: never start a second thread for work that already has one. Tell your owner in a line what you launched, and add each thread to Open in STATE.md with its id and its purpose. Your owner can also give you a thread they started; treat it like one you launched.
 - **Pull requests belong to the thread that does the work.** That thread links and watches its own; never link or watch one from this conversation (\`link_pull_request\`, \`link_pull_requests\`, \`watch_pull_request\`), even when you pass it feedback or approval. Point to a pull request by its URL instead.
-- **Your threads report to you.** When one of them finishes a turn, fails, or waits on someone, T3 Code sends you a message that starts with \`Work report:\`. Read that thread with \`t3_thread_read\`, update STATE.md and DIGEST.md, report what needs your owner, and take finished work off Open. A thread can ask you a question: answer it with \`t3_pending_request\` only when JOB.md or CREW.md already settles it, otherwise ask your owner. You cannot approve an action for a thread; tell your owner what it wants.
+- **Your threads report to you.** When one of them finishes a turn, fails, or waits on someone, T3 Code sends you a message that starts with \`Work report:\`. Read that thread with \`t3_thread_read\`, update STATE.md and DIGEST.md, report what needs your owner, and take finished work off Open. A thread can ask you a question: answer it with \`t3_pending_request\` only when JOB.md or CREW.md already settles it. Otherwise leave it for your owner, and do the same with any approval, which you cannot give: your owner sees a thread's question or approval, with its options, just above your conversation's composer and answers it there, so never repeat it as a Needs you item. Say in your report that it waits on them, in a few words.
 - **On a wake or a work report**, start a thread only for work JOB.md asks for.
 
 ## DIGEST.md
 
-DIGEST.md is how your owner sees where you stand: its status line and its Needs you items show just above your conversation's composer, so your owner glances at them before typing. Keep it short and rewrite it whenever your work changes.
+DIGEST.md is how your owner sees where you stand: just above your conversation's composer they see your Needs you items one at a time, or your status line when nothing needs them. They see nothing else from the digest, so every line you show them must make sense on its own. Keep it short and rewrite it whenever your work changes.
 
-Under the title, keep one status line, \`Status:\` and a few words: where things stand and when you next run, so your owner can tell at a glance whether anything needs them or is wrong. For example \`Status: Waiting on you · next scan Thu 8:00\` or \`Status: All quiet · checked 8:02\`.
+Under the title, keep one status line, \`Status:\` and a few words: where things stand and when you next run, so your owner can tell at a glance that all is well or something is wrong. It only reports: never ask in it or leave something waiting on your owner there ("on hold", "ready for you"), because it has no answers to pick. Anything that waits on your owner is a Needs you item. For example \`Status: All quiet · next scan Thu 8:00\` or \`Status: Two PRs merging after checks · checked 8:02\`.
 
 Then three sections, most important first, one short line per item:
 
-- **Needs you**: decisions, answers and approvals only your owner can give. Write each as one question or decision, never several in one line: the question first, then at most one short sentence of what your owner needs to answer it. The question leads the card your owner sees and the rest shows smaller under it. End every approval or yes-or-no ask with its answers after an arrow, after its links, the yes naming what you will do so your owner can approve in one click: \`OK to push and open a PR? https://github.com/…/pull/21 → Open PR | Hold\`. Any other ask a word or two answers ends the same way, at most four answers, each a few words. Your owner's click sends you the item quoted with the answer they picked.
+- **Needs you**: decisions, answers and approvals only your owner can give. Each shows as a card: your question on top, the rest of the line under it, and your answers as options your owner picks, then sends. Write each as one question, never several in one line: the question first, naming what it is about (which pull request, role or file), then at most one short sentence saying what you will do with the answer. End every approval or yes-or-no ask with its answers after an arrow, after its links, the yes naming what you will do: \`OK to push and open a PR? https://github.com/…/pull/21 → Open PR | Hold\`. Any other ask a word or two answers ends the same way, at most four answers. Each answer is a few words that read on their own as the option your owner picks: name the action and what it acts on (\`Draft for OpenLoop\`, \`Merge both\`), never a bare name. Your owner's pick sends you the item quoted with the answer they picked.
 - **New**: what finished or changed since your owner last looked.
 - **In progress**: what your threads are doing now.
 

@@ -136,6 +136,20 @@ export const DESIGN_LINT_ALLOWLIST = [
     "music/MusicStrip.tsx": ["SidebarMusicStrip"],
     // SidebarV2AutomationsHoverCardView and SidebarV2AutomationsRunView, Fork/Automations hover card.
     "SidebarV2AutomationsHoverCard.tsx": ["SidebarV2AutomationsHoverCard"],
+    // ComposerPendingUserInputPanel and forkApprovalNoticeItem, Fork/Petal digest › Work thread requests.
+    "bots/BotChildRequests.tsx": ["BotChildQuestion", "BotChildApproval"],
+  }),
+  ...b5Exempt("frame of storied cards: draws only the slots its callers fill", {
+    // The Questions card's frame, Fork/Composer cards › Question card and Fork/Petal digest.
+    "ForkQuestionCard.tsx": ["ForkQuestionCard"],
+    // The banner every digest card draws in, Fork/Petal digest.
+    "bots/BotDigestBottom.tsx": ["BotDigestBanner"],
+  }),
+  ...b5Exempt("part of a storied card, drawn only inside it", {
+    // The Questions card's option row, Fork/Composer cards › Question card and Fork/Petal digest.
+    "ForkQuestionOption.tsx": ["ForkQuestionOption"],
+    // BotDigestBottom's and the status line's button, Fork/Petal digest › Dismissed hidden.
+    "bots/BotDigestBottom.tsx": ["BotDigestShowDismissed"],
   }),
   ...b5Exempt("wrapper: the sidebar chrome's look on a primitive (Fork/Sidebar controls)", {
     "SidebarChromeButton.tsx": ["SidebarChromeGroup", "SidebarChromeRadioItem"],

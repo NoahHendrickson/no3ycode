@@ -40,7 +40,7 @@ export const DEFERRED_LINT_RULES = [
   ["t3code/no-manual-memo", 125],
   ["t3code/no-outset-state-indicators", 4],
   // Section dividers in the vendored design-mode engine, kept verbatim for re-syncs.
-  ["t3code/no-low-value-comments", 800],
+  ["t3code/no-low-value-comments", 799],
   ["t3code/no-raw-resize-observer", 3],
   // Upstream rules new in the 2026-10-28 sync; fork code predates them.
   ["react/preserve-manual-memoization", 1],
@@ -51,5 +51,5 @@ export const DEFERRED_LINT_RULES = [
   // Upstream translated the app in the 2026-11-22 sync; fork copy stays English (fork-i18n-catalog).
   // +11 for fork-typography-settings: the font presets, their aria label and the two size rows.
   // +3 for the draft project picker: its search and pin labels.
-  ["t3code/no-untranslated-copy", 891],
+  ["t3code/no-untranslated-copy", 881],
 ];

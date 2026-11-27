@@ -507,7 +507,11 @@ petal reports what needs you. A turn you watched finish in the thread still
 reaches the petal, so its notes stay current, but it does not ping you about it. It can answer a
 thread's questions when its job already settles them, but never approves an
 action for one. A petal keeps a digest of what needs you, what is new and what
-is in progress; it shows at the top of its **Threads**. Rules every thread it
+is in progress. Above its composer it shows one question at a time: pick an
+answer and press **Send**, or **Reply** in your own words. When nothing needs you,
+it shows a line saying where it stands. When one of its threads asks you a question or
+waits on an approval, that shows above the petal's composer too, so you can answer it
+without opening the thread. Rules every thread it
 starts should follow, such as "open pull requests as drafts", go in the petal's
 crew rules: tell the petal, and each thread it starts afterwards gets them.
 

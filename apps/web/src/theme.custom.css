@@ -983,10 +983,8 @@
 
 /* Focus recolours that same hairline rather than adding a ring, so the box
    keeps its 1px weight in both states and nothing reflows when the caret
-   lands. A bot digest's ask wears the surface around a Reply button, not a
-   caret, so focusing that button leaves its hairline alone. */
-:root[data-fork="noahhendrickson-t3code"]
-  [data-fork-composer-surface]:focus-within:not([data-fork-bot-digest] *) {
+   lands. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-surface]:focus-within {
   box-shadow: inset 0 0 0 1px var(--fork-composer-border-focus);
 }
 
@@ -2715,6 +2713,11 @@
   /* The question heads the card, ruled off from its options. */
   & [data-fork-pending-user-input-question] {
     border-bottom: 1px solid var(--fork-composer-border);
+  }
+
+  /* A Petal digest's pager (fork-bot-digest) is ruled off below its actions the same way. */
+  & [data-fork-bot-digest-pager] {
+    border-top: 1px solid var(--fork-composer-border);
   }
 
   /* "Select one" reads at 14px (times Chat stream size), a step under the 16px answers. */
