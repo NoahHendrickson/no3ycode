@@ -10,6 +10,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import {
   canStartCoordinating,
+  coordinatorChildInputs,
   coordinatorMenuItems,
   coordinatorMenuTurnsOn,
   coordinatorMessage,
@@ -106,8 +107,10 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(send).toContain("const forkStartOwnerTurn = useCoordinatorDraftStart(");
     expect(send).toContain("const startPromise = forkStartOwnerTurn({");
     const draft = read("../custom/coordinator/coordinatorDraft.ts");
-    expect(draft).toContain("const rules = await startTurn(turns.rules);");
-    expect(draft).toContain("return startTurn(turns.task);");
+    expect(draft).toContain("const rules = await steps.startTurn(turns.rules);");
+    // An untagged thread gets no task: the composer keeps it in the draft.
+    expect(draft).toContain('if (tagged._tag !== "Success") return tagged;');
+    expect(draft).toContain("const task = await steps.startTurn(turns.task);");
   });
 
   it("offers /coordinate in the composer where it can apply", () => {
@@ -127,6 +130,19 @@ describe("fork guard: fork-coordinator-threads", () => {
       expect(source).toContain("...coordinatorMenuItems(");
       expect(source).toContain("if (isCoordinatorMenuId(clicked.value)) {");
     }
+  });
+
+  it("drops a coordinator's child question from the timeline's end, its card being inline", () => {
+    const question = { id: "q", hasPendingApprovals: false, hasPendingUserInput: true };
+    const approval = { id: "a", hasPendingApprovals: true, hasPendingUserInput: false };
+    const both = { id: "b", hasPendingApprovals: true, hasPendingUserInput: true };
+    expect(coordinatorChildInputs([question, approval, both]).map((child) => child.id)).toEqual([
+      "a",
+      "b",
+    ]);
+    expect(read("../components/chat/useThreadLifecycle.tsx")).toMatch(
+      /forkIsCoordinator\s*\?\s*coordinatorChildInputs\(childThreadInputs\)/u,
+    );
   });
 
   it("keeps the standing rules short, with no model rule", () => {
@@ -171,8 +187,12 @@ describe("fork guard: fork-coordinator-threads", () => {
     const timeline = read("../components/chat/MessagesTimeline.tsx");
     expect(timeline).toContain("forkQuietRequestWakesOnly: forkIsCoordinator && !forkIsBotThread,");
     const row = read("../components/chat/TimelineWorkEntryRow.tsx");
+    // A coordinator host only: a sprint's delegated notices stay plain (answersDelegatedQuestions).
     expect(row).toContain(
-      'item?.type === "notification" && forkHost !== null ? forkDelegatedQuestionOf(item) : null;',
+      'item?.type === "notification" ? forkHostDelegatedQuestion(forkHost, item) : null;',
+    );
+    expect(read("../custom/coordinator/coordinatorThreadHost.tsx")).toContain(
+      "answersDelegatedQuestions: true,",
     );
   });
 });

@@ -208,9 +208,23 @@ describe("quiet bot wakes", () => {
       },
     };
     const coordinator = { ...none, requestReportsOnly: true };
-    const run = (text: string) => [wake("wake-1", 2), notice, reply("wake-1", 4, text)];
+    // As the server writes it: the notice (no message entry of its own), the coordinator's read
+    // of the question, then its reply.
+    const { projectedItem: _notice, ...noticeEntry } = notice.entry;
+    const read: TimelineEntry = {
+      ...notice,
+      id: "read",
+      entry: { ...noticeEntry, id: "read", itemType: "dynamic_tool" },
+    };
+    const run = (text: string) => [notice, read, reply("wake-1", 4, text)];
     const quiet = run("Nothing to report.");
-    expect(withoutRuns(quiet, quietBotWakeRunIds(quiet, coordinator), true)).toEqual([notice]);
+    expect(withoutRuns(quiet, quietBotWakeRunIds(quiet, coordinator), true, true)).toEqual([
+      notice,
+    ]);
+    // A sprint keeps only its own request reports: a delegated notice after its wake's prompt
+    // goes with the quiet wake, as before.
+    const sprintWake = [wake("wake-1", 1), notice, read, reply("wake-1", 4, "Nothing to report.")];
+    expect(withoutRuns(sprintWake, quietBotWakeRunIds(sprintWake, none), true)).toEqual([]);
     // A reply that says something real stays, card and all.
     const answered = run("Red");
     expect(quietBotWakeRunIds(answered, coordinator).size).toBe(0);

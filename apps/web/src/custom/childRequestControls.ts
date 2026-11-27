@@ -93,13 +93,39 @@ export interface ChildQuestionControls {
   readonly panel: QuestionPanelProps;
 }
 
-/** The thread's first open question, answered from here; null while it has none (or it loads). */
+/** The open request a card names, or the thread's first when it names none. */
+export function pendingRequestFor<T extends { readonly requestId: RuntimeRequestId }>(
+  pending: ReadonlyArray<T>,
+  requestId: RuntimeRequestId | undefined,
+): T | undefined {
+  return requestId === undefined
+    ? pending[0]
+    : pending.find((entry) => entry.requestId === requestId);
+}
+
+/** Whether the thread still waits on `requestId`; null while its requests load. */
+export function useChildRequestPending(
+  child: Pick<EnvironmentThreadShell, "environmentId" | "id">,
+  requestId: RuntimeRequestId,
+): boolean | null {
+  const requests = useAtomValue(
+    environmentThreadDetails.pendingRequestsAtom(scopeThreadRef(child.environmentId, child.id)),
+  );
+  if (requests === null) return null;
+  return [...requests.userInputs, ...requests.approvals].some(
+    (entry) => entry.requestId === requestId,
+  );
+}
+
+/** The thread's open question `requestId`, or its first, answered from here; null while it has
+    none (or it loads). */
 export function useChildQuestion(
   child: EnvironmentThreadShell,
   onAnswered?: (
     input: PendingUserInput,
     answers: NonNullable<ReturnType<typeof buildPendingUserInputAnswers>>,
   ) => void,
+  requestId?: RuntimeRequestId,
 ): ChildQuestionControls | null {
   const ref = scopeThreadRef(child.environmentId, child.id);
   const requests = useAtomValue(environmentThreadDetails.pendingRequestsAtom(ref));
@@ -114,7 +140,7 @@ export function useChildQuestion(
   const input =
     requests === null || requests.userInputs.length === 0
       ? undefined
-      : derivePendingUserInputs(requests.userInputs)[0];
+      : pendingRequestFor(derivePendingUserInputs(requests.userInputs), requestId);
   // The thread's own drafts, so a pick made here is there when the thread opens, and back here.
   const draftKey = userInputDraftKey(child.environmentId, child.id, input?.requestId);
   const stored = usePendingUserInputAnswers((state) => state[draftKey] ?? NO_ANSWERS);
@@ -208,13 +234,15 @@ export interface ChildApprovalControls {
   readonly notice: (source?: ReactNode) => ReturnType<typeof forkApprovalNoticeItem>;
 }
 
-/** The thread's first open approval, decided from here; null while it has none (or it loads). */
+/** The thread's open approval `requestId`, or its first, decided from here; null while it has
+    none (or it loads). */
 export function useChildApproval(
   child: EnvironmentThreadShell,
   onAnswered?: (
     approval: ChildApprovalControls["approval"],
     decision: ProviderApprovalDecision,
   ) => void,
+  requestId?: RuntimeRequestId,
 ): ChildApprovalControls | null {
   const ref = scopeThreadRef(child.environmentId, child.id);
   const requests = useAtomValue(environmentThreadDetails.pendingRequestsAtom(ref));
@@ -227,7 +255,7 @@ export function useChildApproval(
     requests === null || requests.approvals.length === 0
       ? []
       : derivePendingApprovals(requests.approvals);
-  const approval = approvals[0];
+  const approval = pendingRequestFor(approvals, requestId);
   if (approval === undefined) return null;
   const onRespondToApproval = async (
     requestId: RuntimeRequestId,

@@ -15,6 +15,9 @@ export interface ForkRequestAnswer {
 }
 
 export interface ForkThreadHost {
+  /** Its delegate_task children's question notices are its cards (a coordinator,
+      fork-coordinator-threads); a sprint's stay plain notices. */
+  readonly answersDelegatedQuestions?: boolean;
   /** Opens a thread named in the conversation in the host's own place; false leaves it to the
       caller, as for the host itself. */
   readonly openThread: (ref: ScopedThreadRef) => boolean;

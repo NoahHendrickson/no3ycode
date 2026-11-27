@@ -78,24 +78,47 @@ export function coordinatorFirstSendTurns(
   };
 }
 
+type Outcome = { readonly _tag: string };
+
+/** A coordinator draft's first send: the rules create the thread, the tag makes it a coordinator,
+    then the owner's task follows. A failed step stops it, so the composer keeps the task in the
+    draft (the failed command reports itself); only a sent task clears the switch. */
+export async function sendCoordinatorFirstTurn<R extends Outcome, T extends Outcome>(
+  turns: ReturnType<typeof coordinatorFirstSendTurns>,
+  steps: {
+    readonly startTurn: (command: StartTurnCommand) => Promise<R>;
+    readonly tag: () => Promise<T>;
+    readonly sent: () => void;
+  },
+): Promise<R | T> {
+  const rules = await steps.startTurn(turns.rules);
+  if (rules._tag !== "Success") return rules;
+  // Rules on an untagged thread make no coordinator; the task waits in the draft instead.
+  const tagged = await steps.tag();
+  if (tagged._tag !== "Success") return tagged;
+  const task = await steps.startTurn(turns.task);
+  if (task._tag === "Success") steps.sent();
+  return task;
+}
+
 /** Wraps the composer's turn start: a draft switched to coordinating sends its rules first. */
-export function useCoordinatorDraftStart<R extends { readonly _tag: string }>(
+export function useCoordinatorDraftStart<R extends Outcome>(
   startTurn: (command: StartTurnCommand) => Promise<R>,
   draftId: DraftId | null,
-): (command: StartTurnCommand) => Promise<R> {
+) {
   const setTag = useOrchestrationCommand(threadEnvironment.setTag);
-  return async (command) => {
+  return async (command: StartTurnCommand) => {
     const { environmentId, input } = command;
     if (draftId === null || !isCoordinatorDraft(draftId, input.threadId)) return startTurn(command);
-    const turns = coordinatorFirstSendTurns(command, newMessageId());
-    const rules = await startTurn(turns.rules);
-    if (rules._tag !== "Success") return rules;
-    setCoordinatorDraft(draftId, input.threadId, false);
-    await setTag({
-      environmentId,
-      input: { threadId: input.threadId, tag: FORK_COORDINATOR_TAG, tagged: true },
+    return sendCoordinatorFirstTurn(coordinatorFirstSendTurns(command, newMessageId()), {
+      startTurn,
+      tag: () =>
+        setTag({
+          environmentId,
+          input: { threadId: input.threadId, tag: FORK_COORDINATOR_TAG, tagged: true },
+        }),
+      sent: () => setCoordinatorDraft(draftId, input.threadId, false),
     });
-    return startTurn(turns.task);
   };
 }
 

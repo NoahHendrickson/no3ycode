@@ -5,17 +5,19 @@ import {
   ProviderInstanceId,
   ThreadId,
 } from "@t3tools/contracts";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { DraftId } from "~/composerDraftStore";
 
 import {
   coordinateCommandAvailable,
   coordinatorFirstSendTurns,
+  sendCoordinatorFirstTurn,
   isCoordinatorDraft,
   setCoordinatorDraft,
 } from "./coordinatorDraft";
 import { coordinatorMessage } from "./coordinatorThreads";
+import { switchCoordinator } from "./useSetCoordinator";
 
 const ownerText = "flaky-test";
 const threadId = ThreadId.make("thread-1");
@@ -112,5 +114,53 @@ describe("coordinator draft switch", () => {
     expect(isCoordinatorDraft(draftId, ThreadId.make("thread-2"))).toBe(false);
     setCoordinatorDraft(draftId, threadId, false);
     expect(isCoordinatorDraft(draftId, threadId)).toBe(false);
+  });
+});
+
+const success = { _tag: "Success" } as const;
+const failure = { _tag: "Failure" } as const;
+
+describe("sendCoordinatorFirstTurn", () => {
+  const turns = coordinatorFirstSendTurns(command, MessageId.make("rules"));
+
+  it("stops before the task when the thread could not be tagged, keeping the switch", async () => {
+    const startTurn = vi.fn(async () => success);
+    const sent = vi.fn();
+    const result = await sendCoordinatorFirstTurn(turns, {
+      startTurn,
+      tag: async () => failure,
+      sent,
+    });
+    expect(result).toBe(failure);
+    expect(startTurn.mock.calls).toEqual([[turns.rules]]);
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it("sends the task after the rules and the tag, then clears the switch", async () => {
+    const startTurn = vi.fn(async () => success);
+    const sent = vi.fn();
+    await sendCoordinatorFirstTurn(turns, { startTurn, tag: async () => success, sent });
+    expect(startTurn.mock.calls).toEqual([[turns.rules], [turns.task]]);
+    expect(sent).toHaveBeenCalledOnce();
+  });
+});
+
+describe("switchCoordinator", () => {
+  it.each([true, false])(
+    "puts the tag back when the rules could not be sent (on: %s)",
+    async (on) => {
+      const setTag = vi.fn(async (_tagged: boolean) => success);
+      await switchCoordinator(on, { setTag, tell: async () => false });
+      expect(setTag.mock.calls).toEqual([[on], [!on]]);
+    },
+  );
+
+  it("keeps the tag once the rules are sent, and sends nothing when tagging failed", async () => {
+    const setTag = vi.fn(async (_tagged: boolean) => success);
+    await switchCoordinator(true, { setTag, tell: async () => true });
+    expect(setTag.mock.calls).toEqual([[true]]);
+    const tell = vi.fn(async () => true);
+    await switchCoordinator(true, { setTag: async () => failure, tell });
+    expect(tell).not.toHaveBeenCalled();
   });
 });

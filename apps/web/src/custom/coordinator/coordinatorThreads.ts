@@ -27,6 +27,14 @@ function canCoordinate(shell: CoordinatorShell): boolean {
   return !isForkBotThread(shell.tags) && isListedThreadLineage(shell.lineage);
 }
 
+/** A coordinator's children that still get the "needs input" line at its timeline's end: a
+    question is already its card in the conversation, an approval has none. */
+export function coordinatorChildInputs<
+  T extends { readonly hasPendingApprovals: boolean; readonly hasPendingUserInput: boolean },
+>(children: ReadonlyArray<T>): ReadonlyArray<T> {
+  return children.filter((child) => child.hasPendingApprovals || !child.hasPendingUserInput);
+}
+
 /** A coordinator the sidebar's Coordinators section lists, and so none of its thread groups. */
 export function isListedCoordinator(thread: {
   readonly archivedAt: string | null;

@@ -4,11 +4,12 @@
  * summaries (orchestration-v2/forkBotWorkReports) lives here, so a change there has one place to
  * follow.
  */
-import type {
-  ForkWorkRequestKind,
-  OrchestrationV2NotificationSource,
-  ScopedThreadRef,
-  ThreadId,
+import {
+  type ForkWorkRequestKind,
+  type OrchestrationV2NotificationSource,
+  RuntimeRequestId,
+  type ScopedThreadRef,
+  type ThreadId,
 } from "@t3tools/contracts";
 
 import type { TimelineEntry } from "~/session-logic";
@@ -72,13 +73,12 @@ export function forkWorkReportRequestKind(summary: string): "question" | "approv
   return null;
 }
 
-/** The request a report key names is the one the thread still waits on. */
-export function forkWorkReportIsPending(
-  key: string,
-  threadId: string,
-  pendingRequestId: string | null | undefined,
-): boolean {
-  return pendingRequestId != null && key === `${threadId}:${pendingRequestId}`;
+/** The request a report key (`threadId:requestId`) names, or null when it names none. */
+export function forkWorkReportRequestId(key: string, threadId: string): RuntimeRequestId | null {
+  const prefix = `${threadId}:`;
+  return key.startsWith(prefix) && key.length > prefix.length
+    ? RuntimeRequestId.make(key.slice(prefix.length))
+    : null;
 }
 
 export interface ForkWorkReport {
@@ -136,12 +136,26 @@ export function forkDelegatedQuestionOf(notice: {
   return { key: `${childThreadId}:${requestId}`, threadId: childThreadId, requestKind: "question" };
 }
 
-/** A work report of a thread's question or approval, which carries the card the owner answers on;
-    a delegated child's question notice is one too. */
+/** A delegated child's question notice, as the card it is where the host answers those (a
+    coordinator); null under any other host, a sprint's included, and for every other notice. */
+export function forkHostDelegatedQuestion(
+  host: { readonly answersDelegatedQuestions?: boolean } | null,
+  notice: Parameters<typeof forkDelegatedQuestionOf>[0],
+): ForkWorkReport | null {
+  return host?.answersDelegatedQuestions === true ? forkDelegatedQuestionOf(notice) : null;
+}
+
+/** A delegated child's question notice entry, which carries a coordinator's question card. */
+export function isForkDelegatedQuestionReport(entry: TimelineEntry): boolean {
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+  const item = entry.entry.projectedItem?.item;
+  return item?.type === "notification" && forkDelegatedQuestionOf(item) !== null;
+}
+
+/** A work report of a thread's question or approval, which carries the card the owner answers on. */
 export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
   if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
   const item = entry.entry.projectedItem?.item;
-  if (item?.type === "notification" && forkDelegatedQuestionOf(item) !== null) return true;
   const report = forkWorkReportOf({
     id: entry.id,
     summary: entry.entry.label,

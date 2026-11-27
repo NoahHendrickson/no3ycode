@@ -1678,6 +1678,9 @@ function timelineRowEntries(
         /* fork:end fork-coordinator-threads */
       }),
       input.forkKeepRequestReports === true,
+      /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+      input.forkQuietRequestWakesOnly === true,
+      /* fork:end fork-coordinator-threads */
     );
   }
   /* fork:end fork-bots */

@@ -13,12 +13,14 @@ import {
 } from "./threadLaunch.logic";
 import {
   forkDelegatedQuestionOf,
-  forkWorkReportIsPending,
+  forkHostDelegatedQuestion,
+  forkWorkReportRequestId,
   forkWorkReportKey,
   forkWorkReportOf,
   forkWorkReportRequestKind,
   forkWorkReportThreadId,
 } from "../forkWorkReports";
+import { pendingRequestFor } from "../childRequestControls";
 
 describe("forkThreadLaunchFromToolItem", () => {
   const input = { title: "Optimize images", message: "Swap the hero to next/image" };
@@ -271,7 +273,7 @@ describe("work report notifications", () => {
       },
     });
     expect(named).toEqual({ key: "mcp:t1:request-1", threadId: "mcp:t1", requestKind: "approval" });
-    expect(forkWorkReportIsPending(named!.key, "mcp:t1", "request-1")).toBe(true);
+    expect(forkWorkReportRequestId(named!.key, "mcp:t1")).toBe("request-1");
     expect(
       forkWorkReportOf({ id, summary: "Rate limiting has a question", source: { kind: "system" } }),
     ).toEqual({ key: "mcp:t1:request-1", threadId: null, requestKind: "question" });
@@ -311,7 +313,16 @@ describe("work report notifications", () => {
       threadId: "mcp:child",
       requestKind: "question",
     });
-    expect(forkWorkReportIsPending(report!.key, "mcp:child", "request:9")).toBe(true);
+    expect(forkWorkReportRequestId(report!.key, "mcp:child")).toBe("request:9");
+    // Only a coordinator answers its children's questions inline; a sprint keeps the notice.
+    expect(
+      forkHostDelegatedQuestion(
+        { answersDelegatedQuestions: true },
+        { id, threadId: "mcp:p1", source },
+      ),
+    ).toEqual(report);
+    expect(forkHostDelegatedQuestion({}, { id, threadId: "mcp:p1", source })).toBeNull();
+    expect(forkHostDelegatedQuestion(null, { id, threadId: "mcp:p1", source })).toBeNull();
     expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p", source })).toBeNull();
     expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p1", source: unnamed })).toBeNull();
     expect(
@@ -331,9 +342,20 @@ describe("thread requests from reports", () => {
     expect(forkWorkReportRequestKind("Rate limiting finished")).toBeNull();
   });
 
-  it("knows the report's request is the one the thread still waits on", () => {
-    expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-1")).toBe(true);
-    expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-2")).toBe(false);
-    expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", null)).toBe(false);
+  it("reads the request a report names, so its card answers that one", () => {
+    expect(forkWorkReportRequestId("mcp:t1:request-1", "mcp:t1")).toBe("request-1");
+    expect(forkWorkReportRequestId("mcp:t1", "mcp:t1")).toBeNull();
+    expect(forkWorkReportRequestId("mcp:t2:request-1", "mcp:t1")).toBeNull();
+  });
+});
+
+describe("pendingRequestFor", () => {
+  it("binds a card to its report's request, not the thread's first open one", () => {
+    const older = { requestId: RuntimeRequestId.make("request-1") };
+    const newer = { requestId: RuntimeRequestId.make("request-2") };
+    expect(pendingRequestFor([older, newer], newer.requestId)).toBe(newer);
+    expect(pendingRequestFor([older, newer], RuntimeRequestId.make("request-3"))).toBeUndefined();
+    // A caller naming none (a Petal digest) keeps the first.
+    expect(pendingRequestFor([older, newer], undefined)).toBe(older);
   });
 });

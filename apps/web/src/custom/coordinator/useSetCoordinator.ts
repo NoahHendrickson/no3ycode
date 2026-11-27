@@ -13,6 +13,20 @@ import {
   isCoordinatorThread,
 } from "./coordinatorThreads";
 
+/** Tags or untags the thread, then tells it. When the telling fails the tag goes back, so the
+    thread never coordinates without its rules or keeps them untagged (each command reports its
+    own failure). */
+export async function switchCoordinator(
+  on: boolean,
+  steps: {
+    readonly setTag: (tagged: boolean) => Promise<{ readonly _tag: string }>;
+    readonly tell: () => Promise<boolean>;
+  },
+): Promise<void> {
+  if ((await steps.setTag(on))._tag !== "Success") return;
+  if (!(await steps.tell())) await steps.setTag(!on);
+}
+
 /** Tags or untags the thread, then tells it, behind whatever it is doing. */
 export function useSetCoordinator(): (
   thread: Pick<EnvironmentThreadShell, "environmentId" | "id" | "source">,
@@ -22,11 +36,13 @@ export function useSetCoordinator(): (
   const tell = useTellBot();
   return async (thread, on) => {
     if (isCoordinatorThread(thread.source) === on) return;
-    const result = await setTag({
-      environmentId: thread.environmentId,
-      input: { threadId: thread.id, tag: FORK_COORDINATOR_TAG, tagged: on },
+    await switchCoordinator(on, {
+      setTag: (tagged) =>
+        setTag({
+          environmentId: thread.environmentId,
+          input: { threadId: thread.id, tag: FORK_COORDINATOR_TAG, tagged },
+        }),
+      tell: () => tell(scopeThreadRef(thread.environmentId, thread.id), coordinatorMessage(on)),
     });
-    if (result._tag !== "Success") return;
-    await tell(scopeThreadRef(thread.environmentId, thread.id), coordinatorMessage(on));
   };
 }

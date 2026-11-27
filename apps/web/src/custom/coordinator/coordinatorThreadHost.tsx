@@ -43,6 +43,7 @@ export function coordinatorThreadHost(coordinatorRef: ScopedThreadRef): ForkThre
   const known = hosts.get(key);
   if (known !== undefined) return known;
   const host: ForkThreadHost = {
+    answersDelegatedQuestions: true,
     openThread: (ref) => openBotThreadsChild(coordinatorRef, ref),
     // The answer reaches the child; the coordinator keeps no record of it.
     onAnswered: () => {},

@@ -10542,8 +10542,17 @@
     run a child's question report started), keeping the notice that draws the card
     (DelegatedTaskQuestionReactor, fenced; the tag is @t3tools/shared/forkBotTags
     FORK_COORDINATOR_TAG, one spelling for server and web; live test 2026-11-27: a Codex
-    coordinator re-asked a Claude child's AskUserQuestion as its own question). With no host, an
-    ordinary
+    coordinator re-asked a Claude child's AskUserQuestion as its own question). Only a
+    coordinator's host draws delegated questions as cards and keeps them in quiet wakes
+    (forkThreadHost answersDelegatedQuestions); a sprint's delegated notices behave as on custom.
+    A quiet question wake drops from its notice on, so its reads ("Worked for") go too. A card
+    answers the request its report names, not the child's first open one (forkWorkReportRequestId,
+    childRequestControls pendingRequestFor), and falls back to the answered view once that
+    request settles. A coordinator's timeline end drops the "Subagent needs input" line for a
+    child whose open request is a question (coordinatorChildInputs in useThreadLifecycle); an
+    approval keeps its line. On the first send a failed tag stops before the task, which stays in
+    the draft; switching from the menu puts the tag back when the rules could not be sent. With
+    no host, an ordinary
     thread draws the notice as before. Approvals do not wake the parent, so they wait in the
     child. Petals, sprints, subagents and side chats get no switch. Web-only: mobile has no
     switch or panel yet.
@@ -10566,6 +10575,12 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/components/chat/useThreadLifecycle.tsx
+    - apps/web/src/custom/childRequestControls.ts
+    - apps/web/src/custom/threadLaunchCards/ForkThreadLaunchCards.tsx
+    - apps/web/src/custom/threadLaunchCards/ForkThreadRequestCard.tsx
+    - apps/web/src/custom/threadLaunchCards/forkThreadHost.ts
+    - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts
     - apps/web/src/custom/bots/quietBotWakes.ts
     - apps/web/src/custom/bots/quietBotWakes.test.ts
     - apps/web/src/custom/forkWorkReports.ts

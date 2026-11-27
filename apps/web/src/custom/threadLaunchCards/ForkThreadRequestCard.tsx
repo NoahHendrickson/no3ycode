@@ -7,13 +7,21 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import { setPendingUserInputCustomAnswer } from "@t3tools/client-runtime/state/pending-user-input";
-import type { ProviderApprovalDecision, ScopedThreadRef } from "@t3tools/contracts";
+import type {
+  ProviderApprovalDecision,
+  RuntimeRequestId,
+  ScopedThreadRef,
+} from "@t3tools/contracts";
 import type { ReactNode } from "react";
 
 import { ComposerBannerStack } from "~/components/chat/ComposerBannerStack";
 import { ComposerPendingUserInputPanel } from "~/components/chat/ComposerPendingUserInputPanel";
 
-import { useChildApproval, useChildQuestion } from "../childRequestControls";
+import {
+  useChildApproval,
+  useChildQuestion,
+  useChildRequestPending,
+} from "../childRequestControls";
 import { CheckIcon } from "../icons/lucide-hugeicons";
 import { ForkThreadHookRow, useOpenThreadBeside } from "./ForkThreadLaunchCards";
 import { type ForkRequestAnswer, useForkThreadHost } from "./forkThreadHost";
@@ -45,21 +53,30 @@ function RequestFrame(props: {
   );
 }
 
-/** The thread's open question or approval, to answer here. */
+/** The thread's open question or approval `requestId`, to answer here; `settled` once the
+    thread no longer waits on it, another of its requests still open. */
 export function ForkThreadRequestCard(props: {
   readonly thread: EnvironmentThreadShell;
   readonly hostRef: ScopedThreadRef | null;
   readonly kind: "question" | "approval";
+  readonly requestId: RuntimeRequestId;
+  readonly settled: ReactNode;
 }) {
+  const pending = useChildRequestPending(props.thread, props.requestId);
+  if (pending === false) return props.settled;
   return (
-    <RequestFrame {...props}>
+    <RequestFrame thread={props.thread} hostRef={props.hostRef} kind={props.kind}>
       {props.kind === "question" ? (
         <div className={CARD}>
-          <ThreadQuestion thread={props.thread} hostRef={props.hostRef} />
+          <ThreadQuestion
+            thread={props.thread}
+            hostRef={props.hostRef}
+            requestId={props.requestId}
+          />
         </div>
       ) : (
         <div className="max-w-xl">
-          <ThreadApproval thread={props.thread} />
+          <ThreadApproval thread={props.thread} requestId={props.requestId} />
         </div>
       )}
     </RequestFrame>
@@ -94,6 +111,7 @@ export function ForkAnsweredRequestCard(props: {
 function ThreadQuestion(props: {
   readonly thread: EnvironmentThreadShell;
   readonly hostRef: ScopedThreadRef | null;
+  readonly requestId: RuntimeRequestId;
 }) {
   const { thread } = props;
   const host = useForkThreadHost();
@@ -101,18 +119,21 @@ function ThreadQuestion(props: {
     props.hostRef,
     scopeThreadRef(thread.environmentId, thread.id),
   );
-  const controls = useChildQuestion(thread, (input, resolved) =>
-    host?.onAnswered(
-      thread,
-      input.requestId,
-      input.questions.map((entry) => {
-        const given = resolved[entry.id];
-        return {
-          question: entry.question,
-          answer: Array.isArray(given) ? given.join(", ") : String(given ?? ""),
-        };
-      }),
-    ),
+  const controls = useChildQuestion(
+    thread,
+    (input, resolved) =>
+      host?.onAnswered(
+        thread,
+        input.requestId,
+        input.questions.map((entry) => {
+          const given = resolved[entry.id];
+          return {
+            question: entry.question,
+            answer: Array.isArray(given) ? given.join(", ") : String(given ?? ""),
+          };
+        }),
+      ),
+    props.requestId,
   );
   if (controls === null) return null;
   const { question, answers, canAnswer, setDraft, advance } = controls;
@@ -172,16 +193,22 @@ const DECISION_WORDS: Partial<Record<ProviderApprovalDecision, string>> = {
   cancel: "Declined",
 };
 
-function ThreadApproval(props: { readonly thread: EnvironmentThreadShell }) {
+function ThreadApproval(props: {
+  readonly thread: EnvironmentThreadShell;
+  readonly requestId: RuntimeRequestId;
+}) {
   const { thread } = props;
   const host = useForkThreadHost();
-  const controls = useChildApproval(thread, (approval, decision) =>
-    host?.onAnswered(thread, approval.requestId, [
-      {
-        question: approval.detail ?? approval.requestKind,
-        answer: DECISION_WORDS[decision] ?? decision,
-      },
-    ]),
+  const controls = useChildApproval(
+    thread,
+    (approval, decision) =>
+      host?.onAnswered(thread, approval.requestId, [
+        {
+          question: approval.detail ?? approval.requestKind,
+          answer: DECISION_WORDS[decision] ?? decision,
+        },
+      ]),
+    props.requestId,
   );
   return controls === null ? null : <ComposerBannerStack items={[controls.notice()]} />;
 }

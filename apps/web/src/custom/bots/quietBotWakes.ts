@@ -8,7 +8,7 @@ import { isForkBotQuietReply } from "@t3tools/shared/forkBotTags";
 
 import type { TimelineEntry } from "~/session-logic";
 
-import { isForkWorkRequestReport } from "../forkWorkReports";
+import { isForkDelegatedQuestionReport, isForkWorkRequestReport } from "../forkWorkReports";
 
 /** The run an entry belongs to, user messages and events included (unlike the fold helpers). */
 function entryOwningRunId(entry: TimelineEntry): RunId | null {
@@ -60,7 +60,12 @@ export function quietBotWakeRunIds(
     const runId = entryOwningRunId(entry);
     if (runId === null) continue;
     if (asksOwner(entry)) shown.add(runId);
-    if (input.requestReportsOnly === true && isForkWorkRequestReport(entry)) reported.add(runId);
+    if (
+      input.requestReportsOnly === true &&
+      (isForkWorkRequestReport(entry) || isForkDelegatedQuestionReport(entry))
+    ) {
+      reported.add(runId);
+    }
     if (entry.kind !== "message") continue;
     const { message } = entry;
     if (message.id === input.revealedMessageId) shown.add(runId);
@@ -88,17 +93,25 @@ export function quietBotWakeRunIds(
 
 /** Drops each run from its first message on. A resumed subagent card listed before that keeps
     its place in the earlier turn, as the turn folds place it. Where the conversation answers its
-    threads inline (fork-thread-launch-cards), a question or approval report stays: it carries the
-    card the owner answers on. */
+    threads inline (fork-thread-launch-cards), a question or approval report stays, as does a
+    coordinator's delegated question (`keepDelegatedQuestions`): each carries the owner's card. */
 export function withoutRuns(
   entries: ReadonlyArray<TimelineEntry>,
   runIds: ReadonlySet<RunId>,
   keepRequestReports = false,
+  keepDelegatedQuestions = false,
 ): ReadonlyArray<TimelineEntry> {
   if (runIds.size === 0) return entries;
   const startIndex = new Map<RunId, number>();
   entries.forEach((entry, index) => {
-    const runId = entry.kind === "message" ? entry.message.runId : null;
+    // A coordinator's question wake starts at its notice, which is no message entry, so the
+    // turn's reads before the quiet reply (its "Worked for" row) go too.
+    const runId =
+      entry.kind === "message"
+        ? entry.message.runId
+        : keepDelegatedQuestions && isForkDelegatedQuestionReport(entry)
+          ? entryOwningRunId(entry)
+          : null;
     if (runId !== null && runIds.has(runId) && !startIndex.has(runId)) {
       startIndex.set(runId, index);
     }
@@ -107,7 +120,10 @@ export function withoutRuns(
     const runId = entryOwningRunId(entry);
     const start = runId === null ? undefined : startIndex.get(runId);
     return (
-      start === undefined || index < start || (keepRequestReports && isForkWorkRequestReport(entry))
+      start === undefined ||
+      index < start ||
+      (keepRequestReports && isForkWorkRequestReport(entry)) ||
+      (keepDelegatedQuestions && isForkDelegatedQuestionReport(entry))
     );
   });
 }

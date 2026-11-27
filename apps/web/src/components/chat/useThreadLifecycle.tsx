@@ -84,6 +84,10 @@ import { openSideThread, resolveThreadOpenRoute } from "../../lib/sideChatPane";
 /* fork:begin fork-thread-state-cards — see .fork/customizations.yaml#fork-thread-state-cards */
 import { useThreadStateBanners } from "~/custom/useThreadStateBanners";
 /* fork:end fork-thread-state-cards */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { coordinatorChildInputs } from "~/custom/coordinator/coordinatorThreads";
+import { useIsCoordinatorThread } from "~/custom/coordinator/useIsCoordinatorThread";
+/* fork:end fork-coordinator-threads */
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
@@ -537,9 +541,17 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
   };
   const onOpenRelatedThreadStable = useStableCallback(onOpenRelatedThread);
   const childThreadInputs = useChildThreadInputs(activeThreadRef);
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  const forkIsCoordinator = useIsCoordinatorThread(activeThreadRef);
+  /* fork:end fork-coordinator-threads */
   const childInputNow = childInputNowItem(
     {
-      childThreadInputs,
+      childThreadInputs:
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+           A coordinator's child question is its inline card already. */
+        forkIsCoordinator
+          ? coordinatorChildInputs(childThreadInputs)
+          : /* fork:end fork-coordinator-threads */ childThreadInputs,
       parentAwaitingUser: Boolean(
         activePendingApproval || activePendingUserInput || activeThreadShell?.hasPendingUserInput,
       ),
