@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { refreshSprintRules, sprintFileOwner, sprintPreviousRulesFile } from "./refreshSprintRules";
-import {
-  SPRINT_RULES_MARKER,
-  SPRINT_RULES_UPDATED_MARKER,
-  sprintSeedFiles,
-} from "./sprintSeedFiles";
+import { previousRulesFile } from "../refreshFolderRules";
+import { refreshSprintRules } from "./refreshSprintRules";
+import { SPRINT_RULES_MARKER, sprintSeedFiles } from "./sprintSeedFiles";
 
 function folder(initial: Record<string, string>, failOn?: string) {
   const files = new Map(Object.entries(initial));
@@ -64,19 +61,13 @@ const OLD_RULES =
   "<!-- sprint-rules: 5 -->\n# Composer redesign\n\n## Other projects\n\n- Docs (v2) (id `project-docs`, at `/docs`)\n";
 
 describe("refreshSprintRules", () => {
-  it("gives every seeded file an owner", () => {
-    for (const path of current.keys()) expect(sprintFileOwner(path), path).not.toBeNull();
-    expect(GENERATED.every((path) => sprintFileOwner(path) === "generated")).toBe(true);
-  });
-
   it("replaces an old sprint's generated files and never touches what it and its owner wrote", async () => {
     const old = folder({ ...OWNED, "CLAUDE.md": OLD_RULES, "AGENTS.md": "old pointer" });
     expect(await refreshSprintRules(old.io, sprint)).toBe(true);
     for (const [path, contents] of Object.entries(OWNED))
       expect(old.files.get(path)).toBe(contents);
     for (const path of GENERATED) expect(old.files.get(path)).toBe(current.get(path));
-    expect(old.files.get(sprintPreviousRulesFile(5))).toBe(OLD_RULES);
-    expect(old.files.has(SPRINT_RULES_UPDATED_MARKER)).toBe(true);
+    expect(old.files.get(previousRulesFile(5))).toBe(OLD_RULES);
     expect(old.writes.at(-1)).toBe("CLAUDE.md");
 
     // Current rules: nothing to do.
@@ -85,7 +76,7 @@ describe("refreshSprintRules", () => {
     expect(old.writes).toHaveLength(writes);
   });
 
-  it("moves the projects an old CLAUDE.md listed into PROJECTS.md, and adds only missing files", async () => {
+  it("moves the projects a version 5 CLAUDE.md listed into PROJECTS.md, and adds only missing files", async () => {
     const old = folder({ "CLAUDE.md": OLD_RULES, "PLAN.md": OWNED["PLAN.md"] });
     await refreshSprintRules(old.io, sprint);
     expect(old.files.get("PROJECTS.md")).toBe(current.get("PROJECTS.md"));
@@ -96,7 +87,7 @@ describe("refreshSprintRules", () => {
   it("counts rules without a marker as the oldest version", async () => {
     const old = folder({ "CLAUDE.md": "# Composer redesign\n\nOld rules." });
     expect(await refreshSprintRules(old.io, sprint)).toBe(true);
-    expect(old.files.get(sprintPreviousRulesFile(1))).toBe("# Composer redesign\n\nOld rules.");
+    expect(old.files.get(previousRulesFile(1))).toBe("# Composer redesign\n\nOld rules.");
     expect(old.files.get("CLAUDE.md")?.startsWith(SPRINT_RULES_MARKER)).toBe(true);
   });
 

@@ -21,10 +21,10 @@ import { botThreadsPanelBotId } from "../custom/bots/botWork";
 import { sidebarV2CardKind } from "../custom/bots/SidebarV2BotCardBody";
 import { SPRINT_CONTEXT_DIRECTORY } from "../custom/sprints/sprintContextFiles";
 import { SPRINT_PANEL_TABS } from "../custom/sprints/sprintPanelState";
-import { refreshSprintRules, sprintFileOwner } from "../custom/sprints/refreshSprintRules";
 import {
   SPRINT_PROJECTS_FILE,
   SPRINT_RULES_VERSION,
+  sprintRulesRefresh,
   sprintSeedFiles,
 } from "../custom/sprints/sprintSeedFiles";
 import {
@@ -53,15 +53,19 @@ const sprintWork = tagged("sprint-fix", [`${FORK_BOT_WORK_TAG_PREFIX}sprint`]);
 // A subagent inherits `sprint` without `bot`: it is the sprint's helper, never a sprint.
 const sprintSubagent = tagged("sprint-sub", [FORK_SPRINT_TAG]);
 
-const seeded = sprintSeedFiles({
+const identity = {
   name: "Composer redesign",
-  goal: "Redesign the composer for Flat Glass",
   threadId: "sprint",
   projectId: "project-test",
   projectTitle: "no3ycode",
   projectRoot: "/repo",
   folderPath: "/scratch/sprints/composer-redesign-sprint",
-  otherProjects: [{ id: "project-docs", title: "Docs", root: "/docs" }],
+};
+const otherProjects = [{ id: "project-docs", title: "Docs", root: "/docs" }];
+const seeded = sprintSeedFiles({
+  ...identity,
+  goal: "Redesign the composer for Flat Glass",
+  otherProjects,
   threadModel: { instanceId: "claudeAgent", model: "claude-opus-5-5" } as never,
   today: "2026-11-27",
 });
@@ -89,12 +93,10 @@ function sprintFolder(files: ReadonlyArray<{ relativePath: string; contents: str
   return { folder, write, runTurnHook };
 }
 
-const RULES_UPDATED_LINE = "T3 Code updated your rules in CLAUDE.md; read it again before you act.";
-
 // The generated files for `seeded`'s sprint, pinned to the rules version they ship as.
 const PINNED_RULES = {
-  version: 6,
-  sha256: "2018ea27bc957fd779b84b75f067b52f162e91b78d5aea354306617a3a977d40",
+  version: 7,
+  sha256: "efc1849ba164b088f72b60fbc86a8ff01627babd4ae37c33ad7c87435942dd41",
 };
 
 describe("fork guard: fork-sprints", () => {
@@ -151,8 +153,6 @@ describe("fork guard: fork-sprints", () => {
       write("context/spec.md", "spec");
       write(`${SPRINT_OWNER_EDITS_DIRECTORY}/CREW.md`, "");
       const first = run();
-      // A fresh sprint's rules are the ones it loaded: no update to announce.
-      expect(first).not.toContain(RULES_UPDATED_LINE);
       expect(first).toContain("Library files:\nspec.md");
       expect(first).toContain("Your owner changed CREW.md. It now reads:\n# Instructions");
       expect(first).toContain("MEMORY.md changed. It now reads:\n# Memory");
@@ -178,10 +178,13 @@ describe("fork guard: fork-sprints", () => {
   it("names the other projects the sprint touches in a file its rules import", () => {
     expect(seededFile("CLAUDE.md")).toContain(`\n@${SPRINT_PROJECTS_FILE}\n`);
     expect(seededFile(SPRINT_PROJECTS_FILE)).toContain("- Docs (id `project-docs`, at `/docs`)");
+    // Only Claude Code expands the import; other providers read the files AGENTS.md names.
+    expect(seededFile("AGENTS.md")).toContain(SPRINT_PROJECTS_FILE);
   });
 
   it("pins the generated rules to their version", () => {
-    const generated = seeded.filter((file) => sprintFileOwner(file.relativePath) === "generated");
+    const { rules, replace } = sprintRulesRefresh(identity, otherProjects);
+    const generated = [{ relativePath: "CLAUDE.md", contents: rules }, ...replace];
     const hash = NodeCrypto.createHash("sha256");
     for (const file of generated) hash.update(`${file.relativePath}\n${file.contents}\n`);
     expect(
@@ -190,39 +193,10 @@ describe("fork guard: fork-sprints", () => {
     ).toEqual(PINNED_RULES);
   });
 
-  it("brings an older sprint's rules up to date and tells it once on its next turn", async () => {
-    const { folder, write, runTurnHook } = sprintFolder(
-      seeded.filter((file) => sprintFileOwner(file.relativePath) === "owned"),
+  it("brings older sprints' rules up to date from the sidebar", () => {
+    expect(readSibling("../components/Sidebar.tsx")).toContain(
+      "useRefreshSprintRules(sprintThreads, projectByKey);",
     );
-    try {
-      write("CLAUDE.md", "<!-- sprint-rules: 5 -->\n# Composer redesign\n");
-      write(".claude/settings.json", "{}");
-      const read = async (relativePath: string) => {
-        const path = NodePath.join(folder, relativePath);
-        return NodeFS.existsSync(path) ? NodeFS.readFileSync(path, "utf8") : null;
-      };
-      const refresh = () =>
-        refreshSprintRules(
-          { read, write: async (relativePath, contents) => write(relativePath, contents) },
-          {
-            name: "Composer redesign",
-            threadId: "sprint",
-            projectId: "project-test",
-            projectTitle: "no3ycode",
-            projectRoot: "/repo",
-            folderPath: "/scratch/sprints/composer-redesign-sprint",
-          },
-        );
-      expect(await refresh()).toBe(true);
-      expect(await read("CLAUDE.md")).toBe(seededFile("CLAUDE.md"));
-      expect(runTurnHook()).toContain(RULES_UPDATED_LINE);
-      expect(runTurnHook()).not.toContain(RULES_UPDATED_LINE);
-      // Up to date: nothing to announce again.
-      expect(await refresh()).toBe(false);
-      expect(runTurnHook()).not.toContain(RULES_UPDATED_LINE);
-    } finally {
-      NodeFS.rmSync(folder, { recursive: true, force: true });
-    }
   });
 
   it("has Pull requests and Library tabs, and binary library files reach the disk", () => {

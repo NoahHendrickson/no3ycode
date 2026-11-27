@@ -6,9 +6,9 @@
 import type { ModelSelection } from "@t3tools/contracts";
 import { FORK_BOT_CREW_FILE, FORK_BOT_QUIET_REPLY } from "@t3tools/shared/forkBotTags";
 
+import type { FolderRulesRefresh, RulesSeedFile } from "../refreshFolderRules";
 import { SPRINT_CONTEXT_DIRECTORY } from "./sprintContextFiles";
 import {
-  SPRINT_ANSWERS_FILE,
   SPRINT_MEMORY_FILE,
   SPRINT_OWNER_EDITS_DIRECTORY,
   SPRINT_PLAN_FILE,
@@ -16,38 +16,14 @@ import {
   sprintThreadModelLine,
 } from "./sprintThreads";
 
-export interface SprintSeedFile {
-  readonly relativePath: string;
-  readonly contents: string;
-}
-
 /** Raise it whenever a generated file's text changes, so refreshSprintRules brings existing
     sprints up to date; the fork-sprints guard pins the generated text to it. */
-export const SPRINT_RULES_VERSION = 6;
+export const SPRINT_RULES_VERSION = 7;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const SPRINT_RULES_MARKER = `<!-- sprint-rules: ${SPRINT_RULES_VERSION} -->`;
 
 /** The other projects the sprint plans across, picked when it starts; CLAUDE.md imports it. */
 export const SPRINT_PROJECTS_FILE = "PROJECTS.md";
-/** Left by refreshSprintRules; the turn hook says the rules changed once, then removes it. */
-export const SPRINT_RULES_UPDATED_MARKER = ".claude/rules-updated";
-
-/** Who writes each file in a sprint's folder. Generated files are T3 Code's: a rules refresh
-    rewrites them. Owned files are the owner's and the sprint's: a refresh only adds a missing one,
-    and never rewrites one. */
-export const SPRINT_FILE_OWNERSHIP = [
-  { relativePath: "CLAUDE.md", owner: "generated" },
-  { relativePath: "AGENTS.md", owner: "generated" },
-  { relativePath: ".claude/settings.json", owner: "generated" },
-  { relativePath: ".claude/compact-instructions.md", owner: "generated" },
-  { relativePath: SPRINT_PLAN_FILE, owner: "owned" },
-  { relativePath: "STATE.md", owner: "owned" },
-  { relativePath: FORK_BOT_CREW_FILE, owner: "owned" },
-  { relativePath: SPRINT_MEMORY_FILE, owner: "owned" },
-  { relativePath: SPRINT_ANSWERS_FILE, owner: "owned" },
-  { relativePath: SPRINT_PROJECTS_FILE, owner: "owned" },
-  { relativePath: `${SPRINT_CONTEXT_DIRECTORY}/`, owner: "owned" },
-] as const;
 
 /** Everything CLAUDE.md is made from, all of it kept outside CLAUDE.md: the thread (name, id,
     folder) and its project. */
@@ -87,19 +63,6 @@ ${projects.length === 0 ? "None." : projects.map(otherProjectLine).join("\n")}
 `;
 }
 
-const OTHER_PROJECT_LINE = /^- (.+) \(id `([^`]+)`, at `([^`]+)`\)$/;
-
-/** The other projects a version 5 or older CLAUDE.md listed itself, for a refresh that adds
-    PROJECTS.md to a sprint made before it. */
-export function parseSprintOtherProjects(rules: string): ReadonlyArray<SprintOtherProject> {
-  return rules.split("\n").flatMap((line) => {
-    const match = OTHER_PROJECT_LINE.exec(line);
-    return match === null
-      ? []
-      : [{ title: match[1] ?? "", id: match[2] ?? "", root: match[3] ?? "" }];
-  });
-}
-
 function instructions(sprint: SprintIdentity): string {
   return `${SPRINT_RULES_MARKER}
 # ${sprint.name}
@@ -110,7 +73,7 @@ You run a sprint: one piece of work your owner is driving over days, based in th
 
 @${SPRINT_PROJECTS_FILE}
 
-${SPRINT_PROJECTS_FILE}, shown above, lists the other projects this sprint also touches. Plan across them, and start a thread in one by passing its \`projectId\`. When your owner adds or drops a project, update the file in that same turn.
+The line above imports ${SPRINT_PROJECTS_FILE}, in this folder, which lists the other projects this sprint also touches. If its text is not shown above, read the file. Plan across them, and start a thread in one by passing its \`projectId\`. When your owner adds or drops a project, update the file in that same turn.
 
 ## Your owner's instructions
 
@@ -242,15 +205,15 @@ The owner's standing instructions for this sprint. The sprint follows them, and 
 `;
 }
 
-const AGENTS_POINTER = `Your standing rules are in CLAUDE.md in this folder, your owner's instructions (which every thread you start also gets) in CREW.md, the sprint's goal and plan in PLAN.md, your working state in STATE.md, and the memory you share with your threads in MEMORY.md. Read all five before anything else at the start of every session, and again whenever your context was compacted. ${SPRINT_CONTEXT_DIRECTORY}/ is the sprint's library: files your owner added and outputs your threads saved.
+const AGENTS_POINTER = `Your standing rules are in CLAUDE.md in this folder, your owner's instructions (which every thread you start also gets) in CREW.md, the sprint's goal and plan in PLAN.md, your working state in STATE.md, the memory you share with your threads in MEMORY.md, and the other projects the sprint touches in ${SPRINT_PROJECTS_FILE}. Read all six before anything else at the start of every session, and again whenever your context was compacted. ${SPRINT_CONTEXT_DIRECTORY}/ is the sprint's library: files your owner added and outputs your threads saved.
 `;
 
-const COMPACT_INSTRUCTIONS = `This conversation runs a sprint. Write the summary as history, not as instructions: the sprint's rules live in CLAUDE.md and CREW.md, its plan in PLAN.md, its working state in STATE.md and its shared memory in MEMORY.md, and all of them are reloaded from disk after this compaction, so do not restate them.
+const COMPACT_INSTRUCTIONS = `This conversation runs a sprint. Write the summary as history, not as instructions: the sprint's rules live in CLAUDE.md and CREW.md, the other projects it touches in ${SPRINT_PROJECTS_FILE}, its plan in PLAN.md, its working state in STATE.md and its shared memory in MEMORY.md, and all of them are reloaded from disk after this compaction, so do not restate them.
 
 End the summary with a section titled "Handoff" that lists:
 - what the owner most recently asked for and whether it is done
 - the threads still working and what each is for
-- anything the owner said that is not yet written to PLAN.md, STATE.md, CREW.md or MEMORY.md, marked "NOT YET SAVED"
+- anything the owner said that is not yet written to PLAN.md, STATE.md, CREW.md, MEMORY.md or ${SPRINT_PROJECTS_FILE}, marked "NOT YET SAVED"
 
 Write every finished action as a dated, past-tense fact ("Started the composer thread on 2026-11-27"), never as something still to do.
 `;
@@ -260,10 +223,8 @@ const MEMORY_PATH = `"$CLAUDE_PROJECT_DIR/${SPRINT_MEMORY_FILE}"`;
 // The checksum of MEMORY.md as last shown, so a change by a thread or the owner is shown once.
 const MEMORY_SEEN = `"$CLAUDE_PROJECT_DIR/.claude/memory-seen"`;
 const MARK_MEMORY_SEEN = `cksum < ${MEMORY_PATH} > ${MEMORY_SEEN} 2>/dev/null`;
-const RULES_UPDATED = `"$CLAUDE_PROJECT_DIR/${SPRINT_RULES_UPDATED_MARKER}"`;
 const TURN_HOOK = [
   'date "+Now: %A %Y-%m-%d %H:%M %Z"',
-  `if [ -f ${RULES_UPDATED} ]; then echo "T3 Code updated your rules in CLAUDE.md; read it again before you act."; rm -f ${RULES_UPDATED}; fi`,
   `if [ -n "$(ls -A ${CONTEXT_PATH} 2>/dev/null)" ]; then echo "Library files:"; ls -1 ${CONTEXT_PATH} | head -40; fi`,
   // A marker per file the owner saved in the panel: show its text once, then drop the marker.
   `if [ -f ${MEMORY_PATH} ] && [ "$(cksum < ${MEMORY_PATH})" != "$(cat ${MEMORY_SEEN} 2>/dev/null)" ]; then echo "MEMORY.md changed. It now reads:"; head -c 6000 ${MEMORY_PATH}; echo; ${MARK_MEMORY_SEEN}; fi`,
@@ -306,28 +267,54 @@ const CLAUDE_SETTINGS = {
   },
 };
 
+type SprintFolderInput = SprintIdentity & {
+  readonly otherProjects: ReadonlyArray<SprintOtherProject>;
+  readonly goal: string;
+  readonly threadModel: ModelSelection | null;
+  readonly today: string;
+};
+
+/** Every file of a sprint's folder, sorted by who writes it: T3 Code replaces CLAUDE.md (`rules`)
+    and `replace`; the owner and the sprint keep `addIfMissing`. */
+function sprintFolderFiles(input: SprintFolderInput): FolderRulesRefresh {
+  return {
+    rules: instructions(input),
+    addIfMissing: [
+      { relativePath: SPRINT_PLAN_FILE, contents: plan(input.goal, input.threadModel) },
+      { relativePath: "STATE.md", contents: state(input.today) },
+      { relativePath: FORK_BOT_CREW_FILE, contents: crew(input.folderPath) },
+      { relativePath: SPRINT_MEMORY_FILE, contents: MEMORY },
+      { relativePath: SPRINT_PROJECTS_FILE, contents: sprintProjectsFile(input.otherProjects) },
+    ],
+    replace: [
+      { relativePath: "AGENTS.md", contents: AGENTS_POINTER },
+      { relativePath: ".claude/compact-instructions.md", contents: COMPACT_INSTRUCTIONS },
+      {
+        relativePath: ".claude/settings.json",
+        contents: `${JSON.stringify(CLAUDE_SETTINGS, null, 2)}\n`,
+      },
+    ],
+  };
+}
+
 /** `today` is a plain date (YYYY-MM-DD) for the first log line; `threadModel` is the model the
     sprint's threads run on, null when the owner has no default to start from. */
-export function sprintSeedFiles(
-  input: SprintIdentity & {
-    readonly otherProjects: ReadonlyArray<SprintOtherProject>;
-    readonly goal: string;
-    readonly threadModel: ModelSelection | null;
-    readonly today: string;
-  },
-): ReadonlyArray<SprintSeedFile> {
-  return [
-    { relativePath: "CLAUDE.md", contents: instructions(input) },
-    { relativePath: SPRINT_PLAN_FILE, contents: plan(input.goal, input.threadModel) },
-    { relativePath: "STATE.md", contents: state(input.today) },
-    { relativePath: FORK_BOT_CREW_FILE, contents: crew(input.folderPath) },
-    { relativePath: SPRINT_MEMORY_FILE, contents: MEMORY },
-    { relativePath: SPRINT_PROJECTS_FILE, contents: sprintProjectsFile(input.otherProjects) },
-    { relativePath: "AGENTS.md", contents: AGENTS_POINTER },
-    { relativePath: ".claude/compact-instructions.md", contents: COMPACT_INSTRUCTIONS },
-    {
-      relativePath: ".claude/settings.json",
-      contents: `${JSON.stringify(CLAUDE_SETTINGS, null, 2)}\n`,
-    },
-  ];
+export function sprintSeedFiles(input: SprintFolderInput): ReadonlyArray<RulesSeedFile> {
+  const { rules, replace, addIfMissing } = sprintFolderFiles(input);
+  return [{ relativePath: "CLAUDE.md", contents: rules }, ...addIfMissing, ...replace];
+}
+
+/** What an existing sprint's folder gets when its rules are older than `SPRINT_RULES_VERSION`. A
+    missing PLAN.md starts with no goal or thread model, and a missing STATE.md with today's date. */
+export function sprintRulesRefresh(
+  sprint: SprintIdentity,
+  otherProjects: ReadonlyArray<SprintOtherProject>,
+): FolderRulesRefresh {
+  return sprintFolderFiles({
+    ...sprint,
+    otherProjects,
+    goal: "",
+    threadModel: null,
+    today: new Date().toISOString().slice(0, 10),
+  });
 }
