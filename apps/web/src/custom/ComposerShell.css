@@ -263,6 +263,31 @@
   }
 }
 
+/* An open PR's CI rides the chip's end as an inner pill, inset 4px from the chip on every side
+   it touches (the chip pads its end 10px), its corners concentric with the chip's. The dark wash
+   keeps the green dot legible on the open fill. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="pull-request"]
+  > [data-fork-pr-chip-ci] {
+  display: inline-flex;
+  height: calc(var(--fork-status-chip-height) - var(--spacing) * 2);
+  align-items: center;
+  gap: calc(var(--spacing) * 1);
+  margin-inline: calc(var(--spacing) * 0.5) calc(var(--spacing) * -1.5);
+  padding-inline: calc(var(--spacing) * 1.5);
+  border-radius: calc(var(--radius-lg) - var(--spacing) * 1);
+  background: var(--fork-black-8);
+  color: var(--fork-pr-chip-ink, currentcolor);
+  font-size: var(--text-2xs);
+  line-height: 1;
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-fork-composer-status-chip="pull-request"]
+  > [data-fork-pr-chip-ci] {
+  background: var(--fork-black-25);
+}
+
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-status-chip="pull-request"]:is(
     [data-pr-state="open"],

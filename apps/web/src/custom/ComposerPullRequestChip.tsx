@@ -1,5 +1,5 @@
-import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
-import type { MouseEvent } from "react";
+import type { EnvironmentId, PullRequestChecksState, ScopedThreadRef } from "@t3tools/contracts";
+import type { ComponentProps, MouseEvent } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
 import {
@@ -15,6 +15,7 @@ import { useRightPanelStore } from "~/rightPanelStore";
 import { vcsEnvironment } from "~/state/vcs";
 
 import { BanIcon, GitMergeIcon } from "./icons/lucide-hugeicons";
+import { PullRequestChecksDot } from "./SidebarV2StatusIndicator";
 import { resolvePullRequestChipState } from "./composerPullRequestChip.logic";
 import { type ThreadAutoMerge, useThreadAutoMerge } from "./threadAutoMerge";
 
@@ -56,11 +57,13 @@ export function ComposerPullRequestChip(props: {
     pullRequests: thread?.pullRequests ?? [],
   });
   const autoMerge = useThreadAutoMerge(threadRef.environmentId, thread?.projectId, pr.currentLink);
+  const snapshot = pr.currentLink?.snapshot;
   return (
     <>
       <ThreadPullRequestBadgeControl
         render={
-          <ComposerControl
+          <PullRequestChipControl
+            checks={snapshot?.state === "open" ? (snapshot.checksState ?? null) : null}
             size="xs"
             data-fork-composer-status-chip="pull-request"
             data-fork-pr-chip
@@ -86,6 +89,28 @@ export function ComposerPullRequestChip(props: {
         />
       ) : null}
     </>
+  );
+}
+
+/** The PR chip's control: the shared badge's glyph and number, then an open PR's CI as a small
+ * pill inside the chip, a dot and "CI". */
+export function PullRequestChipControl({
+  checks,
+  children,
+  ...props
+}: ComponentProps<typeof ComposerControl> & {
+  readonly checks: PullRequestChecksState | null;
+}) {
+  return (
+    <ComposerControl {...props}>
+      {children}
+      {checks === null ? null : (
+        <span data-fork-pr-chip-ci={checks}>
+          <PullRequestChecksDot state={checks} />
+          CI
+        </span>
+      )}
+    </ComposerControl>
   );
 }
 

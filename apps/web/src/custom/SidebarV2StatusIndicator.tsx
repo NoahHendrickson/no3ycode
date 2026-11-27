@@ -1,3 +1,4 @@
+import type { PullRequestChecksState } from "@t3tools/contracts";
 import { type JSX, type RefObject, useRef } from "react";
 
 // Imported through the shim's own path rather than the `lucide-react` alias.
@@ -501,6 +502,20 @@ export function SidebarV2StillMonitoringMark() {
     <span aria-hidden className={cn(MARK_SLOT_CLASS, "text-muted-foreground")}>
       <span className="size-2.5 rounded-full bg-current" />
     </span>
+  );
+}
+
+const CHECKS_DOT_CLASS: Record<PullRequestChecksState, string> = {
+  passing: "bg-success-foreground",
+  pending: "bg-warning-foreground",
+  failing: "bg-destructive-foreground",
+};
+
+/** A pull request's CI: green once its checks pass, amber while they run, red when one fails.
+    Still while running, like every settled mark; the PR chip carries it in its CI pill. */
+export function PullRequestChecksDot({ state }: { readonly state: PullRequestChecksState }) {
+  return (
+    <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", CHECKS_DOT_CLASS[state])} />
   );
 }
 
