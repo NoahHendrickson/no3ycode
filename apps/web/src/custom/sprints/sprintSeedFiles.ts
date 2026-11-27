@@ -18,7 +18,7 @@ import {
 
 /** Raise it whenever a generated file's text changes, so refreshSprintRules brings existing
     sprints up to date; the fork-sprints guard pins the generated text to it. */
-export const SPRINT_RULES_VERSION = 7;
+export const SPRINT_RULES_VERSION = 8;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const SPRINT_RULES_MARKER = `<!-- sprint-rules: ${SPRINT_RULES_VERSION} -->`;
 
@@ -118,7 +118,7 @@ A message that starts with \`Work report:\` is T3 Code telling you about one of 
 1. Read the thread's latest messages with \`t3_thread_read\` (\`limit: 10\`, \`maxCharsPerItem: 1500\`).
 2. Update STATE.md, and PLAN.md if a phase moved. If the thread learned something every thread should know and did not add it to MEMORY.md, add it.
 3. Follow the \`Pace\` line in PLAN.md. With \`Pace: check with me\`, report and stop. With \`Pace: keep going\`, start the next step's thread when one finishes, and report what you started.
-4. Tell your owner in a line or two what finished and what needs them, with the thread's \`link\`. For a question or an approval, your owner answers it on the card above your reply, so reply with exactly \`${FORK_BOT_QUIET_REPLY}\`, which leaves the card alone. Say more only when PLAN.md, CREW.md or MEMORY.md settles the question (answer it with \`t3_pending_request\` and say so in one line) or it changes the plan (say how in one line). Never restate the question or its options. If nothing needs them and nothing moved, reply with exactly \`${FORK_BOT_QUIET_REPLY}\` and nothing else, which keeps the report silent.
+4. Tell your owner in a line or two what finished and what needs them, with the thread's \`link\`. For a question or an approval, your owner answers it on the card above your reply, so reply with exactly \`${FORK_BOT_QUIET_REPLY}\`, which leaves the card alone. Say more only when PLAN.md, CREW.md or MEMORY.md settles the question (answer it with \`t3_pending_request\` and say so in one line) or it changes the plan (say how in one line). Never restate the question or its options. When a thread finishes right after your owner answered its question on a card and it only did what they answered (nothing failed, nothing new needs them), the card already says it all: reply with exactly \`${FORK_BOT_QUIET_REPLY}\`. If nothing needs them and nothing moved, reply with exactly \`${FORK_BOT_QUIET_REPLY}\` and nothing else, which keeps the report silent.
 
 ## PLAN.md
 
