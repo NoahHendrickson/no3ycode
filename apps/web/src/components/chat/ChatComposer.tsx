@@ -4106,7 +4106,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
               <CoordinatorDraftToggle
                 on={forkCoordinator.toggle.on}
                 onChange={forkCoordinator.toggle.setOn}
-                disabled={!canOperateThread || isSendBusy}
+                // A local flag: a draft with no project yet has no operate scope to wait for.
+                disabled={isSendBusy}
               />
             ) : null}
             {/* fork:end fork-coordinator-threads */}

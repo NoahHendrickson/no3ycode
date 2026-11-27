@@ -99,6 +99,18 @@ export function useCoordinatorDraftStart<R extends { readonly _tag: string }>(
   };
 }
 
+/** Where `/coordinate` applies. A draft's switch is a local flag, so it needs no environment
+    scope (a draft with no project yet has none); the send checks permission. A thread's switch
+    sends a command, so it does. */
+export function coordinateCommandAvailable(input: {
+  readonly draft: boolean;
+  readonly draftOn: boolean;
+  readonly canOperate: boolean;
+  readonly threadCanStart: boolean;
+}): boolean {
+  return input.draft ? !input.draftOn : input.canOperate && input.threadCanStart;
+}
+
 /** The composer's way in: the draft's toggle, and `/coordinate` wherever it can apply. */
 export function useCoordinatorComposer(input: {
   readonly draft: { readonly draftId: DraftId; readonly threadId: ThreadId } | null;
@@ -114,9 +126,12 @@ export function useCoordinatorComposer(input: {
   const setDraftOn = (on: boolean) => {
     if (draft !== null) setCoordinatorDraft(draft.draftId, draft.threadId, on);
   };
-  const commandAvailable =
-    canOperate &&
-    (draft !== null ? !draftOn : shell !== null && canStartCoordinating(shell.source));
+  const commandAvailable = coordinateCommandAvailable({
+    draft: draft !== null,
+    draftOn,
+    canOperate,
+    threadCanStart: shell !== null && canStartCoordinating(shell.source),
+  });
   return {
     /** Null off a new-thread draft, where no toggle shows. */
     toggle: draft === null ? null : { on: draftOn, setOn: setDraftOn },

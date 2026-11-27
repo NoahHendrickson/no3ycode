@@ -45,22 +45,11 @@
   );
 }
 
-/* The new-thread Coordinator pill (fork-coordinator-threads), Figma 549:1199: a checkbox, then its
-   icon and label, in the composer chips' type. It wears the composer card's own surface, a tab of
-   the card: the vessel's fill here and its ring below; the themes that blur or natively draw the
-   card list the pill beside it (theme.custom.palettes.css, theme.custom.inlet-black.css). */
+/* The new-thread Coordinator pill (fork-coordinator-threads), a CheckboxPill that wears the composer
+   card's own surface, a tab of the card: the vessel's fill here and its ring below; the sheets that
+   blur, frost or natively draw the card list the pill beside it (palettes, glass, inlet-black). */
 :root[data-fork="noahhendrickson-t3code"] [data-fork-coordinator-toggle] {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--spacing) * 2);
-  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
-  border-radius: var(--radius-lg);
   background: var(--fork-composer-vessel-bg);
-  font-size: var(--fork-composer-chip-text);
-  font-weight: 400;
-  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
-  color: var(--basic-text-strong, var(--foreground));
-  cursor: pointer;
 }
 
 /* Flat Glass and Basic ring the new agent screen's vessel (theme.custom.palettes.css). */

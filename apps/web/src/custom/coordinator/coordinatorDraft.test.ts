@@ -10,6 +10,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { DraftId } from "~/composerDraftStore";
 
 import {
+  coordinateCommandAvailable,
   coordinatorFirstSendTurns,
   isCoordinatorDraft,
   setCoordinatorDraft,
@@ -77,6 +78,27 @@ describe("coordinatorFirstSendTurns", () => {
   it("asks for a one-word reply when the task follows, and one line otherwise", () => {
     expect(coordinatorMessage(true, true)).toMatch(/My first task is my next message\.[^\n]*$/);
     expect(coordinatorMessage(true)).toMatch(/Reply in one line that you're coordinating\.$/);
+  });
+});
+
+describe("coordinateCommandAvailable", () => {
+  it("lets a draft switch on without an environment scope, and a thread only with one", () => {
+    const base = { draftOn: false, threadCanStart: true };
+    // A fresh draft with no project yet has no operate scope; its switch is still a local flag.
+    expect(coordinateCommandAvailable({ ...base, draft: true, canOperate: false })).toBe(true);
+    expect(
+      coordinateCommandAvailable({ ...base, draft: true, draftOn: true, canOperate: false }),
+    ).toBe(false);
+    expect(coordinateCommandAvailable({ ...base, draft: false, canOperate: true })).toBe(true);
+    expect(coordinateCommandAvailable({ ...base, draft: false, canOperate: false })).toBe(false);
+    expect(
+      coordinateCommandAvailable({
+        ...base,
+        draft: false,
+        canOperate: true,
+        threadCanStart: false,
+      }),
+    ).toBe(false);
   });
 });
 

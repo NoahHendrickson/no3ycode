@@ -183,6 +183,9 @@ export const DESIGN_LINT_ALLOWLIST = [
   ...b5Exempt("wrapper: the sidebar chrome's look on a primitive (Fork/Sidebar controls)", {
     "SidebarChromeButton.tsx": ["SidebarChromeGroup", "SidebarChromeRadioItem"],
   }),
+  ...b5Exempt("wrapper around CheckboxPill (Fork/Checkbox pill)", {
+    "coordinator/CoordinatorDraftToggle.tsx": ["CoordinatorDraftToggle"],
+  }),
   ...b5Exempt("wrapper around ComposerModelPicker", {
     "scheduled/ScheduledTaskModelPicker.tsx": ["ScheduledTaskModelPicker"],
     "sprints/SprintModelPicker.tsx": ["SprintModelPicker"],

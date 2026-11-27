@@ -1,0 +1,19 @@
+/* CheckboxPill (fork-coordinator-threads, Figma 549:1199): a checkbox, then its icon and label, in
+   the composer chips' type. The structure is the pill's; the surface is the caller's. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-checkbox-pill] {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
+  border-radius: var(--radius-lg);
+  font-size: var(--fork-composer-chip-text);
+  font-weight: 400;
+  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
+  color: var(--basic-text-strong, var(--foreground));
+  cursor: pointer;
+}
+
+/* The neutral default surface, at no specificity so any caller's surface rule wins. */
+:where([data-fork-checkbox-pill]) {
+  background: var(--fork-context-chip-bg, var(--secondary));
+}

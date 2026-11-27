@@ -1,8 +1,7 @@
-/** The new-thread composer's "Coordinator" switch, a checkbox pill over the card's top-right
-    corner — see `.fork/customizations.yaml#fork-coordinator-threads`. */
-import { Checkbox } from "~/components/ui/checkbox";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
-
+/** The new-thread composer's "Coordinator" switch, a CheckboxPill over the card's top-right corner,
+    in the card's own surface (ComposerShell.css) — see
+    `.fork/customizations.yaml#fork-coordinator-threads`. */
+import { CheckboxPill } from "../CheckboxPill";
 import { WorkflowSquare10Icon } from "../icons/lucide-hugeicons";
 
 export function CoordinatorDraftToggle(props: {
@@ -11,32 +10,18 @@ export function CoordinatorDraftToggle(props: {
   readonly disabled: boolean;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          // The pill (ComposerShell.css), last and pushed right in the chip row. The label makes
-          // the whole pill toggle the checkbox, the one focusable control.
-          <label
-            data-fork-coordinator-toggle
-            className="order-last ml-auto"
-            // The editor keeps focus on a click, as it does for the composer's other controls.
-            onPointerDown={(event) => event.preventDefault()}
-          />
-        }
-      >
-        <Checkbox
-          checked={props.on}
-          disabled={props.disabled}
-          onCheckedChange={(checked) => props.onChange(checked)}
-        />
-        <span className="flex items-center gap-1">
-          <WorkflowSquare10Icon aria-hidden className="size-4" />
-          Coordinator
-        </span>
-      </TooltipTrigger>
-      <TooltipPopup side="top">
-        Start as a coordinator: it hands the work to delegated threads and stays free to talk
-      </TooltipPopup>
-    </Tooltip>
+    <CheckboxPill
+      data-fork-coordinator-toggle
+      // Last and pushed right in the chip row above the composer.
+      className="order-last ml-auto"
+      // The editor keeps focus on a click, as it does for the composer's other controls.
+      preserveFocus
+      checked={props.on}
+      onCheckedChange={props.onChange}
+      disabled={props.disabled}
+      label="Coordinator"
+      icon={WorkflowSquare10Icon}
+      tooltip="Start as a coordinator: it hands the work to delegated threads and stays free to talk"
+    />
   );
 }

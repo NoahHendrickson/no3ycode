@@ -10466,10 +10466,12 @@
 - id: fork-coordinator-threads
   intent: >
     The owner switches an ordinary thread to coordinating (maintainer's request, 2026-11-27).
-    The primary way in is starting one: the new-thread draft's "Coordinator" toggle, a checkbox
-    pill (components/ui Checkbox, then the label; the whole pill toggles it, the checkbox is the
-    one focusable control) over the composer card's top-right corner, last and right-aligned in
-    the chip row above it (owner's placement). It matches the owner's Figma pill (kit 549:1199):
+    The primary way in is starting one: the new-thread draft's "Coordinator" toggle, a use of the
+    generic custom/CheckboxPill (the contrast components/ui Checkbox, then an optional icon and
+    the label; the whole pill toggles it, the checkbox is the one focusable control; the pill
+    owns structure and type, its caller the surface, over a neutral default), over the composer
+    card's top-right corner, last and right-aligned in the chip row above it (owner's placement).
+    It matches the owner's Figma pill (kit 549:1199):
     checkbox, then the workflow-square-10 icon and the label, the composer chips' type in strong
     text. It wears the composer card's own surface, a tab of the card (owner, 2026-11-27; a CSS
     blur cannot reach the desktop wallpaper behind the window): the vessel's fill
@@ -10479,7 +10481,9 @@
     native Liquid Glass cards), wherever the stash chip sits beside the vessel
     (custom/coordinator/CoordinatorDraftToggle, held per draft and thread id in
     custom/coordinator/coordinatorDraft, never on existing threads, reset by sending or a new
-    draft). Its first send (useComposerSend's turn start, wrapped by useCoordinatorDraftStart) is
+    draft). The switch is a local flag, so only a send in flight disables it: a draft with no
+    project yet has no operate scope, and the send checks permission. Its first send
+    (useComposerSend's turn start, wrapped by useCoordinatorDraftStart) is
     two turns: the standing rules create the thread with the draft's bootstrap, the thread is
     tagged, and the owner's own message queues right behind as its own visible message, so the
     first turn that works on it already coordinates. The rules then ask for a one-word reply
@@ -10528,7 +10532,9 @@
     - apps/web/src/custom/coordinator/coordinatorThreadHost.tsx
     - apps/web/src/custom/coordinator/coordinatorDraft.ts
     - apps/web/src/custom/coordinator/CoordinatorDraftToggle.tsx
-    - apps/fork-storybook/stories/fork/CoordinatorDraftToggle.stories.tsx
+    - apps/web/src/custom/CheckboxPill.tsx
+    - apps/web/src/custom/CheckboxPill.css
+    - apps/fork-storybook/stories/fork/CheckboxPill.stories.tsx
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx

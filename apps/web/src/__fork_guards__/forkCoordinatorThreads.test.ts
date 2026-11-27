@@ -49,16 +49,24 @@ describe("fork guard: fork-coordinator-threads", () => {
     const composer = read("../components/chat/ChatComposer.tsx");
     expect(composer).toContain("const forkCoordinator = useCoordinatorComposer({");
     expect(composer).toContain("<CoordinatorDraftToggle");
-    // A checkbox pill in the composer card's own surface, natively drawn where the card is.
+    // Only a send in flight disables it: a draft with no project yet has no operate scope.
+    expect(composer).toMatch(/<CoordinatorDraftToggle[^>]*disabled=\{isSendBusy\}/u);
+    // The generic CheckboxPill, in the composer card's own surface, natively drawn where the card is.
     const toggle = read("../custom/coordinator/CoordinatorDraftToggle.tsx");
-    expect(toggle).toContain("<label");
-    expect(toggle).toContain("<Checkbox");
-    expect(toggle).toContain("<WorkflowSquare10Icon");
+    expect(toggle).toContain("<CheckboxPill");
+    expect(toggle).toContain("data-fork-coordinator-toggle");
+    expect(toggle).toContain("icon={WorkflowSquare10Icon}");
+    const pill = read("../custom/CheckboxPill.tsx");
+    expect(pill).toContain("<label");
+    expect(pill).toContain('variant="contrast"');
+    expect(read("../custom/CheckboxPill.css")).toMatch(
+      /\[data-fork-checkbox-pill\] \{[^}]*color: var\(--basic-text-strong, var\(--foreground\)\);/u,
+    );
     expect(read("../custom/forkDraftLiquidGlass.ts")).toContain(
       '"[data-fork-coordinator-toggle]",',
     );
     expect(read("../custom/ComposerShell.css")).toMatch(
-      /\[data-fork-coordinator-toggle\] \{[^}]*background: var\(--fork-composer-vessel-bg\);[^}]*color: var\(--basic-text-strong, var\(--foreground\)\);/u,
+      /\[data-fork-coordinator-toggle\] \{\s*background: var\(--fork-composer-vessel-bg\);/u,
     );
     const send = read("../components/chat/useComposerSend.ts");
     expect(send).toContain("const forkStartOwnerTurn = useCoordinatorDraftStart(");
