@@ -3,7 +3,6 @@
  * `.fork/customizations.yaml#fork-sprints`. The row has the Petals row's shape: a label that
  * folds the section and a plus. Its cards are ordinary thread cards, its children.
  */
-import { useAtomValue } from "@effect/atom-react";
 import { scopedProjectKey, scopeProjectRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/models";
 import type { ModelSelection } from "@t3tools/contracts";
@@ -31,22 +30,19 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
-import { useEnvironmentSettings } from "~/hooks/useSettings";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { cn } from "~/lib/utils";
-import { getCustomModelOptionsByInstance } from "~/modelSelection";
-import { providerInstanceEntriesFor } from "~/providerInstances";
 import { useProjects } from "~/state/entities";
-import { EMPTY_SERVER_PROVIDERS, serverEnvironment } from "~/state/server";
 
 import { ChevronDownIcon, PlusIcon, XIcon } from "../icons/lucide-hugeicons";
 import { scheduledTaskDraftSelection } from "../scheduled/scheduledTaskModel.logic";
 import { SIDEBAR_V2_CARD_ALIGNMENT } from "../sidebarV2CardAlignment";
 import { SidebarChromeButton, SidebarChromeGroup } from "../SidebarChromeButton";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
-import { sprintDefaultModel, withoutPromptInjectedLevels } from "./sprintModel";
+import { sprintDefaultModel } from "./sprintModel";
 import { SprintModelPicker } from "./SprintModelPicker";
 import { type NewSprint, useCreateSprint } from "./useCreateSprint";
+import { useSprintModelChoices } from "./useSprintModelChoices";
 
 export function SidebarV2SprintsRow(props: {
   readonly collapsed: boolean;
@@ -205,26 +201,20 @@ function NewSprintForm(props: {
   );
   const otherProjects = alsoChoices.filter((candidate) => alsoKeys.has(projectKeyOf(candidate)));
 
-  const settings = useEnvironmentSettings(project.environmentId);
-  const providers =
-    useAtomValue(serverEnvironment.providersValueAtom(project.environmentId)) ??
-    EMPTY_SERVER_PROVIDERS;
-  const instanceEntries = providerInstanceEntriesFor(providers, settings, project.id).map(
-    (entry) => ({ ...entry, models: withoutPromptInjectedLevels(entry.models) }),
-  );
-  // A pick survives a change of project while its provider is on there.
-  const modelSelection = scheduledTaskDraftSelection(
-    pickedModel,
+  const {
     instanceEntries,
-    () =>
-      sprintDefaultModel(instanceEntries) ??
-      scheduledTaskDefaultModel(settings, project, instanceEntries),
-  );
-  const modelOptionsByInstance = getCustomModelOptionsByInstance(
-    settings,
-    providers,
-    modelSelection?.instanceId,
-    modelSelection?.model,
+    selection: modelSelection,
+    modelOptionsByInstance,
+  } = useSprintModelChoices(
+    project.environmentId,
+    project.id,
+    ({ settings, instanceEntries: entries }) =>
+      // A pick survives a change of project while its provider is on there.
+      scheduledTaskDraftSelection(
+        pickedModel,
+        entries,
+        () => sprintDefaultModel(entries) ?? scheduledTaskDefaultModel(settings, project, entries),
+      ),
   );
   const canSubmit = !submitting && modelSelection !== null && name.trim() !== "";
 

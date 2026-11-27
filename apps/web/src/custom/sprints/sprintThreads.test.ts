@@ -4,6 +4,10 @@ import type { ModelSelection } from "@t3tools/contracts";
 
 import {
   parseSprintGoal,
+  sprintAnswerLine,
+  sprintAnswersFor,
+  sprintOwnerEditMarker,
+  withSprintAnswer,
   parseSprintThreadModel,
   sprintGoalLine,
   sprintThreadModelLine,
@@ -90,5 +94,54 @@ describe("sprint thread model", () => {
   ])("%s", (_name, plan, expected) => {
     expect(withSprintThreadModel(plan, opus)).toBe(expected);
     expect(parseSprintThreadModel(withSprintThreadModel(plan, opus))).toEqual(opus);
+  });
+});
+
+describe("sprint answers", () => {
+  it("keeps the newest answers in the sprint's log", () => {
+    const first = withSprintAnswer("", "a");
+    expect(first).toContain("# Answers");
+    expect(first.trimEnd().endsWith("- a")).toBe(true);
+    const log = ["b", "c", "d"].reduce((text, line) => withSprintAnswer(text, line, 2), first);
+    expect(log.match(/^- /gm)).toHaveLength(2);
+    expect(log.trimEnd().endsWith("- c\n- d")).toBe(true);
+  });
+
+  it("names a nested file's owner-edit marker as the turn hook reads it", () => {
+    expect(sprintOwnerEditMarker("context/notes/spec.md")).toBe(
+      ".claude/owner-edits/context__notes__spec.md",
+    );
+  });
+
+  it("reads back the latest answers it wrote for each request", () => {
+    const log = [
+      ["r1", sprintAnswerLine([{ question: "Which color?", answer: "Blue" }])],
+      [
+        "r1",
+        sprintAnswerLine([
+          { question: "Which color?", answer: "Red (Recommended)" },
+          { question: "Which size?", answer: "Large" },
+        ]),
+      ],
+      [
+        "r2",
+        sprintAnswerLine([{ question: "Run\n  rm -rf dist; vp build", answer: "Allowed; once" }]),
+      ],
+    ].reduce(
+      (text, [request, line]) =>
+        withSprintAnswer(text, `2026-11-27 10:00: Pick (mcp:t1:${request}): ${line}`),
+      "",
+    );
+    expect(sprintAnswersFor(log, "mcp:t1:r1")).toEqual([
+      { question: "Which color?", answer: "Red (Recommended)" },
+      { question: "Which size?", answer: "Large" },
+    ]);
+    expect(sprintAnswersFor(log, "mcp:t1:r2")).toEqual([
+      { question: "Run rm -rf dist; vp build", answer: "Allowed; once" },
+    ]);
+    expect(sprintAnswersFor(log, "mcp:t1:r3")).toBeNull();
+    expect(sprintAnswersFor("- 10:00: Pick (t2:r1): Which color? → blue", "t2:r1")).toEqual([
+      { question: "Which color?", answer: "blue" },
+    ]);
   });
 });

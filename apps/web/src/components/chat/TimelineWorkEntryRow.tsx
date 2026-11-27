@@ -59,7 +59,7 @@ import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 /* fork:end fork-subagent-spawn-card */
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
-import { forkWorkReportKey } from "~/custom/threadLaunchCards/threadLaunch.logic";
+import { forkWorkReportKey } from "~/custom/forkWorkReports";
 /* fork:end fork-thread-launch-cards */
 import {
   TimelineRowCtx,

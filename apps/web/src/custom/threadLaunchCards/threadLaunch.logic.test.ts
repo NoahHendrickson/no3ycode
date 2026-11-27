@@ -8,16 +8,15 @@ import {
   type ForkThreadLaunch,
   forkThreadLaunchFromToolItem,
   threadLaunchActivityLine,
+  threadLaunchPullRequests,
+  threadPullRequestStage,
+} from "./threadLaunch.logic";
+import {
   forkWorkReportIsPending,
   forkWorkReportKey,
   forkWorkReportRequestKind,
   forkWorkReportThreadId,
-  threadLaunchPullRequests,
-  threadPullRequestStage,
-  sprintAnswerLine,
-  sprintAnswersFor,
-  withSprintAnswer,
-} from "./threadLaunch.logic";
+} from "../forkWorkReports";
 
 describe("forkThreadLaunchFromToolItem", () => {
   const input = { title: "Optimize images", message: "Swap the hero to next/image" };
@@ -289,48 +288,5 @@ describe("thread requests from reports", () => {
     expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-1")).toBe(true);
     expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-2")).toBe(false);
     expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", null)).toBe(false);
-  });
-
-  it("keeps the newest answers in the sprint's log", () => {
-    const first = withSprintAnswer("", "a");
-    expect(first).toContain("# Answers");
-    expect(first.trimEnd().endsWith("- a")).toBe(true);
-    const log = ["b", "c", "d"].reduce((text, line) => withSprintAnswer(text, line, 2), first);
-    expect(log.match(/^- /gm)).toHaveLength(2);
-    expect(log.trimEnd().endsWith("- c\n- d")).toBe(true);
-  });
-});
-
-describe("sprint answers", () => {
-  it("reads back the latest answers it wrote for each request", () => {
-    const log = [
-      ["r1", sprintAnswerLine([{ question: "Which color?", answer: "Blue" }])],
-      [
-        "r1",
-        sprintAnswerLine([
-          { question: "Which color?", answer: "Red (Recommended)" },
-          { question: "Which size?", answer: "Large" },
-        ]),
-      ],
-      [
-        "r2",
-        sprintAnswerLine([{ question: "Run\n  rm -rf dist; vp build", answer: "Allowed; once" }]),
-      ],
-    ].reduce(
-      (text, [request, line]) =>
-        withSprintAnswer(text, `2026-11-27 10:00: Pick (mcp:t1:${request}): ${line}`),
-      "",
-    );
-    expect(sprintAnswersFor(log, "mcp:t1:r1")).toEqual([
-      { question: "Which color?", answer: "Red (Recommended)" },
-      { question: "Which size?", answer: "Large" },
-    ]);
-    expect(sprintAnswersFor(log, "mcp:t1:r2")).toEqual([
-      { question: "Run rm -rf dist; vp build", answer: "Allowed; once" },
-    ]);
-    expect(sprintAnswersFor(log, "mcp:t1:r3")).toBeNull();
-    expect(sprintAnswersFor("- 10:00: Pick (t2:r1): Which color? → blue", "t2:r1")).toEqual([
-      { question: "Which color?", answer: "blue" },
-    ]);
   });
 });

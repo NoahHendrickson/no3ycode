@@ -91,10 +91,8 @@ import { quietBotWakeRunIds, withoutRuns } from "~/custom/bots/quietBotWakes";
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import {
   type ForkThreadLaunch,
-  forkThreadLaunchesEqual,
   forkThreadLaunchListsEqual,
   placeLaunchesUnderReplies,
-  sameLaunchGroup,
 } from "~/custom/threadLaunchCards/threadLaunch.logic";
 /* fork:end fork-thread-launch-cards */
 
@@ -1618,6 +1616,7 @@ function timelineRowEntries(
     | "pendingApprovalRequestIds"
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
     | "hideQuietBotWakes"
+    | "forkKeepRequestReports"
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     | "forkHoldLiveReplies"
@@ -1672,6 +1671,7 @@ function timelineRowEntries(
         failedRunIds: failedTimelineRunIds(entries, input.latestRun ?? null),
         revealedMessageId: input.revealedMessageId,
       }),
+      input.forkKeepRequestReports === true,
     );
   }
   /* fork:end fork-bots */
@@ -1768,6 +1768,8 @@ export function deriveMessagesTimelineRows(
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
     /** A bot's quiet wakes stay out of the shown rows; see custom/bots/quietBotWakes. */
     hideQuietBotWakes?: boolean;
+    /** Except a question or approval report, where the conversation answers its threads inline. */
+    forkKeepRequestReports?: boolean;
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     /** Outside Zen, a running turn's replies stay out of the rows until it ends, as Zen's do; the newest still splits its steps. */
@@ -2426,19 +2428,14 @@ export function deriveMessagesTimelineRows(
     }
 
     /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+    // One row per call; placeLaunchesUnderReplies groups them.
     if (timelineEntry.kind === "fork-thread-launch") {
-      const previous = nextRows.at(-1);
-      const launch = { id: timelineEntry.id, launch: timelineEntry.launch };
-      if (previous?.kind === "fork-thread-launch" && sameLaunchGroup(previous, timelineEntry)) {
-        nextRows[nextRows.length - 1] = { ...previous, launches: [...previous.launches, launch] };
-        continue;
-      }
       nextRows.push({
         kind: "fork-thread-launch",
         id: timelineEntry.id,
         createdAt: timelineEntry.createdAt,
         runId: timelineEntry.runId,
-        launches: [launch],
+        launches: [{ id: timelineEntry.id, launch: timelineEntry.launch }],
       });
       continue;
     }
@@ -3092,15 +3089,7 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
     /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
     case "fork-thread-launch": {
       const bl = b as typeof a;
-      return (
-        a.createdAt === bl.createdAt &&
-        a.launches.length === bl.launches.length &&
-        a.launches.every(
-          (entry, index) =>
-            entry.id === bl.launches[index]?.id &&
-            forkThreadLaunchesEqual(entry.launch, bl.launches[index]?.launch),
-        )
-      );
+      return a.createdAt === bl.createdAt && forkThreadLaunchListsEqual(a.launches, bl.launches);
     }
     /* fork:end fork-thread-launch-cards */
 

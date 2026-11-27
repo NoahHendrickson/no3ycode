@@ -137,6 +137,26 @@ export class WorkspaceFileSystem extends Context.Service<
 
 const UTF8_BOM = "\uFEFF";
 
+/* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+/** Padded standard base64 only: Buffer.from skips other characters, so a data: URL or base64url
+    would decode to wrong bytes instead of failing. A loop, not a regex: files run to megabytes. */
+function isStrictBase64(text: string): boolean {
+  if (text.length % 4 !== 0) return false;
+  const padding = text.endsWith("==") ? 2 : text.endsWith("=") ? 1 : 0;
+  for (let at = 0; at < text.length - padding; at += 1) {
+    const code = text.charCodeAt(at);
+    const valid =
+      (code >= 65 && code <= 90) || // A-Z
+      (code >= 97 && code <= 122) || // a-z
+      (code >= 48 && code <= 57) || // 0-9
+      code === 43 || // +
+      code === 47; // /
+    if (!valid) return false;
+  }
+  return true;
+}
+/* fork:end fork-sprints */
+
 async function startsWithUtf8Bom(filePath: string): Promise<boolean> {
   const handle = await NodeFSP.open(
     filePath,
@@ -595,6 +615,16 @@ export const make = Effect.gen(function* () {
       .pipe(Effect.orElseSucceed(() => false));
     /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
     const binary = input.encoding === "base64";
+    if (binary && !isStrictBase64(input.contents)) {
+      return yield* new WorkspaceFileSystemOperationError({
+        workspaceRoot: input.cwd,
+        relativePath: input.relativePath,
+        resolvedPath: realTargetPath,
+        operationPath: realTargetPath,
+        operation: "write-file",
+        cause: new Error("The contents are not valid base64."),
+      });
+    }
     // readFile decodes the BOM away, so an editor save would otherwise drop it from the file.
     const keepsBom =
       !binary &&

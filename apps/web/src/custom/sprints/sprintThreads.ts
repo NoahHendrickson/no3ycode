@@ -5,7 +5,8 @@
  *
  * No runtime imports from bots/botThreads here: botThreads reads this module.
  */
-import { ModelSelection } from "@t3tools/contracts";
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { type EnvironmentId, ModelSelection, type ScopedThreadRef } from "@t3tools/contracts";
 import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -40,6 +41,41 @@ export function listSidebarSprints<
   return threads
     .filter((thread) => thread.archivedAt === null && isSprintThread(thread.source))
     .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
+}
+
+/** The sprints the Sprints section shows: all of them, or while it is folded the open one alone. */
+export function visibleSidebarSprints<
+  T extends { readonly environmentId: EnvironmentId; readonly id: ScopedThreadRef["threadId"] },
+>(sprints: ReadonlyArray<T>, collapsed: boolean, routeThreadKey: string | null): T[] {
+  return sprints.filter(
+    (sprint) =>
+      !collapsed ||
+      routeThreadKey === scopedThreadKey(scopeThreadRef(sprint.environmentId, sprint.id)),
+  );
+}
+
+/** The project a new sprint starts in: the open thread's, when there is one. */
+export function sprintDefaultProject<
+  T extends {
+    readonly environmentId: EnvironmentId;
+    readonly id: ScopedThreadRef["threadId"];
+    readonly projectId: string;
+  },
+>(
+  threads: ReadonlyArray<T>,
+  routeThreadRef: ScopedThreadRef | null,
+): { readonly environmentId: string; readonly projectId: string } | null {
+  const routeThread =
+    routeThreadRef === null
+      ? undefined
+      : threads.find(
+          (thread) =>
+            thread.environmentId === routeThreadRef.environmentId &&
+            thread.id === routeThreadRef.threadId,
+        );
+  return routeThread === undefined
+    ? null
+    : { environmentId: routeThread.environmentId, projectId: routeThread.projectId };
 }
 
 const NO_GOAL = "Not set.";
@@ -125,4 +161,69 @@ export function sprintFolderPath(scratchWorkspaceRoot: string, folderName: strin
   const separator = scratchWorkspaceRoot.includes("\\") ? "\\" : "/";
   const root = scratchWorkspaceRoot.replace(/[\\/]+$/, "");
   return [root, SPRINT_FOLDERS_DIRECTORY, folderName].join(separator);
+}
+
+/** Answers the owner gave the sprint's threads directly, from the cards in its conversation; the
+    turn hook shows the sprint the file once it changes (its owner-edit marker). */
+export const SPRINT_ANSWERS_FILE = "ANSWERS.md";
+
+export interface SprintAnswer {
+  readonly question: string;
+  readonly answer: string;
+}
+
+/** One ANSWERS.md entry's text: each question on one line, an arrow, its answer as JSON; several
+    joined by "; ". An approval's question is what it asked to do, its answer the decision. */
+export function sprintAnswerLine(answers: ReadonlyArray<SprintAnswer>): string {
+  return answers
+    .map(
+      (entry) => `${entry.question.replace(/\s+/g, " ").trim()} → ${JSON.stringify(entry.answer)}`,
+    )
+    .join("; ");
+}
+
+// A question, then its answer as a JSON string (which may hold "; "), or bare words written by hand.
+const SPRINT_ANSWER = /(.+?) → ("(?:[^"\\]|\\.)*"|[^;]*)(?:; |$)/g;
+
+/** The owner's latest answers to one request in the sprint's ANSWERS.md, keyed as its work report
+    is (`threadId:requestId`), or null when there are none. */
+export function sprintAnswersFor(
+  log: string,
+  reportKey: string,
+): ReadonlyArray<SprintAnswer> | null {
+  const marker = `(${reportKey}): `;
+  const line = log
+    .split("\n")
+    .filter((entry) => entry.startsWith("- ") && entry.includes(marker))
+    .at(-1);
+  if (line === undefined) return null;
+  const said = line.slice(line.indexOf(marker) + marker.length);
+  const answers = [...said.matchAll(SPRINT_ANSWER)].map(([, question = "", raw = ""]) => {
+    let answer = raw;
+    if (raw.startsWith('"')) {
+      try {
+        answer = String(JSON.parse(raw));
+      } catch {
+        // Written by hand: keep the words.
+      }
+    }
+    return { question, answer };
+  });
+  return answers.length === 0 ? null : answers;
+}
+
+/** One line in the sprint's ANSWERS.md for an answer the owner gave a thread directly; the log
+    keeps the newest `keep` lines under its title. */
+export function withSprintAnswer(log: string, line: string, keep = 20): string {
+  const entries = log
+    .split("\n")
+    .filter((entry) => entry.startsWith("- "))
+    .slice(-(keep - 1));
+  return `# Answers\n\nYour owner answered these threads directly, from the sprint's conversation.\n\n${[...entries, `- ${line}`].join("\n")}\n`;
+}
+
+/** The marker an owner's save of `relativePath` leaves in SPRINT_OWNER_EDITS_DIRECTORY: one flat
+    name per file, `/` written `__`, which the turn hook (sprintSeedFiles) turns back. */
+export function sprintOwnerEditMarker(relativePath: string): string {
+  return `${SPRINT_OWNER_EDITS_DIRECTORY}/${relativePath.replaceAll("/", "__")}`;
 }

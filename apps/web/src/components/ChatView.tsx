@@ -479,6 +479,8 @@ import { useBotThreadsPanelBot, useBotThreadsPanelOpen } from "~/custom/bots/use
 /* fork:end fork-bot-work-threads */
 /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
 import { BotThreadsPanelToggle } from "~/custom/bots/BotThreadsPanelToggle";
+import { SprintPanel } from "~/custom/sprints/SprintPanel";
+import { sprintThreadHost } from "~/custom/sprints/sprintThreadHost";
 import { useIsSprintThread } from "~/custom/sprints/useIsSprintThread";
 /* fork:end fork-sprints */
 /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
@@ -1175,8 +1177,10 @@ export default function ChatView(props: ChatViewProps) {
      A bot reads like a chat: the composer alone, without project and checkout chips. */
   const isForkBotThread = useIsBotThread(activeThreadRef);
   /* fork:end fork-bots */
-  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-  const forkIsSprint = useIsSprintThread(activeThreadRef);
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+     A sprint only routes work: its header keeps details and Threads, without terminal, right
+     panel, Float, Dock or Split agent (Unsplit stays in a split); its timeline hosts its threads. */
+  const forkSprintRef = useIsSprintThread(activeThreadRef) ? activeThreadRef : null;
   /* fork:end fork-sprints */
   const activeThreadKey = activeThreadRef ? scopedThreadKey(activeThreadRef) : null;
   const activeEnvironmentServerBrowser = useEnvironmentSupportsServerBrowser(
@@ -1294,6 +1298,9 @@ export default function ChatView(props: ChatViewProps) {
      the pane floats, or the right panel holds the one sheet slot. A bot and each of its threads
      show the bot's panel. */
   const forkBotThreadsBot = useBotThreadsPanelBot(embedded ? null : activeThreadRef);
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+  const forkBotThreadsIsSprint = useIsSprintThread(forkBotThreadsBot);
+  /* fork:end fork-sprints */
   const forkBotThreadsHeld =
     rightPanelMaximized || splitPane.floating || (prefersPlanSidebarSheet && rightPanelOpen);
   const forkBotThreadsInline =
@@ -3890,16 +3897,15 @@ export default function ChatView(props: ChatViewProps) {
      window, and never split between the header and a panel. A maximized right panel hides the
      conversation, so the cluster moves into that panel's header. */
   const panelToggleControls =
-    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
-       A sprint only routes work: no terminal drawer or right panel, just details and its threads. */
-    forkIsSprint && activeThreadRef ? (
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+    forkSprintRef ? (
       <>
         <PanelLayoutControls
           {...panelToggleControlProps}
           showTerminalControl={false}
           showRightPanelControl={false}
         />
-        <BotThreadsPanelToggle threadRef={activeThreadRef} />
+        <BotThreadsPanelToggle threadRef={forkSprintRef} />
       </>
     ) : (
       /* fork:end fork-sprints */
@@ -3914,9 +3920,8 @@ export default function ChatView(props: ChatViewProps) {
     !embedded &&
     activeThreadRef &&
     activeProjectRef &&
-    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
-       A sprint never starts a split; in one (a launched thread opened beside it) it keeps Unsplit. */
-    (!forkIsSprint || splitPane.split) &&
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+    (forkSprintRef === null || splitPane.split) &&
     /* fork:end fork-sprints */
     // A provider-native subagent thread has no composer and never offers Split agent; inside a
     // pair it keeps Unsplit.
@@ -3936,7 +3941,7 @@ export default function ChatView(props: ChatViewProps) {
         panelToggleControls={panelToggleControls}
         splitAgentToggle={splitAgentToggle}
         /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-        paneActions={!forkIsSprint}
+        paneActions={forkSprintRef === null}
         /* fork:end fork-sprints */
         draftId={isLocalDraftThread ? draftId : null}
         threadRef={activeThreadRef}
@@ -4200,6 +4205,9 @@ export default function ChatView(props: ChatViewProps) {
             >
               <WorkspaceMutationIdContext value={workspaceMutationId}>
                 <ThreadTimeline
+                  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+                  forkThreadHost={forkSprintRef === null ? null : sprintThreadHost(forkSprintRef)}
+                  /* fork:end fork-sprints */
                   pendingApprovals={pendingApprovals}
                   heldApprovalRequestIds={heldApprovalRequestIds}
                   respondingRequestIds={respondingRequestIds}
@@ -4824,19 +4832,34 @@ export default function ChatView(props: ChatViewProps) {
 
       {/* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */}
       {forkBotThreadsBot !== null && activeThreadRef ? (
-        <BotThreadsPanel
-          botRef={forkBotThreadsBot}
-          threadRef={activeThreadRef}
-          workspaceLayoutElement={workspaceLayoutElement}
-          sheet={prefersPlanSidebarSheet}
-          held={forkBotThreadsHeld}
-          rightPanelInline={inlineRightPanelOwnsTitleBar}
-          animationsActive={panelAnimationsActive}
-          animationDurationMs={panelAnimationDurationMs}
-          /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-          parentPanel={sideChatParentPanel}
+        /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+           A sprint and each of its threads show the sprint's panel, a Petal and its threads the
+           Petal's. */
+        forkBotThreadsIsSprint ? (
+          <SprintPanel
+            botRef={forkBotThreadsBot}
+            threadRef={activeThreadRef}
+            workspaceLayoutElement={workspaceLayoutElement}
+            sheet={prefersPlanSidebarSheet}
+            held={forkBotThreadsHeld}
+            rightPanelInline={inlineRightPanelOwnsTitleBar}
+            animationsActive={panelAnimationsActive}
+            animationDurationMs={panelAnimationDurationMs}
+            parentPanel={sideChatParentPanel}
+          />
+        ) : (
           /* fork:end fork-sprints */
-        />
+          <BotThreadsPanel
+            botRef={forkBotThreadsBot}
+            threadRef={activeThreadRef}
+            workspaceLayoutElement={workspaceLayoutElement}
+            sheet={prefersPlanSidebarSheet}
+            held={forkBotThreadsHeld}
+            rightPanelInline={inlineRightPanelOwnsTitleBar}
+            animationsActive={panelAnimationsActive}
+            animationDurationMs={panelAnimationDurationMs}
+          />
+        )
       ) : null}
       {/* fork:end fork-bot-work-threads */}
       {rightPanelPresent && activeThreadRef && !embedded ? (

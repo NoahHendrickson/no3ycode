@@ -5898,33 +5898,40 @@
     Launches: session-logic lifts each `t3_thread_launch` call out of the work stream into a
     "fork-thread-launch" entry (custom/threadLaunchCards/threadLaunch.logic: the wire keeps only
     the result's threadId, so the title is the input's, and the call can be starting or failed);
-    MessagesTimeline.logic keeps it out of the superseded-attempt fold and stacks one run's
-    consecutive launches in one row; MessagesTimeline draws it. Not being a work entry, the
-    turn's "Worked for" fold never swallows it. placeLaunchesUnderReplies then moves a turn's
-    launches, as one group, onto the turn's last reply shown (forkLaunches), which draws them
-    between its text and its hover-only actions (TimelineAssistantRows), so the three hover as
-    one; a turn with no reply shown keeps them as a row where the calls happened.
+    MessagesTimeline.logic keeps it out of the superseded-attempt fold and draws one row per call;
+    MessagesTimeline draws it. Not being a work entry, the turn's "Worked for" fold never swallows
+    it. placeLaunchesUnderReplies, the only place launches group, then moves a turn's launches, as
+    one group, onto the turn's last reply shown (forkLaunches), which draws them between its text
+    and its hover-only actions (TimelineAssistantRows), so the three hover as one; a turn with no
+    reply shown keeps them where the calls happened, one run's consecutive calls in one row.
 
     Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
     in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can
     hold colons, so the row takes the longest known thread id the key starts with
-    (forkWorkReportThreadId). TimelineWorkEntryRow draws the notification as that thread's row,
+    (forkWorkReportThreadId, over one id index per machine's thread list, forkWorkReportThreadIds,
+    so a row never subscribes to every thread shell). All reading of report ids and summaries is in
+    custom/forkWorkReports. TimelineWorkEntryRow draws the notification as that thread's row,
     title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
 
-    Questions and approvals: a report whose summary ends "has a question" / "needs an approval",
+    Questions and approvals: only where the conversation has a host that answers inline
+    (custom/threadLaunchCards/forkThreadHost, a React context ThreadTimeline sets; a sprint
+    supplies it, sprints/sprintThreadHost, so these cards and ThreadContextChip import no sprint
+    code). There a report whose summary ends "has a question" / "needs an approval",
     while its thread still waits on that request (the key ends with the shell's
     pendingRuntimeRequest id), draws as the thread's row with its arm turned down (╭) over a card
-    (custom/threadLaunchCards/ForkThreadRequestCard): the question in the override's
+    (custom/threadLaunchCards/ForkThreadRequestCard, answering through custom/childRequestControls
+    as a Petal's digest cards do): the question in the override's
     ComposerPendingUserInputPanel, bordered and ruled into sections with only the question filled, a
     typed answer as a third row under the options and Open thread at the end of the Submit row
-    (the override's afterOptions / afterActions slots); an approval in forkApprovalNoticeItem. The answer goes
-    straight to the thread. In a sprint it is also logged to ANSWERS.md in its folder
-    (sprintAnswerLine / withSprintAnswer, newest 20) with an owner-edits marker, so the sprint's
-    turn hook shows it on its next message; once settled the card stays, reading the question and
-    the answer back from ANSWERS.md (sprintAnswersFor), or the row says it asked when the answer
-    came from elsewhere. a sprint replies quietly to a question or approval report, and quietBotWakes then drops the turn but
-    keeps the report's card,
-    and a sprint's composer shows no digest asks (BotDigest), so the card is the only place.
+    (the override's afterOptions / afterActions slots; Enter in the typed answer waits out IME
+    composition); an approval in forkApprovalNoticeItem. The answer goes straight to the thread,
+    and the host hears it (onAnswered): a sprint logs it to ANSWERS.md in its folder (fork-sprints).
+    Once settled the host draws the card (AnsweredRequest): a sprint keeps it with the question and
+    the answer read back from ANSWERS.md, or the thread's row when the answer came from elsewhere.
+    A sprint replies quietly to a question or approval report, and quietBotWakes then drops the turn
+    but keeps the report's card (forkKeepRequestReports, set where a host is), and a sprint's
+    composer shows no digest asks (BotDigest), so the card is the only place. A Petal has no host:
+    its report is the thread's row, its quiet wake goes whole, and it answers from its digest.
 
     A row (custom/threadLaunchCards/ForkThreadLaunchCards ForkThreadHookRow) reads the thread
     live: a hook, the title, the sidebar's status mark, a failed thread's error, and a chip per
@@ -5941,11 +5948,14 @@
     - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.ts
     - apps/web/src/custom/threadLaunchCards/ForkThreadLaunchCards.tsx
     - apps/web/src/custom/threadLaunchCards/ForkThreadRequestCard.tsx
+    - apps/web/src/custom/threadLaunchCards/forkThreadHost.ts
+    - apps/web/src/custom/forkWorkReports.ts
   shadows: []
   watch:
     - apps/web/src/session-logic.ts
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
     - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/ThreadTimeline.tsx
     - apps/web/src/custom/bots/quietBotWakes.ts
     - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
     - apps/web/src/custom/bots/BotDigest.tsx
@@ -8266,6 +8276,7 @@
     - apps/web/src/custom/bots/BotMascot.tsx
     - apps/web/src/custom/bots/botSeedFiles.ts
     - apps/web/src/custom/bots/useCreateBot.ts
+    - apps/web/src/custom/bots/useBotThreadCreation.ts
     - apps/web/src/custom/bots/useSetBotMascot.ts
     - apps/web/src/custom/bots/BotMascotDetailsSection.tsx
     - apps/web/src/custom/bots/BotCardStatusLine.tsx
@@ -8713,7 +8724,8 @@
     (botDigestPageAt). Every card's bottom (custom/bots/BotDigestBottom: BotDigestBottom ruled,
     BotDigestBottomInline under an approval's actions) takes its links as data and carries them,
     "Show N dismissed" and the shared pager. A work thread's card is the one the thread itself
-    would show (custom/bots/BotChildRequests): its approval as the approval notice
+    would show (custom/bots/BotChildRequests, answering through custom/childRequestControls, which a
+    sprint's inline cards share): its approval as the approval notice
     (forkApprovalNoticeItem with aside, which marks the span holding its actions and detail
     data-fork-composer-aside) and its question as the Questions card (ComposerPendingUserInputPanel
     with numberKeys off, so a digit picks on the Petal's own question, its bottom as the footer),
@@ -8755,6 +8767,7 @@
     - apps/web/src/custom/bots/BotPullRequestMark.tsx
     - apps/web/src/custom/bots/useAnsweredBotDigestAsks.ts
     - apps/web/src/custom/bots/BotChildRequests.tsx
+    - apps/web/src/custom/childRequestControls.ts
     - apps/web/src/custom/bots/BotDigestBottom.tsx
     - apps/web/src/custom/ForkQuestionCard.tsx
     - apps/web/src/custom/bots/botDigestStack.ts
@@ -8862,16 +8875,28 @@
     240ms --ease-drawer glide, fade only under reduced motion).
     On Threads, search, filter and sort sit beside the close button; a search replaces the tabs
     until Escape. A sprint's panel starts at 380px (SPRINT_PANEL_DEFAULT_WIDTH) so they fit.
-    Its Threads list draws each thread on one line (BotThreadsRowView compact: mark, title, PR
-    mark, time), leaving the checkout to the thread.
+    The panel is custom/sprints/SprintPanel (its header, tabs, child view and rows) over the
+    Petal panel's frame, list, search and controls (bots/BotThreadsPanel, which stays Petal-only);
+    ChatView picks one or the other once. Its Threads list draws each thread on one line
+    (SprintThreadsRowView: mark, title, PR mark, time), leaving the checkout to the thread.
 
     A thread opened from a sprint opens in its panel, never in the main column or a split: the
     panel's header turns into a back arrow and the thread's title, and its body is the thread's
     own chat, composer included, embedded as a side chat is (custom/sprints/SprintChildConversation,
-    with ChatView's sideChatParentPanel, which ChatView hands BotThreadsPanel). openInSprintPanel
-    (sprintPanelState) does it for a Threads tab row, a thread or report row in the transcript
-    (fork-thread-launch-cards useOpenThreadBeside) and a thread link in the sprint's conversation
-    (ThreadContextChip, by the timeline row it sits in); back returns to the tabs.
+    with ChatView's sideChatParentPanel, which ChatView hands SprintPanel). openInSprintPanel
+    (sprintPanelState) does it for a Threads tab row, and, through the host the sprint gives its
+    timeline (custom/sprints/sprintThreadHost, fork-thread-launch-cards forkThreadHost), for a
+    thread or report row in the transcript (useOpenThreadBeside) and a thread link in the sprint's
+    conversation (ThreadContextChip); back returns to the tabs. That host also notes an answer the
+    owner gives from an inline card in ANSWERS.md (sprintAnswerLine / withSprintAnswer, newest 20,
+    one line per request), one note at a time per sprint folder so two quick answers never drop a
+    line, and reads it back for the settled card (sprintAnswersFor). Every owner write to a sprint
+    file (the Goal, Instructions and ANSWERS.md) goes through custom/sprints/sprintFiles
+    writeSprintFile, which drops the owner-edit marker (sprintOwnerEditMarker, `/` written `__`,
+    which the turn hook turns back). The Goal and file tabs share one editor hook
+    (SprintFileEditor useSprintFile and its footer); the Goal is a lens on PLAN.md. A creation
+    seeds the folder only once the thread is made and tagged (bots/useBotThreadCreation, the
+    steps a Petal is made with), so a failed one leaves no folder behind.
 
     The library, like a Claude Project's knowledge, holds files the owner adds in the dialog or
     from the Library tab (custom/sprints/SprintContext, drop or Add files; a text file opens in
@@ -8892,8 +8917,7 @@
     per device), as an ordinary thread card: isPetalThread keeps the mascot, its menu, the
     Petals section and the Petal empty conversation for Petals alone. An empty sprint shows
     starter chips instead (custom/sprints/SprintEmptyConversation, through BotEmptyConversation)
-    that write a prompt into the composer draft and never send it. Its Threads panel is the
-    Petal's, with tabs. Archiving a sprint wraps it up: its threads list again,
+    that write a prompt into the composer draft and never send it. Archiving a sprint wraps it up: its threads list again,
     and unarchiving brings it back. Web and desktop only: the mobile app has no sprint support yet.
   tier: 4
   files:
@@ -8916,6 +8940,10 @@
     - apps/web/src/custom/sprints/sprintPullRequests.logic.ts
     - apps/web/src/custom/sprints/SprintPullRequests.tsx
     - apps/web/src/custom/sprints/SprintEmptyConversation.tsx
+    - apps/web/src/custom/sprints/SprintPanel.tsx
+    - apps/web/src/custom/sprints/sprintThreadHost.tsx
+    - apps/web/src/custom/sprints/sprintFiles.ts
+    - apps/web/src/custom/sprints/useSprintModelChoices.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
@@ -8925,7 +8953,6 @@
     - apps/web/src/index.css
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
     - apps/web/src/custom/bots/botThreads.ts
-    - apps/web/src/custom/bots/BotThreadsPanel.tsx
     - apps/web/src/custom/bots/BotMascot.tsx
     - packages/contracts/src/project.ts
     - apps/server/src/workspace/WorkspaceFileSystem.ts

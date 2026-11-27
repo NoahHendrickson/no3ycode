@@ -4,15 +4,15 @@
  * the thread live and open it in a split beside this conversation.
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
+import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { Fragment, type MouseEvent, type ReactNode, use } from "react";
+import { Fragment, type ReactNode, use } from "react";
 
 import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { cn } from "~/lib/utils";
-import { useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
+import { useEnvironmentThreadRefs, useQuietThreadShell } from "~/state/entities";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 
@@ -22,14 +22,17 @@ import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { morphSplitPairs } from "../splitThreads/splitMorph";
 import { useSplitPane } from "../splitThreads/splitPaneContext";
 import { useSplitThreadStore } from "../splitThreads/splitThreadStore";
-import { openInSprintPanel } from "../sprints/sprintPanelState";
-import { ForkAnsweredRequest, ForkThreadRequestCard } from "./ForkThreadRequestCard";
 import {
-  type ForkThreadLaunch,
   forkWorkReportIsPending,
   forkWorkReportKey,
   forkWorkReportRequestKind,
   forkWorkReportThreadId,
+  forkWorkReportThreadIds,
+} from "../forkWorkReports";
+import { useForkThreadHost } from "./forkThreadHost";
+import { ForkThreadRequestCard } from "./ForkThreadRequestCard";
+import {
+  type ForkThreadLaunch,
   THREAD_PULL_REQUEST_STAGE_LABELS,
   threadLaunchActivityLine,
   threadLaunchPullRequests,
@@ -71,9 +74,10 @@ export function useOpenThreadBeside(
 ): () => void {
   const router = useRouter();
   const splitPane = useSplitPane();
+  const host = useForkThreadHost();
   return () => {
-    // From a sprint, its panel shows the thread and the sprint keeps the column.
-    if (openInSprintPanel(hostRef, threadRef)) return;
+    // A host with its own place for threads (a sprint, its panel) keeps the column.
+    if (host?.openThread(threadRef) === true) return;
     if (
       hostRef !== null &&
       splitPane.canSplit &&
@@ -118,9 +122,6 @@ export function ForkThreadHookRow(props: {
   const error =
     status?.label === "Failed" ? threadLaunchActivityLine(thread?.source.lastError) : null;
   const pullRequests = thread === null ? [] : threadLaunchPullRequests(thread);
-  const openPr = (event: MouseEvent<HTMLElement>, url: string) => {
-    openPrLink(event, url);
-  };
 
   return (
     <div
@@ -148,8 +149,8 @@ export function ForkThreadHookRow(props: {
               type="button"
               aria-label={`Pull request #${link.number}${link.title === null ? "" : `: ${link.title}`}${stage === null ? "" : `, ${stage.toLowerCase()}`}`}
               className="inline-flex h-5 shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 text-xs hover:text-foreground"
-              onClick={(event) => openPr(event, link.url)}
-              onAuxClick={(event) => openPr(event, link.url)}
+              onClick={(event) => openPrLink(event, link.url)}
+              onAuxClick={(event) => openPrLink(event, link.url)}
             >
               <Icon className="size-3" />#{link.number}
             </button>
@@ -184,7 +185,7 @@ export function ForkThreadLaunchList(props: {
             <ForkThreadHookRow
               kind="launch"
               threadRef={scopeThreadRef(
-                launch.environmentId ?? (ctx.activeThreadEnvironmentId as EnvironmentId),
+                launch.environmentId ?? ctx.activeThreadEnvironmentId,
                 launch.threadId,
               )}
               fallbackTitle={launch.title}
@@ -197,15 +198,6 @@ export function ForkThreadLaunchList(props: {
   );
 }
 
-/** A turn's launches as their own timeline row, where the turn shows no reply to hang them on. */
-export function ForkThreadLaunchTimelineRow(props: {
-  readonly row: {
-    readonly launches: ReadonlyArray<{ readonly id: string; readonly launch: ForkThreadLaunch }>;
-  };
-}) {
-  return <ForkThreadLaunchList launches={props.row.launches} />;
-}
-
 /** A work report's notice as the row of the thread it came from, heading the reply it started.
     The plain notice shows when its thread is not on this machine's list. */
 export function ForkWorkReportRow(props: {
@@ -214,29 +206,24 @@ export function ForkWorkReportRow(props: {
   readonly fallback: ReactNode;
 }) {
   const ctx = use(TimelineRowCtx);
-  const key = forkWorkReportKey(props.itemId);
-  const threads = useQuietThreadShells();
+  const host = useForkThreadHost();
   const environmentId = ctx.activeThreadEnvironmentId;
-  const threadId =
-    key === null
-      ? null
-      : forkWorkReportThreadId(
-          key,
-          threads.flatMap((thread) => (thread.environmentId === environmentId ? [thread.id] : [])),
-        );
-  const thread =
-    threadId === null
-      ? undefined
-      : threads.find(
-          (candidate) => candidate.environmentId === environmentId && candidate.id === threadId,
-        );
-  if (thread === undefined || key === null) return props.fallback;
+  const key = forkWorkReportKey(props.itemId);
+  // The machine's thread list changes only when a thread comes or goes, and its id index is
+  // built once per list, so a row neither rescans every thread nor wakes on every update.
+  const threadIds = forkWorkReportThreadIds(useEnvironmentThreadRefs(environmentId));
+  const threadId = key === null ? null : forkWorkReportThreadId(key, threadIds);
+  const thread = useQuietThreadShell(
+    threadId === null ? null : scopeThreadRef(environmentId, threadId),
+  );
+  if (thread === null || key === null) return props.fallback;
   const request = forkWorkReportRequestKind(props.summary);
-  // A question or approval still open is answered right here; once settled it keeps its answer.
-  // Inset as a reply's text is, so its hook lines up with the launch rows under replies.
+  // A question or approval still open is answered right here; once settled the host draws it.
+  // Only a host that answers inline does: a Petal asks above its composer, so its report is the
+  // thread's row alone. Inset as a reply's text is, so its hook lines up with the launch rows.
   return (
     <div className="ps-2">
-      {request === null ? (
+      {request === null || host === null ? (
         <ForkThreadHookRow
           kind="report"
           threadRef={scopeThreadRef(environmentId, thread.id)}
@@ -246,7 +233,7 @@ export function ForkWorkReportRow(props: {
       ) : forkWorkReportIsPending(key, thread.id, thread.source.pendingRuntimeRequest?.id) ? (
         <ForkThreadRequestCard thread={thread} hostRef={ctx.threadRef} kind={request} />
       ) : (
-        <ForkAnsweredRequest
+        <host.AnsweredRequest
           thread={thread}
           reportKey={key}
           hostRef={ctx.threadRef}

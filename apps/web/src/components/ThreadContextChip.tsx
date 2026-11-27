@@ -2,9 +2,7 @@ import { scopeProjectRef } from "@t3tools/client-runtime/environment";
 import type { ThreadContextRecord, ProjectId } from "@t3tools/contracts";
 import { Link, useNavigate } from "@tanstack/react-router";
 /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-import { use } from "react";
-import { openInSprintPanel } from "~/custom/sprints/sprintPanelState";
-import { TimelineRowCtx } from "./chat/timelineRowContext";
+import { useForkThreadHost } from "~/custom/threadLaunchCards/forkThreadHost";
 /* fork:end fork-sprints */
 import { MessagesSquareIcon } from "lucide-react";
 import { useGT } from "gt-react";
@@ -46,8 +44,8 @@ export function ThreadContextChip(props: {
   const title = shell?.title?.trim() || metadata?.title.trim() || props.record.title;
   const navigate = useNavigate();
   /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-  // The conversation the chip is written in, when it is in one.
-  const forkRow = use(TimelineRowCtx) as { readonly threadRef: unknown } | null;
+  // The host of the conversation the chip is written in (a sprint), when it has one.
+  const forkThreadHost = useForkThreadHost();
   /* fork:end fork-sprints */
   return (
     <Tooltip>
@@ -69,10 +67,7 @@ export function ThreadContextChip(props: {
                   if (
                     event.button === 0 &&
                     !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) &&
-                    openInSprintPanel(
-                      (forkRow?.threadRef as Parameters<typeof openInSprintPanel>[0]) ?? null,
-                      { environmentId, threadId },
-                    )
+                    forkThreadHost?.openThread({ environmentId, threadId }) === true
                   ) {
                     event.preventDefault();
                     return;
