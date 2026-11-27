@@ -1746,10 +1746,18 @@ it.effect.each([false, true])(
           "The owner answers it on its card in your conversation: answer it with action respond only when the owner's instructions settle it, and never ask the owner it yourself or restate it.",
         );
         assert.notInclude(wake.text, "ask the user");
+        assert.isTrue(
+          wake.text.endsWith(
+            'If you answered it, say so in one line; otherwise reply exactly "Nothing to report."',
+          ),
+        );
       } else {
         assert.include(
           wake.text,
           "Answer it with action respond when the answer follows from the task or the user's instructions; otherwise ask the user, then answer it. If it is no longer pending, it was answered or dismissed.",
+        );
+        assert.isTrue(
+          wake.text.endsWith("If it is no longer pending, it was answered or dismissed."),
         );
       }
     }).pipe(Effect.provide(DelegatedTaskQuestionReactor.layer.pipe(Layer.provideMerge(layerTest)))),

@@ -1618,6 +1618,9 @@ function timelineRowEntries(
     | "hideQuietBotWakes"
     | "forkKeepRequestReports"
     /* fork:end fork-bots */
+    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+    | "forkQuietRequestWakesOnly"
+    /* fork:end fork-coordinator-threads */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     | "forkHoldLiveReplies"
     /* fork:end fork-quiet-live-turn */
@@ -1670,6 +1673,9 @@ function timelineRowEntries(
         unsettledRunId: deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null),
         failedRunIds: failedTimelineRunIds(entries, input.latestRun ?? null),
         revealedMessageId: input.revealedMessageId,
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+        requestReportsOnly: input.forkQuietRequestWakesOnly === true,
+        /* fork:end fork-coordinator-threads */
       }),
       input.forkKeepRequestReports === true,
     );
@@ -1771,6 +1777,10 @@ export function deriveMessagesTimelineRows(
     /** Except a question or approval report, where the conversation answers its threads inline. */
     forkKeepRequestReports?: boolean;
     /* fork:end fork-bots */
+    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+    /** A coordinator: only a quiet run its child's question woke hides (custom/bots/quietBotWakes). */
+    forkQuietRequestWakesOnly?: boolean;
+    /* fork:end fork-coordinator-threads */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     /** Outside Zen, a running turn's replies stay out of the rows until it ends, as Zen's do; the newest still splits its steps. */
     forkHoldLiveReplies?: boolean;

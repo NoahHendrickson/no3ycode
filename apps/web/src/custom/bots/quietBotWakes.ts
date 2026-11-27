@@ -41,21 +41,26 @@ function asksOwner(entry: TimelineEntry): boolean {
 }
 
 /** Runs the owner never touched whose attempt completed on the quiet reply. A running or failed
-    run, one with an owner message, question or approval, and a cited reply's run always show. */
+    run, one with an owner message, question or approval, and a cited reply's run always show.
+    With `requestReportsOnly` (a coordinator, fork-coordinator-threads), only a run a thread's
+    question or approval report started is one: its card is the exchange. */
 export function quietBotWakeRunIds(
   entries: ReadonlyArray<TimelineEntry>,
   input: {
     readonly unsettledRunId: RunId | null;
     readonly failedRunIds: ReadonlySet<RunId>;
     readonly revealedMessageId: MessageId | null | undefined;
+    readonly requestReportsOnly?: boolean;
   },
 ): ReadonlySet<RunId> {
   const finalReply = new Map<RunId, Extract<TimelineEntry, { kind: "message" }>>();
   const shown = new Set<RunId>();
+  const reported = new Set<RunId>();
   for (const entry of entries) {
     const runId = entryOwningRunId(entry);
     if (runId === null) continue;
     if (asksOwner(entry)) shown.add(runId);
+    if (input.requestReportsOnly === true && isForkWorkRequestReport(entry)) reported.add(runId);
     if (entry.kind !== "message") continue;
     const { message } = entry;
     if (message.id === input.revealedMessageId) shown.add(runId);
@@ -71,6 +76,7 @@ export function quietBotWakeRunIds(
   const quiet = new Set<RunId>();
   for (const [runId, reply] of finalReply) {
     if (shown.has(runId) || input.failedRunIds.has(runId)) continue;
+    if (input.requestReportsOnly === true && !reported.has(runId)) continue;
     // Paged-in history can lack attempts; then only the live run is unfinished.
     const finished = reply.attempt
       ? reply.attempt.status === "completed"

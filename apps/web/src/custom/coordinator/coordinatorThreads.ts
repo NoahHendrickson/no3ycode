@@ -6,6 +6,7 @@
  */
 import { type OrchestrationV2ThreadShell, isListedThreadLineage } from "@t3tools/contracts";
 import {
+  FORK_BOT_QUIET_REPLY,
   FORK_COORDINATOR_TAG,
   isForkBotThread,
   isForkCoordinatorThread,
@@ -84,7 +85,7 @@ const RULES = `You are now this thread's coordinator. Until I switch it off:
 - Hand real work to children with \`delegate_task\`, so I follow them in this thread's panel. Don't list or link them; say in a few words what you started.
 - Keep your own turns short and never wait on a child; its completion wakes you.
 - Run children in parallel only when their scopes don't overlap; work on the same section of a file goes one child after another. Tell each child to make targeted edits and touch git only for its own files.
-- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Otherwise its notice's "ask the user" is not for you: never ask me it yourself or restate the question; say in one line that it waits on me (I answer on its card).`;
+- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Otherwise its notice's "ask the user" is not for you: never ask me it yourself or restate the question; reply exactly "${FORK_BOT_QUIET_REPLY}" (I answer on its card).`;
 
 const ACK = "Reply in one line that you're coordinating.";
 const ACK_BEFORE_TASK = 'My first task is my next message. Reply only "Coordinating." to this one.';

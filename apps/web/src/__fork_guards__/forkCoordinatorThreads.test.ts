@@ -137,6 +137,7 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(rules).toContain("Don't list or link them");
     expect(rules).toContain("scopes don't overlap");
     expect(rules).toContain("or restate the question");
+    expect(rules).toContain('reply exactly "Nothing to report." (I answer on its card)');
     // The server's child-question notice says to ask the user; a coordinator leaves that to the card.
     expect(rules).toContain('"ask the user" is not for you: never ask me it yourself');
     expect(rules).not.toMatch(/model/i);
@@ -162,10 +163,13 @@ describe("fork guard: fork-coordinator-threads", () => {
     const host = read("../custom/coordinator/coordinatorThreadHost.tsx");
     expect(host).toContain("useChildQuestionAnswers(props.thread, props.reportKey, props.kind)");
     expect(host).toContain("<ForkAnsweredRequestCard");
-    // The server words a coordinator's wake for the card, not for asking the owner itself.
-    expect(read("../../../server/src/orchestration-v2/DelegatedTaskQuestionReactor.ts")).toContain(
-      "isForkCoordinatorThread(parent.tags)",
-    );
+    // The server words a coordinator's wake for the card, not for asking the owner itself, and
+    // its quiet reply hides the wake's turn, keeping the card (custom/bots/quietBotWakes).
+    const reactor = read("../../../server/src/orchestration-v2/DelegatedTaskQuestionReactor.ts");
+    expect(reactor).toContain("isForkCoordinatorThread(");
+    expect(reactor).toContain('otherwise reply exactly "${FORK_BOT_QUIET_REPLY}"');
+    const timeline = read("../components/chat/MessagesTimeline.tsx");
+    expect(timeline).toContain("forkQuietRequestWakesOnly: forkIsCoordinator && !forkIsBotThread,");
     const row = read("../components/chat/TimelineWorkEntryRow.tsx");
     expect(row).toContain(
       'item?.type === "notification" && forkHost !== null ? forkDelegatedQuestionOf(item) : null;',

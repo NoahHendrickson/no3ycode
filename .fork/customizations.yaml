@@ -10536,7 +10536,10 @@
     answered card subscribes to its child, through a memoized atom), else the child's row; the
     coordinator keeps no ANSWERS.md (sprint-only). The server's notice of a child's question
     tells a parent to ask the user when the task does not settle it; for a coordinator parent
-    it says instead that the owner answers on the card and never to ask or restate it
+    it says instead that the owner answers on the card and never to ask or restate it, then to
+    reply exactly the quiet reply (FORK_BOT_QUIET_REPLY) unless it answered it; the timeline hides
+    that quiet run as a bot's quiet wake (custom/bots/quietBotWakes requestReportsOnly: only a
+    run a child's question report started), keeping the notice that draws the card
     (DelegatedTaskQuestionReactor, fenced; the tag is @t3tools/shared/forkBotTags
     FORK_COORDINATOR_TAG, one spelling for server and web; live test 2026-11-27: a Codex
     coordinator re-asked a Claude child's AskUserQuestion as its own question). With no host, an
@@ -10563,6 +10566,11 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/custom/bots/quietBotWakes.ts
+    - apps/web/src/custom/bots/quietBotWakes.test.ts
+    - apps/web/src/custom/forkWorkReports.ts
+    - apps/web/src/components/chat/MessagesTimeline.tsx
+    - apps/web/src/components/chat/MessagesTimeline.logic.ts
     - apps/server/src/orchestration-v2/DelegatedTaskQuestionReactor.ts
     - apps/server/src/orchestration-v2/Orchestrator.control-reads.test.ts
     - packages/shared/src/forkBotTags.ts

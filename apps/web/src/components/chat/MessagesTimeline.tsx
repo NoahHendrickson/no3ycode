@@ -166,6 +166,9 @@ import { useForkTimelineRowsStamp } from "~/custom/forkStageStamps";
 import { BotEmptyConversation } from "~/custom/bots/BotMascot";
 import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { useIsCoordinatorThread } from "~/custom/coordinator/useIsCoordinatorThread";
+/* fork:end fork-coordinator-threads */
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import { ForkThreadLaunchList } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
 import { useForkThreadHost } from "~/custom/threadLaunchCards/forkThreadHost";
@@ -528,6 +531,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
   const forkIsBotThread = useIsBotThread(citationThreadRef);
   /* fork:end fork-bots */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  const forkIsCoordinator = useIsCoordinatorThread(citationThreadRef);
+  /* fork:end fork-coordinator-threads */
   /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
   const forkThreadHost = useForkThreadHost();
   /* fork:end fork-thread-launch-cards */
@@ -814,8 +820,17 @@ const ConversationTimeline = memo(function ConversationTimeline({
     revealedMessageId,
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
        Find searches every run, so quiet wakes show while it is open. */
-    hideQuietBotWakes: forkIsBotThread && !findActive,
+    hideQuietBotWakes:
+      (forkIsBotThread ||
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+        forkIsCoordinator) &&
+      /* fork:end fork-coordinator-threads */
+      !findActive,
     /* fork:end fork-bots */
+    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+       A coordinator ends a child's question at its card: the quiet reply to its wake hides. */
+    forkQuietRequestWakesOnly: forkIsCoordinator && !forkIsBotThread,
+    /* fork:end fork-coordinator-threads */
     /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards
        A host that answers its threads inline keeps their question cards in a quiet wake. */
     forkKeepRequestReports: forkThreadHost !== null,

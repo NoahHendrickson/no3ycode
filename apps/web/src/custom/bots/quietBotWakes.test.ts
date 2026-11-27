@@ -183,6 +183,42 @@ describe("quiet bot wakes", () => {
     expect(kept("Rate limiting has a question", false)).toEqual([]);
   });
 
+  it("drops a coordinator's quiet reply to its child's question, keeping the question card", () => {
+    // The server's notice of a delegated child's question, which renders the card inline.
+    const parent = "coordinator-1";
+    const notice: TimelineEntry = {
+      id: `turn-item:message:${encodeURIComponent(`message:delegated-task-question:${parent}:request-1`)}`,
+      kind: "work",
+      createdAt: at(3),
+      entry: {
+        id: "notice",
+        createdAt: at(3),
+        runId: "wake-1" as RunId,
+        label: "question",
+        tone: "info",
+        itemType: "notification",
+        projectedItem: {
+          item: {
+            type: "notification",
+            id: `turn-item:message:${encodeURIComponent(`message:delegated-task-question:${parent}:request-1`)}`,
+            threadId: parent,
+            source: { kind: "delegated_task", taskIds: ["task-1"], childThreadId: "child-1" },
+          },
+        } as never,
+      },
+    };
+    const coordinator = { ...none, requestReportsOnly: true };
+    const run = (text: string) => [wake("wake-1", 2), notice, reply("wake-1", 4, text)];
+    const quiet = run("Nothing to report.");
+    expect(withoutRuns(quiet, quietBotWakeRunIds(quiet, coordinator), true)).toEqual([notice]);
+    // A reply that says something real stays, card and all.
+    const answered = run("Red");
+    expect(quietBotWakeRunIds(answered, coordinator).size).toBe(0);
+    // A coordinator's quiet run that no child's question started is not a wake to hide.
+    const other = [wake("wake-2", 5), reply("wake-2", 6, "Nothing to report.")];
+    expect(quietBotWakeRunIds(other, coordinator).size).toBe(0);
+  });
+
   it("drops a quiet wake from its prompt on, keeping a resumed subagent card in the earlier turn", () => {
     const card = item("wake-1", 2, { type: "subagent", status: "completed" });
     const entries = [

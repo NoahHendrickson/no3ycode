@@ -136,10 +136,12 @@ export function forkDelegatedQuestionOf(notice: {
   return { key: `${childThreadId}:${requestId}`, threadId: childThreadId, requestKind: "question" };
 }
 
-/** A work report of a thread's question or approval, which carries the card the owner answers on. */
+/** A work report of a thread's question or approval, which carries the card the owner answers on;
+    a delegated child's question notice is one too. */
 export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
   if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
   const item = entry.entry.projectedItem?.item;
+  if (item?.type === "notification" && forkDelegatedQuestionOf(item) !== null) return true;
   const report = forkWorkReportOf({
     id: entry.id,
     summary: entry.entry.label,
