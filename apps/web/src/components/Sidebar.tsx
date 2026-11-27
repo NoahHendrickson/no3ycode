@@ -385,6 +385,9 @@ import {
   visibleSidebarSprints,
 } from "~/custom/sprints/sprintThreads";
 /* fork:end fork-sprints */
+/* fork:begin fork-sprint-rules-refresh — see .fork/customizations.yaml#fork-sprint-rules-refresh */
+import { useRefreshSprintRules } from "~/custom/sprints/useRefreshSprintRules";
+/* fork:end fork-sprint-rules-refresh */
 import {
   petalTileHoverAnchor,
   SidebarV2BotCardBody,
@@ -2483,6 +2486,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const sprintThreads = listSidebarSprints(threads);
   const sprintsSectionCollapsed = isListSectionCollapsed("sprints");
   /* fork:end fork-sprints */
+  /* fork:begin fork-sprint-rules-refresh — see .fork/customizations.yaml#fork-sprint-rules-refresh */
+  useRefreshSprintRules(sprintThreads, projectByKey);
+  /* fork:end fork-sprint-rules-refresh */
   /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
   const setBotWork = useSetBotWork();
   /* fork:end fork-bot-crew */

@@ -7,6 +7,7 @@
  */
 
 import * as NodeChildProcess from "node:child_process";
+import * as NodeCrypto from "node:crypto";
 import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
@@ -20,7 +21,12 @@ import { botThreadsPanelBotId } from "../custom/bots/botWork";
 import { sidebarV2CardKind } from "../custom/bots/SidebarV2BotCardBody";
 import { SPRINT_CONTEXT_DIRECTORY } from "../custom/sprints/sprintContextFiles";
 import { SPRINT_PANEL_TABS } from "../custom/sprints/sprintPanelState";
-import { sprintSeedFiles } from "../custom/sprints/sprintSeedFiles";
+import { refreshSprintRules, sprintFileOwner } from "../custom/sprints/refreshSprintRules";
+import {
+  SPRINT_PROJECTS_FILE,
+  SPRINT_RULES_VERSION,
+  sprintSeedFiles,
+} from "../custom/sprints/sprintSeedFiles";
 import {
   FORK_SPRINT_TAG,
   listSidebarSprints,
@@ -61,6 +67,35 @@ const seeded = sprintSeedFiles({
 });
 const seededFile = (path: string) =>
   seeded.find((file) => file.relativePath === path)?.contents ?? "";
+
+/** A temp folder holding `files`, with the turn hook from its `.claude/settings.json`. */
+function sprintFolder(files: ReadonlyArray<{ relativePath: string; contents: string }>) {
+  const folder = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "sprint-hook-"));
+  const write = (relativePath: string, contents: string) => {
+    NodeFS.mkdirSync(NodePath.dirname(NodePath.join(folder, relativePath)), { recursive: true });
+    NodeFS.writeFileSync(NodePath.join(folder, relativePath), contents);
+  };
+  for (const file of files) write(file.relativePath, file.contents);
+  const runTurnHook = () => {
+    const settings = JSON.parse(
+      NodeFS.readFileSync(NodePath.join(folder, ".claude/settings.json"), "utf8"),
+    );
+    return NodeChildProcess.execFileSync(
+      "/bin/sh",
+      ["-c", settings.hooks.UserPromptSubmit[0].hooks[0].command],
+      { env: { PATH: process.env.PATH, CLAUDE_PROJECT_DIR: folder }, encoding: "utf8" },
+    );
+  };
+  return { folder, write, runTurnHook };
+}
+
+const RULES_UPDATED_LINE = "T3 Code updated your rules in CLAUDE.md; read it again before you act.";
+
+// The generated files for `seeded`'s sprint, pinned to the rules version they ship as.
+const PINNED_RULES = {
+  version: 6,
+  sha256: "2018ea27bc957fd779b84b75f067b52f162e91b78d5aea354306617a3a977d40",
+};
 
 describe("fork guard: fork-sprints", () => {
   it("lists sprints in their own section and Petals in theirs", () => {
@@ -111,26 +146,13 @@ describe("fork guard: fork-sprints", () => {
     );
     expect(seeded.map((file) => file.relativePath)).toContain(SPRINT_MEMORY_FILE);
 
-    const folder = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "sprint-hook-"));
+    const { folder, write, runTurnHook: run } = sprintFolder(seeded);
     try {
-      for (const file of seeded) {
-        NodeFS.mkdirSync(NodePath.dirname(NodePath.join(folder, file.relativePath)), {
-          recursive: true,
-        });
-        NodeFS.writeFileSync(NodePath.join(folder, file.relativePath), file.contents);
-      }
-      NodeFS.mkdirSync(NodePath.join(folder, "context"));
-      NodeFS.writeFileSync(NodePath.join(folder, "context", "spec.md"), "spec");
-      NodeFS.mkdirSync(NodePath.join(folder, SPRINT_OWNER_EDITS_DIRECTORY), { recursive: true });
-      NodeFS.writeFileSync(NodePath.join(folder, SPRINT_OWNER_EDITS_DIRECTORY, "CREW.md"), "");
-      const settings = JSON.parse(seededFile(".claude/settings.json"));
-      const turnHook: string = settings.hooks.UserPromptSubmit[0].hooks[0].command;
-      const run = () =>
-        NodeChildProcess.execFileSync("/bin/sh", ["-c", turnHook], {
-          env: { PATH: process.env.PATH, CLAUDE_PROJECT_DIR: folder },
-          encoding: "utf8",
-        });
+      write("context/spec.md", "spec");
+      write(`${SPRINT_OWNER_EDITS_DIRECTORY}/CREW.md`, "");
       const first = run();
+      // A fresh sprint's rules are the ones it loaded: no update to announce.
+      expect(first).not.toContain(RULES_UPDATED_LINE);
       expect(first).toContain("Library files:\nspec.md");
       expect(first).toContain("Your owner changed CREW.md. It now reads:\n# Instructions");
       expect(first).toContain("MEMORY.md changed. It now reads:\n# Memory");
@@ -153,8 +175,54 @@ describe("fork guard: fork-sprints", () => {
     expect(seededFile("CLAUDE.md")).toContain("Merging waits for your owner's approval");
   });
 
-  it("names the other projects the sprint touches in its rules", () => {
-    expect(seededFile("CLAUDE.md")).toContain("- Docs (id `project-docs`, at `/docs`)");
+  it("names the other projects the sprint touches in a file its rules import", () => {
+    expect(seededFile("CLAUDE.md")).toContain(`\n@${SPRINT_PROJECTS_FILE}\n`);
+    expect(seededFile(SPRINT_PROJECTS_FILE)).toContain("- Docs (id `project-docs`, at `/docs`)");
+  });
+
+  it("pins the generated rules to their version", () => {
+    const generated = seeded.filter((file) => sprintFileOwner(file.relativePath) === "generated");
+    const hash = NodeCrypto.createHash("sha256");
+    for (const file of generated) hash.update(`${file.relativePath}\n${file.contents}\n`);
+    expect(
+      { version: SPRINT_RULES_VERSION, sha256: hash.digest("hex") },
+      "A sprint's generated files changed. Raise SPRINT_RULES_VERSION in custom/sprints/sprintSeedFiles.ts so existing sprints get the new text (refreshSprintRules), then pin the new version and hash in PINNED_RULES here.",
+    ).toEqual(PINNED_RULES);
+  });
+
+  it("brings an older sprint's rules up to date and tells it once on its next turn", async () => {
+    const { folder, write, runTurnHook } = sprintFolder(
+      seeded.filter((file) => sprintFileOwner(file.relativePath) === "owned"),
+    );
+    try {
+      write("CLAUDE.md", "<!-- sprint-rules: 5 -->\n# Composer redesign\n");
+      write(".claude/settings.json", "{}");
+      const read = async (relativePath: string) => {
+        const path = NodePath.join(folder, relativePath);
+        return NodeFS.existsSync(path) ? NodeFS.readFileSync(path, "utf8") : null;
+      };
+      const refresh = () =>
+        refreshSprintRules(
+          { read, write: async (relativePath, contents) => write(relativePath, contents) },
+          {
+            name: "Composer redesign",
+            threadId: "sprint",
+            projectId: "project-test",
+            projectTitle: "no3ycode",
+            projectRoot: "/repo",
+            folderPath: "/scratch/sprints/composer-redesign-sprint",
+          },
+        );
+      expect(await refresh()).toBe(true);
+      expect(await read("CLAUDE.md")).toBe(seededFile("CLAUDE.md"));
+      expect(runTurnHook()).toContain(RULES_UPDATED_LINE);
+      expect(runTurnHook()).not.toContain(RULES_UPDATED_LINE);
+      // Up to date: nothing to announce again.
+      expect(await refresh()).toBe(false);
+      expect(runTurnHook()).not.toContain(RULES_UPDATED_LINE);
+    } finally {
+      NodeFS.rmSync(folder, { recursive: true, force: true });
+    }
   });
 
   it("has Pull requests and Library tabs, and binary library files reach the disk", () => {

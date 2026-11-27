@@ -8857,8 +8857,9 @@
     effort by default, any provider allowed, Ultrathink's prompt-prefix levels left out since
     there is no prompt to carry them). Its rules reach Claude through CLAUDE.md and other
     providers through AGENTS.md, which points at it. The dialog's optional "Also touches" menu
-    picks other projects on the same machine; CLAUDE.md lists them (title, id, path) so the sprint
-    plans across them from its first turn.
+    picks other projects on the same machine; PROJECTS.md lists them (title, id, path) and
+    CLAUDE.md imports it with `@PROJECTS.md`, so the sprint plans across them from its first
+    turn and CLAUDE.md stays generated (fork-sprint-rules-refresh).
 
     Its threads own their pull requests by default (the seeded CREW.md, new sprints only): open
     one when the change is ready, link and watch it, fix failing checks and answer reviews, but
@@ -8980,6 +8981,44 @@
     - apps/server/src/workspace/WorkspaceFileSystem.test.ts
     - apps/web/src/custom/sprints/sprintContextFiles.test.ts
     - apps/web/src/custom/sprints/sprintFileEditor.logic.test.ts
+    - apps/web/src/__fork_guards__/forkSprints.test.ts
+- id: fork-sprint-rules-refresh
+  intent: >
+    Sprints made before the rules changed get them, and nothing the owner or the sprint wrote is
+    ever rewritten. sprintSeedFiles SPRINT_FILE_OWNERSHIP splits a sprint's folder in two.
+    Generated, T3 Code's to replace: CLAUDE.md, AGENTS.md, .claude/settings.json and
+    .claude/compact-instructions.md. Owned, only ever added where missing: PLAN.md, STATE.md,
+    CREW.md, MEMORY.md, ANSWERS.md, PROJECTS.md and the context/ library. CLAUDE.md is made from
+    the sprint's identity alone (thread title and id, its project's id, title and root, its folder),
+    all of it kept outside CLAUDE.md; the "Also touches" projects live in PROJECTS.md, which it
+    imports. Its first line is a version marker (SPRINT_RULES_MARKER from SPRINT_RULES_VERSION,
+    raised whenever a generated file's text changes; the fork-sprints guard pins the generated
+    text's hash to the version, so a change without a raise fails CI). Once a client session, for
+    each sprint the sidebar lists whose project has loaded (useRefreshSprintRules, called from
+    Sidebar beside listSidebarSprints, with the bots' quiet file access), a client reads its
+    CLAUDE.md. One whose marker is older than SPRINT_RULES_VERSION (no marker is version 1) is
+    copied to .claude/CLAUDE.v<its version>.md, missing owned files are written (PROJECTS.md from
+    the projects a version 5 CLAUDE.md listed itself), the other generated files are rewritten,
+    .claude/rules-updated is dropped, and CLAUDE.md is written last (refreshSprintRules). A marker
+    at or above the client's version is left alone, so an older client never rolls a newer one's
+    rules back, and so is a folder with no CLAUDE.md: creation seeds a sprint after making and
+    tagging its thread, so that sprint is still being seeded and must not be raced. A failed read or write leaves the old marker and is retried a minute later at the
+    earliest. The turn hook says "T3 Code updated your rules in CLAUDE.md; read it again before
+    you act." once when it finds .claude/rules-updated, then removes it; a fresh sprint never has
+    one. A running session keeps its loaded hooks and rules until Claude Code reloads them. Petal
+    rules (fork-bot-rules-refresh) never reach a sprint: sprints are tagged `sprint` before `bot`
+    and listSidebarBots leaves them out.
+  tier: 4
+  files:
+    - apps/web/src/custom/sprints/refreshSprintRules.ts
+    - apps/web/src/custom/sprints/useRefreshSprintRules.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/custom/sprints/sprintSeedFiles.ts
+    - apps/web/src/custom/bots/useRefreshBotRules.ts
+  verify:
+    - apps/web/src/custom/sprints/refreshSprintRules.test.ts
     - apps/web/src/__fork_guards__/forkSprints.test.ts
 - id: sidebar-v2-threads-fold
   intent: >

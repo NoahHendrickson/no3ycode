@@ -25,7 +25,8 @@ const RETRY_AFTER_MS = 60_000;
 
 const QUIET = { reportFailure: false, reportDefect: false } as const;
 
-function folderFiles(
+/** Reads and writes in a bot or sprint folder on its host, quietly. */
+export function botFolderFiles(
   registry: AtomRegistry.AtomRegistry,
   environmentId: EnvironmentId,
   cwd: string,
@@ -64,7 +65,7 @@ export function useRefreshBotRules(bots: ReadonlyArray<RefreshableBot>): void {
       if (bot.worktreePath === null || checked.has(key)) continue;
       if (Date.now() - (failedAt.get(key) ?? -Infinity) < RETRY_AFTER_MS) continue;
       checked.add(key);
-      void refreshBotRules(folderFiles(registry, bot.environmentId, bot.worktreePath), {
+      void refreshBotRules(botFolderFiles(registry, bot.environmentId, bot.worktreePath), {
         name: bot.title,
         threadId: bot.id,
       }).catch(() => {
