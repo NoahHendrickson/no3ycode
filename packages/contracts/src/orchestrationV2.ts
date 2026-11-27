@@ -1434,6 +1434,12 @@ const MonitorPullRequestStamp = Schema.Struct({
   section: Schema.optional(PullRequestWakeSection),
 });
 
+/* fork:begin fork-bot-work-reports — see .fork/customizations.yaml#fork-bot-work-reports */
+/** What a work report's thread waits on: a question its bot may answer, or an approval it never can. */
+export const ForkWorkRequestKind = Schema.Literals(["question", "approval"]);
+export type ForkWorkRequestKind = typeof ForkWorkRequestKind.Type;
+/* fork:end fork-bot-work-reports */
+
 /** Encode legacy background_command/background_task shapes first so older clients accept command/subagent sources. */
 export const OrchestrationV2NotificationSource = kindUnionWithFallback(
   [
@@ -1470,7 +1476,21 @@ export const OrchestrationV2NotificationSource = kindUnionWithFallback(
       otherPullRequests: Schema.optional(Schema.Array(MonitorPullRequestStamp)),
     }),
     Schema.Struct({ kind: Schema.Literal("background_task") }),
-    Schema.Struct({ kind: Schema.Literal("system") }),
+    Schema.Struct({
+      kind: Schema.Literal("system"),
+      /* fork:begin fork-bot-work-reports — see .fork/customizations.yaml#fork-bot-work-reports
+         A Petal's or sprint's work report names its thread, and the request it waits on.
+         Optional and on the existing kind: older clients decode it as a plain system notice. */
+      forkWorkReport: Schema.optional(
+        Schema.Struct({
+          threadId: ThreadId,
+          request: Schema.optional(
+            Schema.Struct({ id: RuntimeRequestId, kind: ForkWorkRequestKind }),
+          ),
+        }),
+      ),
+      /* fork:end fork-bot-work-reports */
+    }),
   ],
   (kind) => Schema.Struct({ kind }),
   () => ({ kind: "background_task" }),
