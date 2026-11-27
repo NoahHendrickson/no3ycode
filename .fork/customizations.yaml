@@ -10163,3 +10163,36 @@
     - apps/desktop/scripts/dev-electron.mjs
   verify:
     - apps/web/src/__fork_guards__/forkDevElectronNoStartupRelaunch.test.ts
+- id: fork-coordinator-threads
+  intent: >
+    The owner switches an ordinary thread to coordinating, from its menu in the sidebar or the
+    chat header ("Make coordinator", and "Stop coordinating" to switch back; maintainer's
+    request, 2026-11-27). A coordinator keeps its own checkout and branch and hands the work to
+    delegate_task children there, so several chunks of one branch run while it stays free to
+    talk; a sprint (fork-sprints) is the separate home for work across branches and projects.
+    The switch is the `coordinator` tag (thread.tag.set). The standing rules reach the thread as
+    a queued owner message when it is switched on (custom/coordinator/coordinatorThreads
+    coordinatorMessage, sent through fork-bot-crew's useTellBot), which works on every
+    provider and leaves a visible mark of when the mode began; no per-thread system prompt
+    exists to carry them. The rules: delegate_task children, not built-in subagents, so the
+    panel can follow them; short turns that never wait on a child; children in parallel when
+    their scopes do not overlap (targeted edits, no whole-file rewrites, no stash, reset,
+    checkout or clean, commit only their own files, report failures in code they do not own),
+    one after another on the same section; ask the owner what the coordinator cannot settle.
+    A coordinator owns a Threads panel exactly as a listed bot does (fork-bot-work-threads
+    botThreadsPanelBotId), which lists its children by lineage; an archived coordinator's
+    children show no panel. Petals, sprints, subagents and side chats get no switch.
+    Web-only: mobile has no switch or panel yet.
+  tier: 4
+  files:
+    - apps/web/src/custom/coordinator/coordinatorThreads.ts
+    - apps/web/src/custom/coordinator/useSetCoordinator.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/hooks/useThreadActionMenu.ts
+    - apps/web/src/hooks/useThreadActionMenu.test.ts
+    - apps/web/src/custom/bots/botWork.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
+    - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts

@@ -24,6 +24,7 @@ import {
 } from "../custom/bots/botWork";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import { botWorkRowThreadId } from "../custom/bots/botWorkRoster";
+import { FORK_COORDINATOR_TAG } from "../custom/coordinator/coordinatorThreads";
 import {
   toggleBotThreadsPanel,
   useBotThreadsPanelStore,
@@ -459,6 +460,13 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(
       botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), null),
     ).toBeNull();
+    // A coordinator (fork-coordinator-threads) shows its own panel, on itself and its children.
+    const lead = withTags(makeThreadFixture({ id: "lead" as Thread["id"] }), [
+      FORK_COORDINATOR_TAG,
+    ]);
+    expect(botThreadsPanelBotId(lead, null)).toBe("lead");
+    expect(botThreadsPanelBotId(subagentOf("lead"), lead)).toBe("lead");
+    expect(botThreadsPanelBotId(subagentOf("lead"), { ...lead, archivedAt: AT })).toBeNull();
   });
 
   it("restores a maximized right panel so the Threads toggle always shows the panel", () => {

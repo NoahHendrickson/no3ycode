@@ -18,17 +18,20 @@ import {
   type SidebarV2StatusBucket,
 } from "../sidebarV2StatusGrouping";
 
+import { isCoordinatorThread } from "../coordinator/coordinatorThreads";
 import { isBotThread, isListedBot } from "./botThreads";
 import { botWorkOwnerId, threadParentOf } from "./botWorkRoster";
 
-/** Whose Threads panel a thread shows: a bot its own, a bot's work (a launched thread, or a
-    subagent) its bot's, and nothing for any other thread. */
+/** Whose Threads panel a thread shows: a bot or a coordinator (fork-coordinator-threads) its
+    own, their work (a launched thread, or a subagent) theirs, and nothing for any other thread. */
 export function botThreadsPanelBotId(
   thread: Pick<EnvironmentThreadShell, "id" | "source" | "lineage">,
   parent: Pick<EnvironmentThreadShell, "id" | "source" | "archivedAt"> | null,
 ) {
-  if (isBotThread(thread.source)) return thread.id;
-  return parent !== null && parent.id === threadParentOf(thread)?.threadId && isListedBot(parent)
+  if (isBotThread(thread.source) || isCoordinatorThread(thread.source)) return thread.id;
+  return parent !== null &&
+    parent.id === threadParentOf(thread)?.threadId &&
+    (isListedBot(parent) || (isCoordinatorThread(parent.source) && parent.archivedAt === null))
     ? parent.id
     : null;
 }

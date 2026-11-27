@@ -400,6 +400,14 @@ import { botCrewMenuItems, botFromCrewMenuId, isBotCrewMenuId } from "~/custom/b
 import { readListedBots } from "~/custom/bots/readListedBots";
 import { useSetBotWork } from "~/custom/bots/useSetBotWork";
 /* fork:end fork-bot-crew */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import {
+  coordinatorMenuItems,
+  coordinatorMenuTurnsOn,
+  isCoordinatorMenuId,
+} from "~/custom/coordinator/coordinatorThreads";
+import { useSetCoordinator } from "~/custom/coordinator/useSetCoordinator";
+/* fork:end fork-coordinator-threads */
 /* fork:begin fork-bot-rules-refresh — see .fork/customizations.yaml#fork-bot-rules-refresh */
 import { useRefreshBotRules } from "~/custom/bots/useRefreshBotRules";
 /* fork:end fork-bot-rules-refresh */
@@ -2473,6 +2481,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
   const setBotWork = useSetBotWork();
   /* fork:end fork-bot-crew */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  const setCoordinator = useSetCoordinator();
+  /* fork:end fork-coordinator-threads */
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4604,6 +4615,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
               ),
               /* fork:end fork-bot-crew */
+              /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+              ...coordinatorMenuItems(
+                thread.source,
+                readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+              ),
+              /* fork:end fork-coordinator-threads */
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
               chatThreadMenuItem(
                 thread,
@@ -4631,6 +4648,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           return;
         }
         /* fork:end fork-bot-crew */
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+        if (isCoordinatorMenuId(clicked.value)) {
+          if (checkThreadOperations([thread]))
+            void setCoordinator(thread, coordinatorMenuTurnsOn(clicked.value));
+          return;
+        }
+        /* fork:end fork-coordinator-threads */
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         if (isChatModeMoveMenuId(clicked.value)) {
           if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
