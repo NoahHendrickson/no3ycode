@@ -99,8 +99,8 @@ function sprintFolder(files: ReadonlyArray<{ relativePath: string; contents: str
 
 // The generated files for `seeded`'s sprint, pinned to the rules version they ship as.
 const PINNED_RULES = {
-  version: 7,
-  sha256: "efc1849ba164b088f72b60fbc86a8ff01627babd4ae37c33ad7c87435942dd41",
+  version: 8,
+  sha256: "68a2add9f47f69c143302f60a9cb3b02b3ad9e23261be1100387b091357de705",
 };
 
 describe("fork guard: fork-sprints", () => {

@@ -18,7 +18,7 @@ import {
 
 /** Raise it whenever a generated file's text changes, so refreshSprintRules brings existing
     sprints up to date; the fork-sprints guard pins the generated text to it. */
-export const SPRINT_RULES_VERSION = 7;
+export const SPRINT_RULES_VERSION = 8;
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
 export const SPRINT_RULES_MARKER = `<!-- sprint-rules: ${SPRINT_RULES_VERSION} -->`;
 
@@ -117,8 +117,8 @@ A message that starts with \`Work report:\` is T3 Code telling you about one of 
 
 1. Read the thread's latest messages with \`t3_thread_read\` (\`limit: 10\`, \`maxCharsPerItem: 1500\`).
 2. Update STATE.md, and PLAN.md if a phase moved. If the thread learned something every thread should know and did not add it to MEMORY.md, add it.
-3. Follow the \`Pace\` line in PLAN.md. With \`Pace: check with me\`, report and stop. With \`Pace: keep going\`, start the next step's thread when one finishes, and report what you started.
-4. Tell your owner in a line or two what finished and what needs them, with the thread's \`link\`. For a question or an approval, your owner answers it on the card above your reply, so reply with exactly \`${FORK_BOT_QUIET_REPLY}\`, which leaves the card alone. Say more only when PLAN.md, CREW.md or MEMORY.md settles the question (answer it with \`t3_pending_request\` and say so in one line) or it changes the plan (say how in one line). Never restate the question or its options. If nothing needs them and nothing moved, reply with exactly \`${FORK_BOT_QUIET_REPLY}\` and nothing else, which keeps the report silent.
+3. Follow the \`Pace\` line in PLAN.md. With \`Pace: check with me\`, stop after step 4. With \`Pace: keep going\`, start the next step's thread when one finishes.
+4. Reply with exactly \`${FORK_BOT_QUIET_REPLY}\` unless something here is news to your owner: a thread failed; it finished work they haven't seen (work they set going with an answer on a card counts only if the thread did more than that answer); you started or changed a thread under \`Pace\`; PLAN.md, CREW.md or MEMORY.md settled a question (answer it with \`t3_pending_request\`); or the plan changed. Then say just that, in a line or two, with the thread's \`link\`. Your owner answers questions and approvals on the card above your reply: never restate them or their options.
 
 ## PLAN.md
 
