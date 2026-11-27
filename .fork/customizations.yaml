@@ -10547,7 +10547,8 @@
     (forkThreadHost answersDelegatedQuestions); a sprint's delegated notices behave as on custom.
     A quiet question wake drops from its notice on, so its reads ("Worked for") go too, and so
     does a child's "finished" wake when the coordinator replies the quiet reply (the rules ask for
-    it when the child only did what the card answered). A card
+    it when the child only did what the card answered, and the server's completion wake says so
+    to a coordinator parent: Orchestrator delegatedCompletionWakeDetail, fenced). A card
     answers the request its report names, not the child's first open one (forkWorkReportRequestId,
     childRequestControls pendingRequestFor), and falls back to the answered view once that
     request settles. A coordinator's timeline end drops the "Subagent needs input" line for its
@@ -10592,6 +10593,8 @@
     - apps/web/src/components/chat/MessagesTimeline.tsx
     - apps/web/src/components/chat/MessagesTimeline.logic.ts
     - apps/server/src/orchestration-v2/DelegatedTaskQuestionReactor.ts
+    - apps/server/src/orchestration-v2/Orchestrator.ts
+    - apps/server/src/orchestration-v2/DelegatedCompletionDelivery.test.ts
     - apps/server/src/orchestration-v2/Orchestrator.control-reads.test.ts
     - packages/shared/src/forkBotTags.ts
     - apps/web/src/components/Sidebar.logic.ts

@@ -1,4 +1,7 @@
 import * as Exit from "effect/Exit";
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { FORK_COORDINATOR_TAG } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-coordinator-threads */
 import * as EffectOutbox from "./EffectOutbox.ts";
 import * as EffectWorker from "./EffectWorker.ts";
 import * as SourceControlProviderRegistry from "../sourceControl/SourceControlProviderRegistry.ts";
@@ -1132,6 +1135,69 @@ it.layer(layerTest)("delegated completion delivery repairs", (it) => {
         );
       }),
   );
+
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  it.effect.each([false, true])(
+    "words a completion wake for the parent it wakes (coordinator: %s)",
+    (coordinator) =>
+      Effect.gen(function* () {
+        const orchestrator = yield* Orchestrator.OrchestratorV2;
+        const now = yield* DateTime.now;
+        const threadId = ThreadId.make(`completion-wording-parent:${coordinator}`);
+        const runId = RunId.make(`completion-wording-origin:${coordinator}`);
+        const taskId = NodeId.make(`completion-wording-task:${coordinator}`);
+        yield* seedParentWithTerminalTask({
+          threadId,
+          projectId: ProjectId.make(`completion-wording-project:${coordinator}`),
+          runId,
+          rootNodeId: NodeId.make(`completion-wording-root:${coordinator}`),
+          taskId,
+          deliveryState: "claimed",
+          deliveryTaskIds: [taskId],
+          completionWake: "always",
+          now,
+        });
+        if (coordinator) {
+          yield* orchestrator.dispatch({
+            type: "thread.tag.set",
+            commandId: CommandId.make(`completion-wording-tag:${coordinator}`),
+            threadId,
+            tag: FORK_COORDINATOR_TAG,
+            tagged: true,
+          });
+        }
+        const delivery = (yield* orchestrator.getThreadProjection(threadId)).runs[0]!
+          .delegatedCompletion!.delivery!;
+        yield* orchestrator.dispatch({
+          type: "message.dispatch",
+          createdBy: "agent",
+          creationSource: "server",
+          commandId: CommandId.make(`completion-wording-wake:${coordinator}`),
+          threadId,
+          messageId: delivery.messageId,
+          text: "Delegated tasks completed",
+          attachments: [],
+          modelSelection,
+          dispatchMode: { type: "queue_after_active" },
+          delegatedCompletion: {
+            parentRunId: runId,
+            generation: delivery.generation,
+            taskIds: delivery.taskIds,
+          },
+        });
+        const message = (yield* orchestrator.getThreadProjection(threadId)).messages.find(
+          (row) => row.id === delivery.messageId,
+        );
+        const result = `Delegated task ${taskId} [completed]:\nchild finished`;
+        assert.equal(
+          message?.text,
+          coordinator
+            ? `${result}\n\nIf a child only did what the owner answered on its card (nothing failed, nothing new), reply exactly "Nothing to report."; otherwise report its result in a line.`
+            : result,
+        );
+      }),
+  );
+  /* fork:end fork-coordinator-threads */
 
   it.effect("acknowledging a queued wake's results rewrites it, then cancels it", () =>
     Effect.gen(function* () {
