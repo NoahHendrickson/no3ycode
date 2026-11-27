@@ -101,6 +101,7 @@ export const DESIGN_LINT_ALLOWLIST = [
       "ForkThreadLaunchList",
       "ForkThreadLaunchTimelineRow",
       "ForkWorkReportRow",
+      "ForkDelegatedQuestionRow",
       "ForkThreadHookRow",
     ],
     "threadLaunchCards/ForkThreadRequestCard.tsx": ["ForkThreadRequestCard", "ForkAnsweredRequest"],

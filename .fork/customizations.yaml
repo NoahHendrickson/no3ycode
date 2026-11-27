@@ -10380,10 +10380,16 @@
     panel can follow them; short turns that never wait on a child; children in parallel when
     their scopes do not overlap (targeted edits, no whole-file rewrites, no stash, reset,
     checkout or clean, commit only their own files, report failures in code they do not own),
-    one after another on the same section; ask the owner what the coordinator cannot settle.
+    one after another on the same section; a child's question the coordinator cannot settle
+    is left to the owner in one line, never restated.
     A coordinator owns a Threads panel exactly as a listed bot does (fork-bot-work-threads
     botThreadsPanelBotId), which lists its children by lineage; an archived coordinator's
     children show no panel. Petals, sprints, subagents and side chats get no switch.
+    A delegated child's question notice (the server's DelegatedTaskQuestionReactor message,
+    `message:delegated-task-question:<parent>:<request>`) renders in any parent as
+    fork-thread-launch-cards' question card while that request is open (custom/threadLaunchCards
+    ForkDelegatedQuestionRow, delegatedQuestionRequestId), so the owner answers the child in
+    place; after, the child's row. Approvals do not wake the parent, so they wait in the child.
     Web-only: mobile has no switch or panel yet.
   tier: 4
   files:
@@ -10395,6 +10401,10 @@
     - apps/web/src/hooks/useThreadActionMenu.ts
     - apps/web/src/hooks/useThreadActionMenu.test.ts
     - apps/web/src/custom/bots/botWork.ts
+    - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
+    - apps/web/src/custom/threadLaunchCards/ForkThreadLaunchCards.tsx
+    - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.ts
   verify:
     - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
+    - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts

@@ -61,6 +61,10 @@ import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
 import { forkWorkReportKey } from "~/custom/threadLaunchCards/threadLaunch.logic";
 /* fork:end fork-thread-launch-cards */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { ForkDelegatedQuestionRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
+import { delegatedQuestionRequestId } from "~/custom/threadLaunchCards/threadLaunch.logic";
+/* fork:end fork-coordinator-threads */
 import {
   TimelineRowCtx,
   TimelineRowActivityCtx,
@@ -254,6 +258,21 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
     );
   }
   /* fork:end fork-thread-launch-cards */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  const forkQuestionRequestId =
+    item?.type === "notification" && item.source.kind === "delegated_task"
+      ? delegatedQuestionRequestId(item.id, item.threadId)
+      : null;
+  if (forkQuestionRequestId !== null && childThreadId !== undefined) {
+    return (
+      <ForkDelegatedQuestionRow
+        childThreadId={childThreadId}
+        requestId={forkQuestionRequestId}
+        fallback={<WorkEntryLogRow {...props} />}
+      />
+    );
+  }
+  /* fork:end fork-coordinator-threads */
   if (item?.type !== "notification" || childThreadId === undefined) {
     return <WorkEntryLogRow {...props} />;
   }

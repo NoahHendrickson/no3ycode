@@ -4,7 +4,7 @@
  * the thread live and open it in a split beside this conversation.
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
-import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
+import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
 import { Fragment, type MouseEvent, type ReactNode, use } from "react";
 
@@ -208,6 +208,29 @@ export function ForkThreadLaunchTimelineRow(props: {
 
 /** A work report's notice as the row of the thread it came from, heading the reply it started.
     The plain notice shows when its thread is not on this machine's list. */
+/** A delegated child's question (fork-coordinator-threads): its card while that request is open,
+    then the child's row. The answer goes straight to the child. */
+export function ForkDelegatedQuestionRow(props: {
+  readonly childThreadId: ThreadId;
+  readonly requestId: string;
+  readonly fallback: ReactNode;
+}) {
+  const ctx = use(TimelineRowCtx);
+  const child = useQuietThreadShell(
+    scopeThreadRef(ctx.activeThreadEnvironmentId, props.childThreadId),
+  );
+  if (child === null) return props.fallback;
+  return (
+    <div className="ps-2">
+      {child.source.pendingRuntimeRequest?.id === props.requestId ? (
+        <ForkThreadRequestCard thread={child} hostRef={ctx.threadRef} kind="question" />
+      ) : (
+        <ForkAnsweredRequest thread={child} hostRef={ctx.threadRef} kind="question" />
+      )}
+    </div>
+  );
+}
+
 export function ForkWorkReportRow(props: {
   readonly itemId: string;
   readonly summary: string;

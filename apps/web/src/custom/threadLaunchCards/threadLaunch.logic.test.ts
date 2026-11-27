@@ -9,6 +9,7 @@ import {
   forkThreadLaunchFromToolItem,
   threadLaunchActivityLine,
   forkWorkReportIsPending,
+  delegatedQuestionRequestId,
   forkWorkReportKey,
   forkWorkReportRequestKind,
   forkWorkReportThreadId,
@@ -275,6 +276,15 @@ describe("work report notifications", () => {
     expect(forkWorkReportKey(itemId("message:scheduled-wake:t1"))).toBeNull();
     expect(forkWorkReportKey("turn-item:provider:x")).toBeNull();
     expect(forkWorkReportThreadId("t1:run:x", ["t2"])).toBeNull();
+  });
+
+  it("reads the request a delegated child's question names, for its parent only", () => {
+    const question = itemId("message:delegated-task-question:mcp:p1:request:9");
+    expect(delegatedQuestionRequestId(question, "mcp:p1")).toBe("request:9");
+    expect(delegatedQuestionRequestId(question, "other")).toBeNull();
+    expect(
+      delegatedQuestionRequestId(itemId("message:fork-bot-work-report:mcp:p1:request"), "mcp:p1"),
+    ).toBeNull();
   });
 });
 

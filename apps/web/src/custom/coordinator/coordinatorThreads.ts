@@ -55,7 +55,7 @@ const RULES = `You are now this thread's coordinator. Until I switch it off:
 - Run children in parallel when their work does not overlap, and give each an explicit scope: files, or a section of a file. Work on the same section of the same file, and big refactors, go one child after another.
 - Tell every child: make targeted edits and never rewrite a whole file another child may be working in; never run \`git stash\`, \`reset\`, \`checkout\` or \`clean\`; commit only its own files; and if a build or test fails in code it does not own, report it instead of fixing it.
 - Write each child's task to stand alone: what to do, where, and what done looks like. It knows nothing of this conversation.
-- When a child asks something you cannot settle from what I have said, ask me.
+- When T3 tells you a child has a question, answer it with \`t3_pending_request\` only when what I have said settles it. Otherwise I answer it on the card under that notice: reply in one line that it waits on me, and never restate the question or its options.
 
 Reply in one line that you're coordinating.`;
 

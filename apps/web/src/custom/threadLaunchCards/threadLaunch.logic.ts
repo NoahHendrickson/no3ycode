@@ -174,17 +174,33 @@ export function threadLaunchPullRequests(thread: {
 const NOTIFICATION_ITEM_PREFIX = "turn-item:message:";
 const WORK_REPORT_PREFIXES = ["message:fork-bot-work-report:", "message:fork-bot-work-seen:"];
 
-/** What follows a work report's prefix in its notification's item id, or null for another item. */
-export function forkWorkReportKey(itemId: string): string | null {
+function notificationMessageId(itemId: string): string | null {
   if (!itemId.startsWith(NOTIFICATION_ITEM_PREFIX)) return null;
-  let messageId: string;
   try {
-    messageId = decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
+    return decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
   } catch {
     return null;
   }
+}
+
+/** What follows a work report's prefix in its notification's item id, or null for another item. */
+export function forkWorkReportKey(itemId: string): string | null {
+  const messageId = notificationMessageId(itemId);
+  if (messageId === null) return null;
   const prefix = WORK_REPORT_PREFIXES.find((candidate) => messageId.startsWith(candidate));
   return prefix === undefined ? null : messageId.slice(prefix.length);
+}
+
+// orchestration-v2/DelegatedTaskQuestionReactor's message id: the prefix, the parent thread's id,
+// then the child's request id.
+const DELEGATED_QUESTION_PREFIX = "message:delegated-task-question:";
+
+/** The request a delegated child's question notice names, or null for any other notice. */
+export function delegatedQuestionRequestId(itemId: string, parentThreadId: string): string | null {
+  const messageId = notificationMessageId(itemId);
+  const prefix = `${DELEGATED_QUESTION_PREFIX}${parentThreadId}:`;
+  if (messageId === null || !messageId.startsWith(prefix)) return null;
+  return messageId.slice(prefix.length) || null;
 }
 
 /** The thread a report key names. Thread ids can hold colons, so it is the longest of the
