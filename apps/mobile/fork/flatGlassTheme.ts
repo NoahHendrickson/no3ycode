@@ -41,6 +41,21 @@ export function no3yComposerBottomInset(inset: number, draft: boolean): number {
   return draft ? inset + NO3Y_BOTTOM_NAV_CLEARANCE : Math.max(inset - 20, 8);
 }
 
+/**
+ * The visual bottom inset above New agent's composer for centring its collapsed prompt:
+ * KeyboardStickyView slides over the dock band (`no3yComposerBottomInset(safeBottom, true)`)
+ * that ThreadDetailScreen's `bottomInset` still includes while the keyboard is up.
+ */
+export function no3yDraftHeroBottomInset(input: {
+  readonly bottomInset: number;
+  readonly safeBottom: number;
+  readonly keyboardVisible: boolean;
+}): number {
+  return input.keyboardVisible
+    ? Math.max(0, input.bottomInset - no3yComposerBottomInset(input.safeBottom, true))
+    : input.bottomInset;
+}
+
 export interface FlatGlassPalette {
   readonly stageBackground: string;
   readonly panelTint: string;

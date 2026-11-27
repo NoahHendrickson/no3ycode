@@ -19,6 +19,8 @@ export const NO3Y_PANEL_MARGIN = { marginHorizontal: 16, marginVertical: 6 } as 
 export function No3yGlassLayer(props: {
   readonly radius: number;
   readonly tint?: string | undefined;
+  /** On iOS 26+, morphs UIGlassEffect between regular and none when provided. */
+  readonly morph?: { readonly active: boolean } | undefined;
 }) {
   const { themeAppearance } = useAppearancePreferences();
   const palette = flatGlassPalette(themeAppearance);
@@ -26,7 +28,15 @@ export function No3yGlassLayer(props: {
     return (
       <GlassView
         pointerEvents="none"
-        glassEffectStyle="regular"
+        glassEffectStyle={
+          props.morph === undefined
+            ? "regular"
+            : {
+                style: props.morph.active ? "regular" : "none",
+                animate: true,
+                animationDuration: 0.2,
+              }
+        }
         colorScheme={themeAppearance === "dark" ? "dark" : "light"}
         {...(props.tint === undefined ? {} : { tintColor: props.tint })}
         style={[StyleSheet.absoluteFill, { borderRadius: props.radius, overflow: "hidden" }]}

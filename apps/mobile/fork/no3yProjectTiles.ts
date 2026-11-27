@@ -52,3 +52,61 @@ export function rankNo3yProjectTiles(input: {
   const rest = tiles.filter((tile) => tile.lastActivityMs === 0);
   return [...live, ...rest];
 }
+
+const EXPAND_SCROLL_THRESHOLD_INDEX = 4;
+const EXPAND_SCROLL_LEAD_ROWS = 2;
+
+/**
+ * Vertical shift (in ScrollView coordinates) that brings row `rowIndex` directly into the
+ * collapsed dropdown slot at the top of the viewport, even when the list was scrolled.
+ */
+export function no3yCollapsedRowTranslateY(input: {
+  readonly rowIndex: number;
+  readonly scrollY: number;
+  readonly headerOffset: number;
+  readonly rowPitch: number;
+}): number {
+  "worklet";
+  return input.scrollY - input.headerOffset - input.rowIndex * input.rowPitch;
+}
+
+/**
+ * Initial scroll offset when reopening the dropdown: 0 when the picked project is already near
+ * the top, otherwise scrolled so the picked row fans out near the top of the viewport.
+ */
+export function no3yExpandScrollOffset(input: {
+  readonly selectedIndex: number;
+  readonly rowCount: number;
+  readonly rowPitch: number;
+  readonly rowGap: number;
+  readonly topPadding: number;
+  readonly headerOffset: number;
+  readonly bottomInset: number;
+  readonly viewportHeight: number;
+}): number {
+  if (
+    input.selectedIndex <= EXPAND_SCROLL_THRESHOLD_INDEX ||
+    input.rowCount === 0 ||
+    input.viewportHeight <= 0
+  ) {
+    return 0;
+  }
+  const rowsHeight = input.rowCount * input.rowPitch - input.rowGap;
+  const contentHeight = input.topPadding + input.headerOffset + rowsHeight + input.bottomInset;
+  const maxScroll = Math.max(0, contentHeight - input.viewportHeight);
+  return Math.min((input.selectedIndex - EXPAND_SCROLL_LEAD_ROWS) * input.rowPitch, maxScroll);
+}
+
+/** Whether a non-selected row is near enough to the viewport to participate in the collapse morph. */
+export function no3yRowVisibleForCollapse(input: {
+  readonly rowIndex: number;
+  readonly scrollY: number;
+  readonly headerOffset: number;
+  readonly rowPitch: number;
+  readonly viewportHeight: number;
+}): boolean {
+  "worklet";
+  if (input.viewportHeight <= 0) return false;
+  const screenY = input.headerOffset + input.rowIndex * input.rowPitch - input.scrollY;
+  return screenY >= -input.rowPitch && screenY <= input.viewportHeight + input.rowPitch;
+}
