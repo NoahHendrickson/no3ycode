@@ -10,8 +10,8 @@ import { type JSX, type RefObject, useRef } from "react";
 import {
   AlarmClockIcon,
   CircleHalfIcon,
+  CircleHalfInsetIcon,
   PenLineIcon,
-  Progress03Icon,
 } from "./icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
@@ -420,7 +420,7 @@ export function SidebarV2WorkingMark({ seed, still }: WorkingMarkProps) {
 
 /** The settled counterpart to the rain. Done and Failed are the design's 10px
     dot, blue and red; the blocked-on-you states draw a ring with a filled
-    half (Hugeicons Progress03 for Approval, the component set's half circle
+    half (an inset ring after Hugeicons Progress03 for Approval, the component set's half circle
     for Input), so "waiting on you" reads apart by form. Both ink a ~9.75px
     circle: the same visual weight as the 10px dot. */
 function SidebarV2StatusDot({
@@ -434,7 +434,7 @@ function SidebarV2StatusDot({
     <span aria-hidden className={cn(MARK_SLOT_CLASS, TONE_TEXT_CLASS[tone])}>
       {tone === "approval" ? (
         // Its ring is r=10 against the half circle's r=9; 11px keeps the same 9.75px footprint.
-        <Progress03Icon className="size-2.75" />
+        <CircleHalfInsetIcon className="size-2.75" />
       ) : tone === "input" ? (
         <CircleHalfIcon className="size-3" />
       ) : (

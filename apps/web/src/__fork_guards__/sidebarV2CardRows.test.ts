@@ -394,7 +394,7 @@ describe("fork guard: sidebar-v2-card-rows", () => {
       'const MARK_SLOT_CLASS = "flex h-3.5 w-3 shrink-0 items-center justify-center"',
     );
     expect(marks).toMatch(
-      /tone === "approval" \? \([\s\S]*?<Progress03Icon className="size-2\.75" \/>\s*\) : tone === "input" \? \(\s*<CircleHalfIcon className="size-3" \/>/u,
+      /tone === "approval" \? \([\s\S]*?<CircleHalfInsetIcon className="size-2\.75" \/>\s*\) : tone === "input" \? \(\s*<CircleHalfIcon className="size-3" \/>/u,
     );
     expect(marks).not.toContain("CircleAlertIcon");
     expect(marks).toContain('<span ref={dotRef} className="size-2.5 rounded-full bg-current" />');

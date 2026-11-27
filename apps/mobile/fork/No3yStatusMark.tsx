@@ -15,12 +15,13 @@ import {
 } from "./flatGlassTheme";
 import { No3yBeadRing } from "./No3yBeadRing";
 
-/** Hugeicons Progress03 (ring, inset filled half, pulled in to r=6.5) matching the Mac sidebar's approval mark. */
+/** The Mac sidebar's approval mark (a ring around an inset filled half), drawn at HalfCircleMark's
+    outer edge and stroke weight so the two amber marks sit together. */
 function ProgressMark(props: { readonly color: string; readonly size: number }) {
   return (
     <Svg width={props.size} height={props.size} viewBox="0 0 24 24">
-      <Circle cx={12} cy={12} r={10} stroke={props.color} strokeWidth={1.5} fill="none" />
-      <Path d="M12 5.5 A6.5 6.5 0 0 1 12 18.5 Z" fill={props.color} />
+      <Circle cx={12} cy={12} r={9.5} stroke={props.color} strokeWidth={2.6} fill="none" />
+      <Path d="M12 6.75 A5.25 5.25 0 0 1 12 17.25 Z" fill={props.color} />
     </Svg>
   );
 }
