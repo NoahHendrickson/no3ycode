@@ -8648,16 +8648,28 @@
     .claude/CLAUDE.v<its version>.md (its owner may have edited it; one copy per version, so a
     later refresh never overwrites it), CREW.md and DIGEST.md are written where missing, and
     AGENTS.md then CLAUDE.md are rewritten from the current template with the bot's current
-    title and id (refreshBotRules). A marker at or above the client's version is left alone, so
-    an older client never rolls a newer one's rules back. JOB.md, STATE.md and the folder's
-    settings are never touched. CLAUDE.md goes last, so a failed read or write leaves its old
-    marker; that client tries again a minute later at the earliest (a connection still coming up
-    fails once), and a client that cannot read or write the host's files keeps failing quietly. A running session keeps its loaded rules until
-    Claude Code reloads CLAUDE.md (a new session or a compaction).
+    title and id (refreshBotRules). A folder with no CLAUDE.md gets one the same way. A marker at
+    or above the client's version is left alone, so an older client never rolls a newer one's
+    rules back. JOB.md, STATE.md and the folder's settings are never touched. CLAUDE.md goes last,
+    so a failed read or write leaves its old marker; that client tries again a minute later at the
+    earliest (a connection still coming up fails once), and a client that cannot read or write the
+    host's files keeps failing quietly. A running session keeps its loaded rules until Claude Code
+    reloads CLAUDE.md (a new session or a compaction).
+
+    Petals and sprints (fork-sprint-rules-refresh) share one engine. Each seed module returns
+    { rules, replace, addIfMissing } (botRulesRefresh, sprintRulesRefresh), and
+    custom/refreshFolderRules runs it: it parses the `<!-- <kind>-rules: N -->` marker, backs up
+    the old rules, adds what is missing, replaces, then writes CLAUDE.md, and says what a folder
+    with no CLAUDE.md gets. custom/useRefreshFolderRules holds the once-a-session and
+    retry-a-minute-later rule, and custom/hostFolderFiles holds the quiet folder read and write
+    that both refreshes and the sprint panel's file writes (custom/sprints/sprintFiles) use.
   tier: 4
   files:
     - apps/web/src/custom/bots/refreshBotRules.ts
     - apps/web/src/custom/bots/useRefreshBotRules.ts
+    - apps/web/src/custom/refreshFolderRules.ts
+    - apps/web/src/custom/useRefreshFolderRules.ts
+    - apps/web/src/custom/hostFolderFiles.ts
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
@@ -8856,9 +8868,10 @@
     composer's model and effort menu (custom/sprints/SprintModelPicker; newest Sonnet at low
     effort by default, any provider allowed, Ultrathink's prompt-prefix levels left out since
     there is no prompt to carry them). Its rules reach Claude through CLAUDE.md and other
-    providers through AGENTS.md, which points at it. The dialog's optional "Also touches" menu
-    picks other projects on the same machine; CLAUDE.md lists them (title, id, path) so the sprint
-    plans across them from its first turn.
+    providers through AGENTS.md, which points at it and at the files CLAUDE.md imports. The dialog's optional "Also touches" menu
+    picks other projects on the same machine; PROJECTS.md lists them (title, id, path) and
+    CLAUDE.md imports it with `@PROJECTS.md`, so the sprint plans across them from its first
+    turn and CLAUDE.md stays generated (fork-sprint-rules-refresh).
 
     Its threads own their pull requests by default (the seeded CREW.md, new sprints only): open
     one when the change is ready, link and watch it, fix failing checks and answer reviews, but
@@ -8971,6 +8984,7 @@
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
     - apps/web/src/custom/bots/botThreads.ts
     - apps/web/src/custom/bots/BotMascot.tsx
+    - apps/web/src/custom/hostFolderFiles.ts
     - packages/contracts/src/project.ts
     - apps/server/src/workspace/WorkspaceFileSystem.ts
     - apps/server/src/workspace/WorkspaceFileSystem.test.ts
@@ -8980,6 +8994,50 @@
     - apps/server/src/workspace/WorkspaceFileSystem.test.ts
     - apps/web/src/custom/sprints/sprintContextFiles.test.ts
     - apps/web/src/custom/sprints/sprintFileEditor.logic.test.ts
+    - apps/web/src/__fork_guards__/forkSprints.test.ts
+- id: fork-sprint-rules-refresh
+  intent: >
+    Sprints made before the rules changed get them, and nothing the owner or the sprint wrote is
+    ever rewritten. sprintSeedFiles sprintRulesRefresh splits a sprint's folder in two, the same
+    shape a Petal's refresh uses (fork-bot-rules-refresh). Replaced, T3 Code's: CLAUDE.md, AGENTS.md,
+    .claude/settings.json and .claude/compact-instructions.md. Added only where missing, the owner's
+    and the sprint's: PLAN.md, STATE.md, CREW.md, MEMORY.md and PROJECTS.md; ANSWERS.md and the
+    context/ library are never touched. A new sprint is seeded from the same split
+    (sprintSeedFiles). CLAUDE.md is made from the sprint's identity alone (thread title and id, its
+    project's id, title and root, its folder), all of it kept outside CLAUDE.md; the "Also touches"
+    projects live in PROJECTS.md, which it imports with `@PROJECTS.md` for Claude Code and which
+    AGENTS.md names for other providers, which do not expand the import. Its first line is a
+    version marker (SPRINT_RULES_MARKER from SPRINT_RULES_VERSION, raised whenever a generated
+    file's text changes; the fork-sprints guard pins the generated text's hash to the version, so
+    a change without a raise fails CI). Once a client session, for each sprint the sidebar lists
+    whose project has loaded (useRefreshSprintRules, called from Sidebar beside
+    listSidebarSprints), a client reads its CLAUDE.md. One whose marker is older than
+    SPRINT_RULES_VERSION (no marker is version 1) is copied to .claude/CLAUDE.v<its version>.md,
+    missing files are added, the generated files are rewritten and CLAUDE.md is written last
+    (refreshSprintRules, through the shared custom/refreshFolderRules). One migration step runs
+    first: rules up to version 5 listed the other projects in CLAUDE.md itself, so that list
+    becomes the PROJECTS.md the refresh adds. A marker at or above the client's version is left
+    alone, so an older client never rolls a newer one's rules back, and so is a folder with no
+    CLAUDE.md: creation seeds a sprint after making and tagging its thread, so that sprint is
+    still being seeded and must not be raced. A failed read or write leaves the old marker and is
+    retried a minute later at the earliest. Nothing announces an update: Claude Code reads hooks
+    when a session starts, so a running session keeps its loaded hooks and rules until Claude
+    Code reloads them, and the next session has already loaded the new CLAUDE.md. Petal rules
+    never reach a sprint: sprints are tagged `sprint` before `bot` and listSidebarBots leaves
+    them out.
+  tier: 4
+  files:
+    - apps/web/src/custom/sprints/refreshSprintRules.ts
+    - apps/web/src/custom/sprints/useRefreshSprintRules.ts
+  shadows: []
+  watch:
+    - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/custom/sprints/sprintSeedFiles.ts
+    - apps/web/src/custom/refreshFolderRules.ts
+    - apps/web/src/custom/useRefreshFolderRules.ts
+    - apps/web/src/custom/hostFolderFiles.ts
+  verify:
+    - apps/web/src/custom/sprints/refreshSprintRules.test.ts
     - apps/web/src/__fork_guards__/forkSprints.test.ts
 - id: sidebar-v2-threads-fold
   intent: >

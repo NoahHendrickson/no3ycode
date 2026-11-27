@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import { previousRulesFile } from "../refreshFolderRules";
 import { BOT_RULES_MARKER, botSeedFiles } from "./botSeedFiles";
-import { botPreviousRulesFile, refreshBotRules } from "./refreshBotRules";
+import { refreshBotRules } from "./refreshBotRules";
 
 function folder(initial: Record<string, string>, failOn?: string) {
   const files = new Map(Object.entries(initial));
@@ -32,7 +33,7 @@ describe("refreshBotRules", () => {
     });
     expect(await refreshBotRules(old.io, bot)).toBe(true);
     // Rules from before the marker are version 1, kept under that version's own name.
-    expect(old.files.get(botPreviousRulesFile(1))).toBe("# Scout\n\nOld rules.");
+    expect(old.files.get(previousRulesFile(1))).toBe("# Scout\n\nOld rules.");
     expect(old.files.get("CLAUDE.md")?.startsWith(BOT_RULES_MARKER)).toBe(true);
     expect(old.files.get("CLAUDE.md")).toContain("thread id `thread-scout`");
     expect(old.files.get("CREW.md")).toContain("Do not push");
