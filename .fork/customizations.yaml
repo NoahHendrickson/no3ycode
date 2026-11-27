@@ -740,8 +740,9 @@
     table row names its policy (stroke, themed, fill); a guard checks that
     every themed and fill row can actually fill, so the table, not the
     heuristic, says which glyphs fill. The shared stroke attributes sit on the
-    <svg>, so a caller's stroke props reach the glyph. The two blocked-on-you
-    statuses draw a hand-built half circle at the design's 9.75px. Where the
+    <svg>, so a caller's stroke props reach the glyph. The blocked-on-you
+    statuses draw hand-built marks at the design's 9.75px: a half circle for
+    Input, Progress03 with its half pulled in to r=6.5 for Approval. Where the
     derivation cannot reach Hugeicons' solid look (a straight divider the
     outline lacks, back panels and handles that are open strokes, parts that
     should stand apart), the derivation hands back a hand-drawn filled
@@ -829,14 +830,15 @@
     keep their own sizes and centre in the box. The mark's form carries the
     state, per the component set — falling pixels (or the DNA helix, see
     fork-working-mark) while the agent runs, a
-    10px filled dot for Done and the same circle hollow for Idle, Phosphor's
-    half-filled circle for Approval and Input (one amber for both: each means
+    10px filled dot for Done and the same circle hollow for Idle, a ring
+    with an inset filled half for Approval (and Usage limit) and a
+    half-filled circle for Input (one amber for both: each means
     "waiting on you"), the same dot in red for Failed, a slow white
     opacity breath (50% → 20%) while monitoring, a clock for woke — and the
     hue reinforces it: Done is blue,
-    so an unread result reads apart from a live agent. The glyph marks are
-    12px because Phosphor inks its circle on ~81% of the grid, which is the
-    design's 9.75px beside the 10px dot. The monitoring breath is duty-cycled and stepped (same
+    so an unread result reads apart from a live agent. The half circle is
+    12px and the approval ring 11px, so both ink the design's 9.75px beside
+    the 10px dot. The monitoring breath is duty-cycled and stepped (same
     compositor contract as upstream ghost-pulse / status-pulse): long holds
     with a short steps(4) ramp, opacity-only, contain:paint, no will-change —
     so it does not repaint every vsync on high-refresh displays. Working is
@@ -3806,7 +3808,10 @@
     vessel, in flow so the transcript ends above it, and hides when empty: the
     thread's PR (custom/ComposerPullRequestChip, resolved as the branch picker
     resolves it; open, merged and closed PRs fill with their state's colour
-    under a bright top rim, a draft stays neutral; an "Auto-merge" chip follows
+    under a bright top rim, a draft stays neutral; an open PR's CI (its link
+    snapshot's checksState) rides the chip's end as an inner pill, a still dot
+    from SidebarV2StatusIndicator (amber running, green passing, red failing)
+    and "CI"; an "Auto-merge" chip follows
     it while the current open PR has auto-merge armed, read from the PR's detail
     by custom/threadAutoMerge.ts because link snapshots don't carry it; its label
     opens the PR and, where the host and viewer allow it, a ban button turns
@@ -8586,12 +8591,21 @@
     queued notice. Notices resume the bot's
     conversation (no fresh session) and are not held by fork-scheduled-wake-hold. Work-thread
     notifications are unchanged.
+    The notification's system source carries forkWorkReport: the work thread and, for a
+    question or approval, the request (id and ForkWorkRequestKind, classified once in
+    WAITING_REQUEST_KINDS), so a client reads the
+    report from structured fields instead of its message id or English summary (maintainer's
+    approval, 2026-11-27). They are optional fields on the existing system kind, fenced in
+    packages/contracts orchestrationV2.ts: a client or server from before decodes the notice as a
+    plain system one, so clients keep the id-and-summary reading as the fallback for older
+    servers and earlier reports.
   tier: 3
   files:
     - apps/server/src/orchestration-v2/forkBotWorkReports.ts
   shadows: []
   watch:
     - apps/server/src/server.ts
+    - packages/contracts/src/orchestrationV2.ts
   verify:
     - apps/server/src/orchestration-v2/forkBotWorkReports.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts

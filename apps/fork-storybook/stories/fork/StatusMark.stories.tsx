@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { type SidebarV2CardStatusKind, sidebarV2CardTopStatus } from "~/custom/sidebarV2CardStatus";
 import {
+  PullRequestChecksDot,
   SIDEBAR_V2_WORKING_MARK_FORMS,
   SidebarV2DraftMark,
   SidebarV2IdleMark,
@@ -93,7 +94,8 @@ export const WorkingForms: Story = {
 
 /** The marks by name, for call sites that draw one outside a status: the working mark in the
     Appearance setting's form (moving, then still), the idle and draft marks, and the still
-    working and waiting marks a status chip in a message draws. */
+    working and waiting marks a status chip in a message draws, and the CI dot the PR chip's
+    inner pill draws (running, passing, failing). */
 export const Marks: Story = {
   render: () => (
     <Stack gap={3}>
@@ -112,6 +114,11 @@ export const Marks: Story = {
       </Row>
       <Row label="Still waiting">
         <SidebarV2StillMonitoringMark />
+      </Row>
+      <Row label="CI checks">
+        <PullRequestChecksDot state="pending" />
+        <PullRequestChecksDot state="passing" />
+        <PullRequestChecksDot state="failing" />
       </Row>
     </Stack>
   ),

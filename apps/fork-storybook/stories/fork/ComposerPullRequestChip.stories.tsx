@@ -1,12 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { ComposerControl } from "~/components/chat/ComposerControl";
 import {
   prStatusIndicator,
   ThreadPullRequestBadgeControl,
   type ThreadPr,
 } from "~/components/ThreadStatusIndicators";
-import { resolvePullRequestChipState } from "~/custom/composerPullRequestChip.logic";
+import type { PullRequestChecksState } from "@t3tools/contracts";
+import { PullRequestChipControl } from "~/custom/ComposerPullRequestChip";
+import {
+  resolvePullRequestChipChecks,
+  resolvePullRequestChipState,
+} from "~/custom/composerPullRequestChip.logic";
 
 import { Row, Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
@@ -25,14 +29,21 @@ function pullRequest(state: PrState): NonNullable<ThreadPr> {
   };
 }
 
+type ChecksArg = PullRequestChecksState | "none";
+
 /** ComposerPullRequestChip's render, given the PR it would read from the thread and its branch
-    status: the shared badge control drawn as a composer chip, filled by the PR's state. */
-function PullRequestChip({ state }: { state: PrState }) {
+    status: the shared badge control drawn as a composer chip, filled by the PR's state, with
+    its CI pill when the PR is open. */
+function PullRequestChip({ state, checks }: { state: PrState; checks: ChecksArg }) {
   const pr = pullRequest(state);
   return (
     <ThreadPullRequestBadgeControl
       render={
-        <ComposerControl
+        <PullRequestChipControl
+          checks={resolvePullRequestChipChecks({
+            badge: null,
+            snapshot: { state: pr.state, checksState: checks === "none" ? null : checks },
+          })}
           size="xs"
           data-fork-composer-status-chip="pull-request"
           data-fork-pr-chip
@@ -50,10 +61,13 @@ function PullRequestChip({ state }: { state: PrState }) {
   );
 }
 
-function Composer({ state }: { state: PrState }) {
+function Composer({ state, checks = "none" }: { state: PrState; checks?: ChecksArg }) {
   return (
     <div className="w-[736px] max-w-full">
-      <StoryComposer prompt="Ask anything" statusChips={<PullRequestChip state={state} />} />
+      <StoryComposer
+        prompt="Ask anything"
+        statusChips={<PullRequestChip state={state} checks={checks} />}
+      />
     </div>
   );
 }
@@ -63,8 +77,11 @@ const meta = {
   component: Composer,
   tags: ["autodocs"],
   parameters: { surface: "composer" },
-  args: { state: "open" },
-  argTypes: { state: { control: "inline-radio", options: ["open", "draft", "merged", "closed"] } },
+  args: { state: "open", checks: "passing" },
+  argTypes: {
+    state: { control: "inline-radio", options: ["open", "draft", "merged", "closed"] },
+    checks: { control: "inline-radio", options: ["none", "pending", "passing", "failing"] },
+  },
 } satisfies Meta<typeof Composer>;
 
 export default meta;
@@ -83,6 +100,21 @@ export const States: Story = {
       {(["open", "draft", "merged", "closed"] as const).map((state) => (
         <Row key={state} label={state}>
           <Composer state={state} />
+        </Row>
+      ))}
+    </Stack>
+  ),
+};
+
+/** An open or draft PR's CI as the chip's inner pill: amber while checks run, green once they
+    pass, red when one fails. A PR with no checks, or a merged or closed one, shows none. */
+export const Checks: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <Stack gap={4}>
+      {(["pending", "passing", "failing", "none"] as const).map((checks) => (
+        <Row key={checks} label={checks}>
+          <Composer state="open" checks={checks} />
         </Row>
       ))}
     </Stack>

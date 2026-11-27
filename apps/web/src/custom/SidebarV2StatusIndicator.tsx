@@ -1,3 +1,4 @@
+import type { PullRequestChecksState } from "@t3tools/contracts";
 import { type JSX, type RefObject, useRef } from "react";
 
 // Imported through the shim's own path rather than the `lucide-react` alias.
@@ -6,7 +7,12 @@ import { type JSX, type RefObject, useRef } from "react";
 // CircleAlert is Hugeicons' AlertCircle under its lucide name; the half
 // circle is fork-only. Both are the component set's own status marks (Figma
 // 364:17299 exports them at 9.75px), drawn filled.
-import { AlarmClockIcon, CircleHalfIcon, PenLineIcon } from "./icons/lucide-hugeicons";
+import {
+  AlarmClockIcon,
+  CircleHalfIcon,
+  CircleHalfInsetIcon,
+  PenLineIcon,
+} from "./icons/lucide-hugeicons";
 import { cn } from "~/lib/utils";
 import { BEAD_RING_PERIOD, bakeBeadRingFilm } from "./beadRing";
 import { useDoneCelebration } from "./doneCelebration";
@@ -20,15 +26,16 @@ import { type ForkWorkingMark, useForkWorkingMark } from "./forkWorkingMark";
     it. Rain while working is the phanttom Ghostty vocabulary this started
     from; the settled marks follow the component set (Figma 364:17299,
     "thread card v3"): a 10px dot for Done (blue — a finished turn you have
-    not read) and Idle (muted), one amber half-filled circle for both
-    blocked-on-you states, and a filled warning circle for Failed.
+    not read) and Idle (muted), amber marks for the blocked-on-you states (a
+    progress ring for Approval, a half-filled circle for Input), and a filled
+    warning circle for Failed.
     Text labels ("Working", "Approval") are gone — at 282px wide the label
     crowded out the branch name, and the row already says what it is through
     the mark plus the duration readout.
 
-    Form now separates more than rain / dot / clock: Approval and Input are
-    one mark — both mean "waiting on you", and the tooltip says which — while
-    Done and Idle share the dot and differ by hue (blue vs muted). Screen
+    Form now separates more than rain / dot / clock: Approval and Input
+    both mean "waiting on you", share the amber, and differ by glyph, while Done and
+    Idle share the dot and differ by hue (blue vs muted). Screen
     readers get the `role="status"` label SidebarV2 renders alongside the
     mark. */
 
@@ -412,10 +419,10 @@ export function SidebarV2WorkingMark({ seed, still }: WorkingMarkProps) {
 }
 
 /** The settled counterpart to the rain. Done and Failed are the design's 10px
-    dot, blue and red; the two blocked-on-you states draw a half-filled circle
-    (the component set's own glyph, the left half hollow), so "waiting on you"
-    reads apart by form. The glyph is 12px because it inks ~81% of its grid:
-    the same visual weight as the 10px dot. */
+    dot, blue and red; the blocked-on-you states draw a ring with a filled
+    half (an inset ring after Hugeicons Progress03 for Approval, the component set's half circle
+    for Input), so "waiting on you" reads apart by form. Both ink a ~9.75px
+    circle: the same visual weight as the 10px dot. */
 function SidebarV2StatusDot({
   tone,
   dotRef,
@@ -425,7 +432,10 @@ function SidebarV2StatusDot({
 }) {
   return (
     <span aria-hidden className={cn(MARK_SLOT_CLASS, TONE_TEXT_CLASS[tone])}>
-      {tone === "approval" || tone === "input" ? (
+      {tone === "approval" ? (
+        // Its ring is r=10 against the half circle's r=9; 11px keeps the same 9.75px footprint.
+        <CircleHalfInsetIcon className="size-2.75" />
+      ) : tone === "input" ? (
         <CircleHalfIcon className="size-3" />
       ) : (
         <span ref={dotRef} className="size-2.5 rounded-full bg-current" />
@@ -501,6 +511,22 @@ export function SidebarV2StillMonitoringMark() {
     <span aria-hidden className={cn(MARK_SLOT_CLASS, "text-muted-foreground")}>
       <span className="size-2.5 rounded-full bg-current" />
     </span>
+  );
+}
+
+// Not pullRequestChecksStatePresentation's glyph tones: a 6px dot on the PR chip's pale fill needs
+// the legibility-tuned -foreground ramp (700 light, 400 dark) to keep 3:1 non-text contrast.
+const CHECKS_DOT_CLASS: Record<PullRequestChecksState, string> = {
+  passing: "bg-success-foreground",
+  pending: "bg-warning-foreground",
+  failing: "bg-destructive-foreground",
+};
+
+/** A pull request's CI: green once its checks pass, amber while they run, red when one fails.
+    Still while running, like every settled mark; the PR chip carries it in its CI pill. */
+export function PullRequestChecksDot({ state }: { readonly state: PullRequestChecksState }) {
+  return (
+    <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", CHECKS_DOT_CLASS[state])} />
   );
 }
 
