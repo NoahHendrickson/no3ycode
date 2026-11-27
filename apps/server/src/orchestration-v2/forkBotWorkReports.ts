@@ -5,10 +5,10 @@
  */
 import {
   CommandId,
+  type ForkWorkRequestKind,
   MessageId,
   type OrchestrationV2AppThread,
   type OrchestrationV2DomainEvent,
-  type OrchestrationV2NotificationSource,
   type OrchestrationV2Run,
   type OrchestrationV2RuntimeRequest,
   ThreadId,
@@ -35,15 +35,18 @@ const SEEN_MESSAGE_PREFIX = "message:fork-bot-work-seen:";
     (client-runtime threadVisits). */
 export const FORK_BOT_OWNER_WATCH_GRACE = "30 seconds";
 
-/** Requests that wait on a person; a bot can answer a question, never an approval. */
-const WAITING_REQUEST_KINDS: ReadonlySet<OrchestrationV2RuntimeRequest["kind"]> = new Set([
-  "user_input",
-  "command",
-  "file-read",
-  "file-change",
-  "mcp-elicitation",
-  "permission",
-]);
+/** Requests that wait on a person, and what each waits on: a bot can answer a question, never an
+    approval. A kind left out never reports. */
+const WAITING_REQUEST_KINDS: Partial<
+  Record<OrchestrationV2RuntimeRequest["kind"], ForkWorkRequestKind>
+> = {
+  user_input: "question",
+  command: "approval",
+  "file-read": "approval",
+  "file-change": "approval",
+  "mcp-elicitation": "approval",
+  permission: "approval",
+};
 
 /** The bot `thread` works for, when it is a top-level thread of a bot's work. */
 export function forkBotWorkOwnerId(
@@ -59,7 +62,11 @@ type Report =
   | { readonly kind: "settled"; readonly run: OrchestrationV2Run }
   /** A turn the owner watched settle: the bot updates its files and says nothing. */
   | { readonly kind: "watched"; readonly run: OrchestrationV2Run }
-  | { readonly kind: "request"; readonly request: OrchestrationV2RuntimeRequest };
+  | {
+      readonly kind: "request";
+      readonly request: OrchestrationV2RuntimeRequest;
+      readonly waits: ForkWorkRequestKind;
+    };
 
 interface Notice {
   readonly prefix: string;
@@ -68,15 +75,16 @@ interface Notice {
   readonly text: string;
   readonly summary: string;
   readonly outcome: "failed" | "updated";
-  /** Names the thread (and any request it waits on), so clients never parse the id or summary. */
-  readonly source: OrchestrationV2NotificationSource;
+  readonly request?: {
+    readonly id: OrchestrationV2RuntimeRequest["id"];
+    readonly kind: ForkWorkRequestKind;
+  };
 }
 
 const CHECK_THE_REST = `This notice comes from T3 Code, not from your owner. Handle it like a scheduled wake: update STATE.md (and DIGEST.md), then report only what needs your owner, or reply with exactly "Nothing to report." Your other threads may have changed too, so check them while you are at it.`;
 
 function notice(work: OrchestrationV2AppThread, report: Report): Notice {
   const named = `your thread "${work.title}" (${work.id})`;
-  const source = { kind: "system", forkWorkThreadId: work.id } as const;
   const read = `Read its latest messages with t3_thread_read, threadId ${work.id}, limit 5.`;
   switch (report.kind) {
     case "settled": {
@@ -87,7 +95,6 @@ function notice(work: OrchestrationV2AppThread, report: Report): Notice {
         text: `Work report: ${named} ${failed ? "failed its latest turn" : "finished a turn"}. ${read}\n\n${CHECK_THE_REST}`,
         summary: `${work.title} ${failed ? "failed" : "finished"}`,
         outcome: failed ? "failed" : "updated",
-        source,
       };
     }
     case "watched": {
@@ -99,11 +106,10 @@ function notice(work: OrchestrationV2AppThread, report: Report): Notice {
         text: `Work report: your owner just watched ${named} ${failed ? "fail" : "finish"} a turn they started. ${read}\n\nThis notice comes from T3 Code, not from your owner. They have already seen it, so do not report it. Your other threads may have changed too, so check them as well. Update STATE.md and DIGEST.md to match all of them, then reply with exactly "Nothing to report." unless another thread has something your owner has not seen.`,
         summary: `${work.title} ${failed ? "failed" : "finished"} while you watched`,
         outcome: failed ? "failed" : "updated",
-        source,
       };
     }
     case "request": {
-      const question = report.request.kind === "user_input";
+      const question = report.waits === "question";
       return {
         prefix: REPORT_MESSAGE_PREFIX,
         // Someone is waiting: always said outright, never left to a notice about other work.
@@ -113,10 +119,7 @@ function notice(work: OrchestrationV2AppThread, report: Report): Notice {
           : `Work report: ${named} is waiting for your owner to approve an action. You cannot approve it: tell your owner what it wants to do.\n\n${CHECK_THE_REST}`,
         summary: `${work.title} ${question ? "has a question" : "needs an approval"}`,
         outcome: "updated",
-        source: {
-          ...source,
-          forkWorkRequest: { id: report.request.id, kind: question ? "question" : "approval" },
-        },
+        request: { id: report.request.id, kind: report.waits },
       };
     }
   }
@@ -185,7 +188,13 @@ const make = Effect.gen(function* () {
       messageId: MessageId.make(`${next.prefix}${key}`),
       text: next.text,
       notification: {
-        source: next.source,
+        source: {
+          kind: "system",
+          forkWorkReport: {
+            threadId: work.id,
+            ...(next.request === undefined ? {} : { request: next.request }),
+          },
+        },
         outcome: next.outcome,
         summary: next.summary,
         detail: next.text,
@@ -238,7 +247,8 @@ const make = Effect.gen(function* () {
       }
       if (event.type === "runtime-request.updated") {
         const request = event.payload;
-        if (request.status !== "pending" || !WAITING_REQUEST_KINDS.has(request.kind)) return;
+        const waits = WAITING_REQUEST_KINDS[request.kind];
+        if (request.status !== "pending" || waits === undefined) return;
         const work = yield* projections.getThread(event.threadId);
         const botId = forkBotWorkOwnerId(work);
         if (botId === null) return;
@@ -250,7 +260,7 @@ const make = Effect.gen(function* () {
         const origin = run === undefined ? "other" : yield* runOrigin(work.id, run);
         if (origin === "compaction") return;
         const key = `${work.id}:${request.id}`;
-        const value: Report = { kind: "request", request };
+        const value: Report = { kind: "request", request, waits };
         if (origin === "other") return yield* report(work, botId, key, value);
         // The owner answers it there if they saw it ask, and nothing is sent once it is answered.
         yield* afterOwnerGrace(

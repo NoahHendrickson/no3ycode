@@ -179,9 +179,8 @@ it.effect(
       assert.equal(first?.status, "queued");
       assert.include(first?.message.text, `Work report: your thread "Fix the flaky test"`);
       assert.include(first?.message.text, "not from your owner");
-      // The source names the thread, so a client never reads it back from the id or the summary.
       assert.deepEqual(first?.message.notification, {
-        source: { kind: "system", forkWorkThreadId: workId },
+        source: { kind: "system", forkWorkReport: { threadId: workId } },
         outcome: "updated",
         summary: "Fix the flaky test finished",
         detail: first!.message.text,
@@ -220,13 +219,34 @@ it.effect(
       assert.equal(second?.message.notification?.summary, "Fix the flaky test has a question");
       assert.deepEqual(second?.message.notification?.source, {
         kind: "system",
-        forkWorkThreadId: workId,
-        forkWorkRequest: { id: RuntimeRequestId.make("request:question"), kind: "question" },
+        forkWorkReport: {
+          threadId: workId,
+          request: { id: RuntimeRequestId.make("request:question"), kind: "question" },
+        },
+      });
+      yield* reactor.handle({
+        ...question,
+        id: EventId.make("event:approval"),
+        payload: {
+          ...question.payload,
+          id: RuntimeRequestId.make("request:approval"),
+          kind: "command",
+        },
+      });
+      const approval = (yield* reports).find(
+        (report) => report.message.notification?.summary === "Fix the flaky test needs an approval",
+      );
+      assert.deepEqual(approval?.message.notification?.source, {
+        kind: "system",
+        forkWorkReport: {
+          threadId: workId,
+          request: { id: RuntimeRequestId.make("request:approval"), kind: "approval" },
+        },
       });
 
       // An owner turn that settles after they left the thread reports once the grace is up.
       const { runs: botRuns } = yield* projections.getThreadRecords(botId, ["runs"]);
-      for (const notice of [first!, second!]) {
+      for (const notice of [first!, second!, approval!]) {
         yield* orchestrator.dispatch({
           type: "queued-run.cancel",
           commandId: CommandId.make(`cancel:${notice.message.id}`),
@@ -235,7 +255,7 @@ it.effect(
         });
       }
       yield* reactor.handle(settled(ownerRun, "failed", yield* DateTime.now));
-      assert.lengthOf(yield* reports, 2);
+      assert.lengthOf(yield* reports, 3);
       yield* TestClock.adjust(ForkBotWorkReports.FORK_BOT_OWNER_WATCH_GRACE);
       const third = (yield* reports).find(
         (report) => report.message.notification?.summary === "Fix the flaky test failed",
