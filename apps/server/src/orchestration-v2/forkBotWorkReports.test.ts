@@ -179,8 +179,9 @@ it.effect(
       assert.equal(first?.status, "queued");
       assert.include(first?.message.text, `Work report: your thread "Fix the flaky test"`);
       assert.include(first?.message.text, "not from your owner");
+      // The source names the thread, so a client never reads it back from the id or the summary.
       assert.deepEqual(first?.message.notification, {
-        source: { kind: "system" },
+        source: { kind: "system", forkWorkThreadId: workId },
         outcome: "updated",
         summary: "Fix the flaky test finished",
         detail: first!.message.text,
@@ -217,6 +218,11 @@ it.effect(
       assert.equal(second?.status, "queued");
       assert.include(second?.message.text, "requestId request:question");
       assert.equal(second?.message.notification?.summary, "Fix the flaky test has a question");
+      assert.deepEqual(second?.message.notification?.source, {
+        kind: "system",
+        forkWorkThreadId: workId,
+        forkWorkRequest: { id: RuntimeRequestId.make("request:question"), kind: "question" },
+      });
 
       // An owner turn that settles after they left the thread reports once the grace is up.
       const { runs: botRuns } = yield* projections.getThreadRecords(botId, ["runs"]);

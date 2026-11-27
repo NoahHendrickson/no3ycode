@@ -8,6 +8,7 @@ import {
   MessageId,
   type OrchestrationV2AppThread,
   type OrchestrationV2DomainEvent,
+  type OrchestrationV2NotificationSource,
   type OrchestrationV2Run,
   type OrchestrationV2RuntimeRequest,
   ThreadId,
@@ -67,12 +68,15 @@ interface Notice {
   readonly text: string;
   readonly summary: string;
   readonly outcome: "failed" | "updated";
+  /** Names the thread (and any request it waits on), so clients never parse the id or summary. */
+  readonly source: OrchestrationV2NotificationSource;
 }
 
 const CHECK_THE_REST = `This notice comes from T3 Code, not from your owner. Handle it like a scheduled wake: update STATE.md (and DIGEST.md), then report only what needs your owner, or reply with exactly "Nothing to report." Your other threads may have changed too, so check them while you are at it.`;
 
 function notice(work: OrchestrationV2AppThread, report: Report): Notice {
   const named = `your thread "${work.title}" (${work.id})`;
+  const source = { kind: "system", forkWorkThreadId: work.id } as const;
   const read = `Read its latest messages with t3_thread_read, threadId ${work.id}, limit 5.`;
   switch (report.kind) {
     case "settled": {
@@ -83,6 +87,7 @@ function notice(work: OrchestrationV2AppThread, report: Report): Notice {
         text: `Work report: ${named} ${failed ? "failed its latest turn" : "finished a turn"}. ${read}\n\n${CHECK_THE_REST}`,
         summary: `${work.title} ${failed ? "failed" : "finished"}`,
         outcome: failed ? "failed" : "updated",
+        source,
       };
     }
     case "watched": {
@@ -94,6 +99,7 @@ function notice(work: OrchestrationV2AppThread, report: Report): Notice {
         text: `Work report: your owner just watched ${named} ${failed ? "fail" : "finish"} a turn they started. ${read}\n\nThis notice comes from T3 Code, not from your owner. They have already seen it, so do not report it. Your other threads may have changed too, so check them as well. Update STATE.md and DIGEST.md to match all of them, then reply with exactly "Nothing to report." unless another thread has something your owner has not seen.`,
         summary: `${work.title} ${failed ? "failed" : "finished"} while you watched`,
         outcome: failed ? "failed" : "updated",
+        source,
       };
     }
     case "request": {
@@ -107,6 +113,10 @@ function notice(work: OrchestrationV2AppThread, report: Report): Notice {
           : `Work report: ${named} is waiting for your owner to approve an action. You cannot approve it: tell your owner what it wants to do.\n\n${CHECK_THE_REST}`,
         summary: `${work.title} ${question ? "has a question" : "needs an approval"}`,
         outcome: "updated",
+        source: {
+          ...source,
+          forkWorkRequest: { id: report.request.id, kind: question ? "question" : "approval" },
+        },
       };
     }
   }
@@ -175,7 +185,7 @@ const make = Effect.gen(function* () {
       messageId: MessageId.make(`${next.prefix}${key}`),
       text: next.text,
       notification: {
-        source: { kind: "system" },
+        source: next.source,
         outcome: next.outcome,
         summary: next.summary,
         detail: next.text,

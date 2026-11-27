@@ -8513,12 +8513,20 @@
     queued notice. Notices resume the bot's
     conversation (no fresh session) and are not held by fork-scheduled-wake-hold. Work-thread
     notifications are unchanged.
+    The notification's system source names the work thread (forkWorkThreadId) and, for a
+    question or approval, the request (forkWorkRequest: id and kind), so a client reads the
+    report from structured fields instead of its message id or English summary (maintainer's
+    approval, 2026-11-27). They are optional fields on the existing system kind, fenced in
+    packages/contracts orchestrationV2.ts: a client or server from before decodes the notice as a
+    plain system one, so clients keep the id-and-summary reading as the fallback for older
+    servers and earlier reports.
   tier: 3
   files:
     - apps/server/src/orchestration-v2/forkBotWorkReports.ts
   shadows: []
   watch:
     - apps/server/src/server.ts
+    - packages/contracts/src/orchestrationV2.ts
   verify:
     - apps/server/src/orchestration-v2/forkBotWorkReports.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
