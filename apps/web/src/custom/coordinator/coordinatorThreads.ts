@@ -12,6 +12,7 @@ import {
   isForkCoordinatorThread,
 } from "@t3tools/shared/forkBotTags";
 
+import { botWorkOwnerId } from "../bots/botWorkRoster";
 import { isForkDelegatedTaskChildOf } from "../forkWorkReports";
 
 export { FORK_COORDINATOR_TAG };
@@ -23,9 +24,13 @@ export function isCoordinatorThread(shell: CoordinatorShell): boolean {
 
 type CoordinatorShell = Pick<OrchestrationV2ThreadShell, "tags" | "lineage">;
 
-/** A listed thread that is no Petal or sprint: those already coordinate by their own rules. */
+/** A listed thread that is no Petal or sprint, nor one's work: those coordinate by their own rules. */
 function canCoordinate(shell: CoordinatorShell): boolean {
-  return !isForkBotThread(shell.tags) && isListedThreadLineage(shell.lineage);
+  return (
+    !isForkBotThread(shell.tags) &&
+    botWorkOwnerId(shell) === null &&
+    isListedThreadLineage(shell.lineage)
+  );
 }
 
 /** The threads that still get the "needs input" line at a coordinator's timeline end: all but its

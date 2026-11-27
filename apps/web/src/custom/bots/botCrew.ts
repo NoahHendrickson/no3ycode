@@ -12,16 +12,21 @@ import {
   FORK_BOT_WORK_TAG_PREFIX,
   forkBotWorkTag,
   isForkBotThread,
+  isForkCoordinatorThread,
 } from "@t3tools/shared/forkBotTags";
 
 import { botWorkOwnerId } from "./botWorkRoster";
 
 type CrewShell = Pick<OrchestrationV2ThreadShell, "tags" | "lineage">;
 
-/** A thread a bot can take: a listed thread that is no bot itself. A subagent or side chat goes
-    with its parent. */
+/** A thread a bot can take: a listed thread that is no bot or coordinator itself. A subagent or
+    side chat goes with its parent. */
 export function canJoinBotWork(shell: CrewShell): boolean {
-  return !isForkBotThread(shell.tags) && isListedThreadLineage(shell.lineage);
+  return (
+    !isForkBotThread(shell.tags) &&
+    !isForkCoordinatorThread(shell) &&
+    isListedThreadLineage(shell.lineage)
+  );
 }
 
 /** The tag writes that make `botId` the thread's only bot, or no bot's for null: the new tag

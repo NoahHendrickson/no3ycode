@@ -191,10 +191,18 @@ export function closeBotThreadsChild(botKey: string): void {
   }));
 }
 
-/** Opens `target` in `botRef`'s panel, opening the panel too; false for the owner itself. */
+/** Opens `target` in `botRef`'s panel, opening the panel too; false for the owner itself, or where
+    a closed panel would open as a sheet, so the caller opens the thread its own way. */
 export function openBotThreadsChild(botRef: ScopedThreadRef, target: ScopedThreadRef): boolean {
   const botKey = scopedThreadKey(botRef);
   if (botKey === scopedThreadKey(target)) return false;
+  if (
+    useBotThreadsPanelStore.getState().openByBotKey[botKey] !== true &&
+    typeof window !== "undefined" &&
+    window.matchMedia(RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY).matches
+  ) {
+    return false;
+  }
   useBotThreadsChildStore.setState((state) => ({
     byBotKey: { ...state.byBotKey, [botKey]: target },
   }));

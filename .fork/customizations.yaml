@@ -10616,9 +10616,9 @@
     - apps/web/src/hooks/useThreadActionMenu.ts
     - apps/web/src/hooks/useThreadActionMenu.test.ts
     - apps/web/src/custom/bots/botWork.ts
+    - apps/web/src/custom/bots/botCrew.ts
     - apps/web/src/custom/bots/BotThreadsChild.tsx
     - apps/web/src/custom/bots/botThreadsPanelStore.ts
-    - apps/web/src/custom/forkWorkReports.ts
   verify:
     - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
     - apps/web/src/custom/coordinator/coordinatorDraft.test.ts

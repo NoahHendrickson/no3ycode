@@ -82,7 +82,7 @@ type Outcome = { readonly _tag: string };
 
 /** A coordinator draft's first send: the rules create the thread, the tag makes it a coordinator,
     then the owner's task follows. A failed step stops it, so the composer keeps the task in the
-    draft (the failed command reports itself); only a sent task clears the switch. */
+    draft and reports the failure; only a sent task clears the switch. */
 export async function sendCoordinatorFirstTurn<R extends Outcome, T extends Outcome>(
   turns: ReturnType<typeof coordinatorFirstSendTurns>,
   steps: {
@@ -106,7 +106,7 @@ export function useCoordinatorDraftStart<R extends Outcome>(
   startTurn: (command: StartTurnCommand) => Promise<R>,
   draftId: DraftId | null,
 ) {
-  const setTag = useOrchestrationCommand(threadEnvironment.setTag);
+  const setTag = useOrchestrationCommand(threadEnvironment.setTag, { reportFailure: false });
   return async (command: StartTurnCommand) => {
     const { environmentId, input } = command;
     if (draftId === null || !isCoordinatorDraft(draftId, input.threadId)) return startTurn(command);
