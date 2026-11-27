@@ -167,7 +167,8 @@ import { BotEmptyConversation } from "~/custom/bots/BotMascot";
 import { useIsBotThread } from "~/custom/bots/useIsBotThread";
 /* fork:end fork-bots */
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
-import { ForkThreadLaunchTimelineRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
+import { ForkThreadLaunchList } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
+import { useForkThreadHost } from "~/custom/threadLaunchCards/forkThreadHost";
 /* fork:end fork-thread-launch-cards */
 
 function timelineListStateFor(identity: string): {
@@ -527,6 +528,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
   const forkIsBotThread = useIsBotThread(citationThreadRef);
   /* fork:end fork-bots */
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  const forkThreadHost = useForkThreadHost();
+  /* fork:end fork-thread-launch-cards */
   const openPullRequest = useOpenPrLink(citationThreadRef ?? undefined);
   const [minimapStripMap] = useState(() => new Map<string, HTMLSpanElement>());
   const normalizedFindQuery = findQuery.trim();
@@ -812,6 +816,10 @@ const ConversationTimeline = memo(function ConversationTimeline({
        Find searches every run, so quiet wakes show while it is open. */
     hideQuietBotWakes: forkIsBotThread && !findActive,
     /* fork:end fork-bots */
+    /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards
+       A host that answers its threads inline keeps their question cards in a quiet wake. */
+    forkKeepRequestReports: forkThreadHost !== null,
+    /* fork:end fork-thread-launch-cards */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
        Find matches reply text, so it shows the replies, as it swaps Zen for hideAll. */
     forkHoldLiveReplies: !findActive && !forkStreamLiveReplies,
@@ -1827,7 +1835,7 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
       {row.kind === "html-render" ? <HtmlRenderTimelineRow row={row} /> : null}
       {row.kind === "sent-message" ? <SentMessageTimelineRow row={row} /> : null}
       {/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */}
-      {row.kind === "fork-thread-launch" ? <ForkThreadLaunchTimelineRow row={row} /> : null}
+      {row.kind === "fork-thread-launch" ? <ForkThreadLaunchList launches={row.launches} /> : null}
       {/* fork:end fork-thread-launch-cards */}
       {row.kind === "viewed-images" ? <ViewedImagesTimelineRow row={row} /> : null}
       {row.kind === "mcp-app" ? <McpAppTimelineRow row={row} /> : null}

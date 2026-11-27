@@ -287,9 +287,11 @@ describe("fork guard: fork-bots", () => {
   });
 
   it("tags a new bot `bot` before its mascot", () => {
-    expect(createBot).toContain("input: { threadId, tag: FORK_BOT_THREAD_TAG, tagged: true },");
-    expect(createBot).toContain(
-      "await run(threadEnvironment.delete, { environmentId, input: { threadId } });",
+    expect(createBot).toContain("[FORK_BOT_THREAD_TAG],");
+    expect(createBot).toContain("await setTag(environmentId, threadId, botMascotTag(mascot));");
+    // A failed tag deletes the thread again.
+    expect(readSibling("../custom/bots/useBotThreadCreation.ts")).toContain(
+      "await remove(environmentId, input.threadId);",
     );
   });
 

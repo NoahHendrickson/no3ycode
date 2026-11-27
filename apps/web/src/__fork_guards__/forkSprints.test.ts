@@ -100,7 +100,7 @@ describe("fork guard: fork-sprints", () => {
     const turnHook: string = settings.hooks.UserPromptSubmit[0].hooks[0].command;
     expect(turnHook).toContain("Now:");
     expect(turnHook).toContain(`$CLAUDE_PROJECT_DIR/${SPRINT_CONTEXT_DIRECTORY}`);
-    expect(readSibling("../custom/bots/BotThreadsPanel.tsx")).toContain("<SprintPanelTabStrip");
+    expect(readSibling("../custom/sprints/SprintPanel.tsx")).toContain("<SprintPanelTabStrip");
   });
 
   it("shares one instructions file and one memory with its threads, and shows it their changes once", () => {
@@ -176,27 +176,50 @@ describe("fork guard: fork-sprints", () => {
   it("lets the owner pick the sprint's model in the dialog", () => {
     const dialog = readSibling("../custom/sprints/SidebarV2SprintsSection.tsx");
     expect(dialog).toContain("<SprintModelPicker");
-    expect(dialog).toContain("withoutPromptInjectedLevels");
+    expect(dialog).toContain("useSprintModelChoices(");
+    expect(readSibling("../custom/sprints/useSprintModelChoices.ts")).toContain(
+      "withoutPromptInjectedLevels",
+    );
   });
 
   it("keeps a sprint's header to details and its threads", () => {
     const chatView = readSibling("../components/ChatView.tsx");
     expect(chatView).toContain("showTerminalControl={false}");
-    expect(chatView).toContain("(!forkIsSprint || splitPane.split) &&");
-    expect(chatView).toContain("paneActions={!forkIsSprint}");
+    expect(chatView).toContain("(forkSprintRef === null || splitPane.split) &&");
+    expect(chatView).toContain("paneActions={forkSprintRef === null}");
   });
 
   it("opens a sprint's threads in its own panel, keeping the sprint on screen", () => {
-    const panel = readSibling("../custom/bots/BotThreadsPanel.tsx");
+    const panel = readSibling("../custom/sprints/SprintPanel.tsx");
     expect(panel).toContain("<SprintChildConversation");
-    expect(panel).toContain("openInSprintPanel(props.botRef, ref)");
-    expect(readSibling("../components/ThreadContextChip.tsx")).toContain("openInSprintPanel(");
+    expect(panel).toContain("openInSprintPanel(props.sprintRef, ref)");
+    // Transcript rows and thread links reach the panel through the host the sprint's timeline gets.
+    expect(readSibling("../custom/sprints/sprintThreadHost.tsx")).toContain(
+      "openThread: (ref) => openInSprintPanel(sprintRef, ref),",
+    );
+    expect(readSibling("../components/ThreadContextChip.tsx")).toContain(
+      "forkThreadHost?.openThread({ environmentId, threadId }) === true",
+    );
     expect(readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx")).toContain(
-      "if (openInSprintPanel(hostRef, threadRef)) return;",
+      "if (host?.openThread(threadRef) === true) return;",
     );
-    expect(readSibling("../components/ChatView.tsx")).toContain(
-      "parentPanel={sideChatParentPanel}",
+    const chatView = readSibling("../components/ChatView.tsx");
+    expect(chatView).toContain("parentPanel={sideChatParentPanel}");
+    expect(chatView).toContain(
+      "forkThreadHost={forkSprintRef === null ? null : sprintThreadHost(forkSprintRef)}",
     );
+  });
+
+  it("keeps sprint code out of the Petal panel, the thread cards and thread links", () => {
+    expect(readSibling("../custom/bots/BotThreadsPanel.tsx")).not.toContain("../sprints/");
+    for (const file of [
+      "../custom/threadLaunchCards/ForkThreadLaunchCards.tsx",
+      "../custom/threadLaunchCards/ForkThreadRequestCard.tsx",
+      "../custom/threadLaunchCards/threadLaunch.logic.ts",
+      "../components/ThreadContextChip.tsx",
+    ]) {
+      expect(readSibling(file)).not.toMatch(/sprints\//);
+    }
   });
 
   it("steers what the owner sends into a sprint's running turn", () => {
@@ -204,10 +227,10 @@ describe("fork guard: fork-sprints", () => {
     expect(composer).toMatch(/forkIsSprint \|\|/);
   });
 
-  it("draws the Sprints section and tags a new sprint `bot` before `sprint`", () => {
+  it("draws the Sprints section and tags a new sprint `sprint` before `bot`", () => {
     expect(readSibling("../components/Sidebar.tsx")).toContain("<SidebarV2SprintsRow");
     expect(readSibling("../custom/sprints/useCreateSprint.ts")).toContain(
-      "[FORK_BOT_THREAD_TAG, FORK_SPRINT_TAG]",
+      "[FORK_SPRINT_TAG, FORK_BOT_THREAD_TAG]",
     );
   });
 });

@@ -59,12 +59,8 @@ import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 /* fork:end fork-subagent-spawn-card */
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
-import { forkWorkReportKey } from "~/custom/threadLaunchCards/threadLaunch.logic";
+import { forkWorkReportOf } from "~/custom/forkWorkReports";
 /* fork:end fork-thread-launch-cards */
-/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-import { ForkDelegatedQuestionRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
-import { delegatedQuestionRequestId } from "~/custom/threadLaunchCards/threadLaunch.logic";
-/* fork:end fork-coordinator-threads */
 import {
   TimelineRowCtx,
   TimelineRowActivityCtx,
@@ -244,35 +240,12 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
   const childThreadId =
     item?.type === "notification" ? notificationChildThreadId(item.source) : undefined;
   /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
-  if (
-    item?.type === "notification" &&
-    childThreadId === undefined &&
-    forkWorkReportKey(item.id) !== null
-  ) {
-    return (
-      <ForkWorkReportRow
-        itemId={item.id}
-        summary={item.summary}
-        fallback={<WorkEntryLogRow {...props} />}
-      />
-    );
+  const forkReport =
+    item?.type === "notification" && childThreadId === undefined ? forkWorkReportOf(item) : null;
+  if (forkReport !== null) {
+    return <ForkWorkReportRow report={forkReport} fallback={<WorkEntryLogRow {...props} />} />;
   }
   /* fork:end fork-thread-launch-cards */
-  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-  const forkQuestionRequestId =
-    item?.type === "notification" && item.source.kind === "delegated_task"
-      ? delegatedQuestionRequestId(item.id, item.threadId)
-      : null;
-  if (forkQuestionRequestId !== null && childThreadId !== undefined) {
-    return (
-      <ForkDelegatedQuestionRow
-        childThreadId={childThreadId}
-        requestId={forkQuestionRequestId}
-        fallback={<WorkEntryLogRow {...props} />}
-      />
-    );
-  }
-  /* fork:end fork-coordinator-threads */
   if (item?.type !== "notification" || childThreadId === undefined) {
     return <WorkEntryLogRow {...props} />;
   }

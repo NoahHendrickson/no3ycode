@@ -61,17 +61,14 @@ export function forkThreadLaunchFromToolItem(item: {
 }
 
 /** Launches in one row: consecutive in the same run, as the transcript groups subagents. */
-export function sameLaunchGroup(
+function sameLaunchGroup(
   previous: { readonly runId: RunId | null } | undefined,
   next: { readonly runId: RunId | null },
 ): boolean {
   return previous !== undefined && previous.runId !== null && previous.runId === next.runId;
 }
 
-export function forkThreadLaunchesEqual(
-  a: ForkThreadLaunch,
-  b: ForkThreadLaunch | undefined,
-): boolean {
+function forkThreadLaunchesEqual(a: ForkThreadLaunch, b: ForkThreadLaunch | undefined): boolean {
   return (
     b !== undefined &&
     a.title === b.title &&
@@ -168,121 +165,12 @@ export function threadLaunchPullRequests(thread: {
   return out;
 }
 
-// The server's work-report message ids (orchestration-v2/forkBotWorkReports): the prefix, then the
-// reporting thread's id and the run or request it reports on. A notification's turn item id is
-// `turn-item:message:` and that message id, URI-encoded.
-const NOTIFICATION_ITEM_PREFIX = "turn-item:message:";
-const WORK_REPORT_PREFIXES = ["message:fork-bot-work-report:", "message:fork-bot-work-seen:"];
-
-function notificationMessageId(itemId: string): string | null {
-  if (!itemId.startsWith(NOTIFICATION_ITEM_PREFIX)) return null;
-  try {
-    return decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
-  } catch {
-    return null;
-  }
-}
-
-/** What follows a work report's prefix in its notification's item id, or null for another item. */
-export function forkWorkReportKey(itemId: string): string | null {
-  const messageId = notificationMessageId(itemId);
-  if (messageId === null) return null;
-  const prefix = WORK_REPORT_PREFIXES.find((candidate) => messageId.startsWith(candidate));
-  return prefix === undefined ? null : messageId.slice(prefix.length);
-}
-
-// orchestration-v2/DelegatedTaskQuestionReactor's message id: the prefix, the parent thread's id,
-// then the child's request id.
-const DELEGATED_QUESTION_PREFIX = "message:delegated-task-question:";
-
-/** The request a delegated child's question notice names, or null for any other notice. */
-export function delegatedQuestionRequestId(itemId: string, parentThreadId: string): string | null {
-  const messageId = notificationMessageId(itemId);
-  const prefix = `${DELEGATED_QUESTION_PREFIX}${parentThreadId}:`;
-  if (messageId === null || !messageId.startsWith(prefix)) return null;
-  return messageId.slice(prefix.length) || null;
-}
-
-/** The thread a report key names. Thread ids can hold colons, so it is the longest of the
-    candidates the key starts with, followed by a colon. */
-export function forkWorkReportThreadId(key: string, threadIds: Iterable<string>): string | null {
-  let best: string | null = null;
-  for (const id of threadIds) {
-    if (key.startsWith(`${id}:`) && (best === null || id.length > best.length)) best = id;
-  }
-  return best;
-}
-
-/** A report about a thread waiting on its owner: the server's summary ends with what it waits on. */
-export function forkWorkReportRequestKind(summary: string): "question" | "approval" | null {
-  if (summary.endsWith(" has a question")) return "question";
-  if (summary.endsWith(" needs an approval")) return "approval";
-  return null;
-}
-
-/** The request a report key names is the one the thread still waits on. */
-export function forkWorkReportIsPending(
-  key: string,
-  threadId: string,
-  pendingRequestId: string | null | undefined,
-): boolean {
-  return pendingRequestId != null && key === `${threadId}:${pendingRequestId}`;
-}
-
-export interface SprintAnswer {
-  readonly question: string;
-  readonly answer: string;
-}
-
-/** One ANSWERS.md entry's text: each question, an arrow, its answer as JSON; several joined by
-    "; ". An approval's question is what it asked to do, its answer the decision. */
-export function sprintAnswerLine(answers: ReadonlyArray<SprintAnswer>): string {
-  return answers.map((entry) => `${entry.question} → ${JSON.stringify(entry.answer)}`).join("; ");
-}
-
-/** The owner's latest answers to a thread in the sprint's ANSWERS.md, or null when there are none. */
-export function sprintAnswersFor(
-  log: string,
-  threadId: string,
-): ReadonlyArray<SprintAnswer> | null {
-  const marker = `(${threadId}): `;
-  const line = log
-    .split("\n")
-    .filter((entry) => entry.startsWith("- ") && entry.includes(marker))
-    .at(-1);
-  if (line === undefined) return null;
-  const said = line.slice(line.indexOf(marker) + marker.length);
-  const answers = said.split("; ").flatMap((part) => {
-    const arrow = part.lastIndexOf(" → ");
-    if (arrow === -1) return [];
-    const raw = part.slice(arrow + 3);
-    let answer = raw;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      answer = Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
-    } catch {
-      // Written by hand: keep the words.
-    }
-    return [{ question: part.slice(0, arrow), answer }];
-  });
-  return answers.length === 0 ? null : answers;
-}
-
-/** One line in the sprint's ANSWERS.md for an answer the owner gave a thread directly; the log
-    keeps the newest `keep` lines under its title. */
-export function withSprintAnswer(log: string, line: string, keep = 20): string {
-  const entries = log
-    .split("\n")
-    .filter((entry) => entry.startsWith("- "))
-    .slice(-(keep - 1));
-  return `# Answers\n\nYour owner answered these threads directly, from the sprint's conversation.\n\n${[...entries, `- ${line}`].join("\n")}\n`;
-}
-
 type LaunchRow = Extract<MessagesTimelineRow, { kind: "fork-thread-launch" }>;
 
 /** A turn's launched threads drawn by the turn's last reply, as one group, between its text and
     its actions, so the reply that says it started them sits above them and the three hover as one.
-    A turn with no reply shown keeps them as a row where the calls were. */
+    A turn with no reply shown keeps them as rows where the calls were, one run's consecutive
+    calls stacked in one. Rows come one per call; this is the only place they group. */
 export function placeLaunchesUnderReplies(
   rows: ReadonlyArray<MessagesTimelineRow>,
 ): MessagesTimelineRow[] {
@@ -297,12 +185,20 @@ export function placeLaunchesUnderReplies(
       continue;
     groups.set(row.runId, [...(groups.get(row.runId) ?? []), row]);
   }
-  if (groups.size === 0) return [...rows];
   const runAtReply = new Map<number, RunId>();
   for (const [runId, index] of replyByRun) if (groups.has(runId)) runAtReply.set(index, runId);
   const out: MessagesTimelineRow[] = [];
   rows.forEach((row, index) => {
-    if (row.kind === "fork-thread-launch" && row.runId !== null && groups.has(row.runId)) return;
+    if (row.kind === "fork-thread-launch") {
+      if (row.runId !== null && groups.has(row.runId)) return;
+      const previous = out.at(-1);
+      if (previous?.kind === "fork-thread-launch" && sameLaunchGroup(previous, row)) {
+        out[out.length - 1] = { ...previous, launches: [...previous.launches, ...row.launches] };
+      } else {
+        out.push(row);
+      }
+      return;
+    }
     const runId = runAtReply.get(index);
     const group = runId === undefined ? undefined : groups.get(runId);
     out.push(

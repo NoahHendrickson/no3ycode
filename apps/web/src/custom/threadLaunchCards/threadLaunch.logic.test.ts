@@ -1,4 +1,4 @@
-import { MessageId, RunId, ThreadId } from "@t3tools/contracts";
+import { MessageId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
@@ -8,17 +8,16 @@ import {
   type ForkThreadLaunch,
   forkThreadLaunchFromToolItem,
   threadLaunchActivityLine,
-  forkWorkReportIsPending,
-  delegatedQuestionRequestId,
-  forkWorkReportKey,
-  forkWorkReportRequestKind,
-  forkWorkReportThreadId,
   threadLaunchPullRequests,
   threadPullRequestStage,
-  sprintAnswerLine,
-  sprintAnswersFor,
-  withSprintAnswer,
 } from "./threadLaunch.logic";
+import {
+  forkWorkReportIsPending,
+  forkWorkReportKey,
+  forkWorkReportOf,
+  forkWorkReportRequestKind,
+  forkWorkReportThreadId,
+} from "../forkWorkReports";
 
 describe("forkThreadLaunchFromToolItem", () => {
   const input = { title: "Optimize images", message: "Swap the hero to next/image" };
@@ -257,6 +256,29 @@ describe("threadLaunchPullRequests", () => {
 describe("work report notifications", () => {
   const itemId = (messageId: string) => `turn-item:message:${encodeURIComponent(messageId)}`;
 
+  it("reads the server's named thread and request first, and an older report from its id", () => {
+    const id = itemId("message:fork-bot-work-report:mcp:t1:request-1");
+    const named = forkWorkReportOf({
+      id,
+      summary: "Rate limiting waits for you",
+      source: {
+        kind: "system",
+        forkWorkReport: {
+          threadId: ThreadId.make("mcp:t1"),
+          request: { id: RuntimeRequestId.make("request-1"), kind: "approval" },
+        },
+      },
+    });
+    expect(named).toEqual({ key: "mcp:t1:request-1", threadId: "mcp:t1", requestKind: "approval" });
+    expect(forkWorkReportIsPending(named!.key, "mcp:t1", "request-1")).toBe(true);
+    expect(
+      forkWorkReportOf({ id, summary: "Rate limiting has a question", source: { kind: "system" } }),
+    ).toEqual({ key: "mcp:t1:request-1", threadId: null, requestKind: "question" });
+    expect(
+      forkWorkReportOf({ id: "turn-item:provider:x", summary: "x", source: { kind: "system" } }),
+    ).toBeNull();
+  });
+
   it("names the reporting thread, even one whose id holds colons", () => {
     const key = forkWorkReportKey(
       itemId(
@@ -277,15 +299,6 @@ describe("work report notifications", () => {
     expect(forkWorkReportKey("turn-item:provider:x")).toBeNull();
     expect(forkWorkReportThreadId("t1:run:x", ["t2"])).toBeNull();
   });
-
-  it("reads the request a delegated child's question names, for its parent only", () => {
-    const question = itemId("message:delegated-task-question:mcp:p1:request:9");
-    expect(delegatedQuestionRequestId(question, "mcp:p1")).toBe("request:9");
-    expect(delegatedQuestionRequestId(question, "other")).toBeNull();
-    expect(
-      delegatedQuestionRequestId(itemId("message:fork-bot-work-report:mcp:p1:request"), "mcp:p1"),
-    ).toBeNull();
-  });
 });
 
 describe("thread requests from reports", () => {
@@ -299,34 +312,5 @@ describe("thread requests from reports", () => {
     expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-1")).toBe(true);
     expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-2")).toBe(false);
     expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", null)).toBe(false);
-  });
-
-  it("keeps the newest answers in the sprint's log", () => {
-    const first = withSprintAnswer("", "a");
-    expect(first).toContain("# Answers");
-    expect(first.trimEnd().endsWith("- a")).toBe(true);
-    const log = ["b", "c", "d"].reduce((text, line) => withSprintAnswer(text, line, 2), first);
-    expect(log.match(/^- /gm)).toHaveLength(2);
-    expect(log.trimEnd().endsWith("- c\n- d")).toBe(true);
-  });
-});
-
-describe("sprint answers", () => {
-  it("reads back the latest answers it wrote for a thread", () => {
-    const log = [
-      sprintAnswerLine([{ question: "Which color?", answer: "Blue" }]),
-      sprintAnswerLine([
-        { question: "Which color?", answer: "Red (Recommended)" },
-        { question: "Which size?", answer: "Large" },
-      ]),
-    ].reduce(
-      (text, line) => withSprintAnswer(text, `2026-11-27 10:00: Pick (mcp:t1): ${line}`),
-      "",
-    );
-    expect(sprintAnswersFor(log, "mcp:t1")).toEqual([
-      { question: "Which color?", answer: "Red (Recommended)" },
-      { question: "Which size?", answer: "Large" },
-    ]);
-    expect(sprintAnswersFor(log, "t2")).toBeNull();
   });
 });

@@ -681,7 +681,7 @@ it.layer(layerTest, { excludeTestServices: true })("WorkspaceFileSystemLive", (i
     );
 
     // fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
-    it.effect("writes base64 contents as the bytes they encode, with no BOM added", () =>
+    it.effect("writes valid base64 as its bytes, with no BOM added, and refuses the rest", () =>
       Effect.gen(function* () {
         const workspaceFileSystem = yield* WorkspaceFileSystem.WorkspaceFileSystem;
         const fileSystem = yield* FileSystem.FileSystem;
@@ -701,6 +701,25 @@ it.layer(layerTest, { excludeTestServices: true })("WorkspaceFileSystemLive", (i
           encoding: "base64",
         });
 
+        expect(Array.from(yield* fileSystem.readFile(path.join(cwd, "shot.png")))).toEqual(
+          Array.from(png),
+        );
+
+        // A data: URL or base64url fails instead of writing the bytes Buffer.from would guess.
+        for (const contents of [
+          `data:image/png;base64,${Buffer.from(png).toString("base64")}`,
+          Buffer.from(png).toString("base64url"),
+        ]) {
+          const error = yield* Effect.flip(
+            workspaceFileSystem.writeFile({
+              cwd,
+              relativePath: "shot.png",
+              contents,
+              encoding: "base64",
+            }),
+          );
+          expect(error._tag).toBe("WorkspaceFileSystemOperationError");
+        }
         expect(Array.from(yield* fileSystem.readFile(path.join(cwd, "shot.png")))).toEqual(
           Array.from(png),
         );

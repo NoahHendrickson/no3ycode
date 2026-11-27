@@ -379,7 +379,11 @@ import { botMascotMood, botMascotShape, nextBotMascotShape } from "~/custom/bots
 import { isPetalThread, listSidebarBots } from "~/custom/bots/botThreads";
 /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
 import { SidebarV2SprintsRow } from "~/custom/sprints/SidebarV2SprintsSection";
-import { listSidebarSprints } from "~/custom/sprints/sprintThreads";
+import {
+  listSidebarSprints,
+  sprintDefaultProject,
+  visibleSidebarSprints,
+} from "~/custom/sprints/sprintThreads";
 /* fork:end fork-sprints */
 import {
   petalTileHoverAnchor,
@@ -5446,36 +5450,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
             <SidebarV2SprintsRow
               collapsed={sprintsSectionCollapsed}
               onToggleCollapsed={() => toggleListSectionCollapsed("sprints")}
-              defaultProject={(() => {
-                const routeThread =
-                  routeThreadRef === null
-                    ? undefined
-                    : threads.find(
-                        (thread) =>
-                          thread.environmentId === routeThreadRef.environmentId &&
-                          thread.id === routeThreadRef.threadId,
-                      );
-                return routeThread === undefined
-                  ? null
-                  : { environmentId: routeThread.environmentId, projectId: routeThread.projectId };
-              })()}
+              defaultProject={sprintDefaultProject(threads, routeThreadRef)}
             >
               {/* A folded Sprints section keeps the open sprint's card. */}
-              {sprintThreads
-                .filter(
-                  (sprint) =>
-                    !sprintsSectionCollapsed ||
-                    routeRowThreadKey ===
-                      scopedThreadKey(scopeThreadRef(sprint.environmentId, sprint.id)),
-                )
-                .map((sprint) =>
+              {visibleSidebarSprints(sprintThreads, sprintsSectionCollapsed, routeRowThreadKey).map(
+                (sprint) =>
                   renderOneThreadRow(sprint, "active", {
                     botWork:
                       botWorkByKey.get(
                         scopedThreadKey(scopeThreadRef(sprint.environmentId, sprint.id)),
                       ) ?? null,
                   }),
-                )}
+              )}
             </SidebarV2SprintsRow>
             {/* fork:end fork-sprints */}
             {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}

@@ -26,7 +26,7 @@ describe("fork guard: fork-thread-launch-cards", () => {
     expect(logic).toContain('entry.kind === "fork-thread-launch" ||');
     expect(logic).toContain('case "fork-thread-launch":');
     expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
-      "<ForkThreadLaunchTimelineRow row={row} />",
+      "<ForkThreadLaunchList launches={row.launches} />",
     );
   });
 
@@ -38,7 +38,7 @@ describe("fork guard: fork-thread-launch-cards", () => {
 
   it("draws a work report's notice as the reporting thread's row", () => {
     const row = readSibling("../components/chat/TimelineWorkEntryRow.tsx");
-    expect(row).toContain("forkWorkReportKey(item.id) !== null");
+    expect(row).toContain("forkWorkReportOf(item)");
     expect(row).toContain("<ForkWorkReportRow");
   });
 
@@ -51,10 +51,18 @@ describe("fork guard: fork-thread-launch-cards", () => {
   it("answers a thread's open question or approval inline, and only inline in a sprint", () => {
     const rows = readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx");
     expect(rows).toContain("<ForkThreadRequestCard");
-    expect(rows).toContain("<ForkAnsweredRequest");
+    expect(rows).toContain("<host.AnsweredRequest");
+    // Only a host answers inline (a sprint's timeline); a Petal asks above its composer.
+    expect(rows).toContain("request === null || host === null ? (");
+    expect(readSibling("../components/chat/ThreadTimeline.tsx")).toContain(
+      "<ForkThreadHostContext value={forkThreadHost}>",
+    );
     expect(readSibling("../custom/bots/BotDigest.tsx")).toContain("|| isSprintThread(bot.source)");
     expect(readSibling("../custom/bots/quietBotWakes.ts")).toContain(
-      "index < start || isRequestReport(entry)",
+      "(keepRequestReports && isForkWorkRequestReport(entry))",
+    );
+    expect(readSibling("../components/chat/MessagesTimeline.tsx")).toContain(
+      "forkKeepRequestReports: forkThreadHost !== null,",
     );
   });
 });

@@ -1,13 +1,20 @@
 /**
  * A bot's Threads panel — see `.fork/customizations.yaml#fork-bot-work-threads`: a stage column
  * between the conversation and the right panel, in the right panel's shell (a sheet where that is
- * one), on the bot's conversation and on each of its threads, listing its work by status.
+ * one), on the bot's conversation and on each of its threads, listing its work by status. The
+ * frame, list, search and controls are shared with a sprint's panel (sprints/SprintPanel).
  */
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { PanelAnimationDurationMs } from "@t3tools/contracts/settings";
 import { useNavigate } from "@tanstack/react-router";
-import { type ComponentProps, type MouseEvent, useState, useSyncExternalStore } from "react";
+import {
+  type ComponentProps,
+  type MouseEvent,
+  type ReactNode,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import { PreviewPanelShell } from "~/components/preview/PreviewPanelShell";
 import { RightPanelSheet } from "~/components/RightPanelSheet";
@@ -19,8 +26,7 @@ import { observeResize } from "~/lib/observeResize";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { usePanelPresence } from "~/panelAnimations";
-import type { SideChatParentPanel } from "~/lib/sideChatPane";
-import { useProjects, useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
+import { useProjects, useQuietThreadShells } from "~/state/entities";
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
@@ -36,6 +42,7 @@ import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
 import {
+  type BotThreadsView,
   clearBotThreadsFilters,
   closeBotThreadsPanel,
   EMPTY_BOT_THREADS_VIEW,
@@ -50,17 +57,6 @@ import {
   stageFitsBothPanels,
 } from "./stagePanels";
 import { useBotThreadsPanelOpen } from "./useBotWorkOwner";
-import {
-  closeSprintChild,
-  openInSprintPanel,
-  SPRINT_PANEL_DEFAULT_WIDTH,
-  useSprintOpenChild,
-  useSprintPanelTab,
-} from "../sprints/sprintPanelState";
-import { SprintPanelTabContent, SprintPanelTabStrip } from "../sprints/SprintPanelTabs";
-import { SprintChildConversation } from "../sprints/SprintChildConversation";
-import { ChevronLeftIcon } from "../icons/lucide-hugeicons";
-import { useIsSprintThread } from "../sprints/useIsSprintThread";
 
 /** Whether the stage row holds the conversation and both panels, kept current as it resizes. */
 function useStageFitsBothPanels(row: HTMLElement | null): boolean {
@@ -70,7 +66,7 @@ function useStageFitsBothPanels(row: HTMLElement | null): boolean {
   );
 }
 
-export function BotThreadsPanel(props: {
+export interface BotThreadsPanelProps {
   readonly botRef: ScopedThreadRef;
   /** The thread on screen: the bot's conversation, or one of its threads. */
   readonly threadRef: ScopedThreadRef;
@@ -84,9 +80,17 @@ export function BotThreadsPanel(props: {
   readonly rightPanelInline: boolean;
   readonly animationsActive: boolean;
   readonly animationDurationMs: PanelAnimationDurationMs;
-  /** The conversation's own panel, which a sprint's open thread borrows as a side chat does. */
-  readonly parentPanel?: SideChatParentPanel | undefined;
-}) {
+}
+
+/** Rightmost inline, the panel's header is the one under Windows' caption buttons. */
+export function botThreadsPanelRightmost(props: BotThreadsPanelProps): boolean {
+  return !props.sheet && !props.rightPanelInline;
+}
+
+/** The panel's column (or sheet), its motion and its width, around its header and body. */
+export function BotThreadsPanelFrame(
+  props: BotThreadsPanelProps & { readonly defaultWidth: number; readonly children: ReactNode },
+) {
   const botKey = scopedThreadKey(props.botRef);
   const fitsBoth = useStageFitsBothPanels(props.workspaceLayoutElement);
   // A row narrowed below both panels keeps the right panel; this one waits for room.
@@ -99,25 +103,15 @@ export function BotThreadsPanel(props: {
     botKey,
     props.animationDurationMs,
   );
-  const isSprint = useIsSprintThread(props.botRef);
   const inlineSize = usePreviewPanelInlineSize({
     container: props.workspaceLayoutElement,
     widthStorageKey: `t3code:fork:bot-threads-panel-width:${botKey}`,
-    defaultWidth: isSprint ? SPRINT_PANEL_DEFAULT_WIDTH : BOT_THREADS_PANEL_DEFAULT_WIDTH,
+    defaultWidth: props.defaultWidth,
     floorWidth: BOT_THREADS_PANEL_MIN_WIDTH,
     otherPanels: "minimum",
   });
   if (!presence.present) return null;
-  // Rightmost inline, its header is the one under Windows' caption buttons.
-  const rightmost = !props.sheet && !props.rightPanelInline;
-  const body = (
-    <BotThreadsBody
-      botRef={props.botRef}
-      currentThreadRef={props.threadRef}
-      rightmost={rightmost}
-      parentPanel={props.parentPanel}
-    />
-  );
+  const body = props.children;
   if (props.sheet) {
     return (
       <RightPanelSheet
@@ -136,15 +130,21 @@ export function BotThreadsPanel(props: {
   );
 }
 
-/** The panel's header and its list, which read the same search, filter and order. */
-function BotThreadsBody(props: {
-  readonly botRef: ScopedThreadRef;
-  readonly currentThreadRef: ScopedThreadRef;
-  /** Its header is the one under Windows' caption buttons. */
-  readonly rightmost: boolean;
-  readonly parentPanel?: SideChatParentPanel | undefined;
-}) {
-  const botKey = scopedThreadKey(props.botRef);
+export function BotThreadsPanel(props: BotThreadsPanelProps) {
+  return (
+    <BotThreadsPanelFrame {...props} defaultWidth={BOT_THREADS_PANEL_DEFAULT_WIDTH}>
+      <BotThreadsBody
+        botRef={props.botRef}
+        currentThreadRef={props.threadRef}
+        rightmost={botThreadsPanelRightmost(props)}
+      />
+    </BotThreadsPanelFrame>
+  );
+}
+
+/** The bot's work in its groups, by the panel's search, filter and order, and the fold of each. */
+export function useBotThreadsListing(botRef: ScopedThreadRef) {
+  const botKey = scopedThreadKey(botRef);
   const threads = useQuietThreadShells();
   const projects = useProjects();
   const localVisits = useUiStateStore((state) => state.threadLastVisitedAtById);
@@ -153,7 +153,7 @@ function BotThreadsBody(props: {
   const [folded, setFolded] = useState<ReadonlySet<BotWorkGroupKey>>(() => new Set());
   const all = groupBotWork(
     threads,
-    { environmentId: props.botRef.environmentId, threadId: props.botRef.threadId },
+    { environmentId: botRef.environmentId, threadId: botRef.threadId },
     (thread) =>
       resolveThreadLastVisitedAt(
         thread.lastVisitedAt,
@@ -161,192 +161,213 @@ function BotThreadsBody(props: {
       ),
     sort,
   );
-  const groups = filterBotWork(all, { ...view, query: view.query ?? "" });
-  const isSprint = useIsSprintThread(props.botRef);
-  // A sprint's panel has tabs; a Petal's is its Threads list alone.
-  const sprintTab = useSprintPanelTab(botKey);
-  const tab = isSprint ? sprintTab : "threads";
-  const searching = tab === "threads" && view.query !== null;
-  // A sprint shows the thread opened from it here, with a way back to its tabs.
-  const openChild = useSprintOpenChild(botKey);
-  const child = isSprint && props.parentPanel !== undefined ? openChild : null;
-  const childShell = useQuietThreadShell(child);
   const projectIds = new Set(all.flatMap((group) => group.rows.map((row) => row.thread.projectId)));
-  const searchInput = (
+  return {
+    botKey,
+    view,
+    all,
+    groups: filterBotWork(all, { ...view, query: view.query ?? "" }),
+    folded,
+    toggleFolded: (key: BotWorkGroupKey) =>
+      setFolded((previous) => {
+        const next = new Set(previous);
+        if (!next.delete(key)) next.add(key);
+        return next;
+      }),
+    /** The projects its work is in, for the filter. */
+    projects: projects
+      .filter(
+        (project) => project.environmentId === botRef.environmentId && projectIds.has(project.id),
+      )
+      .map((project) => ({ id: project.id, title: project.title })),
+  };
+}
+
+type BotThreadsListing = ReturnType<typeof useBotThreadsListing>;
+
+/** The panel's header bar; the store reads which bot and thread it is on from its attributes. */
+export function BotThreadsHeader(props: {
+  readonly botKey: string;
+  readonly currentThreadRef: ScopedThreadRef;
+  readonly rightmost: boolean;
+  /** Its gap and side insets. */
+  readonly className: string;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex h-(--workspace-topbar-height) min-h-(--workspace-topbar-height) shrink-0 items-center border-b border-border",
+        props.className,
+        isElectron && "drag-region",
+        isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",
+      )}
+      data-fork-bot-threads-header=""
+      // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
+      data-fork-bot-threads-bot={props.botKey}
+      data-fork-bot-threads-thread={scopedThreadKey(props.currentThreadRef)}
+    >
+      {props.children}
+    </div>
+  );
+}
+
+/** Search in place of the header's title, until Escape. */
+export function BotThreadsSearchInput(props: {
+  readonly botKey: string;
+  readonly view: BotThreadsView;
+}) {
+  return (
     <>
       <h2 className="sr-only">Threads</h2>
       <input
         aria-label="Search threads"
         className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none [-webkit-app-region:no-drag] placeholder:text-muted-foreground"
         data-testid="bot-threads-search-input"
-        onChange={(event) => updateBotThreadsView(botKey, { query: event.target.value })}
+        onChange={(event) => updateBotThreadsView(props.botKey, { query: event.target.value })}
         onKeyDown={(event) => {
           if (event.key !== "Escape") return;
           event.stopPropagation();
-          updateBotThreadsView(botKey, { query: null });
+          updateBotThreadsView(props.botKey, { query: null });
         }}
         placeholder="Search threads"
         ref={(field) => {
           if (field !== null && takeBotThreadsSearchFocus()) field.focus();
         }}
         type="text"
-        value={view.query ?? ""}
+        value={props.view.query ?? ""}
       />
-    </>
-  );
-  const controls = (
-    <BotThreadsPanelControls
-      botKey={botKey}
-      view={view}
-      projects={projects
-        .filter(
-          (project) =>
-            project.environmentId === props.botRef.environmentId && projectIds.has(project.id),
-        )
-        .map((project) => ({ id: project.id, title: project.title }))}
-    />
-  );
-  const header = (
-    <div
-      className={cn(
-        "flex h-(--workspace-topbar-height) min-h-(--workspace-topbar-height) shrink-0 items-center border-b border-border",
-        // A sprint's tabs need the room: its track's own fill stands in for the inset.
-        isSprint ? "gap-1 pr-0.5 pl-1.5" : "gap-2 pr-2 pl-3.5",
-        isElectron && "drag-region",
-        isElectron && props.rightmost && "wco:pr-(--workspace-native-controls-inset)",
-      )}
-      data-fork-bot-threads-header=""
-      // BOT_THREADS_PANEL_BOT_ATTRIBUTE and BOT_THREADS_PANEL_THREAD_ATTRIBUTE (the store reads them).
-      data-fork-bot-threads-bot={botKey}
-      data-fork-bot-threads-thread={scopedThreadKey(props.currentThreadRef)}
-    >
-      {child !== null ? (
-        <span className="flex min-w-0 flex-1 items-center gap-1 [-webkit-app-region:no-drag]">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Back to the sprint's threads"
-            onClick={() => closeSprintChild(botKey)}
-            data-testid="sprint-child-back"
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">
-            {childShell?.title ?? "Thread"}
-          </h2>
-        </span>
-      ) : isSprint && !searching ? (
-        // A sprint's tabs stand in for the title; the open one names the panel.
-        <SprintPanelTabStrip sprintKey={botKey} tab={tab} />
-      ) : searching ? (
-        searchInput
-      ) : (
-        <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">Threads</h2>
-      )}
-      <span className="flex shrink-0 items-center [-webkit-app-region:no-drag]">
-        {tab === "threads" && child === null ? controls : null}
-        <StagePanelCloseButton
-          label="Close threads panel"
-          onClose={() => closeBotThreadsPanel(props.botRef)}
-        />
-      </span>
-    </div>
-  );
-  const content =
-    groups.length > 0 ? (
-      <BotThreadsList
-        groups={groups}
-        folded={folded}
-        compact={isSprint}
-        onOpenThread={isSprint ? (ref) => openInSprintPanel(props.botRef, ref) : undefined}
-        onToggle={(key) =>
-          setFolded((previous) => {
-            const next = new Set(previous);
-            if (!next.delete(key)) next.add(key);
-            return next;
-          })
-        }
-        currentThreadRef={props.currentThreadRef}
-      />
-    ) : all.length === 0 ? (
-      <p className="px-3.5 py-3 text-sm text-muted-foreground">
-        {isSprint
-          ? "This sprint has not started any threads."
-          : "This petal has not started any threads."}
-      </p>
-    ) : (
-      <div className="flex flex-col items-start gap-2 px-3.5 py-3">
-        <p className="text-sm text-muted-foreground">No threads match.</p>
-        <Button
-          onClick={() => {
-            clearBotThreadsFilters(botKey);
-            if (view.query !== null) updateBotThreadsView(botKey, { query: "" });
-          }}
-          size="xs"
-          variant="outline"
-        >
-          Clear search and filters
-        </Button>
-      </div>
-    );
-  return (
-    <>
-      {header}
-      {child !== null && props.parentPanel !== undefined ? (
-        <SprintChildConversation
-          sprintRef={props.botRef}
-          childRef={child}
-          parentPanel={props.parentPanel}
-        />
-      ) : tab === "threads" ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">{content}</div>
-      ) : (
-        <SprintPanelTabContent sprintRef={props.botRef} tab={tab} />
-      )}
     </>
   );
 }
 
-function BotThreadsList(props: {
-  readonly groups: ReturnType<typeof filterBotWork>;
-  readonly folded: ReadonlySet<BotWorkGroupKey>;
-  readonly onToggle: (key: BotWorkGroupKey) => void;
-  readonly currentThreadRef: ScopedThreadRef;
-  readonly compact: boolean;
-  readonly onOpenThread?: ((ref: ScopedThreadRef) => void) | undefined;
+/** Search, filter and order for the list. */
+export function BotThreadsListControls(props: { readonly listing: BotThreadsListing }) {
+  return (
+    <BotThreadsPanelControls
+      botKey={props.listing.botKey}
+      view={props.listing.view}
+      projects={props.listing.projects}
+    />
+  );
+}
+
+export function BotThreadsCloseButton(props: { readonly botRef: ScopedThreadRef }) {
+  return (
+    <StagePanelCloseButton
+      label="Close threads panel"
+      onClose={() => closeBotThreadsPanel(props.botRef)}
+    />
+  );
+}
+
+/** The list, or why it is empty: `none` when the bot started nothing, a way back when the
+    search and filters hide everything. */
+export function BotThreadsListBody(props: {
+  readonly listing: BotThreadsListing;
+  readonly none: string;
+  readonly children: ReactNode;
 }) {
-  const { groups, folded } = props;
+  const { listing } = props;
+  if (listing.groups.length > 0) return props.children;
+  if (listing.all.length === 0) {
+    return <p className="px-3.5 py-3 text-sm text-muted-foreground">{props.none}</p>;
+  }
+  return (
+    <div className="flex flex-col items-start gap-2 px-3.5 py-3">
+      <p className="text-sm text-muted-foreground">No threads match.</p>
+      <Button
+        onClick={() => {
+          clearBotThreadsFilters(listing.botKey);
+          if (listing.view.query !== null) updateBotThreadsView(listing.botKey, { query: "" });
+        }}
+        size="xs"
+        variant="outline"
+      >
+        Clear search and filters
+      </Button>
+    </div>
+  );
+}
+
+/** The panel's header and its list, which read the same search, filter and order. */
+function BotThreadsBody(props: {
+  readonly botRef: ScopedThreadRef;
+  readonly currentThreadRef: ScopedThreadRef;
+  /** Its header is the one under Windows' caption buttons. */
+  readonly rightmost: boolean;
+}) {
+  const listing = useBotThreadsListing(props.botRef);
+  const { botKey, view } = listing;
+  return (
+    <>
+      <BotThreadsHeader
+        botKey={botKey}
+        currentThreadRef={props.currentThreadRef}
+        rightmost={props.rightmost}
+        className="gap-2 pr-2 pl-3.5"
+      >
+        {view.query === null ? (
+          <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">Threads</h2>
+        ) : (
+          <BotThreadsSearchInput botKey={botKey} view={view} />
+        )}
+        <span className="flex shrink-0 items-center [-webkit-app-region:no-drag]">
+          <BotThreadsListControls listing={listing} />
+          <BotThreadsCloseButton botRef={props.botRef} />
+        </span>
+      </BotThreadsHeader>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <BotThreadsListBody listing={listing} none="This petal has not started any threads.">
+          <BotThreadsList
+            listing={listing}
+            currentThreadRef={props.currentThreadRef}
+            renderRow={(row, current) => (
+              <BotThreadsRow key={row.thread.id} row={row} current={current} />
+            )}
+          />
+        </BotThreadsListBody>
+      </div>
+    </>
+  );
+}
+
+/** The groups, each a label that folds it and its rows. */
+export function BotThreadsList(props: {
+  readonly listing: BotThreadsListing;
+  readonly currentThreadRef: ScopedThreadRef;
+  /** Each row, keyed by its thread. */
+  readonly renderRow: (row: BotWorkRow, current: boolean) => ReactNode;
+  /** The labels' inset, to line up with the rows'. */
+  readonly labelClassName?: string;
+  readonly labelSize?: ComponentProps<typeof SidebarV2SectionLabel>["size"];
+}) {
+  const { groups, folded, toggleFolded } = props.listing;
   return (
     <div className="px-2 pb-3">
       {groups.map((group) => {
         const collapsed = folded.has(group.key);
         return (
           <section key={group.key} className="pt-3">
-            <div className={cn("flex h-7 items-center", props.compact ? "px-2.5" : "px-1.5")}>
+            <div className={cn("flex h-7 items-center", props.labelClassName ?? "px-1.5")}>
               <SidebarV2SectionLabel
                 collapsed={collapsed}
-                onToggle={() => props.onToggle(group.key)}
+                onToggle={() => toggleFolded(group.key)}
                 testId={`bot-threads-group-${group.key}`}
-                size={props.compact ? "interface" : "sidebar"}
+                size={props.labelSize ?? "sidebar"}
               >
                 {group.label}
               </SidebarV2SectionLabel>
             </div>
             {collapsed ? null : (
               <ul className="flex flex-col gap-0.5">
-                {group.rows.map((row) => (
-                  <BotThreadsRow
-                    key={row.thread.id}
-                    row={row}
-                    compact={props.compact}
-                    onOpenThread={props.onOpenThread}
-                    current={
-                      row.thread.id === props.currentThreadRef.threadId &&
-                      row.thread.environmentId === props.currentThreadRef.environmentId
-                    }
-                  />
-                ))}
+                {group.rows.map((row) =>
+                  props.renderRow(
+                    row,
+                    row.thread.id === props.currentThreadRef.threadId &&
+                      row.thread.environmentId === props.currentThreadRef.environmentId,
+                  ),
+                )}
               </ul>
             )}
           </section>
@@ -356,16 +377,14 @@ function BotThreadsList(props: {
   );
 }
 
-/** Status mark and title, then which checkout the thread is on and its pull request. The
-    project is left out: a bot's threads are read under the bot, which already places them. */
-function BotThreadsRow(props: {
-  readonly row: BotWorkRow;
-  readonly current: boolean;
-  readonly compact: boolean;
-  /** Opens the thread somewhere other than the main column: a sprint's own panel. */
-  readonly onOpenThread?: ((ref: ScopedThreadRef) => void) | undefined;
-}) {
-  const { thread, card } = props.row;
+/** What a row shows and does, whichever layout draws it. `onOpenThread` opens the thread
+    somewhere other than the main column (a sprint's own panel). */
+export function useBotThreadsRow(
+  row: BotWorkRow,
+  current: boolean,
+  onOpenThread?: (ref: ScopedThreadRef) => void,
+) {
+  const { thread, card } = row;
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
   const pullRequest = botThreadPullRequest(thread);
@@ -375,34 +394,36 @@ function BotThreadsRow(props: {
     Date.parse(`${nowMinute}:00.000Z`),
   ).replace(/ ago$/, "");
   const ref = scopeThreadRef(thread.environmentId, thread.id);
-  return (
-    <BotThreadsRowView
-      status={card.topStatus}
-      seed={scopedThreadKey(ref)}
-      title={thread.title}
-      time={time}
-      pullRequest={
-        pullRequest === null ? null : { number: pullRequest.number, state: pullRequestState }
+  return {
+    status: card.topStatus,
+    seed: scopedThreadKey(ref),
+    title: thread.title,
+    time,
+    pullRequest:
+      pullRequest === null ? null : { number: pullRequest.number, state: pullRequestState },
+    branch: thread.branch,
+    hasWorktree: thread.worktreePath !== null,
+    current,
+    onOpen: () => {
+      if (onOpenThread !== undefined) {
+        onOpenThread(ref);
+        return;
       }
-      branch={thread.branch}
-      hasWorktree={thread.worktreePath !== null}
-      current={props.current}
-      compact={props.compact}
-      onOpen={() => {
-        if (props.onOpenThread !== undefined) {
-          props.onOpenThread(ref);
-          return;
-        }
-        if (props.current) return;
-        void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
-      }}
-      // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
-      onContextMenu={(event) => {
-        event.preventDefault();
-        openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
-      }}
-    />
-  );
+      if (current) return;
+      void navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });
+    },
+    // The thread's own menu, whose Petal submenu moves it to another bot or out of this one.
+    onContextMenu: (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      openSidebarThreadMenu(ref, { x: event.clientX, y: event.clientY });
+    },
+  };
+}
+
+/** Status mark and title, then which checkout the thread is on and its pull request. The
+    project is left out: a bot's threads are read under the bot, which already places them. */
+function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: boolean }) {
+  return <BotThreadsRowView {...useBotThreadsRow(props.row, props.current)} />;
 }
 
 /** @public — the row as drawn, from plain props; Storybook renders it on its own. */
@@ -416,8 +437,6 @@ export function BotThreadsRowView(props: {
   readonly branch: string | null;
   readonly hasWorktree: boolean;
   readonly current: boolean;
-  /** One line: a sprint's list, which leaves the checkout to the thread. */
-  readonly compact?: boolean;
   readonly onOpen: () => void;
   readonly onContextMenu?: ((event: MouseEvent<HTMLButtonElement>) => void) | undefined;
 }) {
@@ -428,8 +447,7 @@ export function BotThreadsRowView(props: {
         onClick={props.onOpen}
         onContextMenu={props.onContextMenu}
         className={cn(
-          "gap-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          props.compact === true ? "items-center px-2.5" : "items-start px-1.5",
+          "items-start gap-2.5 px-1.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
           props.current && "bg-accent",
         )}
         data-testid="bot-threads-row"
@@ -437,52 +455,33 @@ export function BotThreadsRowView(props: {
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">
           <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
         </span>
-        {props.compact === true ? (
-          <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-base leading-5 text-foreground">
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm leading-5 text-foreground">
               {props.title}
             </span>
-            {props.pullRequest === null ? null : (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                <BotPullRequestMark
-                  number={props.pullRequest.number}
-                  state={props.pullRequest.state}
-                />
-              </span>
-            )}
             <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
               {props.time}
             </span>
           </span>
-        ) : (
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="min-w-0 flex-1 truncate text-sm leading-5 text-foreground">
-                {props.title}
-              </span>
-              <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
-                {props.time}
-              </span>
-            </span>
-            {/* Always drawn, so every row is the same height with or without a branch. */}
-            <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
-              {props.pullRequest === null ? null : (
-                <BotPullRequestMark
-                  number={props.pullRequest.number}
-                  state={props.pullRequest.state}
-                />
-              )}
-              {props.branch !== null || props.hasWorktree ? (
-                <SidebarV2CheckoutMark
-                  branch={props.branch}
-                  hasWorktree={props.hasWorktree}
-                  devServerPort={null}
-                  className="flex min-w-0 items-center gap-0.5"
-                />
-              ) : null}
-            </span>
+          {/* Always drawn, so every row is the same height with or without a branch. */}
+          <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
+            {props.pullRequest === null ? null : (
+              <BotPullRequestMark
+                number={props.pullRequest.number}
+                state={props.pullRequest.state}
+              />
+            )}
+            {props.branch !== null || props.hasWorktree ? (
+              <SidebarV2CheckoutMark
+                branch={props.branch}
+                hasWorktree={props.hasWorktree}
+                devServerPort={null}
+                className="flex min-w-0 items-center gap-0.5"
+              />
+            ) : null}
           </span>
-        )}
+        </span>
       </ListItem>
     </li>
   );

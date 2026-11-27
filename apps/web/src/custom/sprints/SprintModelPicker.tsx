@@ -10,6 +10,10 @@ import type { ProviderInstanceEntry } from "~/providerInstances";
 import type { ModelEsque } from "~/components/chat/providerIconUtils";
 
 import { ComposerModelPicker } from "../ComposerModelPicker";
+
+/** The provider's icon alone, sized and hovered like the panel header's icon buttons. */
+const ICON_TRIGGER_CLASSNAME =
+  "size-7 justify-center border-transparent px-0 hover:bg-accent [&>span]:flex-none [&_[data-chat-provider-model-picker-label]]:hidden [&_[data-chat-provider-model-picker-traits]]:hidden";
 import { scheduledTaskModelWithOptions } from "../scheduled/scheduledTaskModel.logic";
 
 export function SprintModelPicker(props: {
@@ -22,6 +26,8 @@ export function SprintModelPicker(props: {
   readonly selection: ModelSelection;
   readonly disabled: boolean;
   readonly onChange: (selection: ModelSelection) => void;
+  /** Draws the trigger as the provider's icon, named by this label. */
+  readonly iconLabel?: string;
 }) {
   const { selection, onChange } = props;
   const instance = props.instanceEntries.find((entry) => entry.instanceId === selection.instanceId);
@@ -34,7 +40,11 @@ export function SprintModelPicker(props: {
     instanceEntries: props.instanceEntries,
     modelOptionsByInstance: props.modelOptionsByInstance,
     isComposerOwned: false,
-    triggerClassName: SETTINGS_PICKER_TRIGGER_CLASSNAME,
+    triggerClassName:
+      props.iconLabel === undefined ? SETTINGS_PICKER_TRIGGER_CLASSNAME : ICON_TRIGGER_CLASSNAME,
+    ...(props.iconLabel === undefined
+      ? {}
+      : { triggerAriaLabel: props.iconLabel, popupAlign: "end" as const }),
     onInstanceModelChange: (instanceId: ModelSelection["instanceId"], model: string) => {
       if (instanceId !== selection.instanceId || model !== selection.model)
         onChange({ instanceId, model });

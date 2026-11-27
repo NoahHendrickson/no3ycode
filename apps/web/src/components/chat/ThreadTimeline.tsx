@@ -10,6 +10,12 @@ import {
   timelineHasEphemeralPreviewUrls,
 } from "../ChatView.logic";
 import { MessagesTimeline } from "./MessagesTimeline";
+/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+import {
+  type ForkThreadHost,
+  ForkThreadHostContext,
+} from "../../custom/threadLaunchCards/forkThreadHost";
+/* fork:end fork-thread-launch-cards */
 
 /**
  * The timeline with the streamed text. ChatView reads the thread through its quiet
@@ -24,6 +30,9 @@ export function ThreadTimeline({
   activeThreadKey,
   syncing,
   detailLoading,
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  forkThreadHost = null,
+  /* fork:end fork-thread-launch-cards */
   ...timelineProps
 }: Omit<ComponentProps<typeof MessagesTimeline>, "timelineEntries"> & {
   /** Null until the thread's detail may load; see resolveThreadDetailRef. */
@@ -34,6 +43,10 @@ export function ThreadTimeline({
   activeThreadKey: string | null;
   syncing: boolean;
   detailLoading: boolean;
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  /** How the conversation hosts the threads its rows name (a sprint); none by default. */
+  forkThreadHost?: ForkThreadHost | null;
+  /* fork:end fork-thread-launch-cards */
 }) {
   const visibleTurnItems = useTimelineVisibleTurnItems(threadDetailRef);
   const serverEntries = useIncrementalTimelineEntries(activeThreadKey, {
@@ -55,6 +68,12 @@ export function ThreadTimeline({
     rememberReadyThreadTimeline({ threadKey: activeThreadKey, entries });
   }, [activeThreadKey, detailLoading, entries]);
   return (
-    <MessagesTimeline {...timelineProps} syncing={syncing} timelineEntries={displayedEntries} />
+    /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+    <ForkThreadHostContext value={forkThreadHost}>
+      {/* fork:end fork-thread-launch-cards */}
+      <MessagesTimeline {...timelineProps} syncing={syncing} timelineEntries={displayedEntries} />
+      {/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */}
+    </ForkThreadHostContext>
+    /* fork:end fork-thread-launch-cards */
   );
 }
