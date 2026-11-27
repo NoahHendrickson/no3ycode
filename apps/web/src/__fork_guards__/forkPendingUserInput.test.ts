@@ -27,16 +27,19 @@ const override = readSibling("../overrides/components/chat/ComposerPendingUserIn
 const hook = readSibling("../custom/useComposerPendingUserInputCard.ts");
 // Each option row, shared with a Petal's digest asks (fork-bot-digest).
 const option = readSibling("../custom/ForkQuestionOption.tsx");
+// The card's frame, shared with a Petal's digest cards (fork-bot-digest).
+const card = readSibling("../custom/ForkQuestionCard.tsx");
 const upstream = readSibling("../components/chat/ComposerPendingUserInputPanel.tsx");
 const primaryActions = readSibling("../components/chat/ComposerPrimaryActions.tsx");
 const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
 
 describe("fork guard: fork-pending-user-input", () => {
   it("keeps a thin shadow that owns the Questions chrome", () => {
-    expect(override).toContain('data-fork-pending-user-input="true"');
+    expect(override).toContain("<ForkQuestionCard");
+    expect(card).toContain('data-fork-pending-user-input="true"');
     // No "Questions" label: the question itself heads the card, ruled off from its options.
     expect(override).not.toContain(">Questions</");
-    expect(override).toContain("data-fork-pending-user-input-question");
+    expect(card).toContain("data-fork-pending-user-input-question");
     expect(override).toContain("questionIndex + 1");
     expect(override).toContain("prompt.questions.length > 1");
     expect(override).toContain("useComposerPendingUserInputCard");
@@ -87,7 +90,7 @@ describe("fork guard: fork-pending-user-input", () => {
 
   it("uses checkboxes for multi-select and radios for single-select", () => {
     expect(option).toContain('role={props.multiSelect ? "checkbox" : "radio"}');
-    expect(override).toContain('role={multiSelect ? "group" : "radiogroup"}');
+    expect(card).toContain('role={props.multiSelect ? "group" : "radiogroup"}');
     expect(override).toContain('multiSelect ? "Select one or more" : "Select one"');
     expect(option).toContain("border-foreground/50");
     expect(option).toContain('multiSelect ? "rounded-sm" : "rounded-full"');

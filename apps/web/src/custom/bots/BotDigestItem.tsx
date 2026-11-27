@@ -50,6 +50,20 @@ export function resolveBotDigestLine(
   return { text, links, question: waitingQuestionThread(links) };
 }
 
+/** A work thread as the one link of a card it asks on. */
+export function childLinks(child: EnvironmentThreadShell): BotDigestLinks {
+  return {
+    threads: [
+      {
+        link: { environmentId: child.environmentId, threadId: child.id },
+        label: child.title,
+        shell: child,
+      },
+    ],
+    pullRequests: [],
+  };
+}
+
 /** The threads and pull requests a line links, each opening its target. */
 export function BotDigestLinkRow(props: {
   readonly links: BotDigestLinks;

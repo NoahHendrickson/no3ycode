@@ -23,6 +23,7 @@ export function useComposerPendingUserInputCard({
   answers,
   questionIndex,
   onToggleOption,
+  numberKeys = true,
 }: {
   prompt: PendingUserInput;
   /** Upstream #9786: the client lacks the operate scope, so the card is read-only. */
@@ -31,6 +32,8 @@ export function useComposerPendingUserInputCard({
   answers: Record<string, PendingUserInputDraftAnswer>;
   questionIndex: number;
   onToggleOption: (questionId: string, optionValue: string) => void;
+  /** Off for a second card on screen (a Petal's copy of a work thread's question). */
+  numberKeys?: boolean;
 }) {
   const progress = derivePendingUserInputProgress(prompt.questions, answers, questionIndex);
   const activeQuestion = progress.activeQuestion;
@@ -64,6 +67,7 @@ export function useComposerPendingUserInputCard({
   // (focused in a split, not behind Settings or Usage: fork-split-threads).
   const ownsInput = useOwnsGlobalInput();
   useEffect(() => {
+    if (!numberKeys) return;
     if (!activeQuestion || responseDisabled || !ownsInput) return;
     const handler = (event: globalThis.KeyboardEvent) => {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
@@ -92,7 +96,7 @@ export function useComposerPendingUserInputCard({
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [activeQuestion, responseDisabled, handleOptionSelection, ownsInput]);
+  }, [activeQuestion, responseDisabled, handleOptionSelection, ownsInput, numberKeys]);
 
   return {
     progress,

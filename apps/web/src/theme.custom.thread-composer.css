@@ -8,8 +8,7 @@
    --fork-thread-composer-card.
 
    Scoped to the thread composer's body (ComposerShell): a new agent's draft keeps its own
-   composer, and Petal digest cards (in the form's aside, outside the body) and the scheduled
-   editor reuse the vessel, box and surface markers. */
+   composer, and the scheduled editor reuses the vessel, box and surface markers. */
 :root[data-fork="noahhendrickson-t3code"]:is(
     [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
     [data-fork-theme="basic"]

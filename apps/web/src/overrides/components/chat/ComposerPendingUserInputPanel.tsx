@@ -5,9 +5,9 @@ import { XIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
+import { ForkQuestionCard } from "~/custom/ForkQuestionCard";
 import { ForkQuestionOption } from "~/custom/ForkQuestionOption";
 import { useComposerPendingUserInputCard } from "~/custom/useComposerPendingUserInputCard";
-import { ComposerBanner } from "./ComposerBanner";
 import ChatMarkdown from "../ChatMarkdown";
 import { cn } from "~/lib/utils";
 import {
@@ -34,6 +34,8 @@ interface PendingUserInputPanelProps {
   onDismiss: (requestId: RuntimeRequestId) => void;
   /** Drawn last inside the card: a Petal's copy of a work thread's question names that thread. */
   footer?: ReactNode;
+  /** Off for a copy shown beside another question, so a digit picks on the thread's own card. */
+  numberKeys?: boolean;
 }
 
 export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserInputPanel({
@@ -50,6 +52,7 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
   onPrevious,
   onDismiss,
   footer,
+  numberKeys = true,
 }: PendingUserInputPanelProps) {
   if (pendingUserInputs.length === 0) return null;
   const activePrompt = pendingUserInputs[0];
@@ -71,6 +74,7 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
       onPrevious={onPrevious}
       onDismiss={onDismiss}
       footer={footer}
+      numberKeys={numberKeys}
     />
   );
 });
@@ -89,6 +93,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onPrevious,
   onDismiss,
   footer,
+  numberKeys,
 }: {
   prompt: PendingUserInput;
   cwd: string | undefined;
@@ -103,6 +108,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onPrevious: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
   footer: ReactNode;
+  numberKeys: boolean;
 }) {
   const gt = useGT();
   // Upstream #9786: a client without the operate scope sees the questions but
@@ -116,6 +122,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
     answers,
     questionIndex,
     onToggleOption,
+    numberKeys,
   });
 
   if (!activeQuestion) {
@@ -136,132 +143,127 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   const questionTextAlign = promptDirection === "rtl" ? "text-right" : "text-left";
 
   return (
-    <div data-fork-pending-user-input="true" dir={promptDirection} className="flex flex-col">
-      {/* The question is the card's header, ruled off from its options; a long one scrolls in
-          place (upstream #12166) and unbroken words wrap. */}
-      <div data-fork-pending-user-input-question className="flex items-start gap-4 px-4 py-3">
-        <div className="flex max-h-40 min-w-0 flex-1 flex-col overflow-y-auto text-sm wrap-anywhere">
-          <ChatMarkdown
-            text={activeQuestion.question}
-            cwd={cwd}
-            threadRef={threadRef}
-            lineBreaks
-            className={cn("text-foreground", questionTextAlign)}
-          />
-        </div>
-        {prompt.questions.length > 1 ? (
-          <span className="shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
-            {questionIndex + 1}/{prompt.questions.length}
-          </span>
-        ) : null}
-        {prompt.dismissible ? (
-          // Async questions may be closed without a reply. The fork header is a
-          // plain row rather than upstream's disclosure trigger, so this is a
-          // real button and needs none of upstream's click/keydown containment.
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            className="-my-1 shrink-0"
-            aria-label={gt("Dismiss question without answering")}
-            title={gt("Dismiss question without answering")}
-            disabled={isResponding}
-            data-pending-user-input-dismiss
-            onClick={() => {
-              onDismiss(prompt.requestId);
-            }}
-          >
-            <XIcon />
-          </Button>
-        ) : null}
-      </div>
+    <ForkQuestionCard
+      dir={promptDirection}
+      // A long question scrolls in place.
+      question={
+        <ChatMarkdown
+          text={activeQuestion.question}
+          cwd={cwd}
+          threadRef={threadRef}
+          lineBreaks
+          className={cn("text-foreground", questionTextAlign)}
+        />
+      }
+      aside={
+        <>
+          {prompt.questions.length > 1 ? (
+            <span className="shrink-0 text-sm font-medium text-muted-foreground tabular-nums">
+              {questionIndex + 1}/{prompt.questions.length}
+            </span>
+          ) : null}
+          {prompt.dismissible ? (
+            // Async questions may be closed without a reply. The fork header is a
+            // plain row rather than upstream's disclosure trigger, so this is a
+            // real button and needs none of upstream's click/keydown containment.
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="-my-1 shrink-0"
+              aria-label={gt("Dismiss question without answering")}
+              title={gt("Dismiss question without answering")}
+              disabled={isResponding}
+              data-pending-user-input-dismiss
+              onClick={() => {
+                onDismiss(prompt.requestId);
+              }}
+            >
+              <XIcon />
+            </Button>
+          ) : null}
+        </>
+      }
+      hint={multiSelect ? "Select one or more" : "Select one"}
+      multiSelect={multiSelect}
+      options={
+        <>
+          {activeQuestion.options.map((option, index) => {
+            const optionValue = option.value ?? option.label;
+            const isSelected = isPendingUserInputOptionSelected(
+              activeQuestion,
+              answers[activeQuestion.id],
+              optionValue,
+            );
+            const digitShortcut = numberKeys && index < 9 ? String(index + 1) : undefined;
 
-      <ComposerBanner.Scroll>
-        <div className="flex flex-col px-2 pt-2 pb-3 wrap-anywhere">
-          {/* The selection hint heads the options it describes, aligned with their labels. */}
-          <p data-fork-question-hint className="px-2 pb-1 text-xs text-muted-foreground">
-            {multiSelect ? "Select one or more" : "Select one"}
-          </p>
-          <div className="flex flex-col gap-1" role={multiSelect ? "group" : "radiogroup"}>
-            {activeQuestion.options.map((option, index) => {
-              const optionValue = option.value ?? option.label;
-              const isSelected = isPendingUserInputOptionSelected(
-                activeQuestion,
-                answers[activeQuestion.id],
-                optionValue,
-              );
-              const digitShortcut = index < 9 ? String(index + 1) : undefined;
-
-              // The preview sits outside the button: it can hold links.
-              return (
-                <div key={`${activeQuestion.id}:${optionValue}`} className="flex flex-col gap-1">
-                  <ForkQuestionOption
-                    label={option.label}
-                    description={option.description}
-                    multiSelect={multiSelect}
-                    selected={isSelected}
-                    disabled={interactionDisabled}
-                    keyShortcut={digitShortcut}
-                    textAlignClassName={questionTextAlign}
-                    onSelect={() => {
-                      handleOptionSelection(activeQuestion.id, optionValue);
-                    }}
+            // The preview sits outside the button: it can hold links.
+            return (
+              <div key={`${activeQuestion.id}:${optionValue}`} className="flex flex-col gap-1">
+                <ForkQuestionOption
+                  label={option.label}
+                  description={option.description}
+                  multiSelect={multiSelect}
+                  selected={isSelected}
+                  disabled={interactionDisabled}
+                  keyShortcut={digitShortcut}
+                  textAlignClassName={questionTextAlign}
+                  onSelect={() => {
+                    handleOptionSelection(activeQuestion.id, optionValue);
+                  }}
+                />
+                {option.preview ? (
+                  <ChatMarkdown
+                    text={option.preview}
+                    cwd={cwd}
+                    threadRef={threadRef}
+                    lineBreaks
+                    className="ps-8 pe-2 text-xs text-muted-foreground"
                   />
-                  {option.preview ? (
-                    <ChatMarkdown
-                      text={option.preview}
-                      cwd={cwd}
-                      threadRef={threadRef}
-                      lineBreaks
-                      className="ps-8 pe-2 text-xs text-muted-foreground"
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </ComposerBanner.Scroll>
-
-      {/* Picking an option never submits: Submit (or Next) is the card's own button, bottom
-          left, sized like the other notice cards' actions. */}
-      <div
-        data-fork-pending-user-input-footer
-        className="flex items-center justify-start gap-2 px-4 pb-3"
-      >
-        <Button
-          size="sm"
-          variant="default"
-          data-fork-pending-user-input-submit
-          data-fork-composer-notice-action="primary"
-          disabled={
-            interactionDisabled ||
-            submitDisabledReason !== null ||
-            (progress.isLastQuestion ? !progress.isComplete : !progress.canAdvance)
-          }
-          title={submitDisabledReason ?? undefined}
-          onClick={onAdvance}
-        >
-          {isResponding
-            ? gt("Submitting...")
-            : !progress.isLastQuestion
-              ? gt("Next", { $context: "button that goes to the next question" })
-              : prompt.questions.length > 1
-                ? gt("Submit answers")
-                : gt("Submit", { $context: "verb, submits answers" })}
-        </Button>
-        {questionIndex > 0 ? (
+                ) : null}
+              </div>
+            );
+          })}
+        </>
+      }
+      // Picking an option never submits: Submit (or Next) is the card's own button, bottom
+      // left, sized like the other notice cards' actions.
+      actions={
+        <>
           <Button
             size="sm"
-            variant="outline"
-            data-fork-composer-notice-action="secondary"
-            disabled={isResponding}
-            onClick={onPrevious}
+            variant="default"
+            data-fork-pending-user-input-submit
+            data-fork-composer-notice-action="primary"
+            disabled={
+              interactionDisabled ||
+              submitDisabledReason !== null ||
+              (progress.isLastQuestion ? !progress.isComplete : !progress.canAdvance)
+            }
+            title={submitDisabledReason ?? undefined}
+            onClick={onAdvance}
           >
-            {gt("Previous", { $context: "button that goes to the previous question" })}
+            {isResponding
+              ? gt("Submitting...")
+              : !progress.isLastQuestion
+                ? gt("Next", { $context: "button that goes to the next question" })
+                : prompt.questions.length > 1
+                  ? gt("Submit answers")
+                  : gt("Submit", { $context: "verb, submits answers" })}
           </Button>
-        ) : null}
-      </div>
-      {footer}
-    </div>
+          {questionIndex > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              data-fork-composer-notice-action="secondary"
+              disabled={isResponding}
+              onClick={onPrevious}
+            >
+              {gt("Previous", { $context: "button that goes to the previous question" })}
+            </Button>
+          ) : null}
+        </>
+      }
+      footer={footer}
+    />
   );
 });

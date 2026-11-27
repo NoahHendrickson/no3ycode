@@ -139,6 +139,12 @@ export const DESIGN_LINT_ALLOWLIST = [
     // ComposerPendingUserInputPanel and forkApprovalNoticeItem, Fork/Petal digest › Work thread requests.
     "bots/BotChildRequests.tsx": ["BotChildQuestion", "BotChildApproval"],
   }),
+  ...b5Exempt("frame of storied cards: draws only the slots its callers fill", {
+    // The Questions card's frame, Fork/Composer cards › Question card and Fork/Petal digest.
+    "ForkQuestionCard.tsx": ["ForkQuestionCard"],
+    // The banner every digest card draws in, Fork/Petal digest.
+    "bots/BotDigestBottom.tsx": ["BotDigestBanner"],
+  }),
   ...b5Exempt("part of a storied card, drawn only inside it", {
     // The Questions card's option row, Fork/Composer cards › Question card and Fork/Petal digest.
     "ForkQuestionOption.tsx": ["ForkQuestionOption"],

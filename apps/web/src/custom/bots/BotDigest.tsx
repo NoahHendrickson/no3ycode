@@ -4,31 +4,28 @@
 import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
-import type { ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
+import type { BotDigestLinks } from "@t3tools/client-runtime/fork-bot-digest-links";
+import type { EnvironmentId, ProjectReadFileResult, ScopedThreadRef } from "@t3tools/contracts";
 import { AsyncResult, Atom } from "effect/reactivity";
 import { XIcon } from "../icons/lucide-hugeicons";
 import * as Schema from "effect/Schema";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 
 import { ComposerBanner } from "~/components/chat/ComposerBanner";
 import { Button } from "~/components/ui/button";
 import { toastManager } from "~/components/ui/toast";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
-import { cn, newMessageId } from "~/lib/utils";
+import { newMessageId } from "~/lib/utils";
 import { useQuietThreadShell, useQuietThreadShells } from "~/state/entities";
 import { useFilesystemReadAccess } from "~/state/filesystem";
 import { projectEnvironment } from "~/state/projects";
 import { revisionedQuery } from "~/state/revisionedQuery";
 
+import { ForkQuestionCard } from "../ForkQuestionCard";
 import { ForkQuestionOption } from "../ForkQuestionOption";
 
-import {
-  BotDigestLinkRow,
-  type BotDigestThreads,
-  resolveBotDigestLine,
-  useOpenThread,
-} from "./BotDigestItem";
+import { type BotDigestThreads, resolveBotDigestLine, useOpenThread } from "./BotDigestItem";
 import {
   type BotDigestItem,
   parseBotDigest,
@@ -38,14 +35,14 @@ import {
 } from "@t3tools/client-runtime/fork-bot-digest";
 import { BOT_DIGEST_FILE } from "./botSeedFiles";
 import { isListedBot } from "./botThreads";
-import { botWorkOwnerId } from "./botWorkRoster";
 import { BotChildApproval, BotChildQuestion } from "./BotChildRequests";
 import {
-  type BotDigestBottomState,
+  BotDigestBanner,
   BotDigestBottom,
+  type BotDigestBottomState,
   BotDigestShowDismissed,
 } from "./BotDigestBottom";
-import { waitingBotChildren } from "./waitingBotChildren";
+import { type BotDigestPage, botDigestPageAt, deriveBotDigestStack } from "./botDigestStack";
 import {
   type BotDigestConversation,
   clearBotDigestAnswer,
@@ -61,8 +58,9 @@ const NO_DIGEST = Atom.make(AsyncResult.initial<ProjectReadFileResult, never>(fa
 const DismissedAsks = Schema.Array(Schema.String);
 const NO_DISMISSED: ReadonlyArray<string> = [];
 
-/** The digest of the open thread when it is a bot, just above its composer: the status line and
-    a card per Needs you ask. Nothing draws for any other thread, or while the bot has neither. */
+/** The digest of the open thread when it is a bot, just above its composer: one card at a time
+    for everything that waits on the owner (botDigestStack), else its status line. Nothing draws
+    for any other thread, or while the bot has neither. */
 export function BotDigestAsks(props: { readonly threadRef: ScopedThreadRef | null }) {
   const bot = useQuietThreadShell(props.threadRef);
   const botKey =
@@ -103,8 +101,8 @@ function BotDigestAsksFor(props: {
     NO_DISMISSED,
     DismissedAsks,
   );
-  // One ask at a time, so the stack above the composer never grows with the list.
-  const [page, setPage] = useState(0);
+  // One card at a time, so the stack above the composer never grows with the list.
+  const [page, setPage] = useState<BotDigestPage>({ key: null, index: 0 });
   const tellBot = useTellBot();
   const openThread = useOpenThread();
   const file = AsyncResult.getOrElse(result, () => null);
@@ -118,41 +116,52 @@ function BotDigestAsksFor(props: {
   // is read again; one it keeps then comes back.
   const answered = useAnsweredBotDigestAsks(botKey, conversation, result);
   const threads: BotDigestThreads = { shells };
-  // An ask that sends the owner to a work thread's question goes: the question itself is a card.
-  const askedHere = (item: BotDigestItem) => {
-    const question = resolveBotDigestLine(item, threads, botRef.environmentId).question;
-    return (
-      question !== undefined &&
-      question.archivedAt === null &&
-      question.environmentId === bot.environmentId &&
-      botWorkOwnerId(question.source) === bot.id
-    );
-  };
-  const open = allAsks.filter((item) => !answered.has(item.source) && !askedHere(item));
-  const asks = open.filter((item) => !dismissed.includes(item.source));
-  const hiddenCount = open.length - asks.length;
-  // Everything that waits on the owner, one card at a time: the bot's work's approvals and
-  // questions (BotChildRequests), then the digest's own asks.
-  const { asking, approving } = waitingBotChildren(shells, bot);
-  const entries: ReadonlyArray<
-    | { readonly kind: "approval" | "question"; readonly child: EnvironmentThreadShell }
-    | { readonly kind: "ask"; readonly item: BotDigestItem }
-  > = [
-    ...approving.map((child) => ({ kind: "approval" as const, child })),
-    ...asking.map((child) => ({ kind: "question" as const, child })),
-    ...asks.map((item) => ({ kind: "ask" as const, item })),
-  ];
+  const lineOf = (item: BotDigestItem) => resolveBotDigestLine(item, threads, botRef.environmentId);
+  const { entries, hiddenCount } = deriveBotDigestStack({
+    threads: shells,
+    bot,
+    asks: allAsks,
+    answered,
+    dismissed,
+    questionOf: (item) => lineOf(item).question,
+  });
   if (entries.length === 0 && hiddenCount === 0 && status === null) return null;
-  const at = Math.min(page, Math.max(0, entries.length - 1));
+  const at = botDigestPageAt(entries, page);
   const entry = entries[at];
+  const showDismissed = () => setDismissed(NO_DISMISSED);
+  if (entry === undefined) {
+    return (
+      <BotDigestStatusView
+        status={status}
+        hiddenCount={hiddenCount}
+        onShowDismissed={showDismissed}
+      />
+    );
+  }
+  const bottom: BotDigestBottomState = {
+    paging: {
+      at,
+      count: entries.length,
+      onPage: (index) => setPage({ key: entries[index]?.key ?? null, index }),
+    },
+    hiddenCount,
+    onShowDismissed: showDismissed,
+  };
+  if (entry.kind !== "ask") {
+    const Card = entry.kind === "approval" ? BotChildApproval : BotChildQuestion;
+    return <Card key={entry.key} child={entry.child} bottom={bottom} />;
+  }
+  const { item } = entry;
+  const line = lineOf(item);
+  const ask = splitBotDigestAsk(line.text);
   // Kept to the asks the digest still has, so the list cannot grow past them.
-  const dismiss = (source: string) =>
+  const dismiss = () =>
     setDismissed([
-      ...dismissed.filter((kept) => allAsks.some((ask) => ask.source === kept)),
-      source,
+      ...dismissed.filter((kept) => allAsks.some((candidate) => candidate.source === kept)),
+      item.source,
     ]);
   // An answer goes to the bot as the owner's reply, quoting its ask, behind whatever it is doing.
-  const answer = async (item: BotDigestItem, choice: string) => {
+  const answer = async (choice: string) => {
     const messageId = newMessageId();
     markBotDigestAnswer(botKey, messageId, item.source, conversation);
     if (await tellBot(botRef, `${quoteBotDigestAsk(item.source)}${choice}`, messageId)) return;
@@ -165,9 +174,9 @@ function BotDigestAsksFor(props: {
   };
   // An ask whose linked thread waits on a question opens that thread to answer it there; any
   // other is quoted into the composer beneath.
-  const reply = (item: BotDigestItem, question: EnvironmentThreadShell | undefined) => {
-    if (question !== undefined) {
-      openThread(scopeThreadRef(question.environmentId, question.id));
+  const reply = () => {
+    if (line.question !== undefined) {
+      openThread(scopeThreadRef(line.question.environmentId, line.question.id));
       return;
     }
     const store = useComposerDraftStore.getState();
@@ -175,60 +184,19 @@ function BotDigestAsksFor(props: {
     const quote = quoteBotDigestAsk(item.source);
     store.setPrompt(botRef, existing === "" ? quote : `${existing}\n\n${quote}`);
   };
-  const showDismissed = () => setDismissed(NO_DISMISSED);
-  const bottom: BotDigestBottomState = {
-    paging: { at, count: entries.length, onPage: setPage },
-    hiddenCount,
-    onShowDismissed: showDismissed,
-  };
-  if (entry?.kind === "approval" || entry?.kind === "question") {
-    const Card = entry.kind === "approval" ? BotChildApproval : BotChildQuestion;
-    return (
-      <Card
-        key={`${entry.kind}:${entry.child.environmentId}:${entry.child.id}`}
-        child={entry.child}
-        bottom={bottom}
-      />
-    );
-  }
-  const item = entry?.kind === "ask" ? entry.item : undefined;
-  const line =
-    item === undefined ? null : resolveBotDigestLine(item, threads, botRef.environmentId);
-  const ask = line === null ? null : splitBotDigestAsk(line.text);
-  if (item === undefined || line === null || ask === null) {
-    return (
-      <BotDigestStatusView
-        status={status}
-        hiddenCount={hiddenCount}
-        onShowDismissed={showDismissed}
-      />
-    );
-  }
   return (
     <BotDigestAskCardView
-      key={item.source}
+      key={entry.key}
       question={ask.question}
       detail={ask.detail}
-      hasLinks={line.links.threads.length > 0 || line.links.pullRequests.length > 0}
-      links={<BotDigestLinkRow links={line.links} environmentId={botRef.environmentId} />}
+      links={line.links}
+      environmentId={botRef.environmentId}
       answers={item.answers}
       bottom={bottom}
-      onDismiss={() => dismiss(item.source)}
-      onSend={(choice) => void answer(item, choice)}
-      onReply={() => reply(item, line.question)}
+      onDismiss={dismiss}
+      onSend={(choice) => void answer(choice)}
+      onReply={reply}
     />
-  );
-}
-
-/** The banner card the digest draws in, in the dock above the composer with its other cards.
-    Outside the composer's own focus: a tap here never expands the collapsed phone composer. */
-function BotDigestBanner(props: { readonly children: ReactNode }) {
-  return (
-    <ComposerBanner.Attachment data-fork-composer-aside="true" data-fork-bot-digest="">
-      <ComposerBanner.Root data-chat-composer-top-drawer="true" variant="info">
-        {props.children}
-      </ComposerBanner.Root>
-    </ComposerBanner.Attachment>
   );
 }
 
@@ -257,15 +225,15 @@ export function BotDigestStatusView(props: {
   );
 }
 
-/** @public — one ask as the Questions card: the question heads it, the offered answers are its
-    options, what it links sits in the bottom section with the pager, and nothing goes to the Petal until Send. Reply answers in
-    your own words. Keyed by the ask, so a pick never carries over to the next one. */
+/** @public — one ask as the Questions card: the question and its detail head it, the offered
+    answers are its options, and nothing goes to the Petal until Send; Reply answers in your own
+    words. What it links sits in the bottom section with the pager. Keyed by the ask, so a pick
+    never carries over to the next one. */
 export function BotDigestAskCardView(props: {
   readonly question: string;
   readonly detail: string | null;
-  /** What the ask is about, shown in the bottom section; `hasLinks` says whether it draws any. */
-  readonly links: ReactNode;
-  readonly hasLinks: boolean;
+  readonly links: BotDigestLinks;
+  readonly environmentId: EnvironmentId;
   readonly answers: ReadonlyArray<string>;
   /** Paging and dismissed asks, shared by every card the digest pages through. */
   readonly bottom: BotDigestBottomState;
@@ -278,12 +246,14 @@ export function BotDigestAskCardView(props: {
   const offered = answers.length > 0;
   return (
     <BotDigestBanner>
-      <div data-fork-pending-user-input="true" className="flex flex-col">
-        <div data-fork-pending-user-input-question className="flex items-start gap-4 px-4 py-3">
-          <div className="flex max-h-40 min-w-0 flex-1 flex-col gap-1 overflow-y-auto text-sm wrap-anywhere">
+      <ForkQuestionCard
+        question={
+          <>
             {props.question === "" ? null : <p className="text-foreground">{props.question}</p>}
             {props.detail === null ? null : <p className="text-muted-foreground">{props.detail}</p>}
-          </div>
+          </>
+        }
+        aside={
           <Button
             size="icon-sm"
             variant="ghost"
@@ -294,59 +264,58 @@ export function BotDigestAskCardView(props: {
           >
             <XIcon />
           </Button>
-        </div>
-        {offered ? (
-          <ComposerBanner.Scroll>
-            <div className="flex flex-col px-2 pt-2 pb-3 wrap-anywhere">
-              <p data-fork-question-hint className="px-2 pb-1 text-xs text-muted-foreground">
-                Select one
-              </p>
-              <div className="flex flex-col gap-1" role="radiogroup">
-                {answers.map((answer) => (
-                  <ForkQuestionOption
-                    key={answer}
-                    label={answer}
-                    multiSelect={false}
-                    selected={choice === answer}
-                    disabled={false}
-                    onSelect={() => setChoice(answer)}
-                  />
-                ))}
-              </div>
-            </div>
-          </ComposerBanner.Scroll>
-        ) : null}
-        <div
-          data-fork-pending-user-input-footer
-          className={cn("flex items-center gap-2 px-4 pb-3", !offered && "pt-3")}
-        >
-          {offered ? (
+        }
+        hint="Select one"
+        options={
+          offered
+            ? answers.map((answer) => (
+                <ForkQuestionOption
+                  key={answer}
+                  label={answer}
+                  multiSelect={false}
+                  selected={choice === answer}
+                  disabled={false}
+                  onSelect={() => setChoice(answer)}
+                />
+              ))
+            : undefined
+        }
+        actions={
+          <>
+            {offered ? (
+              <Button
+                size="sm"
+                variant="default"
+                data-fork-composer-notice-action="primary"
+                disabled={choice === null}
+                onClick={() => {
+                  if (choice !== null) props.onSend(choice);
+                }}
+                data-testid="bot-digest-send"
+              >
+                Send
+              </Button>
+            ) : null}
             <Button
               size="sm"
-              variant="default"
-              data-fork-composer-notice-action="primary"
-              disabled={choice === null}
-              onClick={() => {
-                if (choice !== null) props.onSend(choice);
-              }}
-              data-testid="bot-digest-send"
+              // Beside offered answers it is for anything else; alone it is the way to answer.
+              variant={offered ? "outline" : "default"}
+              data-fork-composer-notice-action={offered ? "secondary" : "primary"}
+              onClick={props.onReply}
+              data-testid="bot-digest-reply"
             >
-              Send
+              Reply
             </Button>
-          ) : null}
-          <Button
-            size="sm"
-            // Beside offered answers it is for anything else; alone it is the way to answer.
-            variant={offered ? "outline" : "default"}
-            data-fork-composer-notice-action={offered ? "secondary" : "primary"}
-            onClick={props.onReply}
-            data-testid="bot-digest-reply"
-          >
-            Reply
-          </Button>
-        </div>
-        <BotDigestBottom {...props.bottom} links={props.links} hasLinks={props.hasLinks} ruled />
-      </div>
+          </>
+        }
+        footer={
+          <BotDigestBottom
+            {...props.bottom}
+            links={props.links}
+            environmentId={props.environmentId}
+          />
+        }
+      />
     </BotDigestBanner>
   );
 }

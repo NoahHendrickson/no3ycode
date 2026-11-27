@@ -5181,9 +5181,11 @@
     mounted while questionIndex advances and its selection handler must read
     the question on screen rather than the one it mounted with. Card
     interaction lives in custom/useComposerPendingUserInputCard.ts; the
-    override is presentational. Each option row is custom/ForkQuestionOption.tsx,
-    which a Petal's digest asks (fork-bot-digest) draw too, and an optional footer draws last
-    inside the card (a Petal's copy of a work thread's question names the thread there).
+    override is presentational. Its frame (question, aside, hint and options, actions, footer) is
+    custom/ForkQuestionCard.tsx and each option row custom/ForkQuestionOption.tsx, both filled by a
+    Petal's digest cards (fork-bot-digest) too. An optional footer draws last inside the card (a
+    Petal's copy of a work thread's question names the thread there), and numberKeys turns the
+    1-9 picks off for such a copy, so they stay on the thread's own card.
     Dark-only true-outline Previous (and shared outline
     tokens with changed-files) keep Previous/Next at 24px; compact Previous
     is pinned to a 24×24 square.
@@ -5227,6 +5229,7 @@
   files:
     - apps/web/src/custom/useComposerPendingUserInputCard.ts
     - apps/web/src/custom/ForkQuestionOption.tsx
+    - apps/web/src/custom/ForkQuestionCard.tsx
     - apps/web/src/overrides/components/chat/ComposerPendingUserInputPanel.tsx
     - apps/web/src/theme.custom.css
     - apps/web/src/theme.custom.palettes.css
@@ -8577,10 +8580,11 @@
     links before the arrow, the yes naming the action: `OK to push and open a PR? <PR URL> → Open
     PR | Hold`). On the bot's own conversation the digest is the first card in the banner dock
     above its composer (BotDigestAsks, fenced in ChatComposer's ComposerBanner.Column ahead of the
-    notice cards, so the transcript's bottom inset counts it). It wears the Questions card's stamps
-    (data-chat-composer-top-drawer, data-fork-pending-user-input and its question, hint, option and
-    footer stamps), so every theme paints an ask as it paints an agent's question, with no digest
-    rules of its own. Its attachment is marked data-fork-composer-aside, so focus in it
+    notice cards, so the transcript's bottom inset counts it). Every card fills the Questions card's own frame (custom/ForkQuestionCard, shared with the thread's
+    Questions card, which carries data-fork-pending-user-input and its question, hint, option and
+    footer stamps) inside BotDigestBanner (data-chat-composer-top-drawer), so every theme paints an
+    ask as it paints an agent's question, with no digest rules of its own. Its attachment is marked
+    data-fork-composer-aside, so focus in it
     (isInsideComposerAside) neither expands the collapsed phone composer nor holds it open. The
     bot's Threads panel lists its threads only. With an open Needs you ask it shows one ask at a
     time as that card: a header with the ask's question
@@ -8630,23 +8634,33 @@
     (revisionedQuery keyed by botDigestRevision, so a read never lands before the answers it
     settles; the shell's latest run until the conversation loads). An empty, missing or unreadable digest
     draws nothing.
-    The digest pages through everything that waits on the owner as one stack, one card at a time:
-    first the bot's own work (its bot-work tag, live, in its environment; never a subagent, which
-    the thread view already surfaces; waitingBotChildren) that waits on an approval, then on a
-    question, longest-waiting first, then the digest's asks. Every card's bottom
-    (custom/bots/BotDigestBottom) carries what it is about, "Show N dismissed" and the shared pager.
-    A work thread's card is the one the thread itself would show (custom/bots/BotChildRequests): its
-    approval as the approval notice (forkApprovalNoticeItem, the bottom inline under its actions)
-    and its question as the Questions card (ComposerPendingUserInputPanel, the bottom as its
-    footer), naming the thread with the digest's thread chip, which opens it. Only the card on
-    show is mounted, so only that thread's detail is subscribed to (pendingRequestsAtom, as
-    upstream ChildThreadApprovals does for subagents); until its request loads, or while the
-    shell's flag runs ahead of it, a placeholder card keeps the pager in place. Answers go to the
-    thread with its own commands (respondToApproval, respondToUserInput, dismissUserInput), gated on
-    the thread environment's operate scope; options only, so a question that needs typed words is
-    answered in the thread through its chip. A digest ask whose linked thread is that bot's work
-    waiting on a question leaves the stack, and the seeded CLAUDE.md tells the bot not to repeat a
-    thread's question or approval as a Needs you item.
+    The digest pages through everything that waits on the owner as one stack, one card at a time
+    (custom/bots/botDigestStack, pure and tested: deriveBotDigestStack): first the bot's own work
+    (its bot-work tag, live, in its environment; never a subagent, which the thread view already
+    surfaces; waitingBotChildren) waiting on an approval, oldest thread first (the shell keeps no
+    time for a pending approval), then on a question, longest-waiting first, then the digest's
+    asks. The pager remembers the card the owner chose, by key, so a request arriving ahead of it
+    never swaps the card under the cursor; once that card goes, the place it held
+    (botDigestPageAt). Every card's bottom (custom/bots/BotDigestBottom: BotDigestBottom ruled,
+    BotDigestBottomInline under an approval's actions) takes its links as data and carries them,
+    "Show N dismissed" and the shared pager. A work thread's card is the one the thread itself
+    would show (custom/bots/BotChildRequests): its approval as the approval notice
+    (forkApprovalNoticeItem with aside, which marks the span holding its actions and detail
+    data-fork-composer-aside) and its question as the Questions card (ComposerPendingUserInputPanel
+    with numberKeys off, so a digit picks on the Petal's own question, its bottom as the footer),
+    naming the thread with the digest's thread chip (childLinks), which opens it. Its picks and
+    question index are the thread's own drafts (usePendingUserInputAnswers,
+    usePendingUserInputQuestionIndex, keyed by userInputDraftKey), so they survive paging and match
+    the thread. Only the card on show is mounted, so only that thread's detail is subscribed to
+    (pendingRequestsAtom; upstream's createChildThreadApprovalsAtom would subscribe to every
+    waiting one); until its request loads, or while the shell's flag runs ahead of it, a note card
+    keeps the pager in place. Answers go to the thread with its own commands (respondToApproval,
+    respondToUserInput, dismissUserInput), one at a time, gated on the thread environment's operate
+    scope and, for a question, on a resumable request; a failure toasts the thread's own message.
+    A question with an option-less part needs typed words, which are the thread composer's, so its
+    card says to open the thread through its chip. A digest ask whose linked thread is that bot's
+    work waiting on a question leaves the stack, and the seeded CLAUDE.md tells the bot not to
+    repeat a thread's question or approval as a Needs you item.
     On the no3y iPhone composer (fork/No3yBotDigest.tsx, fenced in ThreadDetailScreen beside
     ChildThreadApprovals, under the no3y layout) the same digest is a 24pt-radius glass card
     rising in above the composer (the panel stack above the composer draws over the composer's
@@ -8673,7 +8687,8 @@
     - apps/web/src/custom/bots/useAnsweredBotDigestAsks.ts
     - apps/web/src/custom/bots/BotChildRequests.tsx
     - apps/web/src/custom/bots/BotDigestBottom.tsx
-    - apps/web/src/custom/bots/waitingBotChildren.ts
+    - apps/web/src/custom/ForkQuestionCard.tsx
+    - apps/web/src/custom/bots/botDigestStack.ts
     - packages/client-runtime/src/forkBotDigest.ts
     - packages/client-runtime/src/forkBotDigestLinks.ts
     - apps/mobile/fork/No3yBotDigest.tsx
@@ -8689,7 +8704,7 @@
   verify:
     - packages/client-runtime/src/forkBotDigest.test.ts
     - packages/client-runtime/src/forkBotDigestLinks.test.ts
-    - apps/web/src/custom/bots/waitingBotChildren.test.ts
+    - apps/web/src/custom/bots/botDigestStack.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
 - id: fork-bot-crew
   intent: >
@@ -8780,8 +8795,8 @@
     through view exports that take plain props (ForkSubagentStartLineView,
     BotThreadsRowView,
     PetalViewOptionsMenu, PETALS_GRID_CLASS_NAME, the
-    working-mark forms, BotDigestView, BotDigestAskCardView,
-    BotDigestAskActions, botDigestAskTile), marked @public because knip does not follow the
+    working-mark forms, BotDigestStatusView, BotDigestAskCardView,
+    BotDigestBottom, BotDigestBottomInline), marked @public because knip does not follow the
     stories, so a story never copies the app markup it shows. The package
     touches no upstream file: apps/* already covers it and release smoke copies
     a fixed package list. The Figma kit "no3y code — Basic UI kit" is captured

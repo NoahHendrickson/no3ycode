@@ -10,11 +10,11 @@ import { type ComponentProps, useState } from "react";
 import { ComposerBanner } from "~/components/chat/ComposerBanner";
 import { ComposerBannerStack } from "~/components/chat/ComposerBannerStack";
 import { ComposerPendingUserInputPanel } from "~/components/chat/ComposerPendingUserInputPanel";
-import { BotDigestBottom } from "~/custom/bots/BotDigestBottom";
+import { BotDigestBottom, BotDigestBottomInline } from "~/custom/bots/BotDigestBottom";
 import { BotDigestAskCardView, BotDigestStatusView } from "~/custom/bots/BotDigest";
 import { forkApprovalNoticeItem } from "~/custom/forkApprovalNotice";
 import type { PendingApproval, PendingUserInput } from "~/session-logic";
-import { BotDigestLinkRow, resolveBotDigestLine } from "~/custom/bots/BotDigestItem";
+import { BotDigestLinkRow, childLinks, resolveBotDigestLine } from "~/custom/bots/BotDigestItem";
 import { Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
 
@@ -107,8 +107,8 @@ function Digest(props: DigestProps) {
         key={shownIndex}
         question={ask.question}
         detail={ask.detail}
-        links={<BotDigestLinkRow links={links(ask)} environmentId={environmentId} />}
-        hasLinks={ask.thread !== null || ask.pullRequest !== null}
+        links={links(ask)}
+        environmentId={environmentId}
         answers={ask.answers}
         bottom={{
           paging: { at, count: shown.length, onPage: setPage },
@@ -457,8 +457,8 @@ function LinkedAsk(props: { readonly spec: LinkedAskSpec }) {
         <BotDigestAskCardView
           question={spec.question}
           detail={spec.detail}
-          links={<BotDigestLinkRow links={line.links} environmentId={environmentId} />}
-          hasLinks={line.links.threads.length > 0 || line.links.pullRequests.length > 0}
+          links={line.links}
+          environmentId={environmentId}
           answers={spec.answers}
           bottom={ALONE}
           onDismiss={noop}
@@ -516,26 +516,6 @@ const WORK_APPROVAL: PendingApproval = {
 
 type QuestionAnswers = ComponentProps<typeof ComposerPendingUserInputPanel>["answers"];
 
-/** A thread chip as the digest draws one. */
-function ThreadChip(props: { readonly thread: EnvironmentThreadShell }) {
-  const { thread } = props;
-  return (
-    <BotDigestLinkRow
-      environmentId={environmentId}
-      links={{
-        threads: [
-          {
-            link: { environmentId: thread.environmentId, threadId: thread.id },
-            label: thread.title,
-            shell: thread,
-          },
-        ],
-        pullRequests: [],
-      }}
-    />
-  );
-}
-
 /** A work thread's question as the Petal shows it, picking locally. */
 function WorkQuestion(props: {
   readonly paging: ComponentProps<typeof BotDigestBottom>["paging"];
@@ -562,9 +542,8 @@ function WorkQuestion(props: {
               paging={props.paging}
               hiddenCount={0}
               onShowDismissed={noop}
-              links={<ThreadChip thread={LINKED_THREADS[1]!} />}
-              hasLinks
-              ruled
+              links={childLinks(LINKED_THREADS[1]!)}
+              environmentId={environmentId}
             />
           }
         />
@@ -592,13 +571,12 @@ export const WorkThreadRequests: Story = {
                 isResponding: false,
                 onRespondToApproval: async () => {},
                 source: (
-                  <BotDigestBottom
+                  <BotDigestBottomInline
                     paging={{ at: 0, count: 3, onPage: noop }}
                     hiddenCount={0}
                     onShowDismissed={noop}
-                    links={<ThreadChip thread={LINKED_THREADS[0]!} />}
-                    hasLinks
-                    ruled={false}
+                    links={childLinks(LINKED_THREADS[0]!)}
+                    environmentId={environmentId}
                   />
                 ),
               }),
