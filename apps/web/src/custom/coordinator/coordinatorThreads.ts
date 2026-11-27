@@ -22,6 +22,11 @@ function canCoordinate(shell: CoordinatorShell): boolean {
   return !isForkBotThread(shell.tags) && isListedThreadLineage(shell.lineage);
 }
 
+/** Where the menu would offer "Make coordinator": a thread that can coordinate and does not yet. */
+export function canStartCoordinating(shell: CoordinatorShell): boolean {
+  return canCoordinate(shell) && !isCoordinatorThread(shell);
+}
+
 const MENU_ON = "coordinator:on";
 const MENU_OFF = "coordinator:off";
 type CoordinatorMenuId = typeof MENU_ON | typeof MENU_OFF;
@@ -53,13 +58,15 @@ const RULES = `You are now this thread's coordinator. Until I switch it off:
 - Hand real work to children with \`delegate_task\`, so I can follow them in this thread's panel.
 - Keep your own turns short and never wait on a child; its completion wakes you.
 - Run children in parallel only when their scopes don't overlap; work on the same section of a file goes one child after another. Tell each child to make targeted edits and touch git only for its own files.
-- When a child asks something my instructions don't settle, say in one line that it waits on me (I answer on the card), and never restate the question.
+- When a child asks something my instructions don't settle, say in one line that it waits on me (I answer on the card), and never restate the question.`;
 
-Reply in one line that you're coordinating.`;
+const ACK = "Reply in one line that you're coordinating.";
+const ACK_BEFORE_TASK = 'My first task is my next message. Reply only "Coordinating." to this one.';
 
 const STOP = `You are no longer this thread's coordinator. Do the work directly again; use children only when they clearly help. Reply in one line.`;
 
-/** The owner's message that switches coordinating on or off. */
-export function coordinatorMessage(on: boolean): string {
-  return on ? RULES : STOP;
+/** The owner's message that switches coordinating on or off; `taskFollows` when the owner's first
+    task is queued right behind it, so the turn it costs stays one word. */
+export function coordinatorMessage(on: boolean, taskFollows = false): string {
+  return on ? `${RULES}\n\n${taskFollows ? ACK_BEFORE_TASK : ACK}` : STOP;
 }

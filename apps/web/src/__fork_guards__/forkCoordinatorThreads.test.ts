@@ -8,6 +8,7 @@ import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  canStartCoordinating,
   coordinatorMenuItems,
   coordinatorMenuTurnsOn,
   coordinatorMessage,
@@ -36,6 +37,43 @@ describe("fork guard: fork-coordinator-threads", () => {
     };
     expect(coordinatorMenuItems({ tags: [], lineage: subagent }, true)).toEqual([]);
     expect(isCoordinatorMenuId("pin")).toBe(false);
+    // `/coordinate` applies exactly where the menu offers "Make coordinator".
+    expect(canStartCoordinating({ tags: [], lineage: root })).toBe(true);
+    expect(canStartCoordinating({ tags: [FORK_COORDINATOR_TAG], lineage: root })).toBe(false);
+    expect(canStartCoordinating({ tags: [FORK_BOT_THREAD_TAG], lineage: root })).toBe(false);
+    expect(canStartCoordinating({ tags: [], lineage: subagent })).toBe(false);
+    expect(canStartCoordinating({ tags: [], lineage: { ...root, sideChat: true } })).toBe(false);
+  });
+
+  it("starts a new thread as a coordinator from the draft's toggle, rules before the task", () => {
+    const composer = read("../components/chat/ChatComposer.tsx");
+    expect(composer).toContain("const forkCoordinator = useCoordinatorComposer({");
+    expect(composer).toContain("<CoordinatorDraftToggle");
+    // A checkbox pill on the context chip's hover fill, so it reads over the screen's backdrop.
+    const toggle = read("../custom/coordinator/CoordinatorDraftToggle.tsx");
+    expect(toggle).toContain("<label");
+    expect(toggle).toContain("<Checkbox");
+    expect(toggle).toContain("<WorkflowSquare10Icon");
+    expect(read("../custom/ComposerShell.css")).toMatch(
+      /\[data-fork-coordinator-toggle\] \{[^}]*background: var\(--fork-context-chip-bg-hover\);[^}]*backdrop-filter: blur\(var\(--glass-blur\)\);[^}]*color: var\(--basic-text-strong, var\(--foreground\)\);/u,
+    );
+    const send = read("../components/chat/useComposerSend.ts");
+    expect(send).toContain("const forkStartOwnerTurn = useCoordinatorDraftStart(");
+    expect(send).toContain("const startPromise = forkStartOwnerTurn({");
+    const draft = read("../custom/coordinator/coordinatorDraft.ts");
+    expect(draft).toContain("const rules = await startTurn(turns.rules);");
+    expect(draft).toContain("return startTurn(turns.task);");
+  });
+
+  it("offers /coordinate in the composer where it can apply", () => {
+    expect(read("../composer-logic.ts")).toContain('| "coordinate"');
+    const items = read("../components/chat/useComposerMenuItems.ts");
+    expect(items).toContain("...(coordinateAvailable");
+    expect(items).toContain('command: "coordinate"');
+    const composer = read("../components/chat/ChatComposer.tsx");
+    expect(composer).toContain("coordinateAvailable: forkCoordinator.commandAvailable,");
+    expect(composer).toContain('if (item.command === "coordinate") {');
+    expect(composer).toContain("forkCoordinator.runCommand();");
   });
 
   it("offers the switch in the sidebar's thread menu and the chat header's", () => {

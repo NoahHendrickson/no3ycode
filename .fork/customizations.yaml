@@ -10465,11 +10465,29 @@
     - apps/web/src/__fork_guards__/forkDevElectronNoStartupRelaunch.test.ts
 - id: fork-coordinator-threads
   intent: >
-    The owner switches an ordinary thread to coordinating, from its menu in the sidebar or the
-    chat header ("Make coordinator", and "Stop coordinating" to switch back; maintainer's
-    request, 2026-11-27). A coordinator keeps its own checkout and branch and hands the work to
-    delegate_task children there, so several chunks of one branch run while it stays free to
-    talk; a sprint (fork-sprints) is the separate home for work across branches and projects.
+    The owner switches an ordinary thread to coordinating (maintainer's request, 2026-11-27).
+    The primary way in is starting one: the new-thread draft's "Coordinator" toggle, a checkbox
+    pill (components/ui Checkbox, then the label; the whole pill toggles it, the checkbox is the
+    one focusable control) over the composer card's top-right corner, last and right-aligned in
+    the chip row above it (owner's placement). It matches the owner's Figma pill (kit 549:1199):
+    checkbox, then the workflow-square-10 icon and the label; the context chip's hover fill over
+    a backdrop blur (--glass-blur), no hairline, the composer chips' type in strong text
+    (custom/ComposerShell.css), so it reads over the new agent screen's backdrop
+    (custom/coordinator/CoordinatorDraftToggle, held per draft and thread id in
+    custom/coordinator/coordinatorDraft, never on existing threads, reset by sending or a new
+    draft). Its first send (useComposerSend's turn start, wrapped by useCoordinatorDraftStart) is
+    two turns: the standing rules create the thread with the draft's bootstrap, the thread is
+    tagged, and the owner's own message queues right behind as its own visible message, so the
+    first turn that works on it already coordinates. The rules then ask for a one-word reply
+    (coordinatorMessage's taskFollows) and carry no title seed, so the thread keeps the title
+    seeded from the owner's message (no generated title on that first send). The other ways in
+    are `/coordinate` in the composer (a built-in slash command: on a draft it turns the toggle
+    on, on a thread the menu would offer "Make coordinator" it switches coordinating on; hidden
+    elsewhere and once coordinating) and the thread menu in the sidebar or the chat header
+    ("Make coordinator", and "Stop coordinating" to switch back). A coordinator keeps its own
+    checkout and branch and hands the work to delegate_task children there, so several chunks
+    of one branch run while it stays free to talk; a sprint (fork-sprints) is the separate home
+    for work across branches and projects.
     It stays as light as possible (maintainer, 2026-11-27): no default thread model, model
     setting or model rule, so children inherit the coordinator's model unless the owner names
     one in chat. The switch is the `coordinator` tag (thread.tag.set). The standing rules reach
@@ -10504,9 +10522,17 @@
     - apps/web/src/custom/coordinator/useIsCoordinatorThread.ts
     - apps/web/src/custom/coordinator/CoordinatorPanel.tsx
     - apps/web/src/custom/coordinator/coordinatorThreadHost.tsx
+    - apps/web/src/custom/coordinator/coordinatorDraft.ts
+    - apps/web/src/custom/coordinator/CoordinatorDraftToggle.tsx
+    - apps/fork-storybook/stories/fork/CoordinatorDraftToggle.stories.tsx
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/components/chat/ChatComposer.tsx
+    - apps/web/src/components/chat/useComposerSend.ts
+    - apps/web/src/components/chat/useComposerMenuItems.ts
+    - apps/web/src/composer-logic.ts
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
     - apps/web/src/hooks/useThreadActionMenu.ts
@@ -10517,5 +10543,6 @@
     - apps/web/src/custom/forkWorkReports.ts
   verify:
     - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
+    - apps/web/src/custom/coordinator/coordinatorDraft.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
     - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts

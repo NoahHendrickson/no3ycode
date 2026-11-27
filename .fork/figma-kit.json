@@ -58,6 +58,7 @@
   "apps/fork-storybook/stories/fork/ComposerPullRequestChip.stories.tsx": "0c8beceb65afec57",
   "apps/fork-storybook/stories/fork/ComposerUsage.stories.tsx": "4d345bfb6b218e8e",
   "apps/fork-storybook/stories/fork/ComposerWorkspace.stories.tsx": "af273ccfaa5d0e60",
+  "apps/fork-storybook/stories/fork/CoordinatorDraftToggle.stories.tsx": "6c5f99829d99b83d",
   "apps/fork-storybook/stories/fork/DesignChangeChip.stories.tsx": "8b92df37b43f2a96",
   "apps/fork-storybook/stories/fork/DesignPanelControls.stories.tsx": "6fc4c1ec84b04389",
   "apps/fork-storybook/stories/fork/Dictation.stories.tsx": "e76b7140acf244a9",

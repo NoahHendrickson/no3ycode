@@ -45,6 +45,25 @@
   );
 }
 
+/* The new-thread Coordinator pill (fork-coordinator-threads), Figma 549:1199: a checkbox, then its
+   icon and label, on the context chip's hover fill over a blur of the new agent screen's backdrop,
+   no hairline, in the composer chips' type. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-coordinator-toggle] {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
+  border-radius: var(--radius-lg);
+  background: var(--fork-context-chip-bg-hover);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  font-size: var(--fork-composer-chip-text);
+  font-weight: 400;
+  line-height: calc(var(--fork-composer-chip-text) + var(--spacing) * 1.5);
+  color: var(--basic-text-strong, var(--foreground));
+  cursor: pointer;
+}
+
 /* Two ComposerControls in one pill: the halves take the pill's height, ink and type. A learned
    next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it.
    Armed auto-merge too: its label, then the ban button that turns it off. */

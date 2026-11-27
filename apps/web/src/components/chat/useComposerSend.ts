@@ -101,6 +101,9 @@ import { runMobileComposerTransition } from "./draftHeroTransition";
 /* fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode */
 import { forkDesignChanges } from "~/custom/designMode/designChangeDraftStore";
 /* fork:end fork-design-mode */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { useCoordinatorDraftStart } from "~/custom/coordinator/coordinatorDraft";
+/* fork:end fork-coordinator-threads */
 import { useClientSettingsHydrated } from "../../hooks/useSettings";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { environmentPresentations } from "../../state/presentation";
@@ -393,6 +396,13 @@ export function useComposerSend(input: ComposerSendInput) {
   const startThreadTurn = useOrchestrationCommand(threadEnvironment.startTurn, {
     reportFailure: false,
   });
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+     A draft switched to coordinating sends the standing rules first, its task queued behind. */
+  const forkStartOwnerTurn = useCoordinatorDraftStart(
+    startThreadTurn,
+    isLocalDraftThread ? draftId : null,
+  );
+  /* fork:end fork-coordinator-threads */
   const uploadThreadFeedback = useOrchestrationCommand(threadEnvironment.uploadFeedback, {
     reportFailure: false,
   });
@@ -1572,7 +1582,9 @@ export function useComposerSend(input: ComposerSendInput) {
           )
         : null;
       if (backgroundThreadRef) beginBackgroundDraftSubmissionByRef(backgroundThreadRef);
-      const startPromise = startThreadTurn({
+      /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+      const startPromise = forkStartOwnerTurn({
+        /* fork:end fork-coordinator-threads */
         environmentId,
         input: {
           threadId: threadIdForSend,

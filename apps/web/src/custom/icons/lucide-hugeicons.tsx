@@ -605,6 +605,7 @@ export const TicketIcon = icon("ticket", Hg.TicketIcon, "themed");
 export const SlidersHorizontalIcon = icon("sliders-horizontal", Hg.SlidersHorizontalIcon, "stroke");
 export const RocketIcon = icon("rocket", Hg.RocketIcon, "stroke");
 export const WorkflowIcon = icon("workflow", Hg.WorkflowIcon, "stroke");
+export const WorkflowSquare10Icon = icon("workflow-square-10", Hg.WorkflowSquare10Icon, "stroke");
 export const MessageSquareDashedIcon = icon(
   "message-square-dashed",
   Hg.MessageSquareDashedIcon,
