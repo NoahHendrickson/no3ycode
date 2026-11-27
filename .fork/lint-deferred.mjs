@@ -51,6 +51,6 @@ export const DEFERRED_LINT_RULES = [
   // Upstream translated the app in the 2026-11-22 sync; fork copy stays English (fork-i18n-catalog).
   // +11 for fork-typography-settings: the font presets, their aria label and the two size rows.
   // +3 for the draft project picker: its search and pin labels.
-  // +94 for fork-sprints and fork-thread-launch-cards: dialog, panel tabs, cards, toasts.
-  ["t3code/no-untranslated-copy", 977],
+  // +95 for fork-sprints, fork-thread-launch-cards and fork-coordinator-threads: menus, panels, cards.
+  ["t3code/no-untranslated-copy", 978],
 ];

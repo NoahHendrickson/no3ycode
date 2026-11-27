@@ -13,14 +13,15 @@ import { appAtomRegistry } from "~/rpc/atomRegistry";
 import { readThreadShell, useQuietThreadShell } from "~/state/entities";
 import { projectEnvironment } from "~/state/projects";
 
+import type { HostFolder } from "../hostFolderFiles";
 import { ForkThreadHookRow } from "../threadLaunchCards/ForkThreadLaunchCards";
 import { ForkAnsweredRequestCard } from "../threadLaunchCards/ForkThreadRequestCard";
 import type { ForkThreadHost } from "../threadLaunchCards/forkThreadHost";
-import { noteSprintAnswer, type SprintFolder } from "./sprintFiles";
+import { noteSprintAnswer } from "./sprintFiles";
 import { openInSprintPanel } from "./sprintPanelState";
 import { SPRINT_ANSWERS_FILE, sprintAnswersFor } from "./sprintThreads";
 
-function sprintFolderOf(shell: EnvironmentThreadShell | null): SprintFolder | null {
+function sprintFolderOf(shell: EnvironmentThreadShell | null): HostFolder | null {
   return shell === null || shell.worktreePath === null
     ? null
     : { environmentId: shell.environmentId, cwd: shell.worktreePath };

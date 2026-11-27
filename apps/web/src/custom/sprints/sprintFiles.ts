@@ -3,12 +3,9 @@
  * A write the sprint should hear about also drops that file's owner-edit marker
  * (sprintOwnerEditMarker), which its turn hook reads on the next message.
  */
-import { executeAtomQuery, runAtomCommand } from "@t3tools/client-runtime/state/runtime";
-import type { EnvironmentId } from "@t3tools/contracts";
 import type { AtomRegistry } from "effect/reactivity";
 
-import { projectEnvironment } from "~/state/projects";
-
+import { type HostFolder, readHostFolderFile, writeHostFolderFile } from "../hostFolderFiles";
 import {
   SPRINT_ANSWERS_FILE,
   type SprintAnswer,
@@ -17,49 +14,28 @@ import {
   withSprintAnswer,
 } from "./sprintThreads";
 
-/** A sprint's folder on its machine. */
-export interface SprintFolder {
-  readonly environmentId: EnvironmentId;
-  readonly cwd: string;
-}
-
-const QUIET = { reportFailure: false, reportDefect: true } as const;
+const ASKED = { reportDefect: true } as const;
 
 /** Reads one of the sprint's files fresh, past the query's cache. */
 export function readSprintFile(
   registry: AtomRegistry.AtomRegistry,
-  folder: SprintFolder,
+  folder: HostFolder,
   relativePath: string,
 ) {
-  return executeAtomQuery(
-    registry,
-    projectEnvironment.readFile({
-      environmentId: folder.environmentId,
-      input: { cwd: folder.cwd, relativePath, allowMissing: true },
-    }),
-    { ...QUIET, refresh: true },
-  );
+  return readHostFolderFile(registry, folder, relativePath, ASKED);
 }
 
 /** Writes one of the sprint's files; with `announce`, the sprint is shown its new text on its next
     message. Resolves to whether the file itself was written. */
 export async function writeSprintFile(
   registry: AtomRegistry.AtomRegistry,
-  folder: SprintFolder,
+  folder: HostFolder,
   relativePath: string,
   contents: string,
   options: { readonly announce: boolean },
 ): Promise<boolean> {
   const write = (path: string, text: string) =>
-    runAtomCommand(
-      registry,
-      projectEnvironment.writeFile,
-      {
-        environmentId: folder.environmentId,
-        input: { cwd: folder.cwd, relativePath: path, contents: text },
-      },
-      { label: projectEnvironment.writeFile.label, ...QUIET },
-    );
+    writeHostFolderFile(registry, folder, path, text, ASKED);
   const written = await write(relativePath, contents);
   if (written._tag !== "Success") return false;
   if (options.announce)
@@ -75,7 +51,7 @@ const answerLogQueues = new Map<string, Promise<void>>();
     request, and reads the log again so the settled card shows it. */
 export function noteSprintAnswer(
   registry: AtomRegistry.AtomRegistry,
-  folder: SprintFolder,
+  folder: HostFolder,
   entry: {
     readonly threadTitle: string;
     /** The work report's `threadId:requestId`. */

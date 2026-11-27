@@ -5,6 +5,8 @@
  */
 import { FORK_BOT_CREW_FILE, FORK_BOT_QUIET_REPLY } from "@t3tools/shared/forkBotTags";
 
+import type { FolderRulesRefresh } from "../refreshFolderRules";
+
 export interface BotSeedFile {
   readonly relativePath: string;
   readonly contents: string;
@@ -241,13 +243,12 @@ export function botSeedFiles(
   ];
 }
 
-/** What an existing bot's folder gets when its rules are older than `BOT_RULES_VERSION`: the
-    files only T3 Code writes are replaced, and files the bot keeps are added only where missing.
-    JOB.md, STATE.md and the folder's settings are never touched. */
-export function botRulesRefresh(bot: BotIdentity): {
-  readonly replace: ReadonlyArray<BotSeedFile>;
-  readonly addIfMissing: ReadonlyArray<BotSeedFile>;
-} {
-  // CLAUDE.md last: its marker is what says the refresh finished.
-  return { replace: [AGENTS_FILE, rulesFile(bot)], addIfMissing: [CREW_FILE, DIGEST_FILE] };
+/** What an existing bot's folder gets when its rules are older than `BOT_RULES_VERSION`. JOB.md,
+    STATE.md and the folder's settings are never touched. */
+export function botRulesRefresh(bot: BotIdentity): FolderRulesRefresh {
+  return {
+    rules: rulesFile(bot).contents,
+    replace: [AGENTS_FILE],
+    addIfMissing: [CREW_FILE, DIGEST_FILE],
+  };
 }
