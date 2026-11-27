@@ -550,7 +550,7 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
         /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
            A coordinator's child question is its inline card already. */
         forkIsCoordinator
-          ? coordinatorChildInputs(childThreadInputs)
+          ? coordinatorChildInputs(activeThreadRef?.threadId ?? "", childThreadInputs)
           : /* fork:end fork-coordinator-threads */ childThreadInputs,
       parentAwaitingUser: Boolean(
         activePendingApproval || activePendingUserInput || activeThreadShell?.hasPendingUserInput,

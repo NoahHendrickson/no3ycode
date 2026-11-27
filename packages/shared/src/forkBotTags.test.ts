@@ -1,11 +1,35 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import { ThreadId } from "@t3tools/contracts";
+
 import {
+  FORK_COORDINATOR_TAG,
   forkBotWorkOwner,
   forkBotWorkTag,
   forkSubagentTags,
   isForkBotQuietReply,
+  isForkCoordinatorThread,
 } from "./forkBotTags.ts";
+
+describe("isForkCoordinatorThread", () => {
+  it("is a tagged listed thread, never the subagent or side chat that inherits the tag", () => {
+    const root = {
+      rootThreadId: ThreadId.make("coordinator"),
+      parentThreadId: null,
+      relationshipToParent: null,
+    };
+    const tags = [FORK_COORDINATOR_TAG];
+    expect(isForkCoordinatorThread({ tags, lineage: root })).toBe(true);
+    expect(isForkCoordinatorThread({ tags: [], lineage: root })).toBe(false);
+    const child = {
+      ...root,
+      parentThreadId: ThreadId.make("coordinator"),
+      relationshipToParent: "subagent" as const,
+    };
+    expect(isForkCoordinatorThread({ tags, lineage: child })).toBe(false);
+    expect(isForkCoordinatorThread({ tags, lineage: { ...root, sideChat: true } })).toBe(false);
+  });
+});
 
 describe("bot-work tags", () => {
   it("name the bot a thread works for, in one spelling", () => {

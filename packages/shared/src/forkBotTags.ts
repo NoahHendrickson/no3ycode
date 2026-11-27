@@ -3,6 +3,7 @@
  * and `#fork-bot-work-threads`. Shared so the server, the web client and provider-core's subagent
  * builder read one spelling.
  */
+import { isListedThreadLineage, type OrchestrationV2AppThreadLineage } from "@t3tools/contracts";
 
 /** The tag that makes a thread a bot. */
 export const FORK_BOT_THREAD_TAG = "bot";
@@ -32,8 +33,15 @@ export function isForkBotThread(tags: ReadonlyArray<string> | undefined): boolea
     Here, beside the bot tags, so the server words its notices to one by the same spelling. */
 export const FORK_COORDINATOR_TAG = "coordinator";
 
-export function isForkCoordinatorThread(tags: ReadonlyArray<string> | undefined): boolean {
-  return tags?.includes(FORK_COORDINATOR_TAG) === true;
+/** A coordinator: tagged, and a listed top-level thread. Subagents and side chats inherit their
+    parent's tags, so a coordinator's delegated child carries the tag without being one. */
+export function isForkCoordinatorThread(thread: {
+  readonly tags?: ReadonlyArray<string> | undefined;
+  readonly lineage: OrchestrationV2AppThreadLineage;
+}): boolean {
+  return (
+    thread.tags?.includes(FORK_COORDINATOR_TAG) === true && isListedThreadLineage(thread.lineage)
+  );
 }
 
 /** The tags a subagent inherits from its parent: every one but a bot's identity, so a bot's

@@ -231,6 +231,38 @@ describe("quiet bot wakes", () => {
     // A coordinator's quiet run that no child's question started is not a wake to hide.
     const other = [wake("wake-2", 5), reply("wake-2", 6, "Nothing to report.")];
     expect(quietBotWakeRunIds(other, coordinator).size).toBe(0);
+
+    // The child's "finished" notice wakes it again; when that only repeats the card's answer the
+    // whole run goes, notice included. A real reply keeps the run and its notice.
+    const finished: TimelineEntry = {
+      ...notice,
+      id: "turn-item:message:finished",
+      entry: {
+        ...notice.entry,
+        id: "finished",
+        runId: "wake-3" as RunId,
+        projectedItem: {
+          item: {
+            type: "notification",
+            id: "turn-item:message:finished",
+            threadId: parent,
+            outcome: "completed",
+            source: { kind: "delegated_task", taskIds: ["task-1"], childThreadId: "child-1" },
+          },
+        } as never,
+      },
+    };
+    const completion = (text: string) => [finished, reply("wake-3", 8, text)];
+    const quietCompletion = completion("Nothing to report.");
+    expect(
+      withoutRuns(quietCompletion, quietBotWakeRunIds(quietCompletion, coordinator), true, true),
+    ).toEqual([]);
+    const news = completion("Failed");
+    expect(withoutRuns(news, quietBotWakeRunIds(news, coordinator), true, true)).toEqual(news);
+    // Not for a sprint: its quiet completion wake ends where its reply starts, as before.
+    expect(withoutRuns(quietCompletion, quietBotWakeRunIds(quietCompletion, none), true)).toEqual([
+      finished,
+    ]);
   });
 
   it("drops a quiet wake from its prompt on, keeping a resumed subagent card in the earlier turn", () => {

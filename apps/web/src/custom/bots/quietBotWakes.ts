@@ -8,7 +8,11 @@ import { isForkBotQuietReply } from "@t3tools/shared/forkBotTags";
 
 import type { TimelineEntry } from "~/session-logic";
 
-import { isForkDelegatedQuestionReport, isForkWorkRequestReport } from "../forkWorkReports";
+import {
+  isForkDelegatedCompletionReport,
+  isForkDelegatedQuestionReport,
+  isForkWorkRequestReport,
+} from "../forkWorkReports";
 
 /** The run an entry belongs to, user messages and events included (unlike the fold helpers). */
 function entryOwningRunId(entry: TimelineEntry): RunId | null {
@@ -62,7 +66,9 @@ export function quietBotWakeRunIds(
     if (asksOwner(entry)) shown.add(runId);
     if (
       input.requestReportsOnly === true &&
-      (isForkWorkRequestReport(entry) || isForkDelegatedQuestionReport(entry))
+      (isForkWorkRequestReport(entry) ||
+        isForkDelegatedQuestionReport(entry) ||
+        isForkDelegatedCompletionReport(entry))
     ) {
       reported.add(runId);
     }
@@ -109,7 +115,8 @@ export function withoutRuns(
     const runId =
       entry.kind === "message"
         ? entry.message.runId
-        : keepDelegatedQuestions && isForkDelegatedQuestionReport(entry)
+        : keepDelegatedQuestions &&
+            (isForkDelegatedQuestionReport(entry) || isForkDelegatedCompletionReport(entry))
           ? entryOwningRunId(entry)
           : null;
     if (runId !== null && runIds.has(runId) && !startIndex.has(runId)) {

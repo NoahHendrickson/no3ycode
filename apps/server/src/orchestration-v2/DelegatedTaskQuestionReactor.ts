@@ -49,7 +49,7 @@ const make = Effect.gen(function* () {
     const read = `Read it with t3_pending_request action read, threadId ${task.childThreadId}, and requestId ${request.id}.`;
     /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
        A coordinator's owner answers its children's questions on their cards in its conversation. */
-    const coordinator = isForkCoordinatorThread((yield* projections.getThread(task.threadId)).tags);
+    const coordinator = isForkCoordinatorThread(yield* projections.getThread(task.threadId));
     const answer = coordinator
       ? "The owner answers it on its card in your conversation: answer it with action respond only when the owner's instructions settle it, and never ask the owner it yourself or restate it."
       : /* fork:end fork-coordinator-threads */

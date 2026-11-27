@@ -10545,12 +10545,17 @@
     coordinator re-asked a Claude child's AskUserQuestion as its own question). Only a
     coordinator's host draws delegated questions as cards and keeps them in quiet wakes
     (forkThreadHost answersDelegatedQuestions); a sprint's delegated notices behave as on custom.
-    A quiet question wake drops from its notice on, so its reads ("Worked for") go too. A card
+    A quiet question wake drops from its notice on, so its reads ("Worked for") go too, and so
+    does a child's "finished" wake when the coordinator replies the quiet reply (the rules ask for
+    it when the child only did what the card answered). A card
     answers the request its report names, not the child's first open one (forkWorkReportRequestId,
     childRequestControls pendingRequestFor), and falls back to the answered view once that
-    request settles. A coordinator's timeline end drops the "Subagent needs input" line for a
-    child whose open request is a question (coordinatorChildInputs in useThreadLifecycle); an
-    approval keeps its line. On the first send a failed tag stops before the task, which stays in
+    request settles. A coordinator's timeline end drops the "Subagent needs input" line for its
+    own delegate_task child whose open request is a question (coordinatorChildInputs in
+    useThreadLifecycle, forkWorkReports isForkDelegatedTaskChildOf); side chats, nested
+    delegates, native subagents and approvals keep it. A thread is a coordinator only when tagged
+    and listed (isForkCoordinatorThread takes the lineage): its delegated children inherit the
+    tag without becoming one. On the first send a failed tag stops before the task, which stays in
     the draft; switching from the menu puts the tag back when the rules could not be sent. With
     no host, an ordinary
     thread draws the notice as before. Approvals do not wake the parent, so they wait in the

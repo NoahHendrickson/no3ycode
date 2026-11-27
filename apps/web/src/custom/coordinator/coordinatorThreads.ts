@@ -12,12 +12,13 @@ import {
   isForkCoordinatorThread,
 } from "@t3tools/shared/forkBotTags";
 
+import { isForkDelegatedTaskChildOf } from "../forkWorkReports";
+
 export { FORK_COORDINATOR_TAG };
 
-export function isCoordinatorThread(shell: {
-  readonly tags?: ReadonlyArray<string> | undefined;
-}): boolean {
-  return isForkCoordinatorThread(shell.tags);
+/** Tagged and listed: a coordinator's delegated child inherits the tag without being one. */
+export function isCoordinatorThread(shell: CoordinatorShell): boolean {
+  return isForkCoordinatorThread(shell);
 }
 
 type CoordinatorShell = Pick<OrchestrationV2ThreadShell, "tags" | "lineage">;
@@ -27,12 +28,23 @@ function canCoordinate(shell: CoordinatorShell): boolean {
   return !isForkBotThread(shell.tags) && isListedThreadLineage(shell.lineage);
 }
 
-/** A coordinator's children that still get the "needs input" line at its timeline's end: a
-    question is already its card in the conversation, an approval has none. */
+/** The threads that still get the "needs input" line at a coordinator's timeline end: all but its
+    own delegate_task children whose open request is a question, which is their card in its
+    conversation. Side chats, nested delegates and approvals keep their line. */
 export function coordinatorChildInputs<
-  T extends { readonly hasPendingApprovals: boolean; readonly hasPendingUserInput: boolean },
->(children: ReadonlyArray<T>): ReadonlyArray<T> {
-  return children.filter((child) => child.hasPendingApprovals || !child.hasPendingUserInput);
+  T extends {
+    readonly id: string;
+    readonly lineage: CoordinatorShell["lineage"];
+    readonly hasPendingApprovals: boolean;
+    readonly hasPendingUserInput: boolean;
+  },
+>(coordinatorId: string, children: ReadonlyArray<T>): ReadonlyArray<T> {
+  return children.filter(
+    (child) =>
+      child.hasPendingApprovals ||
+      !child.hasPendingUserInput ||
+      !isForkDelegatedTaskChildOf(child, coordinatorId),
+  );
 }
 
 /** A coordinator the sidebar's Coordinators section lists, and so none of its thread groups. */
@@ -43,7 +55,7 @@ export function isListedCoordinator(thread: {
 }): boolean {
   return (
     thread.archivedAt === null &&
-    isCoordinatorThread(thread.source) &&
+    isCoordinatorThread({ tags: thread.source.tags, lineage: thread.lineage }) &&
     canCoordinate({ tags: thread.source.tags, lineage: thread.lineage })
   );
 }
@@ -90,10 +102,10 @@ export function coordinatorMenuTurnsOn(id: CoordinatorMenuId): boolean {
 
 const RULES = `You are now this thread's coordinator. Until I switch it off:
 
-- Hand real work to children with \`delegate_task\`, so I follow them in this thread's panel. Don't list or link them; say in a few words what you started.
-- Keep your own turns short and never wait on a child; its completion wakes you.
-- Run children in parallel only when their scopes don't overlap; work on the same section of a file goes one child after another. Tell each child to make targeted edits and touch git only for its own files.
-- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Otherwise its notice's "ask the user" is not for you: never ask me it yourself or restate the question; reply exactly "${FORK_BOT_QUIET_REPLY}" (I answer on its card).`;
+- Hand real work to children with \`delegate_task\`. Don't list or link them; say briefly what you started.
+- Keep your turns short and never wait on a child; its completion wakes you. If it just did what I answered, reply exactly "${FORK_BOT_QUIET_REPLY}"; else report it in a line.
+- Run children in parallel only when their scopes don't overlap; in turn on the same part of a file. Each makes targeted edits and touches git only for its own files.
+- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Else its notice's "ask the user" is not for you: never ask me it yourself or restate the question; reply exactly "${FORK_BOT_QUIET_REPLY}" (I answer on its card).`;
 
 const ACK = "Reply in one line that you're coordinating.";
 const ACK_BEFORE_TASK = 'My first task is my next message. Reply only "Coordinating." to this one.';

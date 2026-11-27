@@ -116,6 +116,29 @@ export function forkWorkReportOf(notice: {
 // orchestration-v2/DelegatedTaskQuestionReactor's message id: the prefix, the parent's thread id,
 // then the child's request id.
 const DELEGATED_QUESTION_PREFIX = "message:delegated-task-question:";
+// provider-core IdAllocator's delegated task thread id (isDelegatedTaskThread, server-only).
+const DELEGATED_TASK_THREAD_PREFIX = "thread:delegated-task:";
+
+/** A thread `parentId` started with T3's delegate_task, as its direct child: no provider's native
+    subagent, nested delegate or side chat. */
+export function isForkDelegatedTaskChildOf(
+  child: {
+    readonly id: string;
+    readonly lineage: {
+      readonly parentThreadId: string | null;
+      readonly relationshipToParent: string | null;
+      readonly sideChat?: boolean | undefined;
+    };
+  },
+  parentId: string,
+): boolean {
+  return (
+    child.id.startsWith(DELEGATED_TASK_THREAD_PREFIX) &&
+    child.lineage.parentThreadId === parentId &&
+    child.lineage.relationshipToParent === "subagent" &&
+    child.lineage.sideChat !== true
+  );
+}
 
 /** A delegated child's question notice, which wakes its parent, read as the child's question
     report (fork-coordinator-threads); null for every other notice. */
@@ -143,6 +166,18 @@ export function forkHostDelegatedQuestion(
   notice: Parameters<typeof forkDelegatedQuestionOf>[0],
 ): ForkWorkReport | null {
   return host?.answersDelegatedQuestions === true ? forkDelegatedQuestionOf(notice) : null;
+}
+
+/** A delegated child's "finished" notice entry, which wakes a coordinator once the child is done. */
+export function isForkDelegatedCompletionReport(entry: TimelineEntry): boolean {
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+  const item = entry.entry.projectedItem?.item;
+  return (
+    item?.type === "notification" &&
+    item.source.kind === "delegated_task" &&
+    item.outcome === "completed" &&
+    forkDelegatedQuestionOf(item) === null
+  );
 }
 
 /** A delegated child's question notice entry, which carries a coordinator's question card. */

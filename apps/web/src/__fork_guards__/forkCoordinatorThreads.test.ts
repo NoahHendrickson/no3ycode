@@ -11,6 +11,7 @@ import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import {
   canStartCoordinating,
   coordinatorChildInputs,
+  isCoordinatorThread,
   coordinatorMenuItems,
   coordinatorMenuTurnsOn,
   coordinatorMessage,
@@ -42,6 +43,12 @@ describe("fork guard: fork-coordinator-threads", () => {
     };
     expect(coordinatorMenuItems({ tags: [], lineage: subagent }, true)).toEqual([]);
     expect(isCoordinatorMenuId("pin")).toBe(false);
+    // A delegated child inherits the tag; it is no coordinator, nor is a tagged side chat.
+    expect(isCoordinatorThread({ tags: [FORK_COORDINATOR_TAG], lineage: root })).toBe(true);
+    expect(isCoordinatorThread({ tags: [FORK_COORDINATOR_TAG], lineage: subagent })).toBe(false);
+    expect(
+      isCoordinatorThread({ tags: [FORK_COORDINATOR_TAG], lineage: { ...root, sideChat: true } }),
+    ).toBe(false);
     // `/coordinate` applies exactly where the menu offers "Make coordinator".
     expect(canStartCoordinating({ tags: [], lineage: root })).toBe(true);
     expect(canStartCoordinating({ tags: [FORK_COORDINATOR_TAG], lineage: root })).toBe(false);
@@ -133,15 +140,40 @@ describe("fork guard: fork-coordinator-threads", () => {
   });
 
   it("drops a coordinator's child question from the timeline's end, its card being inline", () => {
-    const question = { id: "q", hasPendingApprovals: false, hasPendingUserInput: true };
-    const approval = { id: "a", hasPendingApprovals: true, hasPendingUserInput: false };
-    const both = { id: "b", hasPendingApprovals: true, hasPendingUserInput: true };
-    expect(coordinatorChildInputs([question, approval, both]).map((child) => child.id)).toEqual([
-      "a",
-      "b",
+    const child = (
+      id: string,
+      pending: { readonly approval?: boolean; readonly question?: boolean },
+      lineage: { readonly parentThreadId?: ThreadId; readonly sideChat?: boolean } = {},
+    ) => ({
+      id,
+      hasPendingApprovals: pending.approval === true,
+      hasPendingUserInput: pending.question === true,
+      lineage: {
+        ...root,
+        parentThreadId: ThreadId.make("coordinator"),
+        relationshipToParent: "subagent" as const,
+        ...lineage,
+      },
+    });
+    const delegated = "thread:delegated-task:";
+    const children = [
+      child(`${delegated}question`, { question: true }),
+      child(`${delegated}approval`, { approval: true }),
+      child(`${delegated}both`, { approval: true, question: true }),
+      // No inline card for these: each keeps its line.
+      child(`${delegated}side`, { question: true }, { sideChat: true }),
+      child(`${delegated}nested`, { question: true }, { parentThreadId: ThreadId.make("child") }),
+      child("thread:provider:claude:native", { question: true }),
+    ];
+    expect(coordinatorChildInputs("coordinator", children).map((entry) => entry.id)).toEqual([
+      `${delegated}approval`,
+      `${delegated}both`,
+      `${delegated}side`,
+      `${delegated}nested`,
+      "thread:provider:claude:native",
     ]);
     expect(read("../components/chat/useThreadLifecycle.tsx")).toMatch(
-      /forkIsCoordinator\s*\?\s*coordinatorChildInputs\(childThreadInputs\)/u,
+      /forkIsCoordinator\s*\?\s*coordinatorChildInputs\(/u,
     );
   });
 
