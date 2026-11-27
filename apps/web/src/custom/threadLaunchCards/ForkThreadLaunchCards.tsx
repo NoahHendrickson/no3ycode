@@ -23,9 +23,8 @@ import { morphSplitPairs } from "../splitThreads/splitMorph";
 import { useSplitPane } from "../splitThreads/splitPaneContext";
 import { useSplitThreadStore } from "../splitThreads/splitThreadStore";
 import {
+  type ForkWorkReport,
   forkWorkReportIsPending,
-  forkWorkReportKey,
-  forkWorkReportRequestKind,
   forkWorkReportThreadId,
   forkWorkReportThreadIds,
 } from "../forkWorkReports";
@@ -201,23 +200,23 @@ export function ForkThreadLaunchList(props: {
 /** A work report's notice as the row of the thread it came from, heading the reply it started.
     The plain notice shows when its thread is not on this machine's list. */
 export function ForkWorkReportRow(props: {
-  readonly itemId: string;
-  readonly summary: string;
+  readonly report: ForkWorkReport;
   readonly fallback: ReactNode;
 }) {
   const ctx = use(TimelineRowCtx);
   const host = useForkThreadHost();
   const environmentId = ctx.activeThreadEnvironmentId;
-  const key = forkWorkReportKey(props.itemId);
-  // The machine's thread list changes only when a thread comes or goes, and its id index is
-  // built once per list, so a row neither rescans every thread nor wakes on every update.
+  const { key } = props.report;
+  // A report from an older server names its thread only in the key. The machine's thread list
+  // changes only when a thread comes or goes, and its id index is built once per list, so a row
+  // neither rescans every thread nor wakes on every update.
   const threadIds = forkWorkReportThreadIds(useEnvironmentThreadRefs(environmentId));
-  const threadId = key === null ? null : forkWorkReportThreadId(key, threadIds);
+  const threadId = props.report.threadId ?? forkWorkReportThreadId(key, threadIds);
   const thread = useQuietThreadShell(
     threadId === null ? null : scopeThreadRef(environmentId, threadId),
   );
-  if (thread === null || key === null) return props.fallback;
-  const request = forkWorkReportRequestKind(props.summary);
+  if (thread === null) return props.fallback;
+  const request = props.report.requestKind;
   // A question or approval still open is answered right here; once settled the host draws it.
   // Only a host that answers inline does: a Petal asks above its composer, so its report is the
   // thread's row alone. Inset as a reply's text is, so its hook lines up with the launch rows.

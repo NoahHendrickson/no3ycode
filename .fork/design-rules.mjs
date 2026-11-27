@@ -106,6 +106,7 @@ export const DESIGN_LINT_ALLOWLIST = [
     "bots/BotMascotDetailsSection.tsx": ["BotMascotDetailsSection"],
     "sprints/SidebarV2SprintsSection.tsx": ["SidebarV2SprintsRow"],
     "sprints/SprintGoal.tsx": ["SprintGoal"],
+    "sprints/SprintThreadModel.tsx": ["SprintThreadModel"],
     "sprints/SprintContext.tsx": ["SprintContext"],
     "threadLaunchCards/ForkThreadLaunchCards.tsx": [
       "ForkThreadLaunchList",

@@ -38,7 +38,7 @@ describe("fork guard: fork-thread-launch-cards", () => {
 
   it("draws a work report's notice as the reporting thread's row", () => {
     const row = readSibling("../components/chat/TimelineWorkEntryRow.tsx");
-    expect(row).toContain("forkWorkReportKey(item.id) !== null");
+    expect(row).toContain("forkWorkReportOf(item)");
     expect(row).toContain("<ForkWorkReportRow");
   });
 

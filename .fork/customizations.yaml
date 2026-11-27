@@ -8867,13 +8867,15 @@
     reports and summaries in.
 
     Its Threads panel has tabs (custom/sprints/SprintPanelTabs; the open tab per sprint in
-    sprintPanelState): Threads (the Petal list), Pull requests (custom/sprints/SprintPullRequests:
+    sprintPanelState): Threads (the Petal list, under a "New threads" row where the owner picks the
+    Thread model with the dialog's model menu, custom/sprints/SprintThreadModel; maintainer's
+    request, 2026-11-27: the goal tab is about the goal, not how threads run), Pull requests
+    (custom/sprints/SprintPullRequests:
     every PR of the threads the Threads tab lists, failing checks and merge-ready first, each
     with its stage and thread; a row opens the PR; sprintPullRequests.logic), Goal
-    (custom/sprints/SprintGoal: the owner edits the goal and picks the Thread model with the
-    dialog's model menu; each save reads PLAN.md fresh and rewrites only its Goal or Thread
-    model line, withSprintGoal / withSprintThreadModel, and drops the PLAN.md owner-edit
-    marker), Library, Instructions and Memory, modelled on Claude Projects' one "Project
+    (custom/sprints/SprintGoal: the owner edits the goal; it and the Threads tab's model row each
+    read PLAN.md fresh and rewrite only their Goal or Thread model line, withSprintGoal /
+    withSprintThreadModel, and drop the PLAN.md owner-edit marker), Library, Instructions and Memory, modelled on Claude Projects' one "Project
     instructions" field and shared MEMORY.md (maintainer's request, 2026-11-27). Instructions is
     CREW.md: the server adds it to every launched thread's first message, and CLAUDE.md imports
     it with `@CREW.md`, so the sprint and its threads read one text and the generated rules stay
@@ -8941,6 +8943,7 @@
     - apps/web/src/custom/sprints/useIsSprintThread.ts
     - apps/web/src/custom/sprints/SidebarV2SprintsSection.tsx
     - apps/web/src/custom/sprints/SprintGoal.tsx
+    - apps/web/src/custom/sprints/SprintThreadModel.tsx
     - apps/web/src/custom/sprints/sprintModel.ts
     - apps/web/src/custom/sprints/SprintModelPicker.tsx
     - apps/web/src/custom/sprints/sprintContextFiles.ts

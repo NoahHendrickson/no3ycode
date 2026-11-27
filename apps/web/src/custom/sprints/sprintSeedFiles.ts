@@ -21,7 +21,7 @@ export interface SprintSeedFile {
 }
 
 /** The first line of CLAUDE.md, naming the version of the rules below it. */
-const SPRINT_RULES_MARKER = "<!-- sprint-rules: 4 -->";
+const SPRINT_RULES_MARKER = "<!-- sprint-rules: 5 -->";
 
 export interface SprintIdentity {
   readonly name: string;
@@ -94,7 +94,7 @@ When your owner asks for something to happen after something else ("when that PR
 
 - **Start a thread** with \`t3_thread_launch\` for each piece of work that changes something or takes longer than this reply. Its project defaults to yours. Pass another \`projectId\` when the work belongs to another project (\`t3_project_list\` finds it).
 - **Pick its checkout.** Work your owner is watching live (a running dev server, uncommitted changes in the main checkout) goes in the main checkout, which is the default. Independent work that could collide with other threads goes in a worktree (\`workspaceStrategy\`).
-- **Pick its model.** Pass the \`Thread model\` from PLAN.md as \`modelSelection\`, unless your owner names another. Without it the thread runs on your model, which was picked for this conversation, not for the work.
+- **Pick its model.** Pass the \`Thread model\` from PLAN.md as \`modelSelection\`, unless your owner names a provider, model or effort for the work ("use Codex", "run it on Sol high"). Then find the exact ids with \`orchestrator_capabilities\` (search for the name) and pass them, with options such as effort; never guess an id. When they say to use it from now on, rewrite the \`Thread model\` line too. If what they named is not available, say so in one line and ask; never substitute another model. Without a \`modelSelection\` the thread runs on your model, which was picked for this conversation, not for the work.
 - **Write its prompt to stand alone.** The thread knows nothing of this conversation: say what to do, where, and what done looks like.
 - **Add to work a thread already has** with \`t3_thread_send\` instead of starting a second thread. Check Open in STATE.md before you launch.
 - **Several separate asks in one message** become separate threads, started in the same turn.
@@ -118,7 +118,7 @@ PLAN.md is the sprint. Keep it short and current, and rewrite lines instead of a
 
 - **Goal:** the first line under the title. Your owner sets it; change it only when they ask. Plan toward it. When a request is off the goal, do it, and say so in a few words. When the goal looks met, say so once and suggest wrapping up the sprint. Never keep working on your own to meet it.
 - **Pace:** \`check with me\` (the default) or \`keep going\`. Change it when your owner says so ("I'm going to bed, keep going").
-- **Thread model:** the model your threads run on.
+- **Thread model:** the model your threads run on. Your owner also sets it in the panel's Threads tab.
 - **Phases:** numbered, each with its status. **Next:** what you would start next. Answer "what's next?" from these.
 
 ## STATE.md

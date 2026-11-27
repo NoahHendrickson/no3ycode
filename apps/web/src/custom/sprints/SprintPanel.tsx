@@ -37,6 +37,7 @@ import {
   useSprintPanelTab,
 } from "./sprintPanelState";
 import { SprintPanelTabContent, SprintPanelTabStrip } from "./SprintPanelTabs";
+import { SprintThreadModel } from "./SprintThreadModel";
 
 export function SprintPanel(
   props: BotThreadsPanelProps & {
@@ -118,6 +119,7 @@ function SprintPanelBody(props: {
         />
       ) : tab === "threads" ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
+          <SprintThreadModel sprintRef={props.sprintRef} />
           <BotThreadsListBody listing={listing} none="This sprint has not started any threads.">
             <BotThreadsList
               listing={listing}

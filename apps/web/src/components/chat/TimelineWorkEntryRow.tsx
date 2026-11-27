@@ -59,7 +59,7 @@ import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 /* fork:end fork-subagent-spawn-card */
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
-import { forkWorkReportKey } from "~/custom/forkWorkReports";
+import { forkWorkReportOf } from "~/custom/forkWorkReports";
 /* fork:end fork-thread-launch-cards */
 import {
   TimelineRowCtx,
@@ -240,18 +240,10 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
   const childThreadId =
     item?.type === "notification" ? notificationChildThreadId(item.source) : undefined;
   /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
-  if (
-    item?.type === "notification" &&
-    childThreadId === undefined &&
-    forkWorkReportKey(item.id) !== null
-  ) {
-    return (
-      <ForkWorkReportRow
-        itemId={item.id}
-        summary={item.summary}
-        fallback={<WorkEntryLogRow {...props} />}
-      />
-    );
+  const forkReport =
+    item?.type === "notification" && childThreadId === undefined ? forkWorkReportOf(item) : null;
+  if (forkReport !== null) {
+    return <ForkWorkReportRow report={forkReport} fallback={<WorkEntryLogRow {...props} />} />;
   }
   /* fork:end fork-thread-launch-cards */
   if (item?.type !== "notification" || childThreadId === undefined) {

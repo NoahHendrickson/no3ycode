@@ -4,7 +4,12 @@
  * summaries (orchestration-v2/forkBotWorkReports) lives here, so a change there has one place to
  * follow.
  */
-import type { ScopedThreadRef, ThreadId } from "@t3tools/contracts";
+import type {
+  ForkWorkRequestKind,
+  OrchestrationV2NotificationSource,
+  ScopedThreadRef,
+  ThreadId,
+} from "@t3tools/contracts";
 
 import type { TimelineEntry } from "~/session-logic";
 
@@ -72,12 +77,46 @@ export function forkWorkReportIsPending(
   return pendingRequestId != null && key === `${threadId}:${pendingRequestId}`;
 }
 
+export interface ForkWorkReport {
+  /** `threadId:requestId` for a question or approval, which ANSWERS.md and the pending check use. */
+  readonly key: string;
+  /** Null when only the key names it: resolve it with forkWorkReportThreadId. */
+  readonly threadId: ThreadId | null;
+  readonly requestKind: ForkWorkRequestKind | null;
+}
+
+/** A notification read as a work report: from the source's forkWorkReport when the server sent one
+    (fork-bot-work-reports), else from its id and summary, for older servers and earlier reports. */
+export function forkWorkReportOf(notice: {
+  readonly id: string;
+  readonly summary: string;
+  readonly source: OrchestrationV2NotificationSource | undefined;
+}): ForkWorkReport | null {
+  const named = notice.source?.kind === "system" ? notice.source.forkWorkReport : undefined;
+  if (named !== undefined) {
+    const { threadId, request } = named;
+    return {
+      key:
+        request === undefined
+          ? (forkWorkReportKey(notice.id) ?? threadId)
+          : `${threadId}:${request.id}`,
+      threadId,
+      requestKind: request?.kind ?? null,
+    };
+  }
+  const key = forkWorkReportKey(notice.id);
+  if (key === null) return null;
+  return { key, threadId: null, requestKind: forkWorkReportRequestKind(notice.summary) };
+}
+
 /** A work report of a thread's question or approval, which carries the card the owner answers on. */
 export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
-  return (
-    entry.kind === "work" &&
-    entry.entry.itemType === "notification" &&
-    forkWorkReportKey(entry.id) !== null &&
-    forkWorkReportRequestKind(entry.entry.label) !== null
-  );
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+  const item = entry.entry.projectedItem?.item;
+  const report = forkWorkReportOf({
+    id: entry.id,
+    summary: entry.entry.label,
+    source: item?.type === "notification" ? item.source : undefined,
+  });
+  return report?.requestKind != null;
 }

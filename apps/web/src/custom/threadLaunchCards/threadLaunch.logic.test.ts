@@ -1,4 +1,4 @@
-import { MessageId, RunId, ThreadId } from "@t3tools/contracts";
+import { MessageId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
@@ -14,6 +14,7 @@ import {
 import {
   forkWorkReportIsPending,
   forkWorkReportKey,
+  forkWorkReportOf,
   forkWorkReportRequestKind,
   forkWorkReportThreadId,
 } from "../forkWorkReports";
@@ -254,6 +255,29 @@ describe("threadLaunchPullRequests", () => {
 
 describe("work report notifications", () => {
   const itemId = (messageId: string) => `turn-item:message:${encodeURIComponent(messageId)}`;
+
+  it("reads the server's named thread and request first, and an older report from its id", () => {
+    const id = itemId("message:fork-bot-work-report:mcp:t1:request-1");
+    const named = forkWorkReportOf({
+      id,
+      summary: "Rate limiting waits for you",
+      source: {
+        kind: "system",
+        forkWorkReport: {
+          threadId: ThreadId.make("mcp:t1"),
+          request: { id: RuntimeRequestId.make("request-1"), kind: "approval" },
+        },
+      },
+    });
+    expect(named).toEqual({ key: "mcp:t1:request-1", threadId: "mcp:t1", requestKind: "approval" });
+    expect(forkWorkReportIsPending(named!.key, "mcp:t1", "request-1")).toBe(true);
+    expect(
+      forkWorkReportOf({ id, summary: "Rate limiting has a question", source: { kind: "system" } }),
+    ).toEqual({ key: "mcp:t1:request-1", threadId: null, requestKind: "question" });
+    expect(
+      forkWorkReportOf({ id: "turn-item:provider:x", summary: "x", source: { kind: "system" } }),
+    ).toBeNull();
+  });
 
   it("names the reporting thread, even one whose id holds colons", () => {
     const key = forkWorkReportKey(
