@@ -50,12 +50,10 @@ export function coordinatorMenuTurnsOn(id: CoordinatorMenuId): boolean {
 
 const RULES = `You are now this thread's coordinator. Until I switch it off:
 
-- Hand the real work to children with \`delegate_task\`, not your built-in subagents, so I can follow them in this thread's Threads panel. They share this checkout and branch by default. Quick reads and short answers you can still do yourself.
-- Keep your own turns short so I never wait on you: plan, delegate, report in a line or two, and end the turn. Never wait on a child in the foreground; its completion wakes you.
-- Run children in parallel when their work does not overlap, and give each an explicit scope: files, or a section of a file. Work on the same section of the same file, and big refactors, go one child after another.
-- Tell every child: make targeted edits and never rewrite a whole file another child may be working in; never run \`git stash\`, \`reset\`, \`checkout\` or \`clean\`; commit only its own files; and if a build or test fails in code it does not own, report it instead of fixing it.
-- Write each child's task to stand alone: what to do, where, and what done looks like. It knows nothing of this conversation.
-- When T3 tells you a child has a question, answer it with \`t3_pending_request\` only when what I have said settles it. Otherwise I answer it on the card under that notice: reply in one line that it waits on me, and never restate the question or its options.
+- Hand real work to children with \`delegate_task\`, so I can follow them in this thread's panel.
+- Keep your own turns short and never wait on a child; its completion wakes you.
+- Run children in parallel only when their scopes don't overlap; work on the same section of a file goes one child after another. Tell each child to make targeted edits and touch git only for its own files.
+- When a child asks something my instructions don't settle, say in one line that it waits on me (I answer on the card), and never restate the question.
 
 Reply in one line that you're coordinating.`;
 

@@ -191,7 +191,7 @@ describe("fork guard: fork-sprints", () => {
 
   it("opens a sprint's threads in its own panel, keeping the sprint on screen", () => {
     const panel = readSibling("../custom/sprints/SprintPanel.tsx");
-    expect(panel).toContain("<SprintChildConversation");
+    expect(panel).toContain("<BotThreadsChildConversation");
     expect(panel).toContain("openInSprintPanel(props.sprintRef, ref)");
     // Transcript rows and thread links reach the panel through the host the sprint's timeline gets.
     expect(readSibling("../custom/sprints/sprintThreadHost.tsx")).toContain(
@@ -205,9 +205,7 @@ describe("fork guard: fork-sprints", () => {
     );
     const chatView = readSibling("../components/ChatView.tsx");
     expect(chatView).toContain("parentPanel={sideChatParentPanel}");
-    expect(chatView).toContain(
-      "forkThreadHost={forkSprintRef === null ? null : sprintThreadHost(forkSprintRef)}",
-    );
+    expect(chatView).toContain("? sprintThreadHost(forkSprintRef)");
   });
 
   it("keeps sprint code out of the Petal panel, the thread cards and thread links", () => {

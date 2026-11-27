@@ -8898,8 +8898,9 @@
 
     A thread opened from a sprint opens in its panel, never in the main column or a split: the
     panel's header turns into a back arrow and the thread's title, and its body is the thread's
-    own chat, composer included, embedded as a side chat is (custom/sprints/SprintChildConversation,
-    with ChatView's sideChatParentPanel, which ChatView hands SprintPanel). openInSprintPanel
+    own chat, composer included, embedded as a side chat is (custom/bots/BotThreadsChild, shared
+    with fork-coordinator-threads, with ChatView's sideChatParentPanel, which ChatView hands
+    SprintPanel; the open thread is botThreadsPanelStore's openBotThreadsChild). openInSprintPanel
     (sprintPanelState) does it for a Threads tab row, and, through the host the sprint gives its
     timeline (custom/sprints/sprintThreadHost, fork-thread-launch-cards forkThreadHost), for a
     thread or report row in the transcript (useOpenThreadBeside) and a thread link in the sprint's
@@ -8952,7 +8953,7 @@
     - apps/web/src/custom/sprints/sprintPanelState.ts
     - apps/web/src/custom/sprints/SprintPanelTabs.tsx
     - apps/web/src/custom/sprints/SprintFileEditor.tsx
-    - apps/web/src/custom/sprints/SprintChildConversation.tsx
+    - apps/web/src/custom/bots/BotThreadsChild.tsx
     - apps/web/src/custom/sprints/sprintFileEditor.logic.ts
     - apps/web/src/custom/sprints/sprintPullRequests.logic.ts
     - apps/web/src/custom/sprints/SprintPullRequests.tsx
@@ -10411,38 +10412,51 @@
     request, 2026-11-27). A coordinator keeps its own checkout and branch and hands the work to
     delegate_task children there, so several chunks of one branch run while it stays free to
     talk; a sprint (fork-sprints) is the separate home for work across branches and projects.
-    The switch is the `coordinator` tag (thread.tag.set). The standing rules reach the thread as
-    a queued owner message when it is switched on (custom/coordinator/coordinatorThreads
-    coordinatorMessage, sent through fork-bot-crew's useTellBot), which works on every
-    provider and leaves a visible mark of when the mode began; no per-thread system prompt
-    exists to carry them. The rules: delegate_task children, not built-in subagents, so the
-    panel can follow them; short turns that never wait on a child; children in parallel when
-    their scopes do not overlap (targeted edits, no whole-file rewrites, no stash, reset,
-    checkout or clean, commit only their own files, report failures in code they do not own),
-    one after another on the same section; a child's question the coordinator cannot settle
-    is left to the owner in one line, never restated.
-    A coordinator owns a Threads panel exactly as a listed bot does (fork-bot-work-threads
-    botThreadsPanelBotId), which lists its children by lineage; an archived coordinator's
-    children show no panel. Petals, sprints, subagents and side chats get no switch.
-    A delegated child's question notice (the server's DelegatedTaskQuestionReactor message,
-    `message:delegated-task-question:<parent>:<request>`) renders in any parent as
-    fork-thread-launch-cards' question card while that request is open (custom/threadLaunchCards
-    ForkDelegatedQuestionRow, delegatedQuestionRequestId), so the owner answers the child in
-    place; after, the child's row. Approvals do not wake the parent, so they wait in the child.
-    Web-only: mobile has no switch or panel yet.
+    It stays as light as possible (maintainer, 2026-11-27): no default thread model, model
+    setting or model rule, so children inherit the coordinator's model unless the owner names
+    one in chat. The switch is the `coordinator` tag (thread.tag.set). The standing rules reach
+    the thread as a queued owner message when it is switched on (custom/coordinator/
+    coordinatorThreads coordinatorMessage, sent through fork-bot-crew's useTellBot), which works
+    on every provider and marks when the mode began. They stay short: delegate real work with
+    delegate_task so the panel shows it; short turns that never wait on a child; children in
+    parallel only when their scopes do not overlap, one after another on the same section of a
+    file, with targeted edits and git only for their own files; a child's question the owner's
+    instructions do not settle is left to the owner's card in one line, never restated.
+    Only a coordinator gets a sub-agent panel (custom/coordinator/CoordinatorPanel); ordinary
+    threads keep their inline sub-agent cards. It shows on the coordinator and on each of its
+    children (fork-bot-work-threads botThreadsPanelBotId; none for an archived coordinator's
+    children), behind the usual Threads toggle, and lists the children by status with the Petal
+    panel's shared parts (bots/BotThreadsPanel). No tabs. On the coordinator's own page a child
+    opens inside the panel with a back arrow (bots/BotThreadsChild, shared with fork-sprints), so
+    the coordinator keeps the main column; on a child's page the child holds the column and is
+    never embedded in itself. The coordinator's timeline gets a host (coordinatorThreadHost,
+    fork-thread-launch-cards forkThreadHost) that opens named threads in that panel. A delegated
+    child's question notice (the server's DelegatedTaskQuestionReactor message,
+    `message:delegated-task-question:<parent>:<request>`, source delegated_task; read by
+    forkWorkReports forkDelegatedQuestionOf) renders, under any host, as the shared question card
+    while that request is open, so the owner answers the child in place, and as the child's row
+    once answered; the coordinator keeps no ANSWERS.md (sprint-only). With no host, an ordinary
+    thread draws the notice as before. Approvals do not wake the parent, so they wait in the
+    child. Petals, sprints, subagents and side chats get no switch. Web-only: mobile has no
+    switch or panel yet.
   tier: 4
   files:
     - apps/web/src/custom/coordinator/coordinatorThreads.ts
     - apps/web/src/custom/coordinator/useSetCoordinator.ts
+    - apps/web/src/custom/coordinator/useIsCoordinatorThread.ts
+    - apps/web/src/custom/coordinator/CoordinatorPanel.tsx
+    - apps/web/src/custom/coordinator/coordinatorThreadHost.tsx
   shadows: []
   watch:
     - apps/web/src/components/Sidebar.tsx
+    - apps/web/src/components/ChatView.tsx
+    - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
     - apps/web/src/hooks/useThreadActionMenu.ts
     - apps/web/src/hooks/useThreadActionMenu.test.ts
     - apps/web/src/custom/bots/botWork.ts
-    - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
-    - apps/web/src/custom/threadLaunchCards/ForkThreadLaunchCards.tsx
-    - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.ts
+    - apps/web/src/custom/bots/BotThreadsChild.tsx
+    - apps/web/src/custom/bots/botThreadsPanelStore.ts
+    - apps/web/src/custom/forkWorkReports.ts
   verify:
     - apps/web/src/__fork_guards__/forkCoordinatorThreads.test.ts
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts

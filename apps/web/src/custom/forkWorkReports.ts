@@ -19,15 +19,19 @@ import type { TimelineEntry } from "~/session-logic";
 const NOTIFICATION_ITEM_PREFIX = "turn-item:message:";
 const WORK_REPORT_PREFIXES = ["message:fork-bot-work-report:", "message:fork-bot-work-seen:"];
 
-/** What follows a work report's prefix in its notification's item id, or null for another item. */
-export function forkWorkReportKey(itemId: string): string | null {
+function notificationMessageId(itemId: string): string | null {
   if (!itemId.startsWith(NOTIFICATION_ITEM_PREFIX)) return null;
-  let messageId: string;
   try {
-    messageId = decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
+    return decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
   } catch {
     return null;
   }
+}
+
+/** What follows a work report's prefix in its notification's item id, or null for another item. */
+export function forkWorkReportKey(itemId: string): string | null {
+  const messageId = notificationMessageId(itemId);
+  if (messageId === null) return null;
   const prefix = WORK_REPORT_PREFIXES.find((candidate) => messageId.startsWith(candidate));
   return prefix === undefined ? null : messageId.slice(prefix.length);
 }
@@ -107,6 +111,29 @@ export function forkWorkReportOf(notice: {
   const key = forkWorkReportKey(notice.id);
   if (key === null) return null;
   return { key, threadId: null, requestKind: forkWorkReportRequestKind(notice.summary) };
+}
+
+// orchestration-v2/DelegatedTaskQuestionReactor's message id: the prefix, the parent's thread id,
+// then the child's request id.
+const DELEGATED_QUESTION_PREFIX = "message:delegated-task-question:";
+
+/** A delegated child's question notice, which wakes its parent, read as the child's question
+    report (fork-coordinator-threads); null for every other notice. */
+export function forkDelegatedQuestionOf(notice: {
+  readonly id: string;
+  readonly threadId: string;
+  readonly source: OrchestrationV2NotificationSource;
+}): ForkWorkReport | null {
+  if (notice.source.kind !== "delegated_task" || notice.source.childThreadId === undefined) {
+    return null;
+  }
+  const messageId = notificationMessageId(notice.id);
+  const prefix = `${DELEGATED_QUESTION_PREFIX}${notice.threadId}:`;
+  if (messageId === null || !messageId.startsWith(prefix)) return null;
+  const requestId = messageId.slice(prefix.length);
+  if (requestId === "") return null;
+  const { childThreadId } = notice.source;
+  return { key: `${childThreadId}:${requestId}`, threadId: childThreadId, requestKind: "question" };
 }
 
 /** A work report of a thread's question or approval, which carries the card the owner answers on. */

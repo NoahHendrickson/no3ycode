@@ -1,4 +1,4 @@
-import { MessageId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
+import { MessageId, NodeId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
@@ -12,6 +12,7 @@ import {
   threadPullRequestStage,
 } from "./threadLaunch.logic";
 import {
+  forkDelegatedQuestionOf,
   forkWorkReportIsPending,
   forkWorkReportKey,
   forkWorkReportOf,
@@ -298,6 +299,28 @@ describe("work report notifications", () => {
     expect(forkWorkReportKey(itemId("message:scheduled-wake:t1"))).toBeNull();
     expect(forkWorkReportKey("turn-item:provider:x")).toBeNull();
     expect(forkWorkReportThreadId("t1:run:x", ["t2"])).toBeNull();
+  });
+
+  it("reads a delegated child's question as the child's report, in its parent only", () => {
+    const unnamed = { kind: "delegated_task" as const, taskIds: [NodeId.make("task-1")] };
+    const source = { ...unnamed, childThreadId: ThreadId.make("mcp:child") };
+    const id = itemId("message:delegated-task-question:mcp:p1:request:9");
+    const report = forkDelegatedQuestionOf({ id, threadId: "mcp:p1", source });
+    expect(report).toEqual({
+      key: "mcp:child:request:9",
+      threadId: "mcp:child",
+      requestKind: "question",
+    });
+    expect(forkWorkReportIsPending(report!.key, "mcp:child", "request:9")).toBe(true);
+    expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p", source })).toBeNull();
+    expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p1", source: unnamed })).toBeNull();
+    expect(
+      forkDelegatedQuestionOf({
+        id: itemId("message:delegated-task-result:mcp:p1:task-1"),
+        threadId: "mcp:p1",
+        source,
+      }),
+    ).toBeNull();
   });
 });
 

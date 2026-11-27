@@ -61,6 +61,10 @@ import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
 import { forkWorkReportOf } from "~/custom/forkWorkReports";
 /* fork:end fork-thread-launch-cards */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { forkDelegatedQuestionOf } from "~/custom/forkWorkReports";
+import { useForkThreadHost } from "~/custom/threadLaunchCards/forkThreadHost";
+/* fork:end fork-coordinator-threads */
 import {
   TimelineRowCtx,
   TimelineRowActivityCtx,
@@ -239,9 +243,17 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
   const item = props.workEntry.projectedItem?.item;
   const childThreadId =
     item?.type === "notification" ? notificationChildThreadId(item.source) : undefined;
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+     A delegated child's question is its card where the host answers inline (a coordinator). */
+  const forkHost = useForkThreadHost();
+  const forkQuestion =
+    item?.type === "notification" && forkHost !== null ? forkDelegatedQuestionOf(item) : null;
+  /* fork:end fork-coordinator-threads */
   /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
   const forkReport =
-    item?.type === "notification" && childThreadId === undefined ? forkWorkReportOf(item) : null;
+    item?.type === "notification" && childThreadId === undefined
+      ? forkWorkReportOf(item)
+      : forkQuestion;
   if (forkReport !== null) {
     return <ForkWorkReportRow report={forkReport} fallback={<WorkEntryLogRow {...props} />} />;
   }

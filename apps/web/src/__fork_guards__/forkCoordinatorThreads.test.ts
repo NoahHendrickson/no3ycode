@@ -10,6 +10,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   coordinatorMenuItems,
   coordinatorMenuTurnsOn,
+  coordinatorMessage,
   FORK_COORDINATOR_TAG,
   isCoordinatorMenuId,
 } from "../custom/coordinator/coordinatorThreads";
@@ -43,5 +44,36 @@ describe("fork guard: fork-coordinator-threads", () => {
       expect(source).toContain("...coordinatorMenuItems(");
       expect(source).toContain("if (isCoordinatorMenuId(clicked.value)) {");
     }
+  });
+
+  it("keeps the standing rules short, with no model rule", () => {
+    const rules = coordinatorMessage(true);
+    expect(rules).toContain("`delegate_task`");
+    expect(rules).toContain("never wait on a child");
+    expect(rules).toContain("scopes don't overlap");
+    expect(rules).toContain("never restate the question");
+    expect(rules).not.toMatch(/model/i);
+    expect(rules.length).toBeLessThan(800);
+  });
+
+  it("shows the coordinator's own panel, a child opening inside it, on itself and its children", () => {
+    const chatView = read("../components/ChatView.tsx");
+    expect(chatView).toContain("forkBotThreadsIsCoordinator ? (");
+    expect(chatView).toContain("<CoordinatorPanel");
+    expect(chatView).toContain("coordinatorThreadHost(forkCoordinatorRef)");
+    const panel = read("../custom/coordinator/CoordinatorPanel.tsx");
+    expect(panel).toContain("const child = onCoordinatorPage ? openChild : null;");
+    expect(panel).toContain("<BotThreadsChildConversation");
+    expect(panel).toContain("<BotThreadsChildHeading");
+    expect(read("../custom/coordinator/coordinatorThreadHost.tsx")).toContain(
+      "openThread: (ref) => openBotThreadsChild(coordinatorRef, ref),",
+    );
+  });
+
+  it("answers a delegated child's question on its card where the host answers inline", () => {
+    const row = read("../components/chat/TimelineWorkEntryRow.tsx");
+    expect(row).toContain(
+      'item?.type === "notification" && forkHost !== null ? forkDelegatedQuestionOf(item) : null;',
+    );
   });
 });

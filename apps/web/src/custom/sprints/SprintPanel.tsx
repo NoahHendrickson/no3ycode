@@ -5,10 +5,8 @@
  */
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { Button } from "~/components/ui/button";
 import type { SideChatParentPanel } from "~/lib/sideChatPane";
 import { cn } from "~/lib/utils";
-import { useQuietThreadShell } from "~/state/entities";
 
 import {
   BotThreadsCloseButton,
@@ -24,16 +22,14 @@ import {
   useBotThreadsRow,
 } from "../bots/BotThreadsPanel";
 import { BotPullRequestMark } from "../bots/BotPullRequestMark";
+import { BotThreadsChildConversation, BotThreadsChildHeading } from "../bots/BotThreadsChild";
+import { useBotThreadsOpenChild } from "../bots/botThreadsPanelStore";
 import type { BotWorkRow } from "../bots/botWork";
-import { ChevronLeftIcon } from "../icons/lucide-hugeicons";
 import { ListItem } from "../ListItem";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
-import { SprintChildConversation } from "./SprintChildConversation";
 import {
-  closeSprintChild,
   openInSprintPanel,
   SPRINT_PANEL_DEFAULT_WIDTH,
-  useSprintOpenChild,
   useSprintPanelTab,
 } from "./sprintPanelState";
 import { SprintPanelTabContent, SprintPanelTabStrip } from "./SprintPanelTabs";
@@ -70,9 +66,8 @@ function SprintPanelBody(props: {
   // The thread opened from the sprint shows here, only on the sprint's own page: on one of its
   // threads, that thread holds the main column.
   const onSprintPage = scopedThreadKey(props.currentThreadRef) === sprintKey;
-  const openChild = useSprintOpenChild(sprintKey);
+  const openChild = useBotThreadsOpenChild(sprintKey);
   const child = onSprintPage ? openChild : null;
-  const childShell = useQuietThreadShell(child);
   return (
     <>
       <BotThreadsHeader
@@ -83,21 +78,11 @@ function SprintPanelBody(props: {
         className="gap-1 pr-0.5 pl-1.5"
       >
         {child !== null ? (
-          <span className="flex min-w-0 flex-1 items-center gap-1 [-webkit-app-region:no-drag]">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Back to the sprint's threads"
-              onClick={() => closeSprintChild(sprintKey)}
-              data-testid="sprint-child-back"
-            >
-              <ChevronLeftIcon />
-            </Button>
-            <h2 className="min-w-0 flex-1 truncate text-sm font-normal text-foreground">
-              {childShell?.title ?? "Thread"}
-            </h2>
-          </span>
+          <BotThreadsChildHeading
+            botKey={sprintKey}
+            childRef={child}
+            backLabel="Back to the sprint's threads"
+          />
         ) : searching ? (
           <BotThreadsSearchInput botKey={sprintKey} view={view} />
         ) : (
@@ -115,8 +100,8 @@ function SprintPanelBody(props: {
         </span>
       </BotThreadsHeader>
       {child !== null ? (
-        <SprintChildConversation
-          sprintRef={props.sprintRef}
+        <BotThreadsChildConversation
+          botRef={props.sprintRef}
           childRef={child}
           parentPanel={props.parentPanel}
         />
