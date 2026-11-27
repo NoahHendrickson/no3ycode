@@ -15,7 +15,7 @@ export type ContextFileRead =
       readonly contents: string;
       readonly encoding: "utf8" | "base64";
     }
-  | { readonly kind: "skipped"; readonly name: string; readonly reason: "large" };
+  | { readonly kind: "skipped"; readonly name: string; readonly reason: "large" | "unreadable" };
 
 /** A file name that stays one entry inside `context/`: no folders, no hidden files. */
 export function contextFileName(name: string): string {
@@ -50,7 +50,10 @@ export function bytesToBase64(bytes: Uint8Array): string {
 export async function readContextFile(file: File): Promise<ContextFileRead> {
   const name = contextFileName(file.name);
   if (file.size > MAX_BINARY_FILE_BYTES) return { kind: "skipped", name, reason: "large" };
-  const bytes = new Uint8Array(await file.arrayBuffer());
+  // A dropped folder, or a file gone since it was picked, cannot be read.
+  const buffer = await file.arrayBuffer().catch(() => null);
+  if (buffer === null) return { kind: "skipped", name, reason: "unreadable" };
+  const bytes = new Uint8Array(buffer);
   const text = file.size > MAX_TEXT_FILE_BYTES ? null : decodeContextText(bytes);
   return text === null
     ? { kind: "file", name, contents: bytesToBase64(bytes), encoding: "base64" }
@@ -59,8 +62,10 @@ export async function readContextFile(file: File): Promise<ContextFileRead> {
 
 /** One line for a toast naming the files that were not copied. */
 export function skippedContextSummary(read: ReadonlyArray<ContextFileRead>): string | null {
-  const large = read.filter((file) => file.kind === "skipped");
-  return large.length === 0
-    ? null
-    : `${large.map((file) => file.name).join(", ")}: larger than 20 MB.`;
+  const skipped = read.flatMap((file) =>
+    file.kind === "skipped"
+      ? [`${file.name} (${file.reason === "large" ? "larger than 20 MB" : "could not be read"})`]
+      : [],
+  );
+  return skipped.length === 0 ? null : `${skipped.join(", ")}.`;
 }

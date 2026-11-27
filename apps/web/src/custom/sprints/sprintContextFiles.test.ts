@@ -6,6 +6,7 @@ import {
   contextFileName,
   decodeContextText,
   readContextFile,
+  skippedContextSummary,
 } from "./sprintContextFiles";
 import { withoutPromptInjectedLevels } from "./sprintModel";
 
@@ -48,6 +49,15 @@ describe("readContextFile", () => {
     expect(read.kind === "file" && read.encoding).toBe("base64");
     const decoded = read.kind === "file" ? atob(read.contents) : "";
     expect(Array.from(decoded, (char) => char.charCodeAt(0))).toEqual(Array.from(png));
+  });
+
+  it("skips a dropped folder, which cannot be read", async () => {
+    const folder = Object.assign(new File([], "designs"), {
+      arrayBuffer: () => Promise.reject(new DOMException("Not found", "NotFoundError")),
+    });
+    const read = await readContextFile(folder);
+    expect(read).toEqual({ kind: "skipped", name: "designs", reason: "unreadable" });
+    expect(skippedContextSummary([read])).toBe("designs (could not be read).");
   });
 
   it("encodes past one chunk", () => {

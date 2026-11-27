@@ -246,7 +246,12 @@ export function ForkWorkReportRow(props: {
       ) : forkWorkReportIsPending(key, thread.id, thread.source.pendingRuntimeRequest?.id) ? (
         <ForkThreadRequestCard thread={thread} hostRef={ctx.threadRef} kind={request} />
       ) : (
-        <ForkAnsweredRequest thread={thread} hostRef={ctx.threadRef} kind={request} />
+        <ForkAnsweredRequest
+          thread={thread}
+          reportKey={key}
+          hostRef={ctx.threadRef}
+          kind={request}
+        />
       )}
     </div>
   );

@@ -251,7 +251,7 @@ const CLAUDE_SETTINGS = {
           {
             type: "command",
             // Capped, so files that outgrew their rules cannot flood every new session.
-            command: `for f in PLAN.md STATE.md ${SPRINT_MEMORY_FILE}; do echo "Your $f as it is on disk now:"; head -c 6000 "$CLAUDE_PROJECT_DIR/$f"; echo; done; ${MARK_MEMORY_SEEN}`,
+            command: `for f in PLAN.md STATE.md ${SPRINT_MEMORY_FILE}; do echo "Your $f as it is on disk now:"; head -c 6000 "$CLAUDE_PROJECT_DIR/$f"; echo; done; ${MARK_MEMORY_SEEN} || true`,
           },
         ],
       },

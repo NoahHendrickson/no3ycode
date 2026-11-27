@@ -204,10 +204,10 @@ describe("fork guard: fork-sprints", () => {
     expect(composer).toMatch(/forkIsSprint \|\|/);
   });
 
-  it("draws the Sprints section and tags a new sprint `bot` before `sprint`", () => {
+  it("draws the Sprints section and tags a new sprint `sprint` before `bot`", () => {
     expect(readSibling("../components/Sidebar.tsx")).toContain("<SidebarV2SprintsRow");
     expect(readSibling("../custom/sprints/useCreateSprint.ts")).toContain(
-      "[FORK_BOT_THREAD_TAG, FORK_SPRINT_TAG]",
+      "[FORK_SPRINT_TAG, FORK_BOT_THREAD_TAG]",
     );
   });
 });

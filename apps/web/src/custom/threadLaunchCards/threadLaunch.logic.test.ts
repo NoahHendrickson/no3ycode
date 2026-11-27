@@ -302,21 +302,35 @@ describe("thread requests from reports", () => {
 });
 
 describe("sprint answers", () => {
-  it("reads back the latest answers it wrote for a thread", () => {
+  it("reads back the latest answers it wrote for each request", () => {
     const log = [
-      sprintAnswerLine([{ question: "Which color?", answer: "Blue" }]),
-      sprintAnswerLine([
-        { question: "Which color?", answer: "Red (Recommended)" },
-        { question: "Which size?", answer: "Large" },
-      ]),
+      ["r1", sprintAnswerLine([{ question: "Which color?", answer: "Blue" }])],
+      [
+        "r1",
+        sprintAnswerLine([
+          { question: "Which color?", answer: "Red (Recommended)" },
+          { question: "Which size?", answer: "Large" },
+        ]),
+      ],
+      [
+        "r2",
+        sprintAnswerLine([{ question: "Run\n  rm -rf dist; vp build", answer: "Allowed; once" }]),
+      ],
     ].reduce(
-      (text, line) => withSprintAnswer(text, `2026-11-27 10:00: Pick (mcp:t1): ${line}`),
+      (text, [request, line]) =>
+        withSprintAnswer(text, `2026-11-27 10:00: Pick (mcp:t1:${request}): ${line}`),
       "",
     );
-    expect(sprintAnswersFor(log, "mcp:t1")).toEqual([
+    expect(sprintAnswersFor(log, "mcp:t1:r1")).toEqual([
       { question: "Which color?", answer: "Red (Recommended)" },
       { question: "Which size?", answer: "Large" },
     ]);
-    expect(sprintAnswersFor(log, "t2")).toBeNull();
+    expect(sprintAnswersFor(log, "mcp:t1:r2")).toEqual([
+      { question: "Run rm -rf dist; vp build", answer: "Allowed; once" },
+    ]);
+    expect(sprintAnswersFor(log, "mcp:t1:r3")).toBeNull();
+    expect(sprintAnswersFor("- 10:00: Pick (t2:r1): Which color? → blue", "t2:r1")).toEqual([
+      { question: "Which color?", answer: "blue" },
+    ]);
   });
 });

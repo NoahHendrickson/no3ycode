@@ -21,7 +21,11 @@ export function SprintChildConversation(props: {
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- registers the sprint's panel as the embedded thread's panel host
   useEffect(() => hostRightPanel(childRef, sprintRef), [childRef, sprintRef]);
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-fork-sprint-child={childRef.threadId}>
+    <div
+      className="flex min-h-0 flex-1 flex-col"
+      data-fork-sprint-child={childRef.threadId}
+      data-side-chat-pane={childRef.threadId}
+    >
       <BackgroundThreadContext value>
         <ComposerHandleContext value={null}>
           <ChatView

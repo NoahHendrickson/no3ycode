@@ -218,36 +218,42 @@ export interface SprintAnswer {
   readonly answer: string;
 }
 
-/** One ANSWERS.md entry's text: each question, an arrow, its answer as JSON; several joined by
-    "; ". An approval's question is what it asked to do, its answer the decision. */
+/** One ANSWERS.md entry's text: each question on one line, an arrow, its answer as JSON; several
+    joined by "; ". An approval's question is what it asked to do, its answer the decision. */
 export function sprintAnswerLine(answers: ReadonlyArray<SprintAnswer>): string {
-  return answers.map((entry) => `${entry.question} → ${JSON.stringify(entry.answer)}`).join("; ");
+  return answers
+    .map(
+      (entry) => `${entry.question.replace(/\s+/g, " ").trim()} → ${JSON.stringify(entry.answer)}`,
+    )
+    .join("; ");
 }
 
-/** The owner's latest answers to a thread in the sprint's ANSWERS.md, or null when there are none. */
+// A question, then its answer as a JSON string (which may hold "; "), or bare words written by hand.
+const SPRINT_ANSWER = /(.+?) → ("(?:[^"\\]|\\.)*"|[^;]*)(?:; |$)/g;
+
+/** The owner's latest answers to one request in the sprint's ANSWERS.md, keyed as its work report
+    is (`threadId:requestId`), or null when there are none. */
 export function sprintAnswersFor(
   log: string,
-  threadId: string,
+  reportKey: string,
 ): ReadonlyArray<SprintAnswer> | null {
-  const marker = `(${threadId}): `;
+  const marker = `(${reportKey}): `;
   const line = log
     .split("\n")
     .filter((entry) => entry.startsWith("- ") && entry.includes(marker))
     .at(-1);
   if (line === undefined) return null;
   const said = line.slice(line.indexOf(marker) + marker.length);
-  const answers = said.split("; ").flatMap((part) => {
-    const arrow = part.lastIndexOf(" → ");
-    if (arrow === -1) return [];
-    const raw = part.slice(arrow + 3);
+  const answers = [...said.matchAll(SPRINT_ANSWER)].map(([, question = "", raw = ""]) => {
     let answer = raw;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      answer = Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
-    } catch {
-      // Written by hand: keep the words.
+    if (raw.startsWith('"')) {
+      try {
+        answer = String(JSON.parse(raw));
+      } catch {
+        // Written by hand: keep the words.
+      }
     }
-    return [{ question: part.slice(0, arrow), answer }];
+    return { question, answer };
   });
   return answers.length === 0 ? null : answers;
 }

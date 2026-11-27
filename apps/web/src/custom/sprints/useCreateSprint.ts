@@ -150,9 +150,9 @@ export function useCreateSprint(): (sprint: NewSprint) => Promise<ScopedThreadRe
       },
     });
     if (failed(created)) return null;
-    // `bot` first, as a Petal: the server links its work by that tag. A failed tag would leave
-    // a stray thread, so the thread goes again.
-    for (const tag of [FORK_BOT_THREAD_TAG, FORK_SPRINT_TAG]) {
+    // `sprint` first: a thread tagged `bot` alone reads as a Petal, whose rules refresh would
+    // overwrite the sprint's CLAUDE.md. A failed tag would leave a stray thread, so it goes again.
+    for (const tag of [FORK_SPRINT_TAG, FORK_BOT_THREAD_TAG]) {
       const tagged = await run(threadEnvironment.setTag, {
         environmentId,
         input: { threadId, tag, tagged: true },

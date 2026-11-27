@@ -167,9 +167,11 @@ function BotThreadsBody(props: {
   const sprintTab = useSprintPanelTab(botKey);
   const tab = isSprint ? sprintTab : "threads";
   const searching = tab === "threads" && view.query !== null;
-  // A sprint shows the thread opened from it here, with a way back to its tabs.
+  // A sprint shows the thread opened from it here, with a way back to its tabs. Only on the
+  // sprint's own page: on one of its threads, that thread holds the main column.
+  const onSprintPage = isSprint && scopedThreadKey(props.currentThreadRef) === botKey;
   const openChild = useSprintOpenChild(botKey);
-  const child = isSprint && props.parentPanel !== undefined ? openChild : null;
+  const child = onSprintPage && props.parentPanel !== undefined ? openChild : null;
   const childShell = useQuietThreadShell(child);
   const projectIds = new Set(all.flatMap((group) => group.rows.map((row) => row.thread.projectId)));
   const searchInput = (
@@ -259,7 +261,7 @@ function BotThreadsBody(props: {
         groups={groups}
         folded={folded}
         compact={isSprint}
-        onOpenThread={isSprint ? (ref) => openInSprintPanel(props.botRef, ref) : undefined}
+        onOpenThread={onSprintPage ? (ref) => openInSprintPanel(props.botRef, ref) : undefined}
         onToggle={(key) =>
           setFolded((previous) => {
             const next = new Set(previous);

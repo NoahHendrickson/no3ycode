@@ -72,7 +72,11 @@ function sprintFolder(shell: EnvironmentThreadShell | null) {
 /** Notes a direct answer in a sprint's ANSWERS.md and marks it changed; nothing for other hosts. */
 function useNoteAnswer(hostRef: ScopedThreadRef | null) {
   const registry = useContext(RegistryContext);
-  return async (thread: EnvironmentThreadShell, answers: ReadonlyArray<SprintAnswer>) => {
+  return async (
+    thread: EnvironmentThreadShell,
+    requestId: RuntimeRequestId,
+    answers: ReadonlyArray<SprintAnswer>,
+  ) => {
     const folder = sprintFolder(hostRef === null ? null : readThreadShell(hostRef));
     if (folder === null) return;
     const { environmentId, cwd } = folder;
@@ -95,7 +99,7 @@ function useNoteAnswer(hostRef: ScopedThreadRef | null) {
         { label: projectEnvironment.writeFile.label, ...QUIET },
       );
     const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
-    const line = `${stamp}: ${thread.title} (${thread.id}): ${sprintAnswerLine(answers)}`;
+    const line = `${stamp}: ${thread.title} (${thread.id}:${requestId}): ${sprintAnswerLine(answers)}`;
     const written = await write(ANSWERS_FILE, withSprintAnswer(log, line));
     if (written._tag !== "Success") return;
     await write(`${SPRINT_OWNER_EDITS_DIRECTORY}/${ANSWERS_FILE}`, `${new Date().toISOString()}\n`);
@@ -175,6 +179,8 @@ const NO_LOG = Atom.make(AsyncResult.initial<ProjectReadFileResult, never>(false
     with the question and the answer; otherwise the thread's row alone remains. */
 export function ForkAnsweredRequest(props: {
   readonly thread: EnvironmentThreadShell;
+  /** The work report's `threadId:requestId`, which its ANSWERS.md line carries. */
+  readonly reportKey: string;
   readonly hostRef: ScopedThreadRef | null;
   readonly kind: "question" | "approval";
 }) {
@@ -191,7 +197,7 @@ export function ForkAnsweredRequest(props: {
   const answers =
     file === null || file.exists === false
       ? null
-      : sprintAnswersFor(file.contents, props.thread.id);
+      : sprintAnswersFor(file.contents, props.reportKey);
   if (answers === null) {
     return (
       <ForkThreadHookRow
@@ -271,6 +277,7 @@ function ThreadQuestion(props: {
       if (!sent) return;
       void noteAnswer(
         thread,
+        input.requestId,
         input.questions.map((entry) => {
           const given = resolved[entry.id];
           return {
@@ -412,7 +419,7 @@ function ThreadApproval(props: {
       "Could not send the decision.",
     );
     if (sent) {
-      void noteAnswer(thread, [
+      void noteAnswer(thread, requestId, [
         {
           question: approval.detail ?? approval.requestKind,
           answer: DECISION_WORDS[decision] ?? decision,
