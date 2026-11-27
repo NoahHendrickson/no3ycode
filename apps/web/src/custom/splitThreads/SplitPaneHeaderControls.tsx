@@ -62,13 +62,16 @@ export function SplitPaneHeaderControls(props: {
   readonly panelToggleControls: ReactNode;
   /** SplitAgentToggle, when the pane can split or is split. */
   readonly splitAgentToggle: ReactNode;
+  /** Float and Dock to right; off for a sprint, which stays in the column (fork-sprints). */
+  readonly paneActions?: boolean;
   /** The pane's thread while it is an unsent draft, else null. */
   readonly draftId: DraftId | null;
   readonly threadRef: ScopedThreadRef | null;
 }) {
   const { draftId, threadRef } = props;
   const splitPane = useSplitPane();
-  const { windowAction, dockAction } = splitPane;
+  const { windowAction, dockAction } =
+    props.paneActions === false ? { windowAction: null, dockAction: null } : splitPane;
 
   const close = (draft: DraftId, ref: ScopedThreadRef) =>
     void closeSplitDraft(splitPane.focusPartner, ref, draft);

@@ -10,7 +10,7 @@ import { useEnvironmentScope } from "~/state/session";
 import { BotMascot } from "./BotMascot";
 import { BOT_MASCOT_SHAPES } from "./botMascotArt";
 import { botMascotShape } from "./botMascotTags";
-import { isBotThread } from "./botThreads";
+import { isPetalThread } from "./botThreads";
 import { useSetBotMascot } from "./useSetBotMascot";
 
 export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThreadRef }) {
@@ -20,7 +20,7 @@ export function BotMascotDetailsSection(props: { readonly threadRef: ScopedThrea
     AuthOrchestrationOperateScope,
   );
   const setBotMascot = useSetBotMascot();
-  if (shell === null || !isBotThread(shell.source)) return null;
+  if (shell === null || !isPetalThread(shell.source)) return null;
   const current = botMascotShape(shell.source);
   return (
     <ThreadDetailsSection headingId="thread-details-bot-mascot-heading" title="Mascot">

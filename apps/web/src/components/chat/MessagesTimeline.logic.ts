@@ -88,6 +88,13 @@ import { isHostPath } from "@t3tools/shared/path";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { quietBotWakeRunIds, withoutRuns } from "~/custom/bots/quietBotWakes";
 /* fork:end fork-bots */
+/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+import {
+  type ForkThreadLaunch,
+  forkThreadLaunchListsEqual,
+  placeLaunchesUnderReplies,
+} from "~/custom/threadLaunchCards/threadLaunch.logic";
+/* fork:end fork-thread-launch-cards */
 
 export function timelineEntryRunId(entry: TimelineEntry): RunId | null {
   if (entry.kind === "message") {
@@ -96,7 +103,14 @@ export function timelineEntryRunId(entry: TimelineEntry): RunId | null {
   if (entry.kind === "proposed-plan") {
     return entry.proposedPlan.runId;
   }
-  if (entry.kind === "html-render" || entry.kind === "mcp-app" || entry.kind === "sent-message") {
+  if (
+    entry.kind === "html-render" ||
+    entry.kind === "mcp-app" ||
+    entry.kind === "sent-message" ||
+    /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+    entry.kind === "fork-thread-launch"
+    /* fork:end fork-thread-launch-cards */
+  ) {
     return entry.runId;
   }
   return entry.kind === "work" ? (entry.entry.runId ?? null) : null;
@@ -656,6 +670,10 @@ type MessagesTimelineRowContent =
       groupedWithPrevious?: boolean;
       /** Set when the message above is a steer too, so the label shows once. */
       continuesSteer?: boolean;
+      /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+      /** The threads this reply's turn started, drawn under its text and above its actions. */
+      forkLaunches?: ReadonlyArray<{ readonly id: string; readonly launch: ForkThreadLaunch }>;
+      /* fork:end fork-thread-launch-cards */
     }
   | {
       kind: "assistant-meta";
@@ -692,6 +710,15 @@ type MessagesTimelineRowContent =
       createdAt: string;
       text: string;
     }
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  | {
+      kind: "fork-thread-launch";
+      id: string;
+      createdAt: string;
+      runId: RunId | null;
+      launches: ReadonlyArray<{ readonly id: string; readonly launch: ForkThreadLaunch }>;
+    }
+  /* fork:end fork-thread-launch-cards */
   | {
       kind: "mcp-app";
       id: string;
@@ -876,6 +903,9 @@ function deriveSupersededAttemptFolds(
       entry.kind === "html-render" ||
       entry.kind === "mcp-app" ||
       entry.kind === "sent-message" ||
+      /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+      entry.kind === "fork-thread-launch" ||
+      /* fork:end fork-thread-launch-cards */
       timelineEntryIsPersistentResourceCard(entry) ||
       liveSubagentEntryIds.has(entry.id) ||
       (entry.kind === "work" && entry.entry.itemType === "system_notice")
@@ -1586,6 +1616,7 @@ function timelineRowEntries(
     | "pendingApprovalRequestIds"
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
     | "hideQuietBotWakes"
+    | "forkKeepRequestReports"
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     | "forkHoldLiveReplies"
@@ -1640,6 +1671,7 @@ function timelineRowEntries(
         failedRunIds: failedTimelineRunIds(entries, input.latestRun ?? null),
         revealedMessageId: input.revealedMessageId,
       }),
+      input.forkKeepRequestReports === true,
     );
   }
   /* fork:end fork-bots */
@@ -1736,6 +1768,8 @@ export function deriveMessagesTimelineRows(
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
     /** A bot's quiet wakes stay out of the shown rows; see custom/bots/quietBotWakes. */
     hideQuietBotWakes?: boolean;
+    /** Except a question or approval report, where the conversation answers its threads inline. */
+    forkKeepRequestReports?: boolean;
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
     /** Outside Zen, a running turn's replies stay out of the rows until it ends, as Zen's do; the newest still splits its steps. */
@@ -2393,6 +2427,20 @@ export function deriveMessagesTimelineRows(
       continue;
     }
 
+    /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+    // One row per call; placeLaunchesUnderReplies groups them.
+    if (timelineEntry.kind === "fork-thread-launch") {
+      nextRows.push({
+        kind: "fork-thread-launch",
+        id: timelineEntry.id,
+        createdAt: timelineEntry.createdAt,
+        runId: timelineEntry.runId,
+        launches: [{ id: timelineEntry.id, launch: timelineEntry.launch }],
+      });
+      continue;
+    }
+    /* fork:end fork-thread-launch-cards */
+
     if (timelineEntry.kind === "sent-message") {
       nextRows.push({
         kind: "sent-message",
@@ -2599,9 +2647,14 @@ export function deriveMessagesTimelineRows(
     }
   }
 
-  const result = attachTrailingToolGroupsToAssistant(
-    attachCreatedThreadSummaries(nextRows, timelineEntries, collapsedFoldMemberIds),
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards
+     Upstream: the same rows without placeLaunchesUnderReplies around them. */
+  const result = placeLaunchesUnderReplies(
+    attachTrailingToolGroupsToAssistant(
+      attachCreatedThreadSummaries(nextRows, timelineEntries, collapsedFoldMemberIds),
+    ),
   );
+  /* fork:end fork-thread-launch-cards */
   return result.map((row, index) => {
     if (timelineRowIsWorkLog(row) && timelineRowIsWorkLog(result[index + 1])) {
       return { ...row, continuesWorkLog: true };
@@ -3033,6 +3086,13 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
       return a.createdAt === bs.createdAt && a.text === bs.text;
     }
 
+    /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+    case "fork-thread-launch": {
+      const bl = b as typeof a;
+      return a.createdAt === bl.createdAt && forkThreadLaunchListsEqual(a.launches, bl.launches);
+    }
+    /* fork:end fork-thread-launch-cards */
+
     case "mcp-app": {
       const bm = b as typeof a;
       return (
@@ -3099,7 +3159,10 @@ function isRowUnchanged(a: MessagesTimelineRow, b: MessagesTimelineRow): boolean
         a.revertTurnCount === bm.revertTurnCount &&
         a.groupedWithNext === bm.groupedWithNext &&
         a.groupedWithPrevious === bm.groupedWithPrevious &&
-        a.continuesSteer === bm.continuesSteer
+        a.continuesSteer === bm.continuesSteer &&
+        /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+        forkThreadLaunchListsEqual(a.forkLaunches, bm.forkLaunches)
+        /* fork:end fork-thread-launch-cards */
       );
     }
   }

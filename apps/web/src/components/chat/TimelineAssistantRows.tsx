@@ -44,6 +44,9 @@ import { vcsEnvironment } from "../../state/vcs";
 /* fork:begin no3y-subagent-link-chip — see .fork/customizations.yaml#no3y-subagent-link-chip */
 import { ForkSubagentLinkScope } from "../../custom/ForkSubagentLinkChip";
 /* fork:end no3y-subagent-link-chip */
+/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+import { ForkThreadLaunchList } from "../../custom/threadLaunchCards/ForkThreadLaunchCards";
+/* fork:end fork-thread-launch-cards */
 
 const NO_VCS_STATUS = Atom.make(AsyncResult.initial());
 
@@ -110,6 +113,11 @@ export function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind
             <AssistantStatusBadge status="interrupted" />
           </div>
         ) : null}
+        {/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */}
+        {row.forkLaunches === undefined ? null : (
+          <ForkThreadLaunchList launches={row.forkLaunches} className="mt-2" />
+        )}
+        {/* fork:end fork-thread-launch-cards */}
         {row.showAssistantMeta ? (
           <AssistantMessageMeta
             className="mt-1.5"

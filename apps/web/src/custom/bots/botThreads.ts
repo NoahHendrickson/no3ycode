@@ -6,6 +6,8 @@ import type { OrchestrationV2ThreadShell } from "@t3tools/contracts";
 import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as DateTime from "effect/DateTime";
 
+import { isSprintThread } from "../sprints/sprintThreads";
+
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 
 /** Where bot folders live, relative to the No-project workspace root. */
@@ -17,6 +19,12 @@ export type BotShell = Pick<OrchestrationV2ThreadShell, "tags" | "latestVisibleM
 
 export function isBotThread(shell: Pick<BotShell, "tags">): boolean {
   return isForkBotThread(shell.tags);
+}
+
+/** A bot that is a Petal: every bot but a sprint (`fork-sprints`), which shares the bot machinery
+    and none of a Petal's face, section or wakes. */
+export function isPetalThread(shell: Pick<BotShell, "tags">): boolean {
+  return isBotThread(shell) && !isSprintThread(shell);
 }
 
 /** A bot the sidebar lists: an archived bot's work is ordinary threads again, everywhere. */
@@ -49,7 +57,8 @@ export function isQuietBotCompletion(
   return !Number.isNaN(runAt) && DateTime.toEpochMillis(report.updatedAt) < runAt;
 }
 
-/** Bots listed in the sidebar's Bots section, oldest first so a bot keeps its place. */
+/** Bots listed in the sidebar's Bots section, oldest first so a bot keeps its place. Petals only:
+    sprints list in their own section. */
 export function listSidebarBots<
   T extends {
     readonly archivedAt: string | null;
@@ -58,7 +67,7 @@ export function listSidebarBots<
   },
 >(threads: ReadonlyArray<T>): T[] {
   return threads
-    .filter(isListedBot)
+    .filter((thread) => isListedBot(thread) && !isSprintThread(thread.source))
     .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
 }
 

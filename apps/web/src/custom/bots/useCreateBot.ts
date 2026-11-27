@@ -2,13 +2,6 @@
  * Creating a bot — see `.fork/customizations.yaml#fork-bots`. Existing commands only.
  * The folder is seeded before the thread exists, so the bot's first session loads its instructions.
  */
-import { RegistryContext } from "@effect/atom-react";
-import {
-  type AtomCommandResult,
-  isAtomCommandInterrupted,
-  runAtomCommand,
-  squashAtomCommandFailure,
-} from "@t3tools/client-runtime/state/runtime";
 import {
   DEFAULT_SERVER_SETTINGS,
   type ModelSelection,
@@ -17,10 +10,8 @@ import {
 import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { useRouter } from "@tanstack/react-router";
-import { useContext } from "react";
 
 import { scheduledTaskDefaultModel } from "~/components/settings/scheduledTasksSettings.logic";
-import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { newThreadId } from "~/lib/utils";
 import {
@@ -29,15 +20,14 @@ import {
   isProviderInstancePickerReady,
   sortProviderInstanceEntries,
 } from "~/providerInstances";
-import { projectEnvironment } from "~/state/projects";
 import { EMPTY_SERVER_PROVIDERS, serverEnvironment } from "~/state/server";
-import { threadEnvironment } from "~/state/threads";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
 import type { BotMascotShape } from "./botMascotArt";
 import { botMascotTag } from "./botMascotTags";
 import { botSeedFiles } from "./botSeedFiles";
 import { BOT_FOLDERS_DIRECTORY, botFolderName, botFolderPath } from "./botThreads";
+import { useBotThreadCreation } from "./useBotThreadCreation";
 
 const FAILURE_TITLE = "Could not create the petal";
 
@@ -60,18 +50,15 @@ function botModelSelection(
   return claude && model ? { instanceId: claude.instanceId, model: model.slug } : null;
 }
 
-function reportFailure(description: string) {
-  toastManager.add(stackedThreadToast({ type: "error", title: FAILURE_TITLE, description }));
-}
-
 /** Creates a bot and opens its conversation. Resolves to the bot's thread, or null when it failed. */
 export function useCreateBot(): (
   name: string,
   mascot: BotMascotShape,
 ) => Promise<ScopedThreadRef | null> {
-  const registry = useContext(RegistryContext);
   const router = useRouter();
   const { scratchEnvironmentId, scratchWorkspaceRootFor, openScratchProject } = useScratchProject();
+  const { registry, reportFailure, seed, createTagged, setTag } =
+    useBotThreadCreation(FAILURE_TITLE);
 
   return async (rawName, mascot) => {
     const name = rawName.trim();
@@ -86,21 +73,6 @@ export function useCreateBot(): (
     }
     const project = await openScratchProject(environmentId, FAILURE_TITLE);
     if (project === null) return null;
-
-    const failed = (result: AtomCommandResult<unknown, unknown>) => {
-      if (result._tag === "Success") return false;
-      if (!isAtomCommandInterrupted(result)) {
-        const error = squashAtomCommandFailure(result);
-        reportFailure(error instanceof Error ? error.message : "An error occurred.");
-      }
-      return true;
-    };
-    const run = <W, A, E>(command: Parameters<typeof runAtomCommand<W, A, E>>[1], value: W) =>
-      runAtomCommand(registry, command, value, {
-        label: command.label,
-        reportFailure: false,
-        reportDefect: true,
-      });
 
     const settings =
       registry.get(serverEnvironment.settingsValueAtom(environmentId)) ?? DEFAULT_SERVER_SETTINGS;
@@ -124,23 +96,19 @@ export function useCreateBot(): (
 
     const threadId = newThreadId();
     const folderName = botFolderName(name, threadId);
-    const seeded = await Promise.all(
-      botSeedFiles({ name, today: new Date().toISOString().slice(0, 10), threadId }).map((file) =>
-        run(projectEnvironment.writeFile, {
-          environmentId,
-          input: {
-            cwd: scratchRoot,
-            relativePath: `${BOT_FOLDERS_DIRECTORY}/${folderName}/${file.relativePath}`,
-            contents: file.contents,
-          },
-        }),
-      ),
-    );
-    if (seeded.some(failed)) return null;
-
-    const created = await run(threadEnvironment.create, {
+    const seeded = await seed(
       environmentId,
-      input: {
+      scratchRoot,
+      `${BOT_FOLDERS_DIRECTORY}/${folderName}`,
+      botSeedFiles({ name, today: new Date().toISOString().slice(0, 10), threadId }),
+    );
+    if (!seeded) return null;
+
+    // `bot` first: a failed mascot write leaves a bot with a face from its id. A failed `bot`
+    // write would leave a stray No-project thread, so that thread goes again.
+    const created = await createTagged(
+      environmentId,
+      {
         threadId,
         projectId: project.id,
         title: name,
@@ -151,25 +119,11 @@ export function useCreateBot(): (
         branch: null,
         worktreePath: botFolderPath(scratchRoot, folderName),
       },
-    });
-    if (failed(created)) return null;
-    // `bot` first: a failed mascot write leaves a bot with a face from its id. A failed `bot`
-    // write would leave a stray No-project thread, so that thread goes again.
-    const taggedBot = await run(threadEnvironment.setTag, {
-      environmentId,
-      input: { threadId, tag: FORK_BOT_THREAD_TAG, tagged: true },
-    });
-    if (failed(taggedBot)) {
-      await run(threadEnvironment.delete, { environmentId, input: { threadId } });
-      return null;
-    }
-    // Reported, but the bot stands: it wears a face from its id until the mascot is changed.
-    failed(
-      await run(threadEnvironment.setTag, {
-        environmentId,
-        input: { threadId, tag: botMascotTag(mascot), tagged: true },
-      }),
+      [FORK_BOT_THREAD_TAG],
     );
+    if (!created) return null;
+    // Reported, but the bot stands: it wears a face from its id until the mascot is changed.
+    await setTag(environmentId, threadId, botMascotTag(mascot));
 
     const ref = { environmentId, threadId };
     void router.navigate({ to: "/$environmentId/$threadId", params: buildThreadRouteParams(ref) });

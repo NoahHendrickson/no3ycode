@@ -8,6 +8,8 @@ import { isForkBotQuietReply } from "@t3tools/shared/forkBotTags";
 
 import type { TimelineEntry } from "~/session-logic";
 
+import { isForkWorkRequestReport } from "../forkWorkReports";
+
 /** The run an entry belongs to, user messages and events included (unlike the fold helpers). */
 function entryOwningRunId(entry: TimelineEntry): RunId | null {
   switch (entry.kind) {
@@ -18,6 +20,7 @@ function entryOwningRunId(entry: TimelineEntry): RunId | null {
     case "html-render":
     case "mcp-app":
     case "sent-message":
+    case "fork-thread-launch":
       return entry.runId;
     case "work":
       return entry.entry.runId ?? null;
@@ -78,10 +81,13 @@ export function quietBotWakeRunIds(
 }
 
 /** Drops each run from its first message on. A resumed subagent card listed before that keeps
-    its place in the earlier turn, as the turn folds place it. */
+    its place in the earlier turn, as the turn folds place it. Where the conversation answers its
+    threads inline (fork-thread-launch-cards), a question or approval report stays: it carries the
+    card the owner answers on. */
 export function withoutRuns(
   entries: ReadonlyArray<TimelineEntry>,
   runIds: ReadonlySet<RunId>,
+  keepRequestReports = false,
 ): ReadonlyArray<TimelineEntry> {
   if (runIds.size === 0) return entries;
   const startIndex = new Map<RunId, number>();
@@ -94,6 +100,8 @@ export function withoutRuns(
   return entries.filter((entry, index) => {
     const runId = entryOwningRunId(entry);
     const start = runId === null ? undefined : startIndex.get(runId);
-    return start === undefined || index < start;
+    return (
+      start === undefined || index < start || (keepRequestReports && isForkWorkRequestReport(entry))
+    );
   });
 }

@@ -47,7 +47,8 @@ const chatView = readSibling("../components/ChatView.tsx");
 const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
 const botDigest = readSibling("../custom/bots/BotDigest.tsx");
 const botDigestParts = readSibling("../custom/bots/BotDigestBottom.tsx");
-const botChildRequests = readSibling("../custom/bots/BotChildRequests.tsx");
+// Its controller, shared with a sprint's inline cards (fork-thread-launch-cards).
+const childRequestControls = readSibling("../custom/childRequestControls.ts");
 const sidebar = readSibling("../components/Sidebar.tsx");
 const panelControls = readSibling("../components/chat/PanelLayoutControls.tsx");
 const inlineSize = readSibling("../hooks/usePreviewPanelInlineSize.ts");
@@ -394,7 +395,7 @@ describe("fork guard: fork-bot-work-threads", () => {
     );
     expect(botDigestParts).toContain('data-fork-composer-aside="true"');
     // A work thread's approval notice is the aside too, on the span holding its actions.
-    expect(botChildRequests).toContain("aside: true,");
+    expect(childRequestControls).toContain("aside: true,");
     expect(botDigest).toContain("<ForkQuestionCard");
     // A work thread's question or approval pages with the digest's asks, answered from the Petal.
     expect(botDigest).toContain("deriveBotDigestStack({");

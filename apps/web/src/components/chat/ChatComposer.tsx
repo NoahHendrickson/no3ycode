@@ -172,6 +172,9 @@ import {
 } from "~/custom/voice/forkDictation";
 import { useOwnsGlobalInput } from "~/custom/splitThreads/splitPaneContext";
 /* fork:end fork-local-dictation */
+/* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+import { useIsSprintThread } from "~/custom/sprints/useIsSprintThread";
+/* fork:end fork-sprints */
 /* fork:begin fork-design-mode — see .fork/customizations.yaml#fork-design-mode */
 import { ForkComposerDesignChanges } from "~/custom/designMode/ForkComposerDesignChanges";
 import { useForkPendingDesignChangeCount } from "~/custom/designMode/designChangeDraftStore";
@@ -1339,13 +1342,19 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   });
 
   const isComposerApprovalState = activePendingApproval !== null;
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+     A sprint never makes its owner wait: what they send goes into its running turn. */
+  const forkIsSprint = useIsSprintThread(routeKind === "server" ? routeThreadRef : null);
+  /* fork:end fork-sprints */
   // A send declines the approvals shown here to redirect the agent, so it steers the waiting
   // turn instead of queueing behind it. Approvals the typing guard holds stay unseen and pending.
-  const followUpBehavior = pendingApprovals.some(
-    (approval) => !heldRequestIds.has(approval.requestId),
-  )
-    ? "steer"
-    : settings.followUpBehavior;
+  const followUpBehavior =
+    /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
+    forkIsSprint ||
+    /* fork:end fork-sprints */
+    pendingApprovals.some((approval) => !heldRequestIds.has(approval.requestId))
+      ? "steer"
+      : settings.followUpBehavior;
   const composerSuggestionsVisible = composerMenuOpen;
   const composerSuggestionListVisible = composerSuggestionsVisible && composerMenuItems.length > 0;
   const activePendingUserInput = pendingUserInputs[0] ?? null;

@@ -57,6 +57,10 @@ import { FetchedToolOutput, V2ItemInspector } from "./V2ItemInspector";
 /* fork:begin fork-subagent-spawn-card — see .fork/customizations.yaml#fork-subagent-spawn-card */
 import { ForkSubagentNotice } from "~/custom/ForkSubagentGroup";
 /* fork:end fork-subagent-spawn-card */
+/* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCards";
+import { forkWorkReportOf } from "~/custom/forkWorkReports";
+/* fork:end fork-thread-launch-cards */
 import {
   TimelineRowCtx,
   TimelineRowActivityCtx,
@@ -235,6 +239,13 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
   const item = props.workEntry.projectedItem?.item;
   const childThreadId =
     item?.type === "notification" ? notificationChildThreadId(item.source) : undefined;
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  const forkReport =
+    item?.type === "notification" && childThreadId === undefined ? forkWorkReportOf(item) : null;
+  if (forkReport !== null) {
+    return <ForkWorkReportRow report={forkReport} fallback={<WorkEntryLogRow {...props} />} />;
+  }
+  /* fork:end fork-thread-launch-cards */
   if (item?.type !== "notification" || childThreadId === undefined) {
     return <WorkEntryLogRow {...props} />;
   }

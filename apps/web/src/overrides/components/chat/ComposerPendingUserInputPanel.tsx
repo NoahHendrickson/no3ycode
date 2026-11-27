@@ -34,6 +34,10 @@ interface PendingUserInputPanelProps {
   onDismiss: (requestId: RuntimeRequestId) => void;
   /** Drawn last inside the card: a Petal's copy of a work thread's question names that thread. */
   footer?: ReactNode;
+  /** Under the options, above Submit: an inline card's typed answer (fork-thread-launch-cards). */
+  afterOptions?: ReactNode;
+  /** After Submit and Previous, at the row's end: an inline card's Open thread. */
+  afterActions?: ReactNode;
   /** Off for a copy shown beside another question, so a digit picks on the thread's own card. */
   numberKeys?: boolean;
 }
@@ -52,6 +56,8 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
   onPrevious,
   onDismiss,
   footer,
+  afterOptions,
+  afterActions,
   numberKeys = true,
 }: PendingUserInputPanelProps) {
   if (pendingUserInputs.length === 0) return null;
@@ -74,6 +80,8 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
       onPrevious={onPrevious}
       onDismiss={onDismiss}
       footer={footer}
+      afterOptions={afterOptions}
+      afterActions={afterActions}
       numberKeys={numberKeys}
     />
   );
@@ -93,6 +101,8 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onPrevious,
   onDismiss,
   footer,
+  afterOptions,
+  afterActions,
   numberKeys,
 }: {
   prompt: PendingUserInput;
@@ -108,6 +118,8 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onPrevious: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
   footer: ReactNode;
+  afterOptions: ReactNode;
+  afterActions: ReactNode;
   numberKeys: boolean;
 }) {
   const gt = useGT();
@@ -223,6 +235,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
               </div>
             );
           })}
+          {afterOptions}
         </>
       }
       // Picking an option never submits: Submit (or Next) is the card's own button, bottom
@@ -261,6 +274,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
               {gt("Previous", { $context: "button that goes to the previous question" })}
             </Button>
           ) : null}
+          {afterActions}
         </>
       }
       footer={footer}
