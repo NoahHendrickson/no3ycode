@@ -486,6 +486,7 @@ import { useIsSprintThread } from "~/custom/sprints/useIsSprintThread";
 /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
 import { CoordinatorPanel } from "~/custom/coordinator/CoordinatorPanel";
 import { coordinatorThreadHost } from "~/custom/coordinator/coordinatorThreadHost";
+import { useDismissCoordinatorMirrors } from "~/custom/coordinator/useDismissCoordinatorMirrors";
 import { useIsCoordinatorThread } from "~/custom/coordinator/useIsCoordinatorThread";
 /* fork:end fork-coordinator-threads */
 /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
@@ -1610,6 +1611,14 @@ export default function ChatView(props: ChatViewProps) {
     composerRef,
     setThreadError,
   });
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+     A child's question is answered on its card here; the coordinator's own re-ask of it goes. */
+  useDismissCoordinatorMirrors(
+    forkCoordinatorRef,
+    pendingUserInputs,
+    serverProjection?.turnItems ?? EMPTY_TURN_ITEMS,
+  );
+  /* fork:end fork-coordinator-threads */
   const [heldApprovalRequestIds, setHeldApprovalRequestIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );

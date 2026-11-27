@@ -133,8 +133,12 @@ describe("fork guard: fork-coordinator-threads", () => {
     const rules = coordinatorMessage(true);
     expect(rules).toContain("`delegate_task`");
     expect(rules).toContain("never wait on a child");
+    // The children show in the subagents card and the panel; a reply's thread links get cut off.
+    expect(rules).toContain("Don't list or link them");
     expect(rules).toContain("scopes don't overlap");
-    expect(rules).toContain("never restate the question");
+    expect(rules).toContain("or restate the question");
+    // The server's child-question notice says to ask the user; a coordinator leaves that to the card.
+    expect(rules).toContain('"ask the user" is not for you: never ask me it yourself');
     expect(rules).not.toMatch(/model/i);
     expect(rules.length).toBeLessThan(800);
   });
@@ -154,6 +158,10 @@ describe("fork guard: fork-coordinator-threads", () => {
   });
 
   it("answers a delegated child's question on its card where the host answers inline", () => {
+    // ...and drops the coordinator's own re-ask of it, so it shows inline only.
+    expect(read("../components/ChatView.tsx")).toContain(
+      "useDismissCoordinatorMirrors(\n    forkCoordinatorRef,",
+    );
     const row = read("../components/chat/TimelineWorkEntryRow.tsx");
     expect(row).toContain(
       'item?.type === "notification" && forkHost !== null ? forkDelegatedQuestionOf(item) : null;',

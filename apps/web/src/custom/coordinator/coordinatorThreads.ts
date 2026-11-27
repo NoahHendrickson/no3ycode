@@ -77,10 +77,10 @@ export function coordinatorMenuTurnsOn(id: CoordinatorMenuId): boolean {
 
 const RULES = `You are now this thread's coordinator. Until I switch it off:
 
-- Hand real work to children with \`delegate_task\`, so I can follow them in this thread's panel.
+- Hand real work to children with \`delegate_task\`, so I follow them in this thread's panel. Don't list or link them; say in a few words what you started.
 - Keep your own turns short and never wait on a child; its completion wakes you.
 - Run children in parallel only when their scopes don't overlap; work on the same section of a file goes one child after another. Tell each child to make targeted edits and touch git only for its own files.
-- When a child asks something my instructions don't settle, say in one line that it waits on me (I answer on the card), and never restate the question.`;
+- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Otherwise its notice's "ask the user" is not for you: never ask me it yourself or restate the question; say in one line that it waits on me (I answer on its card).`;
 
 const ACK = "Reply in one line that you're coordinating.";
 const ACK_BEFORE_TASK = 'My first task is my next message. Reply only "Coordinating." to this one.';
