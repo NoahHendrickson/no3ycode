@@ -3,10 +3,10 @@
 // component=ComposerPullRequestChip
 import figma from "figma";
 
-// Each chip above the composer is its own component; the PR chip reads the thread's PR itself.
+// The PR chip reads CI from the thread's PR. Its render control takes the resolved checks state.
 const kind = figma.selectedInstance.getEnum("Kind", {
-  "PR · Open": "pr",
-  "PR · Draft": "pr",
+  "PR · Open": "open",
+  "PR · Draft": "draft",
   "PR · Merged": "pr",
   "PR · Closed": "pr",
   "Background work": "work",
@@ -14,6 +14,13 @@ const kind = figma.selectedInstance.getEnum("Kind", {
   Queued: "queued",
 });
 const count = Number(figma.selectedInstance.getString("Queued count"));
+const checks = figma.selectedInstance.getEnum("Checks", {
+  None: "none",
+  Pending: "pending",
+  Passing: "passing",
+  Failing: "failing",
+});
+const showChecks = (kind === "open" || kind === "draft") && checks && checks !== "none";
 
 export default {
   example:
@@ -21,12 +28,24 @@ export default {
       ? figma.tsx`<ComposerQueuedChip count={${Number.isFinite(count) ? String(count) : "0"}} onExpand={onExpand} />`
       : kind === "work"
         ? figma.tsx`<ComposerBackgroundWorkChip {...backgroundWork} />`
-        : figma.tsx`<ComposerPullRequestChip threadRef={threadRef} branch={branch} cwd={cwd} />`,
+        : showChecks
+          ? figma.tsx`<PullRequestChipControl
+  checks="${checks}"
+  size="xs"
+  data-fork-composer-status-chip="pull-request"
+  data-fork-pr-chip
+  data-pr-state="${kind}"
+>
+  {badgeContent}
+</PullRequestChipControl>`
+          : figma.tsx`<ComposerPullRequestChip threadRef={threadRef} branch={branch} cwd={cwd} />`,
   imports:
     kind === "queued"
       ? ['import { ComposerQueuedChip } from "~/custom/ComposerQueuedChip";']
       : kind === "work"
         ? ['import { ComposerBackgroundWorkChip } from "~/custom/ComposerBackgroundWork";']
-        : ['import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";'],
+        : showChecks
+          ? ['import { PullRequestChipControl } from "~/custom/ComposerPullRequestChip";']
+          : ['import { ComposerPullRequestChip } from "~/custom/ComposerPullRequestChip";'],
   id: "status-chip",
 };
