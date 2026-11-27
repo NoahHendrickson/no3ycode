@@ -286,10 +286,21 @@
   }
 }
 
+/* On a pale fill the glass rims and the black halo blur into a grey fuzz, so light mode draws
+   one crisp hairline in the state's ink instead. */
+:root[data-fork="noahhendrickson-t3code"]:not(.dark)
+  [data-fork-composer-status-chip="pull-request"]:is(
+    [data-pr-state="open"],
+    [data-pr-state="merged"],
+    [data-pr-state="closed"]
+  ) {
+  box-shadow: inset 0 0 0 1px rgb(from var(--fork-pr-chip-ink) r g b / 22%);
+}
+
 :root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="pull-request"] {
   &[data-pr-state="open"] {
-    --fork-pr-chip-fill: #dcf5e6;
-    --fork-pr-chip-fill-hover: #cdeedb;
+    --fork-pr-chip-fill: #c8f2d6;
+    --fork-pr-chip-fill-hover: #b6ecc8;
     --fork-pr-chip-ink: #166534;
   }
   &[data-pr-state="merged"] {
