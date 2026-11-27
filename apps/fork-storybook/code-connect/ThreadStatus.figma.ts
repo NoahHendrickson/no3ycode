@@ -25,23 +25,32 @@ const status = figma.selectedInstance.getEnum("Status", {
   Idle: "idle",
   "Idle · dot": "dot",
   Draft: "draft",
+  "CI · Pending": "ci-pending",
+  "CI · Passing": "ci-passing",
+  "CI · Failing": "ci-failing",
 });
 // Working · Still is the working mark drawn without motion, as status chips inside a message use it.
 const still = status === "still";
-const kinded = status !== undefined && !still && !["idle", "dot", "draft"].includes(status);
+const checks = status?.startsWith("ci-") ? status.slice(3) : undefined;
+const kinded =
+  status !== undefined && !checks && !still && !["idle", "dot", "draft"].includes(status);
 const statusProp = kinded
   ? `{sidebarV2CardTopStatus("${status}", { goalActive: false })}`
   : "{null}";
 const idle = status === "dot" || status === "draft" ? ` idle="${status}"` : "";
 
 export default {
-  example: still
-    ? figma.tsx`<SidebarV2StillWorkingMark />`
-    : figma.tsx`<SidebarV2StatusMark status=${statusProp} seed={threadKey}${idle} />`,
+  example: checks
+    ? figma.tsx`<PullRequestChecksDot state="${checks}" />`
+    : still
+      ? figma.tsx`<SidebarV2StillWorkingMark />`
+      : figma.tsx`<SidebarV2StatusMark status=${statusProp} seed={threadKey}${idle} />`,
   imports: [
-    still
-      ? 'import { SidebarV2StillWorkingMark } from "~/custom/SidebarV2StatusIndicator";'
-      : 'import { SidebarV2StatusMark } from "~/custom/SidebarV2StatusIndicator";',
+    checks
+      ? 'import { PullRequestChecksDot } from "~/custom/SidebarV2StatusIndicator";'
+      : still
+        ? 'import { SidebarV2StillWorkingMark } from "~/custom/SidebarV2StatusIndicator";'
+        : 'import { SidebarV2StatusMark } from "~/custom/SidebarV2StatusIndicator";',
     ...(kinded ? ['import { sidebarV2CardTopStatus } from "~/custom/sidebarV2CardStatus";'] : []),
   ],
   id: "thread-status",

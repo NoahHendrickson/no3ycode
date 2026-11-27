@@ -2,7 +2,10 @@ import { ThreadPullRequestLink } from "@t3tools/contracts";
 import { Schema } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolvePullRequestChipState } from "./composerPullRequestChip.logic";
+import {
+  resolvePullRequestChipChecks,
+  resolvePullRequestChipState,
+} from "./composerPullRequestChip.logic";
 
 const decodeLink = Schema.decodeSync(ThreadPullRequestLink);
 
@@ -81,5 +84,41 @@ describe("resolvePullRequestChipState", () => {
     ],
   ])("%s", (_name, input, expected) => {
     expect(resolvePullRequestChipState(input)).toBe(expected);
+  });
+});
+
+describe("resolvePullRequestChipChecks", () => {
+  const single = { kind: "pull-request" as const, others: 0, state: "open" as const };
+  it.each([
+    [
+      "an open PR's checks",
+      { badge: single, snapshot: { state: "open" as const, checksState: "failing" as const } },
+      "failing",
+    ],
+    ["an open PR with no checks", { badge: null, snapshot: { state: "open" as const } }, null],
+    [
+      "a merged PR",
+      { badge: single, snapshot: { state: "merged" as const, checksState: "passing" as const } },
+      null,
+    ],
+    ["a PR still pending", { badge: null, snapshot: null }, null],
+    [
+      "several PRs",
+      {
+        badge: { ...single, others: 1 },
+        snapshot: { state: "open" as const, checksState: "passing" as const },
+      },
+      null,
+    ],
+    [
+      "a stack",
+      {
+        badge: { kind: "stack" as const, layers: 3, state: "open" as const },
+        snapshot: { state: "open" as const, checksState: "passing" as const },
+      },
+      null,
+    ],
+  ])("%s", (_name, input, expected) => {
+    expect(resolvePullRequestChipChecks(input)).toBe(expected);
   });
 });

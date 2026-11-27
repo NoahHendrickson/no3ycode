@@ -2,7 +2,11 @@ import {
   type ThreadPullRequestBadge,
   visibleThreadPullRequests,
 } from "@t3tools/client-runtime/thread-pull-requests";
-import type { ThreadPullRequestLink } from "@t3tools/contracts";
+import type {
+  PullRequestChecksState,
+  ThreadPullRequestLink,
+  ThreadPullRequestSnapshot,
+} from "@t3tools/contracts";
 
 import type { ThreadPr } from "~/components/ThreadStatusIndicators";
 
@@ -26,4 +30,16 @@ export function resolvePullRequestChipState(input: {
   }
   if (!pr) return undefined;
   return pr.state === "open" && pr.isDraft === true ? "draft" : pr.state;
+}
+
+/** The CI the chip's inner pill shows: the current PR's checks while it is open. A stack or a
+ * thread with several PRs shows none, since its fill is the aggregate and one PR's CI would
+ * stand in for the rest (a green pill over a failing layer). */
+export function resolvePullRequestChipChecks(input: {
+  readonly badge: ThreadPullRequestBadge | null;
+  readonly snapshot: Pick<ThreadPullRequestSnapshot, "state" | "checksState"> | null | undefined;
+}): PullRequestChecksState | null {
+  const { badge, snapshot } = input;
+  if (badge !== null && (badge.kind === "stack" || badge.others > 0)) return null;
+  return snapshot?.state === "open" ? (snapshot.checksState ?? null) : null;
 }

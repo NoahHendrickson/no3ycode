@@ -1,5 +1,5 @@
-import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
-import type { MouseEvent } from "react";
+import type { EnvironmentId, PullRequestChecksState, ScopedThreadRef } from "@t3tools/contracts";
+import type { ComponentProps, MouseEvent } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
 import {
@@ -7,6 +7,7 @@ import {
   resolveDisplayedThreadPr,
   useThreadDisplayedPullRequest,
 } from "~/components/ThreadStatusIndicators";
+import { pullRequestChecksStatePresentation } from "~/components/pullRequest/pullRequestPresentation";
 import { usePullRequestActionRunner } from "~/components/pullRequest/usePullRequestActions";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { useQuietThreadShell } from "~/state/entities";
@@ -15,7 +16,11 @@ import { useRightPanelStore } from "~/rightPanelStore";
 import { vcsEnvironment } from "~/state/vcs";
 
 import { BanIcon, GitMergeIcon } from "./icons/lucide-hugeicons";
-import { resolvePullRequestChipState } from "./composerPullRequestChip.logic";
+import { PullRequestChecksDot } from "./SidebarV2StatusIndicator";
+import {
+  resolvePullRequestChipChecks,
+  resolvePullRequestChipState,
+} from "./composerPullRequestChip.logic";
 import { type ThreadAutoMerge, useThreadAutoMerge } from "./threadAutoMerge";
 
 /** The thread's PR as a chip above the composer (fork-composer-shell), resolved the way
@@ -60,7 +65,11 @@ export function ComposerPullRequestChip(props: {
     <>
       <ThreadPullRequestBadgeControl
         render={
-          <ComposerControl
+          <PullRequestChipControl
+            checks={resolvePullRequestChipChecks({
+              badge: pr.badge,
+              snapshot: pr.currentLink?.snapshot,
+            })}
             size="xs"
             data-fork-composer-status-chip="pull-request"
             data-fork-pr-chip
@@ -86,6 +95,38 @@ export function ComposerPullRequestChip(props: {
         />
       ) : null}
     </>
+  );
+}
+
+/** The PR chip's control: the shared badge's glyph and number, then an open PR's CI as a small
+ * pill inside the chip, a dot and "CI". The badge's aria-label names the control and hides its
+ * content, so the checks' state joins that label. */
+export function PullRequestChipControl({
+  checks,
+  children,
+  ...props
+}: ComponentProps<typeof ComposerControl> & {
+  readonly checks: PullRequestChecksState | null;
+}) {
+  return (
+    <ComposerControl
+      {...props}
+      aria-label={
+        checks === null
+          ? props["aria-label"]
+          : [props["aria-label"], pullRequestChecksStatePresentation(checks).label]
+              .filter(Boolean)
+              .join(", ")
+      }
+    >
+      {children}
+      {checks === null ? null : (
+        <span data-fork-pr-chip-ci={checks}>
+          <PullRequestChecksDot state={checks} />
+          CI
+        </span>
+      )}
+    </ComposerControl>
   );
 }
 

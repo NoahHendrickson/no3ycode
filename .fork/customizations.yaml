@@ -3806,7 +3806,10 @@
     vessel, in flow so the transcript ends above it, and hides when empty: the
     thread's PR (custom/ComposerPullRequestChip, resolved as the branch picker
     resolves it; open, merged and closed PRs fill with their state's colour
-    under a bright top rim, a draft stays neutral; an "Auto-merge" chip follows
+    under a bright top rim, a draft stays neutral; an open PR's CI (its link
+    snapshot's checksState) rides the chip's end as an inner pill, a still dot
+    from SidebarV2StatusIndicator (amber running, green passing, red failing)
+    and "CI"; an "Auto-merge" chip follows
     it while the current open PR has auto-merge armed, read from the PR's detail
     by custom/threadAutoMerge.ts because link snapshots don't carry it; its label
     opens the PR and, where the host and viewer allow it, a ban button turns

@@ -868,6 +868,10 @@ describe("fork guard: fork-composer-shell", () => {
     expect(prChip).toContain("useThreadAutoMerge(");
     expect(prChip).toContain('perform("disable-auto-merge")');
     expect(shellCss).toContain('[data-fork-composer-status-chip="auto-merge"]');
+    // An open PR's CI rides inside the PR chip as a pill: the shared still dot plus "CI".
+    expect(prChip).toContain("checks={resolvePullRequestChipChecks(");
+    expect(prChip).toContain("<PullRequestChecksDot state={checks} />");
+    expect(shellCss).toContain("> [data-fork-pr-chip-ci] {");
     // Background work: the label lists the tasks, a subagent's row opens its thread, the square stops.
     expect(work).toContain("export function ComposerBackgroundWorkChip");
     // A fill travels the Layers02 mark front → middle → back; reduced motion hides it.
