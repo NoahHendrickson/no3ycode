@@ -417,8 +417,11 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
     command("second", 5, "inProgress"),
   ];
 
-  it("closes each stretch before a held reply into its own row and folds the rest into the line", () => {
+  it("closes the steps before the newest reply into one row and folds the rest into the line", () => {
     expect(kinds(rowsFor(turn, true))).toEqual(["work-toggle", "working"]);
+    expect(kinds(rowsFor(turn.slice(0, 3), true))).toEqual(["work-toggle", "working"]);
+    expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
+    // A later reply grows the one row; a row per stretch was tried and rejected as noisy.
     const later = {
       ...commentary(6),
       id: "later-entry",
@@ -433,10 +436,9 @@ describe("a running turn holds its replies (fork-quiet-live-turn)", () => {
       ],
       true,
     );
-    expect(kinds(grown)).toEqual(["work-toggle", "work", "working"]);
-    expect(grown.some((row) => row.kind === "message")).toBe(false);
-    expect(kinds(rowsFor(turn.slice(0, 3), true))).toEqual(["work-toggle", "working"]);
-    expect(kinds(rowsFor(turn.slice(0, 2), true))).toEqual(["working"]);
+    expect(kinds(grown)).toEqual(["work-toggle", "working"]);
+    const summary = grown[0];
+    expect(summary?.kind === "work-toggle" && summary.hiddenCount).toBe(3);
   });
 
   it("keeps an opened status line open when the next reply lands or its tool fails", () => {
