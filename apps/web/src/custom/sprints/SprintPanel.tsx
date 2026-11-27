@@ -106,7 +106,10 @@ function SprintPanelBody(props: {
         )}
         <span className="flex shrink-0 items-center [-webkit-app-region:no-drag]">
           {tab === "threads" && child === null ? (
-            <BotThreadsListControls listing={listing} />
+            <>
+              <SprintThreadModel sprintRef={props.sprintRef} />
+              <BotThreadsListControls listing={listing} />
+            </>
           ) : null}
           <BotThreadsCloseButton botRef={props.sprintRef} />
         </span>
@@ -119,7 +122,6 @@ function SprintPanelBody(props: {
         />
       ) : tab === "threads" ? (
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <SprintThreadModel sprintRef={props.sprintRef} />
           <BotThreadsListBody listing={listing} none="This sprint has not started any threads.">
             <BotThreadsList
               listing={listing}
