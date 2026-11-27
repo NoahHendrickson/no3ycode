@@ -505,6 +505,8 @@ export function SidebarV2StillMonitoringMark() {
   );
 }
 
+// Not pullRequestChecksStatePresentation's glyph tones: a 6px dot on the PR chip's pale fill needs
+// the legibility-tuned -foreground ramp (700 light, 400 dark) to keep 3:1 non-text contrast.
 const CHECKS_DOT_CLASS: Record<PullRequestChecksState, string> = {
   passing: "bg-success-foreground",
   pending: "bg-warning-foreground",

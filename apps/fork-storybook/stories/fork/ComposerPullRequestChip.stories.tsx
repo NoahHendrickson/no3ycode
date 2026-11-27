@@ -7,7 +7,10 @@ import {
 } from "~/components/ThreadStatusIndicators";
 import type { PullRequestChecksState } from "@t3tools/contracts";
 import { PullRequestChipControl } from "~/custom/ComposerPullRequestChip";
-import { resolvePullRequestChipState } from "~/custom/composerPullRequestChip.logic";
+import {
+  resolvePullRequestChipChecks,
+  resolvePullRequestChipState,
+} from "~/custom/composerPullRequestChip.logic";
 
 import { Row, Stack } from "../Specimen.tsx";
 import { StoryComposer } from "../StoryComposer.tsx";
@@ -29,14 +32,18 @@ function pullRequest(state: PrState): NonNullable<ThreadPr> {
 type ChecksArg = PullRequestChecksState | "none";
 
 /** ComposerPullRequestChip's render, given the PR it would read from the thread and its branch
-    status: the shared badge control drawn as a composer chip, filled by the PR's state, with its CI pill when the PR is open. */
+    status: the shared badge control drawn as a composer chip, filled by the PR's state, with
+    its CI pill when the PR is open. */
 function PullRequestChip({ state, checks }: { state: PrState; checks: ChecksArg }) {
   const pr = pullRequest(state);
   return (
     <ThreadPullRequestBadgeControl
       render={
         <PullRequestChipControl
-          checks={checks === "none" || state === "merged" || state === "closed" ? null : checks}
+          checks={resolvePullRequestChipChecks({
+            badge: null,
+            snapshot: { state: pr.state, checksState: checks === "none" ? null : checks },
+          })}
           size="xs"
           data-fork-composer-status-chip="pull-request"
           data-fork-pr-chip
