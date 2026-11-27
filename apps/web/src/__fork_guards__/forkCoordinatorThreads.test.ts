@@ -201,6 +201,10 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(panel).toContain("const child = onCoordinatorPage ? openChild : null;");
     expect(panel).toContain("<BotThreadsChildConversation");
     expect(panel).toContain("<BotThreadsChildHeading");
+    // The sprint panel's compact list: one-line rows under interface-size group headers.
+    expect(panel).toContain("<BotThreadsCompactRow");
+    expect(panel).toContain('labelSize="interface"');
+    expect(read("../custom/sprints/SprintPanel.tsx")).toContain("<BotThreadsCompactRow");
     expect(read("../custom/coordinator/coordinatorThreadHost.tsx")).toContain(
       "openThread: (ref) => openBotThreadsChild(coordinatorRef, ref),",
     );

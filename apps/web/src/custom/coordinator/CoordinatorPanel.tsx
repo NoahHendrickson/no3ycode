@@ -16,13 +16,11 @@ import {
   BotThreadsPanelFrame,
   type BotThreadsPanelProps,
   botThreadsPanelRightmost,
-  BotThreadsRowView,
   BotThreadsSearchInput,
   useBotThreadsListing,
-  useBotThreadsRow,
 } from "../bots/BotThreadsPanel";
+import { BotThreadsCompactRow } from "../bots/BotThreadsCompactRow";
 import { BotThreadsChildConversation, BotThreadsChildHeading } from "../bots/BotThreadsChild";
-import type { BotWorkRow } from "../bots/botWork";
 import { openBotThreadsChild, useBotThreadsOpenChild } from "../bots/botThreadsPanelStore";
 import { BOT_THREADS_PANEL_DEFAULT_WIDTH } from "../bots/stagePanels";
 
@@ -92,8 +90,11 @@ function CoordinatorPanelBody(props: {
             <BotThreadsList
               listing={listing}
               currentThreadRef={props.currentThreadRef}
+              // The sprint panel's compact list: interface-size headers over one-line rows.
+              labelClassName="px-2.5"
+              labelSize="interface"
               renderRow={(row, current) => (
-                <CoordinatorThreadsRow
+                <BotThreadsCompactRow
                   key={row.thread.id}
                   row={row}
                   current={current}
@@ -110,12 +111,4 @@ function CoordinatorPanelBody(props: {
       )}
     </>
   );
-}
-
-function CoordinatorThreadsRow(props: {
-  readonly row: BotWorkRow;
-  readonly current: boolean;
-  readonly onOpenThread: ((ref: ScopedThreadRef) => void) | undefined;
-}) {
-  return <BotThreadsRowView {...useBotThreadsRow(props.row, props.current, props.onOpenThread)} />;
 }

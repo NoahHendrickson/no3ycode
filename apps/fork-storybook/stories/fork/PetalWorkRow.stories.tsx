@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
+import { BotThreadsCompactRowView } from "~/custom/bots/BotThreadsCompactRow";
 import { BotThreadsRowView } from "~/custom/bots/BotThreadsPanel";
 import { BotThreadsPanelControls } from "~/custom/bots/BotThreadsPanelControls";
 import { EMPTY_BOT_THREADS_VIEW, useBotThreadsViewStore } from "~/custom/bots/botThreadsPanelStore";
@@ -110,6 +111,17 @@ export const States: Story = {
     <>
       {ROWS.map(([name, row]) => (
         <BotThreadsRowView key={name} {...row} seed={name} />
+      ))}
+    </>
+  ),
+};
+
+/** The same threads on one line each, as a sprint's and a coordinator's panels list them. */
+export const Compact: Story = {
+  render: () => (
+    <>
+      {ROWS.map(([name, row]) => (
+        <BotThreadsCompactRowView key={name} {...row} seed={name} />
       ))}
     </>
   ),

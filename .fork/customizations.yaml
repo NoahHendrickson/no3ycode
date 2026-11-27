@@ -8907,7 +8907,8 @@
     The panel is custom/sprints/SprintPanel (its header, tabs, child view and rows) over the
     Petal panel's frame, list, search and controls (bots/BotThreadsPanel, which stays Petal-only);
     ChatView picks one or the other once. Its Threads list draws each thread on one line
-    (SprintThreadsRowView: mark, title, PR mark, time), leaving the checkout to the thread.
+    (bots/BotThreadsCompactRow, shared with fork-coordinator-threads: mark, title, PR mark,
+    time), leaving the checkout to the thread.
 
     A thread opened from a sprint opens in its panel, never in the main column or a split: the
     panel's header turns into a back arrow and the thread's title, and its body is the thread's
@@ -10518,7 +10519,8 @@
     parallel only when their scopes do not overlap, one after another on the same section of a
     file, with targeted edits and git only for their own files; a child's question the owner's
     instructions do not settle is left to the owner's card in one line, never restated.
-    Only a coordinator gets a sub-agent panel (custom/coordinator/CoordinatorPanel); ordinary
+    Only a coordinator gets a sub-agent panel (custom/coordinator/CoordinatorPanel, one-line rows
+    as the sprint panel lists them: bots/BotThreadsCompactRow, interface-size headers); ordinary
     threads keep their inline sub-agent cards. It shows on the coordinator and on each of its
     children (fork-bot-work-threads botThreadsPanelBotId; none for an archived coordinator's
     children), behind the usual Threads toggle, and lists the children by status with the Petal
@@ -10569,6 +10571,7 @@
     - apps/web/src/custom/coordinator/useIsCoordinatorThread.ts
     - apps/web/src/custom/coordinator/CoordinatorPanel.tsx
     - apps/web/src/custom/coordinator/coordinatorThreadHost.tsx
+    - apps/web/src/custom/bots/BotThreadsCompactRow.tsx
     - apps/web/src/custom/coordinator/coordinatorDraft.ts
     - apps/web/src/custom/coordinator/coordinatorAnswers.ts
     - apps/web/src/custom/coordinator/SidebarV2CoordinatorsSection.tsx

@@ -155,6 +155,8 @@ export const DESIGN_LINT_ALLOWLIST = [
     "SegmentedTabs.tsx": ["SegmentedTabs", "SegmentedTab", "SegmentedMenuTabs", "SegmentedMenuTab"],
   }),
   ...b5Exempt("wrapper: reads live thread state, then draws a storied view", {
+    // BotThreadsCompactRowView, Fork/Petal work row › Compact.
+    "bots/BotThreadsCompactRow.tsx": ["BotThreadsCompactRow"],
     // ForkSubagentStartLineView, Fork/Subagent line.
     "ForkSubagentGroup.tsx": ["ForkSubagentGroup", "ForkSubagentNotice"],
     // SubagentLinkMark in a ContextChip, Fork/Subagent link.

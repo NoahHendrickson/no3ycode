@@ -6,7 +6,6 @@
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import type { SideChatParentPanel } from "~/lib/sideChatPane";
-import { cn } from "~/lib/utils";
 
 import {
   BotThreadsCloseButton,
@@ -19,14 +18,10 @@ import {
   botThreadsPanelRightmost,
   BotThreadsSearchInput,
   useBotThreadsListing,
-  useBotThreadsRow,
 } from "../bots/BotThreadsPanel";
-import { BotPullRequestMark } from "../bots/BotPullRequestMark";
+import { BotThreadsCompactRow } from "../bots/BotThreadsCompactRow";
 import { BotThreadsChildConversation, BotThreadsChildHeading } from "../bots/BotThreadsChild";
 import { useBotThreadsOpenChild } from "../bots/botThreadsPanelStore";
-import type { BotWorkRow } from "../bots/botWork";
-import { ListItem } from "../ListItem";
-import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import {
   openInSprintPanel,
   SPRINT_PANEL_DEFAULT_WIDTH,
@@ -114,7 +109,7 @@ function SprintPanelBody(props: {
               labelClassName="px-2.5"
               labelSize="interface"
               renderRow={(row, current) => (
-                <SprintThreadsRow
+                <BotThreadsCompactRow
                   key={row.thread.id}
                   row={row}
                   current={current}
@@ -131,53 +126,5 @@ function SprintPanelBody(props: {
         <SprintPanelTabContent sprintRef={props.sprintRef} tab={tab} />
       )}
     </>
-  );
-}
-
-function SprintThreadsRow(props: {
-  readonly row: BotWorkRow;
-  readonly current: boolean;
-  readonly onOpenThread: ((ref: ScopedThreadRef) => void) | undefined;
-}) {
-  return (
-    <SprintThreadsRowView {...useBotThreadsRow(props.row, props.current, props.onOpenThread)} />
-  );
-}
-
-/** One line per thread (mark, title, pull request, time), leaving the checkout to the thread. */
-function SprintThreadsRowView(props: ReturnType<typeof useBotThreadsRow>) {
-  return (
-    <li>
-      <ListItem
-        aria-current={props.current ? "page" : undefined}
-        onClick={props.onOpen}
-        onContextMenu={props.onContextMenu}
-        className={cn(
-          "items-center gap-2.5 px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          props.current && "bg-accent",
-        )}
-        data-testid="bot-threads-row"
-      >
-        <span className="flex h-5 w-3 shrink-0 items-center justify-center">
-          <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
-        </span>
-        <span className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-base leading-5 text-foreground">
-            {props.title}
-          </span>
-          {props.pullRequest === null ? null : (
-            <span className="shrink-0 text-xs text-muted-foreground">
-              <BotPullRequestMark
-                number={props.pullRequest.number}
-                state={props.pullRequest.state}
-              />
-            </span>
-          )}
-          <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
-            {props.time}
-          </span>
-        </span>
-      </ListItem>
-    </li>
   );
 }
