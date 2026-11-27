@@ -2162,6 +2162,7 @@
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
     [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
+    [data-fork-composer-stack="true"] [data-fork-coordinator-toggle],
     [data-fork-draft-launchpad-card]
   ) {
   background: var(--fork-composer-vessel-bg);
@@ -2215,7 +2216,12 @@
   [data-chat-composer-overlay="true"][data-draft-hero] {
   --fork-composer-vessel-bg: transparent;
 
-  & :is([data-fork-composer-vessel], [data-fork-draft-launchpad-card]) {
+  &
+    :is(
+      [data-fork-composer-vessel],
+      [data-fork-draft-launchpad-card],
+      [data-fork-coordinator-toggle]
+    ) {
     background: transparent;
     border-color: transparent;
     box-shadow: none;

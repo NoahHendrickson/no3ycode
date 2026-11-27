@@ -347,6 +347,7 @@
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
       [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
+      [data-fork-composer-stack="true"] [data-fork-coordinator-toggle],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     ) {
@@ -377,6 +378,7 @@
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
       [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
+      [data-fork-composer-stack="true"] [data-fork-coordinator-toggle],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     ):is(:focus-visible, :has(:focus-visible:not([data-testid="composer-editor"]))) {
@@ -390,6 +392,7 @@
     :is(
       [data-fork-composer-stack="true"] [data-fork-composer-vessel],
       [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
+      [data-fork-composer-stack="true"] [data-fork-coordinator-toggle],
       [data-fork-draft-launchpad-card],
       [data-chat-header] [data-fork-pill]
     )::before {
@@ -430,6 +433,17 @@
     --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
     --fork-glass-frost-radius: var(--radius-lg);
     --contrast-muted-foreground: rgb(255 255 255 / 92%);
+  }
+
+  /* The new-thread Coordinator pill (fork-coordinator-threads), a tab of the vessel. */
+  :root[data-fork="noahhendrickson-t3code"]:where(
+      :not([data-fork-glass-picture="off"])
+    ).dark[data-fork-theme="cool-darker"]
+    [data-chat-column-maximized-away][data-fork-draft-hero]
+    [data-fork-composer-stack="true"]
+    [data-fork-coordinator-toggle] {
+    --fork-glass-frost-wash: var(--fork-composer-vessel-bg);
+    --fork-glass-frost-radius: var(--radius-lg);
   }
 
   :root[data-fork="noahhendrickson-t3code"]:where(
@@ -537,6 +551,7 @@
   :is(
     [data-fork-composer-stack="true"] [data-fork-composer-vessel],
     [data-fork-composer-stack="true"] [data-fork-composer-status-chip="stash"],
+    [data-fork-composer-stack="true"] [data-fork-coordinator-toggle],
     [data-fork-draft-launchpad-card],
     [data-chat-header] [data-fork-pill]
   ),

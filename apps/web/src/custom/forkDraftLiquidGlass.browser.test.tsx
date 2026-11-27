@@ -164,7 +164,15 @@ describe("useForkDraftLiquidGlass", () => {
     await vi.waitFor(() => expect(states.at(-1)?.cards).toHaveLength(2));
     expect(states.at(-1)?.cards[1]?.cornerRadius).toBe(10);
 
+    // The new-thread Coordinator pill is a tab of the composer card, so it gets one too.
+    const pill = document.createElement("label");
+    pill.setAttribute("data-fork-coordinator-toggle", "");
+    pill.style.cssText = "display:block;width:120px;height:33px;border-radius:8px";
+    overlay.prepend(pill);
+    await vi.waitFor(() => expect(states.at(-1)?.cards).toHaveLength(3));
+
     chip.remove();
+    pill.remove();
     await vi.waitFor(() => expect(states.at(-1)?.cards).toHaveLength(1));
   });
 });

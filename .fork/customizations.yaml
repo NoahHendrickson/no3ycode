@@ -10470,9 +10470,13 @@
     pill (components/ui Checkbox, then the label; the whole pill toggles it, the checkbox is the
     one focusable control) over the composer card's top-right corner, last and right-aligned in
     the chip row above it (owner's placement). It matches the owner's Figma pill (kit 549:1199):
-    checkbox, then the workflow-square-10 icon and the label; the context chip's hover fill over
-    a backdrop blur (--glass-blur), no hairline, the composer chips' type in strong text
-    (custom/ComposerShell.css), so it reads over the new agent screen's backdrop
+    checkbox, then the workflow-square-10 icon and the label, the composer chips' type in strong
+    text. It wears the composer card's own surface, a tab of the card (owner, 2026-11-27; a CSS
+    blur cannot reach the desktop wallpaper behind the window): the vessel's fill
+    (custom/ComposerShell.css), Flat Glass's and Basic's draft vessel ring, and a place in every
+    list that blurs, frosts or natively draws the card (theme.custom.palettes.css,
+    theme.custom.glass.css, theme.custom.inlet-black.css, and custom/forkDraftLiquidGlass's
+    native Liquid Glass cards), wherever the stash chip sits beside the vessel
     (custom/coordinator/CoordinatorDraftToggle, held per draft and thread id in
     custom/coordinator/coordinatorDraft, never on existing threads, reset by sending or a new
     draft). Its first send (useComposerSend's turn start, wrapped by useCoordinatorDraftStart) is
@@ -10529,6 +10533,10 @@
   watch:
     - apps/web/src/components/Sidebar.tsx
     - apps/web/src/custom/ComposerShell.css
+    - apps/web/src/theme.custom.palettes.css
+    - apps/web/src/theme.custom.glass.css
+    - apps/web/src/theme.custom.inlet-black.css
+    - apps/web/src/custom/forkDraftLiquidGlass.ts
     - apps/web/src/components/chat/ChatComposer.tsx
     - apps/web/src/components/chat/useComposerSend.ts
     - apps/web/src/components/chat/useComposerMenuItems.ts

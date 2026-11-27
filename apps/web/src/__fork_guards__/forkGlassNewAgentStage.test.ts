@@ -51,7 +51,7 @@ const POPUP = `body.dropdown-glass${FROSTED}`;
 const SUPPORTS = ["@supports (anchor-name: --fork-glass-card)"];
 // The frost hosts, as the sheet lists them inside one :is().
 const HOSTS =
-  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-composer-stack="true"][data-fork-composer-status-chip="stash"],[data-fork-draft-launchpad-card],[data-chat-header][data-fork-pill])';
+  ':is([data-fork-composer-stack="true"][data-fork-composer-vessel],[data-fork-composer-stack="true"][data-fork-composer-status-chip="stash"],[data-fork-composer-stack="true"][data-fork-coordinator-toggle],[data-fork-draft-launchpad-card],[data-chat-header][data-fork-pill])';
 
 const sheet = readSibling("../theme.custom.glass.css");
 const rules = cssRules(sheet);

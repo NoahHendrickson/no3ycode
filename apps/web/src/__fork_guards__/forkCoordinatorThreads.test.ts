@@ -49,13 +49,16 @@ describe("fork guard: fork-coordinator-threads", () => {
     const composer = read("../components/chat/ChatComposer.tsx");
     expect(composer).toContain("const forkCoordinator = useCoordinatorComposer({");
     expect(composer).toContain("<CoordinatorDraftToggle");
-    // A checkbox pill on the context chip's hover fill, so it reads over the screen's backdrop.
+    // A checkbox pill in the composer card's own surface, natively drawn where the card is.
     const toggle = read("../custom/coordinator/CoordinatorDraftToggle.tsx");
     expect(toggle).toContain("<label");
     expect(toggle).toContain("<Checkbox");
     expect(toggle).toContain("<WorkflowSquare10Icon");
+    expect(read("../custom/forkDraftLiquidGlass.ts")).toContain(
+      '"[data-fork-coordinator-toggle]",',
+    );
     expect(read("../custom/ComposerShell.css")).toMatch(
-      /\[data-fork-coordinator-toggle\] \{[^}]*background: var\(--fork-context-chip-bg-hover\);[^}]*backdrop-filter: blur\(var\(--glass-blur\)\);[^}]*color: var\(--basic-text-strong, var\(--foreground\)\);/u,
+      /\[data-fork-coordinator-toggle\] \{[^}]*background: var\(--fork-composer-vessel-bg\);[^}]*color: var\(--basic-text-strong, var\(--foreground\)\);/u,
     );
     const send = read("../components/chat/useComposerSend.ts");
     expect(send).toContain("const forkStartOwnerTurn = useCoordinatorDraftStart(");
