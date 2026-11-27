@@ -43,7 +43,8 @@ export const SCHEDULED_RUN_ACTIVITY_MARKS: Record<
   SidebarV2TopStatusMark
 > = {
   working: { label: "Running", mark: "working" },
-  needsYou: { label: "Waiting on you", mark: "dot", tone: "approval" },
+  // Holds approval and input runs alike, so it wears the shared half circle, not approval's ring.
+  needsYou: { label: "Waiting on you", mark: "dot", tone: "input" },
   failed: { label: "Failed", mark: "dot", tone: "failed" },
 };
 

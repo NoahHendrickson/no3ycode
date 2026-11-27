@@ -160,6 +160,16 @@ const CircleHalfRight: IconSvgElement = [
   ["path", { d: "M12 3a9 9 0 0 1 0 18z", fill: "currentColor", key: "half" }],
 ];
 
+// Hugeicons Progress03 with its half pulled in from r=7.5 to 6.5: at 11px the antialiased ring
+// reads thicker than its 1.5 units, so the gap needs more room to look as wide as the ring.
+const CircleHalfInset: IconSvgElement = [
+  [
+    "circle",
+    { cx: "12", cy: "12", r: "10", stroke: "currentColor", strokeWidth: "1.5", key: "ring" },
+  ],
+  ["path", { d: "M12 5.5a6.5 6.5 0 0 1 0 13z", fill: "currentColor", key: "half" }],
+];
+
 export const ChevronDownIcon = icon("chevron-down", Hg.ChevronDownIcon, "stroke");
 export const ChevronDown = ChevronDownIcon;
 export const ChevronUpIcon = icon("chevron-up", Hg.ChevronUpIcon, "stroke");
@@ -549,6 +559,8 @@ export const CalendarArrowUpIcon = icon("calendar-arrow-up", Hg.CalendarArrowUpI
 export const NavigationArrowIcon = icon("navigation-arrow", Hg.Navigation03Icon, "themed");
 export const ChartDonutIcon = icon("chart-donut", Hg.ChartRingIcon, "themed");
 export const CircleHalfIcon = icon("circle-half", CircleHalfRight, "stroke");
+// The amber "waiting on you" mark (Needs approval, Usage limit reached).
+export const CircleHalfInsetIcon = icon("circle-half-inset", CircleHalfInset, "stroke");
 export const FadersHorizontalIcon = icon("faders-horizontal", Hg.SlidersHorizontalIcon, "stroke");
 // The model picker's favourite toggle.
 export const HeartIcon = icon("heart", Hg.HeartIcon, "themed");
