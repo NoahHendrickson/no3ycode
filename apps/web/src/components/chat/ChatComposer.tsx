@@ -4061,9 +4061,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             />
           )
         }
-        /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
-        digest={<BotDigestAsks threadRef={routeThreadRef} />}
-        /* fork:end fork-bot-digest */
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
         modeControls={composerModeControls}
         modelControls={composerModelControls}
@@ -4075,6 +4072,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         banners={
           <ComposerBanner.Dock>
             <ComposerBanner.Column>
+              {/* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */}
+              <BotDigestAsks threadRef={routeThreadRef} />
+              {/* fork:end fork-bot-digest */}
               {/* fork:begin fork-composer-approval-notice — see .fork/customizations.yaml#fork-composer-approval-notice */}
               <ComposerBannerStack items={forkShelfItems} />
               {/* fork:end fork-composer-approval-notice */}

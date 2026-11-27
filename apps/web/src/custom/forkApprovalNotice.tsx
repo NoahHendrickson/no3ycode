@@ -3,7 +3,7 @@ import {
   fullAccessOverrideExplanation,
 } from "@t3tools/client-runtime/state/thread-requests";
 import { ShieldIcon } from "./icons/lucide-hugeicons";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { ComposerPendingApprovalActions } from "~/components/chat/ComposerPendingApprovalActions";
 import type { ComposerBannerStackItem } from "~/components/chat/ComposerBannerStack";
@@ -38,6 +38,8 @@ export function forkApprovalNoticeItem(input: {
   readonly disabled: boolean;
   readonly isResponding: boolean;
   readonly onRespondToApproval: ForkApprovalResponder;
+  /** Under the actions: a Petal's copy of a work thread's approval names that thread. */
+  readonly source?: ReactNode;
 }): ComposerBannerStackItem {
   const { approval } = input;
   const label = APPROVAL_LABEL[approval.requestKind];
@@ -113,6 +115,7 @@ export function forkApprovalNoticeItem(input: {
             onRespondToApproval={input.onRespondToApproval}
           />
         </span>
+        {input.source}
       </span>
     ),
   };

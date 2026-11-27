@@ -25,6 +25,8 @@ const theme = readSibling("../theme.custom.css");
 const palettes = readSibling("../theme.custom.palettes.css");
 const override = readSibling("../overrides/components/chat/ComposerPendingUserInputPanel.tsx");
 const hook = readSibling("../custom/useComposerPendingUserInputCard.ts");
+// Each option row, shared with a Petal's digest asks (fork-bot-digest).
+const option = readSibling("../custom/ForkQuestionOption.tsx");
 const upstream = readSibling("../components/chat/ComposerPendingUserInputPanel.tsx");
 const primaryActions = readSibling("../components/chat/ComposerPrimaryActions.tsx");
 const chatComposer = readSibling("../components/chat/ChatComposer.tsx");
@@ -39,10 +41,11 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain("prompt.questions.length > 1");
     expect(override).toContain("useComposerPendingUserInputCard");
     // Theme-adaptive selection — not white-alpha that disappears in Light.
-    expect(override).toContain("border-foreground/24");
-    expect(override).toContain("bg-foreground/8");
-    expect(override).not.toContain("border-white/");
-    expect(override).not.toContain("bg-white/");
+    expect(override).toContain("<ForkQuestionOption");
+    expect(option).toContain("border-foreground/24");
+    expect(option).toContain("bg-foreground/8");
+    expect(`${override}${option}`).not.toContain("border-white/");
+    expect(`${override}${option}`).not.toContain("bg-white/");
     // Card interaction lives in custom/; the override must not re-own it.
     expect(override).not.toContain("autoAdvanceTimerRef");
     expect(override).not.toContain('addEventListener("keydown"');
@@ -52,7 +55,8 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain("data-fork-pending-user-input-submit");
     expect(hook).toContain('addEventListener("keydown"');
     // Number keys stay wired; announce via aria-keyshortcuts without kbd badges.
-    expect(override).toContain("aria-keyshortcuts");
+    expect(override).toContain("keyShortcut={digitShortcut}");
+    expect(option).toContain("aria-keyshortcuts");
     // Upstream dropped its kbd badges too (#25869), so only the override side is pinned.
     expect(override).not.toContain("shortcutKey");
     expect(upstream).toContain("activeQuestion.header");
@@ -82,11 +86,11 @@ describe("fork guard: fork-pending-user-input", () => {
   });
 
   it("uses checkboxes for multi-select and radios for single-select", () => {
-    expect(override).toContain('role={multiSelect ? "checkbox" : "radio"}');
+    expect(option).toContain('role={props.multiSelect ? "checkbox" : "radio"}');
     expect(override).toContain('role={multiSelect ? "group" : "radiogroup"}');
     expect(override).toContain('multiSelect ? "Select one or more" : "Select one"');
-    expect(override).toContain("border-foreground/50");
-    expect(override).toContain('multiSelect ? "rounded-sm" : "rounded-full"');
+    expect(option).toContain("border-foreground/50");
+    expect(option).toContain('multiSelect ? "rounded-sm" : "rounded-full"');
   });
 
   it("keeps Previous in the card and only the advance arrow in the composer", () => {

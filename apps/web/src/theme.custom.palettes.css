@@ -414,9 +414,9 @@
     box-shadow: inset 0 -1px 0 var(--border);
   }
 
-  /* A 1px inner ring on the composer vessels outside a composer form: Petal digest cards and
-     the scheduled editor. The thread composer paints no vessel (theme.custom.thread-composer.css). */
-  & :is([data-fork-bot-digest], [data-scheduled-composer]) [data-fork-composer-vessel] {
+  /* A 1px inner ring on the composer vessel outside a composer form: the scheduled editor. The
+     thread composer paints no vessel (theme.custom.thread-composer.css). */
+  & [data-scheduled-composer] [data-fork-composer-vessel] {
     box-shadow: inset 0 0 0 1px var(--fork-composer-border);
   }
 

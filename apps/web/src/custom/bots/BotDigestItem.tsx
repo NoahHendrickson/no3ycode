@@ -2,21 +2,19 @@
  * One line of a bot's digest — see `.fork/customizations.yaml#fork-bot-digest`: its words, then
  * the threads and pull requests it links (client-runtime fork-bot-digest-links), each opening its target.
  */
-import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { unknownThreadLinkLabel } from "@t3tools/shared/threadLinksCopy";
 import { useNavigate } from "@tanstack/react-router";
 import { useMessages } from "gt-react";
 
-import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { cn } from "~/lib/utils";
 import { buildThreadRouteParams } from "~/threadRoutes";
 
-import { resolveSidebarV2CardStatus } from "../sidebarV2CardStatus";
-import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
+import { MessageSquareIcon } from "../icons/lucide-hugeicons";
 import {
   type BotDigestLinks,
   type BotPullRequest,
@@ -29,7 +27,6 @@ import type { BotDigestItem } from "@t3tools/client-runtime/fork-bot-digest";
 /** The threads the panel already holds, which the digest reads its links against. */
 export interface BotDigestThreads {
   readonly shells: ReadonlyArray<EnvironmentThreadShell>;
-  readonly localVisits: Readonly<Record<string, string>>;
 }
 
 const chipClassName =
@@ -57,7 +54,6 @@ export function resolveBotDigestLine(
 export function BotDigestLinkRow(props: {
   readonly links: BotDigestLinks;
   readonly environmentId: EnvironmentId;
-  readonly localVisits: BotDigestThreads["localVisits"];
 }) {
   const { links } = props;
   const messages = useMessages();
@@ -66,15 +62,17 @@ export function BotDigestLinkRow(props: {
     <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-muted-foreground">
       {links.threads.map(({ link, label, shell }) =>
         shell === undefined ? (
-          <span key={`${link.environmentId}/${link.threadId}`} className="truncate">
-            {label || unknownThreadLinkLabel(link, props.environmentId, messages)}
+          <span
+            key={`${link.environmentId}/${link.threadId}`}
+            className="flex min-w-0 items-center gap-1"
+          >
+            <ThreadGlyph />
+            <span className="truncate">
+              {label || unknownThreadLinkLabel(link, props.environmentId, messages)}
+            </span>
           </span>
         ) : (
-          <BotDigestThreadChip
-            key={`${shell.environmentId}/${shell.id}`}
-            shell={shell}
-            localVisits={props.localVisits}
-          />
+          <BotDigestThreadChip key={`${shell.environmentId}/${shell.id}`} shell={shell} />
         ),
       )}
       {links.pullRequests.map((pullRequest) => (
@@ -89,18 +87,15 @@ export function BotDigestLinkRow(props: {
   );
 }
 
-/** A linked thread: its sidebar status mark and title, opening it. */
-function BotDigestThreadChip(props: {
-  readonly shell: EnvironmentThreadShell;
-  readonly localVisits: Readonly<Record<string, string>>;
-}) {
+/** A thread: one speech bubble, sized to a pull request's glyph. */
+function ThreadGlyph() {
+  return <MessageSquareIcon aria-hidden className="size-3 shrink-0" />;
+}
+
+/** A linked thread: the thread glyph and its title, opening it. */
+function BotDigestThreadChip(props: { readonly shell: EnvironmentThreadShell }) {
   const { shell } = props;
   const openThread = useOpenThread();
-  const key = scopedThreadKey(scopeThreadRef(shell.environmentId, shell.id));
-  const card = resolveSidebarV2CardStatus(shell, {
-    lastVisitedAt: resolveThreadLastVisitedAt(shell.lastVisitedAt, props.localVisits[key]),
-    wokeAt: null,
-  });
   return (
     <button
       type="button"
@@ -108,9 +103,7 @@ function BotDigestThreadChip(props: {
       onClick={() => openThread(scopeThreadRef(shell.environmentId, shell.id))}
       data-testid="bot-digest-thread"
     >
-      <span className="flex h-4 w-3 shrink-0 items-center justify-center">
-        <SidebarV2StatusMark status={card.topStatus} seed={key} idle="dot" />
-      </span>
+      <ThreadGlyph />
       <span className="truncate">{shell.title}</span>
     </button>
   );

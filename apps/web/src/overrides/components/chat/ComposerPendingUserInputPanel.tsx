@@ -1,10 +1,11 @@
 import { type RuntimeRequestId, type ScopedThreadRef } from "@t3tools/contracts";
 import { useGT } from "gt-react";
-import { memo } from "react";
-import { CheckIcon, XIcon } from "lucide-react";
+import { memo, type ReactNode } from "react";
+import { XIcon } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
+import { ForkQuestionOption } from "~/custom/ForkQuestionOption";
 import { useComposerPendingUserInputCard } from "~/custom/useComposerPendingUserInputCard";
 import { ComposerBanner } from "./ComposerBanner";
 import ChatMarkdown from "../ChatMarkdown";
@@ -13,7 +14,7 @@ import {
   isPendingUserInputOptionSelected,
   type PendingUserInputDraftAnswer,
 } from "@t3tools/client-runtime/state/pending-user-input";
-import { markdownProseDirection, textDirection } from "~/textDirection";
+import { markdownProseDirection } from "~/textDirection";
 import { type PendingUserInput } from "~/session-logic";
 
 interface PendingUserInputPanelProps {
@@ -31,6 +32,8 @@ interface PendingUserInputPanelProps {
   /** Back to the previous question; the card owns Previous and Submit. */
   onPrevious: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
+  /** Drawn last inside the card: a Petal's copy of a work thread's question names that thread. */
+  footer?: ReactNode;
 }
 
 export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserInputPanel({
@@ -46,6 +49,7 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
   onAdvance,
   onPrevious,
   onDismiss,
+  footer,
 }: PendingUserInputPanelProps) {
   if (pendingUserInputs.length === 0) return null;
   const activePrompt = pendingUserInputs[0];
@@ -66,31 +70,10 @@ export const ComposerPendingUserInputPanel = memo(function ComposerPendingUserIn
       onAdvance={onAdvance}
       onPrevious={onPrevious}
       onDismiss={onDismiss}
+      footer={footer}
     />
   );
 });
-
-function OptionControl({ multiSelect, selected }: { multiSelect: boolean; selected: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      data-fork-question-control
-      className={cn(
-        "flex size-4 shrink-0 items-center justify-center border border-foreground/50",
-        multiSelect ? "rounded-sm" : "rounded-full",
-        selected && "border-transparent",
-      )}
-    >
-      {selected ? (
-        multiSelect ? (
-          <CheckIcon className="size-3" strokeWidth={3} />
-        ) : (
-          <span className="size-1.5 rounded-full bg-current" />
-        )
-      ) : null}
-    </span>
-  );
-}
 
 const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard({
   prompt,
@@ -105,6 +88,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onAdvance,
   onPrevious,
   onDismiss,
+  footer,
 }: {
   prompt: PendingUserInput;
   cwd: string | undefined;
@@ -118,6 +102,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
   onAdvance: () => void;
   onPrevious: () => void;
   onDismiss: (requestId: RuntimeRequestId) => void;
+  footer: ReactNode;
 }) {
   const gt = useGT();
   // Upstream #9786: a client without the operate scope sees the questions but
@@ -209,46 +194,18 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
               // The preview sits outside the button: it can hold links.
               return (
                 <div key={`${activeQuestion.id}:${optionValue}`} className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    role={multiSelect ? "checkbox" : "radio"}
-                    aria-checked={isSelected}
-                    data-fork-question-option
-                    aria-keyshortcuts={digitShortcut}
+                  <ForkQuestionOption
+                    label={option.label}
+                    description={option.description}
+                    multiSelect={multiSelect}
+                    selected={isSelected}
                     disabled={interactionDisabled}
-                    onClick={() => {
+                    keyShortcut={digitShortcut}
+                    textAlignClassName={questionTextAlign}
+                    onSelect={() => {
                       handleOptionSelection(activeQuestion.id, optionValue);
                     }}
-                    className={cn(
-                      questionTextAlign,
-                      "group flex w-full flex-col gap-1 rounded-xl border p-2 outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/40",
-                      isSelected
-                        ? "border-foreground/24 bg-foreground/8 text-foreground"
-                        : "border-transparent hover:bg-foreground/4",
-                      interactionDisabled && "cursor-not-allowed opacity-50",
-                      !interactionDisabled && "cursor-pointer",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <OptionControl multiSelect={multiSelect} selected={isSelected} />
-                      <span className="text-sm text-foreground" dir={textDirection(option.label)}>
-                        {option.label}
-                      </span>
-                    </div>
-                    {option.description && option.description !== option.label ? (
-                      <div className="flex w-full items-center pl-6">
-                        <span
-                          className={cn(
-                            "flex-1 text-sm font-normal",
-                            isSelected ? "text-foreground/80" : "text-muted-foreground",
-                          )}
-                          dir={textDirection(option.description)}
-                        >
-                          {option.description}
-                        </span>
-                      </div>
-                    ) : null}
-                  </button>
+                  />
                   {option.preview ? (
                     <ChatMarkdown
                       text={option.preview}
@@ -304,6 +261,7 @@ const ComposerPendingUserInputCard = memo(function ComposerPendingUserInputCard(
           </Button>
         ) : null}
       </div>
+      {footer}
     </div>
   );
 });

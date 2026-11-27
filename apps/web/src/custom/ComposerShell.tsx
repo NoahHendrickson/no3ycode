@@ -41,8 +41,6 @@ type ComposerShellProps = ComposerShellVisibilityInput & {
   statusChips?: ReactNode;
   /** Chips that stay over the collapsed phone pill (the stash, whose tap expands and opens it). */
   persistentChips?: ReactNode;
-  /** A Petal's digest, under the chips and above the notice cards. */
-  digest?: ReactNode;
   /** Notice cards (questions, approvals, compaction, settle) between the chips and the composer. */
   banners?: ReactNode;
 };
@@ -60,7 +58,6 @@ export const ComposerShell = memo(function ComposerShell({
   usageControls,
   statusChips,
   persistentChips,
-  digest,
   banners,
 }: ComposerShellProps) {
   const { showInteractiveControls } = resolveComposerShellVisibility({
@@ -109,10 +106,6 @@ export const ComposerShell = memo(function ComposerShell({
       >
         {collapsedMobile ? null : statusChips}
         {persistentChips}
-      </div>
-      {/* In the form, but not the composer: the body's theme and focus rules stop here. */}
-      <div data-fork-composer-aside="true" className="contents">
-        {digest}
       </div>
       <div data-fork-composer-body="true" className="flex min-w-0 flex-col">
         <div data-fork-composer-banners="true" className="flex min-w-0 flex-col">
