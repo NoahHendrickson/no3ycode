@@ -15,6 +15,16 @@ import {
 } from "./flatGlassTheme";
 import { No3yBeadRing } from "./No3yBeadRing";
 
+/** Hugeicons Progress03 (ring, inset filled half, pulled in to r=6.5) matching the Mac sidebar's approval mark. */
+function ProgressMark(props: { readonly color: string; readonly size: number }) {
+  return (
+    <Svg width={props.size} height={props.size} viewBox="0 0 24 24">
+      <Circle cx={12} cy={12} r={10} stroke={props.color} strokeWidth={1.5} fill="none" />
+      <Path d="M12 5.5 A6.5 6.5 0 0 1 12 18.5 Z" fill={props.color} />
+    </Svg>
+  );
+}
+
 /** Half-filled circle matching the Mac sidebar's CircleHalfIcon for blocked-on-you states. */
 function HalfCircleMark(props: { readonly color: string; readonly size: number }) {
   return (
@@ -82,10 +92,9 @@ export function No3yStatusMark(props: {
     >
       {props.kind === "working" ? (
         <No3yBeadRing color={color} size={size} />
-      ) : props.kind === "approval" ||
-        props.kind === "input" ||
-        props.kind === "request" ||
-        props.kind === "limited" ? (
+      ) : props.kind === "approval" || props.kind === "limited" ? (
+        <ProgressMark color={color} size={13 * scale} />
+      ) : props.kind === "input" || props.kind === "request" ? (
         <HalfCircleMark color={color} size={13 * scale} />
       ) : props.kind === "woke" ? (
         <SymbolView

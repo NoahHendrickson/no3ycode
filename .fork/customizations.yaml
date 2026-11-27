@@ -740,8 +740,9 @@
     table row names its policy (stroke, themed, fill); a guard checks that
     every themed and fill row can actually fill, so the table, not the
     heuristic, says which glyphs fill. The shared stroke attributes sit on the
-    <svg>, so a caller's stroke props reach the glyph. The two blocked-on-you
-    statuses draw a hand-built half circle at the design's 9.75px. Where the
+    <svg>, so a caller's stroke props reach the glyph. The blocked-on-you
+    statuses draw hand-built marks at the design's 9.75px: a half circle for
+    Input, Progress03 with its half pulled in to r=6.5 for Approval. Where the
     derivation cannot reach Hugeicons' solid look (a straight divider the
     outline lacks, back panels and handles that are open strokes, parts that
     should stand apart), the derivation hands back a hand-drawn filled
@@ -829,14 +830,15 @@
     keep their own sizes and centre in the box. The mark's form carries the
     state, per the component set — falling pixels (or the DNA helix, see
     fork-working-mark) while the agent runs, a
-    10px filled dot for Done and the same circle hollow for Idle, Phosphor's
-    half-filled circle for Approval and Input (one amber for both: each means
+    10px filled dot for Done and the same circle hollow for Idle, a ring
+    with an inset filled half for Approval (and Usage limit) and a
+    half-filled circle for Input (one amber for both: each means
     "waiting on you"), the same dot in red for Failed, a slow white
     opacity breath (50% → 20%) while monitoring, a clock for woke — and the
     hue reinforces it: Done is blue,
-    so an unread result reads apart from a live agent. The glyph marks are
-    12px because Phosphor inks its circle on ~81% of the grid, which is the
-    design's 9.75px beside the 10px dot. The monitoring breath is duty-cycled and stepped (same
+    so an unread result reads apart from a live agent. The half circle is
+    12px and the approval ring 11px, so both ink the design's 9.75px beside
+    the 10px dot. The monitoring breath is duty-cycled and stepped (same
     compositor contract as upstream ghost-pulse / status-pulse): long holds
     with a short steps(4) ramp, opacity-only, contain:paint, no will-change —
     so it does not repaint every vsync on high-refresh displays. Working is
