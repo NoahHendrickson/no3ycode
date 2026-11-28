@@ -198,13 +198,15 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     // Settled shelves each carry the chevron.
     const shelfChevrons = [...sidebarV2.matchAll(/SIDEBAR_V2_TRAILING_OFFSET\.shelfChevron/gu)];
     expect(shelfChevrons.length).toBe(3);
-    // Positioned, so the card's actions share a paint layer with the subagent
-    // count the crossfade turns into a stacking context — see the call site.
-    // Matched on w-0, which is the actions wrapper's own collapse and not
-    // something the count it shares the cell with ever carries.
+    // Positioned, so the card's actions paint above any crossfade sibling
+    // that shares their cell — see the call site. Matched on w-0, the
+    // actions wrapper's own collapse.
     const cardActions = /"([^"]*col-start-1 row-start-1[^"]*\bw-0\b[^"]*)"/u.exec(sidebarV2)?.[1];
     expect(cardActions).toBeDefined();
     expect(cardActions).toContain("relative");
+    // group-any-hover (upstream #15536): a secondary hovering pointer on a
+    // touch-primary device reveals the actions too.
+    expect(cardActions).toContain("group-any-hover/v2-row:opacity-100");
     // The chrome rows' share of the same axis: 4px, and only 4px — the list
     // pays for its own scroll gutter now (fork-sidebar-chrome guards that), so
     // a scrollbar term reappearing here would double-count it.
@@ -278,18 +280,5 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(sidebarV2.slice(actionsGrid, cardStatus)).toContain(
       "SIDEBAR_V2_CARD_ALIGNMENT.statusBox",
     );
-    // The trailing cell still fades the subagent count when the hover
-    // actions will replace it; that decoration must stay out of the hit path
-    // for the same reason status used to. The fade class is gated separately
-    // (no actions → nothing to yield to → no fade), so the base string is the
-    // anchor here.
-    const subagentCountClass =
-      /"(pointer-events-none[^"]*col-start-1 row-start-1 flex items-center[^"]*)"/u.exec(
-        sidebarV2,
-      )?.[1];
-    expect(subagentCountClass).toBeDefined();
-    // group-any-hover (upstream #15536): a secondary hovering pointer on a
-    // touch-primary device reveals the actions too.
-    expect(sidebarV2).toContain("transition-opacity group-any-hover/v2-row:opacity-0");
   });
 });
