@@ -94,6 +94,7 @@ import {
   forkThreadLaunchListsEqual,
   placeLaunchesUnderReplies,
 } from "~/custom/threadLaunchCards/threadLaunch.logic";
+import { withoutLaunchedThreadReports } from "~/custom/forkWorkReports";
 /* fork:end fork-thread-launch-cards */
 
 export function timelineEntryRunId(entry: TimelineEntry): RunId | null {
@@ -1676,6 +1677,9 @@ function timelineRowEntries(
     );
   }
   /* fork:end fork-bots */
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  shown = withoutLaunchedThreadReports(shown);
+  /* fork:end fork-thread-launch-cards */
   /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn
      Zen's rule in every mode: a running turn's replies wait for it to end; the status line reads
      them. Held after settling, so a thought followed only by a held reply still reads settled. */

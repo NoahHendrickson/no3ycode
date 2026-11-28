@@ -176,6 +176,33 @@ export function isForkDelegatedQuestionReport(entry: TimelineEntry): boolean {
   return item?.type === "notification" && forkDelegatedQuestionOf(item) !== null;
 }
 
+/** A thread's row shows once, under the reply that launched it, and reads its status live there. A
+    later report that only says it finished a turn would draw the same row again, so it goes; a
+    question or approval keeps its card, and a thread launched elsewhere keeps its report row. */
+export function withoutLaunchedThreadReports(
+  entries: ReadonlyArray<TimelineEntry>,
+): ReadonlyArray<TimelineEntry> {
+  const launched = new Set<string>();
+  for (const entry of entries) {
+    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
+      launched.add(entry.launch.threadId);
+    }
+  }
+  if (launched.size === 0) return entries;
+  return entries.filter((entry) => {
+    if (entry.kind !== "work" || entry.entry.itemType !== "notification") return true;
+    const item = entry.entry.projectedItem?.item;
+    const report = forkWorkReportOf({
+      id: entry.id,
+      summary: entry.entry.label,
+      source: item?.type === "notification" ? item.source : undefined,
+    });
+    if (report === null || report.requestKind !== null) return true;
+    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
+    return threadId === null || !launched.has(threadId);
+  });
+}
+
 /** A work report of a thread's question or approval, which carries the card the owner answers on. */
 export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
   if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
