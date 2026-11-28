@@ -433,10 +433,19 @@ describe("threadLaunchPullRequests", () => {
         linkedPullRequest: null,
         branchPullRequest: branch as never,
       }),
-    ).toEqual([{ number: 31, url: "https://h/o/r/pull/31", title: null, stage: null }]);
+    ).toEqual([
+      {
+        number: 31,
+        url: "https://h/o/r/pull/31",
+        title: null,
+        state: null,
+        checks: null,
+        stage: null,
+      },
+    ]);
   });
 
-  it("lists each pull request once, the link's details first", () => {
+  it("lists each pull request once, the link's details first, with chip state and open checks", () => {
     expect(
       threadLaunchPullRequests({
         pullRequests: [
@@ -444,14 +453,54 @@ describe("threadLaunchPullRequests", () => {
             number: 31,
             url: "https://h/o/r/pull/31",
             source: "created",
-            snapshot: { state: "merged", title: "Cinnabars page" },
+            snapshot: {
+              state: "merged",
+              isDraft: false,
+              checksState: "passing",
+              title: "Cinnabars page",
+            },
+          } as never,
+          {
+            number: 32,
+            url: "https://h/o/r/pull/32",
+            source: "created",
+            snapshot: { state: "open", isDraft: false, checksState: "pending", title: null },
+          } as never,
+          {
+            number: 33,
+            url: "https://h/o/r/pull/33",
+            source: "created",
+            snapshot: { state: "open", isDraft: true, checksState: "failing", title: null },
           } as never,
         ],
         linkedPullRequest: branch as never,
         branchPullRequest: branch as never,
       }),
     ).toEqual([
-      { number: 31, url: "https://h/o/r/pull/31", title: "Cinnabars page", stage: "merged" },
+      {
+        number: 31,
+        url: "https://h/o/r/pull/31",
+        title: "Cinnabars page",
+        state: "merged",
+        checks: null,
+        stage: "merged",
+      },
+      {
+        number: 32,
+        url: "https://h/o/r/pull/32",
+        title: null,
+        state: "open",
+        checks: "pending",
+        stage: "checks-running",
+      },
+      {
+        number: 33,
+        url: "https://h/o/r/pull/33",
+        title: null,
+        state: "draft",
+        checks: "failing",
+        stage: "draft",
+      },
     ]);
   });
 });

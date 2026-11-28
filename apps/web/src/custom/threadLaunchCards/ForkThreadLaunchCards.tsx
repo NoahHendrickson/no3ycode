@@ -6,9 +6,13 @@
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { Fragment, type ReactNode, use } from "react";
+import { type ReactNode, use } from "react";
 
 import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
+import {
+  pullRequestChecksStatePresentation,
+  resolvePullRequestState,
+} from "~/components/pullRequest/pullRequestPresentation";
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { cn } from "~/lib/utils";
@@ -16,7 +20,7 @@ import { useEnvironmentThreadRefs, useQuietThreadShell } from "~/state/entities"
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 
-import { GitMergeIcon, GitPullRequestIcon } from "../icons/lucide-hugeicons";
+import { PullRequestRowChip } from "../ComposerPullRequestChip";
 import { resolveSidebarV2CardStatus } from "../sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { morphSplitPairs } from "../splitThreads/splitMorph";
@@ -148,25 +152,36 @@ export function ForkThreadHookRow(props: {
         {error === null ? null : <span className="min-w-0 truncate text-xs">{error}</span>}
       </button>
       {pullRequests.map((link) => {
-        const Icon = link.stage === "merged" ? GitMergeIcon : GitPullRequestIcon;
+        const presentation =
+          link.state === null
+            ? null
+            : resolvePullRequestState({
+                state: link.state === "draft" ? "open" : link.state,
+                isDraft: link.state === "draft",
+              });
         const stage = link.stage === null ? null : THREAD_PULL_REQUEST_STAGE_LABELS[link.stage];
+        const checks =
+          link.checks === null
+            ? null
+            : pullRequestChecksStatePresentation(link.checks).label.toLowerCase();
+        const details =
+          stage === null
+            ? [checks ?? presentation?.label.toLowerCase()]
+            : link.state === "draft" && checks !== null
+              ? [stage.toLowerCase(), checks]
+              : [stage.toLowerCase()];
+        const detail = details.filter(Boolean).join(", ");
         return (
-          <Fragment key={link.url}>
-            <button
-              type="button"
-              aria-label={`Pull request #${link.number}${link.title === null ? "" : `: ${link.title}`}${stage === null ? "" : `, ${stage.toLowerCase()}`}`}
-              className="inline-flex h-5 shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 text-xs hover:text-foreground"
-              onClick={(event) => openPrLink(event, link.url)}
-              onAuxClick={(event) => openPrLink(event, link.url)}
-            >
-              <Icon className="size-3" />#{link.number}
-            </button>
-            {stage === null ? null : (
-              <span aria-hidden className="shrink-0 text-xs">
-                {stage}
-              </span>
-            )}
-          </Fragment>
+          <PullRequestRowChip
+            key={link.url}
+            number={link.number}
+            state={presentation}
+            chipState={link.state ?? undefined}
+            checks={link.checks}
+            aria-label={`Pull request #${link.number}${link.title === null ? "" : `: ${link.title}`}${detail === "" ? "" : `, ${detail}`}`}
+            onClick={(event) => openPrLink(event, link.url)}
+            onAuxClick={(event) => openPrLink(event, link.url)}
+          />
         );
       })}
       {activity === null ? null : <span className="min-w-0 truncate text-xs">{activity}</span>}

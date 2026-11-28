@@ -5955,13 +5955,14 @@
 
     A row (custom/threadLaunchCards/ForkThreadLaunchCards ForkThreadHookRow) reads the thread
     live: a hook, the title, the sidebar's status mark, a failed thread's error, and a chip per
-    pull request (its links plus the linked and branch PR the composer chip shows), each followed
-    by its stage in muted text (threadPullRequestStage: the composer chip's open/draft/merged/closed,
-    an open PR's failing or running checks, and ready to merge as the next-step pill reads it;
-    nothing for an open PR with nothing to report or no snapshot yet), then the thread's
-    background work as the composer's banner titles it (threadRowLiveState, through
-    presentPendingBackgroundWork). Ready to merge waits until the thread is idle with nothing in
-    the background (maintainer's report, 2026-11-27: a child still running a review read ready).
+    pull request (its links plus the linked and branch PR the composer chip shows), rendered as an
+    interactive button through the shared row PR chip (ComposerPullRequestChip PullRequestRowChip,
+    owner's Basic UI kit 552:1425: filled, inked and glyphed by its live PR state — open green,
+    merged purple, closed red, draft/unsynced neutral — with an open PR's CI pill inside the chip
+    and no loose stage label beside it), then the thread's background work as the composer's banner
+    titles it (threadRowLiveState, through presentPendingBackgroundWork). Ready to merge waits until
+    the thread is idle with nothing in the background (maintainer's report, 2026-11-27: a child
+    still running a review read ready).
     A PR watch is not background work there: a sprint child keeps one on its PR, which on a ready
     PR only waits on the owner's merge (isPullRequestWatchTask; a parked "waiting" runtime with
     only watches left counts as idle).

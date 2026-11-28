@@ -162,23 +162,31 @@ export function PullRequestChipControl({
   );
 }
 
-/** A pull request as a bot panel's thread row shows it (fork-sprints, fork-coordinator-threads). */
+/** A pull request as a thread row shows it: bot panels (fork-sprints, fork-coordinator-threads)
+    and inline transcript thread rows (fork-thread-launch-cards). */
 export interface PullRequestRowChipProps {
   readonly number: number;
   readonly state: PullRequestStatePresentation | null;
   /** What the chip fills by (composerPullRequestChip.logic pullRequestChipStateOf). */
   readonly chipState: PullRequestChipState | undefined;
   readonly checks: PullRequestChecksState | null;
+  /** Present when the chip opens its PR itself (inline transcript rows); absent inside a row button. */
+  readonly onClick?: ((event: MouseEvent<HTMLElement>) => void) | undefined;
+  readonly onAuxClick?: ((event: MouseEvent<HTMLElement>) => void) | undefined;
+  readonly "aria-label"?: string | undefined;
 }
 
-/** The composer's PR chip in its row variant (ComposerShell.css: smaller and deeper), drawn
-    inside a row's button, so it is a span whose words are read in place. */
+/** The composer's PR chip in its row variant (ComposerShell.css: smaller and deeper). Renders as a
+    span inside a row's button (reading its words in place), or as a button when `onClick` is set
+    (an inline transcript row). */
 export function PullRequestRowChip(props: PullRequestRowChipProps) {
-  const { state, checks } = props;
+  const { state, checks, onClick, onAuxClick } = props;
+  const ariaLabel = props["aria-label"];
   const Icon = state?.Icon ?? PullRequestGlyph.pullRequest;
   return (
     <ComposerControl
-      render={<span />}
+      {...(onClick === undefined ? { render: <span /> } : { onClick, onAuxClick })}
+      {...(ariaLabel === undefined ? {} : { "aria-label": ariaLabel })}
       size="xs"
       data-fork-composer-status-chip="pull-request"
       data-fork-pr-chip
@@ -186,16 +194,20 @@ export function PullRequestRowChip(props: PullRequestRowChipProps) {
       data-pr-state={props.chipState}
     >
       <span className={cn("contents font-normal text-xs tabular-nums", state?.toneClassName)}>
-        <span className="sr-only">
-          {state === null ? "Pull request" : `${state.label} pull request`}
-        </span>
+        {ariaLabel === undefined ? (
+          <span className="sr-only">
+            {state === null ? "Pull request" : `${state.label} pull request`}
+          </span>
+        ) : null}
         <Icon aria-hidden className="shrink-0" />
         <span>{props.number}</span>
       </span>
       {checks === null ? null : (
         <span data-fork-pr-chip-ci={checks}>
           <PullRequestChecksDot state={checks} />
-          <span className="sr-only">{pullRequestChecksStatePresentation(checks).label}</span>
+          {ariaLabel === undefined ? (
+            <span className="sr-only">{pullRequestChecksStatePresentation(checks).label}</span>
+          ) : null}
           <span aria-hidden>CI</span>
         </span>
       )}
