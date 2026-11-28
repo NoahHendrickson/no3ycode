@@ -39,7 +39,13 @@ export function ForkThreadReadyToMerge(props: {
 }) {
   const { thread, link } = props;
   const { environmentId } = thread;
-  const pr = useThreadDisplayedPullRequest(environmentId, thread);
+  // Scoped to this PR alone: with the thread's other PRs the badge would read as a stack or "+N".
+  const onlyLink = [link];
+  const pr = useThreadDisplayedPullRequest(environmentId, {
+    pullRequests: onlyLink,
+    linkedPullRequest: null,
+    branchPullRequest: null,
+  });
   const openPrLink = useOpenPrLink(scopeThreadRef(environmentId, thread.id));
   const canWrite = useAtomValue(pullRequestEnvironment.runAction.permissionAtom(environmentId));
   const resolveProjectDefault = usePullRequestDefaultMergeMethodResolver(
@@ -89,7 +95,7 @@ export function ForkThreadReadyToMerge(props: {
     >
       <ThreadPullRequestChip
         pr={{ ...pr, currentLink: link, number: link.number, url: link.url }}
-        pullRequests={thread.pullRequests}
+        pullRequests={onlyLink}
         onOpenList={props.onOpenThread}
         onOpenPullRequest={(event, targetUrl) => openPrLink(event, targetUrl ?? link.url)}
       />
