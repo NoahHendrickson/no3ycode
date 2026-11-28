@@ -3,7 +3,7 @@ import { EnvironmentId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  botThreadMergedPullRequests,
+  botThreadRowPullRequests,
   resolveBotDigestLinks,
   waitingQuestionThread,
 } from "./forkBotDigestLinks.ts";
@@ -94,7 +94,7 @@ describe("resolveBotDigestLinks", () => {
   });
 });
 
-describe("botThreadMergedPullRequests", () => {
+describe("botThreadRowPullRequests", () => {
   const pr = (number: number, state: string, mergedAt: string | null = null) => ({
     url: `https://github.com/acme/app/pull/${number}`,
     number,
@@ -106,7 +106,7 @@ describe("botThreadMergedPullRequests", () => {
     snapshot: { ...SNAPSHOT, isDraft: false, state, mergedAt, updatedAt: mergedAt },
   });
 
-  it("lists the merged ones beside the current open one, newest merge first, leaving closed and dismissed out", () => {
+  it("lists the current open one, then the merged ones newest merge first, leaving closed and dismissed out", () => {
     const thread = shell("thread-1", {
       pullRequests: [
         pr(560, "merged", "2026-11-20T00:00:00.000Z"),
@@ -116,17 +116,17 @@ describe("botThreadMergedPullRequests", () => {
         { ...pr(561, "merged", "2026-11-26T00:00:00.000Z"), source: "stack-dismissed" },
       ],
     } as unknown as Partial<EnvironmentThreadShell>);
-    expect(botThreadMergedPullRequests(thread).map((link) => link.number)).toEqual([562, 560]);
+    expect(botThreadRowPullRequests(thread).map((link) => link.number)).toEqual([564, 562, 560]);
   });
 
-  it("leaves out the merged one the row already shows when none is open", () => {
+  it("lists the merged one the row already shows once when none is open", () => {
     const thread = shell("thread-1", {
       pullRequests: [
         pr(560, "merged", "2026-11-20T00:00:00.000Z"),
         pr(562, "merged", "2026-11-27T00:00:00.000Z"),
       ],
     } as unknown as Partial<EnvironmentThreadShell>);
-    expect(botThreadMergedPullRequests(thread).map((link) => link.number)).toEqual([560]);
+    expect(botThreadRowPullRequests(thread).map((link) => link.number)).toEqual([562, 560]);
   });
 });
 

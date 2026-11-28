@@ -4,12 +4,10 @@
  * panel keeps BotThreadsPanel's row.
  */
 import { useAtomValue } from "@effect/atom-react";
-import { botThreadMergedPullRequests } from "@t3tools/client-runtime/fork-bot-digest-links";
 import type { ProviderDriverKind, ScopedThreadRef } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
-import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { serverEnvironment } from "~/state/server";
 
 import { PullRequestRowChip } from "../ComposerPullRequestChip";
@@ -27,44 +25,38 @@ export function BotThreadsCompactRow(props: {
     <BotThreadsCompactRowView
       {...useBotThreadsRow(props.row, props.current, props.onOpenThread)}
       model={useForkThreadModel(props.row.thread)}
-      mergedPullRequests={botThreadMergedPullRequests(props.row.thread).map((pullRequest) => ({
-        number: pullRequest.number,
-        state: pullRequest.snapshot === null ? null : resolvePullRequestState(pullRequest.snapshot),
-        chipState: "merged",
-        checks: null,
-      }))}
     />
   );
 }
 
-/** Merged chips after the current one; more fold into "+N", so the line fits the narrowest panel. */
-const MERGED_CHIP_LIMIT = 1;
+/** The thread's own chip and one merged one; more fold into "+N", so the line fits the narrowest
+    panel. */
+const ROW_CHIP_LIMIT = 2;
 
 /** @public — the row as drawn, from plain props; Storybook renders it on its own. Two lines per
     thread: mark, title and time, then its pull request as the composer's chip (its row variant),
     its other merged ones, and the model it runs. */
 export function BotThreadsCompactRowView(
   props: Omit<ComponentProps<typeof BotThreadsRowFrame>, "density" | "detail"> & {
-    readonly pullRequest: ComponentProps<typeof PullRequestRowChip> | null;
+    /** Its own pull request, then its other merged ones, newest first. */
+    readonly pullRequests: ReadonlyArray<ComponentProps<typeof PullRequestRowChip>>;
     readonly model: ForkThreadModel | null;
-    /** The thread's other merged pull requests, newest first. */
-    readonly mergedPullRequests?: ReadonlyArray<ComponentProps<typeof PullRequestRowChip>>;
   },
 ) {
-  const { pullRequest, model, mergedPullRequests = [] } = props;
-  const hiddenMerged = mergedPullRequests.length - MERGED_CHIP_LIMIT;
+  const { pullRequests, model } = props;
+  const hiddenMerged = pullRequests.length - ROW_CHIP_LIMIT;
   return (
     <BotThreadsRowFrame
       {...props}
       density="compact"
       detail={
-        pullRequest === null && model === null ? null : (
+        pullRequests.length === 0 && model === null ? null : (
           <span className="flex min-w-0 items-center gap-4">
-            {pullRequest === null ? null : (
+            {pullRequests.length === 0 ? null : (
               <span className="flex shrink-0 items-center gap-1">
-                <PullRequestRowChip {...pullRequest} />
-                {mergedPullRequests.slice(0, MERGED_CHIP_LIMIT).map((merged) => (
-                  <PullRequestRowChip key={merged.number} {...merged} />
+                {pullRequests.slice(0, ROW_CHIP_LIMIT).map((pullRequest, index) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- positional: own chip, then newest merged
+                  <PullRequestRowChip key={index} {...pullRequest} />
                 ))}
                 {hiddenMerged > 0 ? (
                   <span className="text-xs text-muted-foreground tabular-nums">

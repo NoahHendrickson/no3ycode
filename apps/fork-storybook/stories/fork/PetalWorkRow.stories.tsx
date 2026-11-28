@@ -3,6 +3,7 @@ import { EnvironmentId, ProviderDriverKind } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
+import { pullRequestLookOf } from "~/custom/bots/BotPullRequestMark";
 import { BotThreadsCompactRowView } from "~/custom/bots/BotThreadsCompactRow";
 import { BotThreadsRowView } from "~/custom/bots/BotThreadsPanel";
 import { BotThreadsPanelControls } from "~/custom/bots/BotThreadsPanelControls";
@@ -123,7 +124,7 @@ const CHIP_STATE = {
   "Merged PR": "merged",
   "Closed PR": "closed",
 } as const;
-const MERGED = resolvePullRequestState({ state: "merged", isDraft: false });
+const MERGED = pullRequestLookOf({ state: "merged", isDraft: false, checksState: null });
 /** What each row has already landed: one merged, then more than the row shows. */
 const MERGED_BEFORE: Partial<Record<string, ReadonlyArray<number>>> = {
   "Open PR": [358],
@@ -156,22 +157,19 @@ export const Compact: Story = {
           key={name}
           {...row}
           seed={name}
-          pullRequest={
+          pullRequests={
             row.pullRequest === null
-              ? null
-              : {
-                  ...row.pullRequest,
-                  chipState: CHIP_STATE[name as keyof typeof CHIP_STATE],
-                  checks: name === "Open PR" ? "pending" : null,
-                }
+              ? []
+              : [
+                  {
+                    ...row.pullRequest,
+                    chipState: CHIP_STATE[name as keyof typeof CHIP_STATE],
+                    checks: name === "Open PR" ? "pending" : null,
+                  },
+                  ...(MERGED_BEFORE[name] ?? []).map((number) => ({ number, ...MERGED })),
+                ]
           }
           model={name === "Closed PR" ? NEON : OPUS}
-          mergedPullRequests={(MERGED_BEFORE[name] ?? []).map((number) => ({
-            number,
-            state: MERGED,
-            chipState: "merged",
-            checks: null,
-          }))}
         />
       ))}
     </>

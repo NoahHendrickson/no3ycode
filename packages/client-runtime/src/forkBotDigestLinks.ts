@@ -13,6 +13,7 @@ import {
 import type {
   EnvironmentId,
   ThreadLinkedPullRequest,
+  ThreadPullRequestLink,
   ThreadPullRequestSnapshot,
 } from "@t3tools/contracts";
 import { type ThreadLink, threadLinkCandidates } from "@t3tools/shared/threadLinks";
@@ -42,8 +43,14 @@ export interface BotDigestLinks {
 }
 
 /** A thread's pull request in the sidebar badge's order: its linked one, else its branch's. */
-export function botThreadPullRequest(shell: EnvironmentThreadShell): BotPullRequest | null {
-  const current = resolveThreadCurrentPullRequestLink(shell.pullRequests);
+function botThreadPullRequest(shell: EnvironmentThreadShell): BotPullRequest | null {
+  return ownPullRequest(shell, resolveThreadCurrentPullRequestLink(shell.pullRequests));
+}
+
+function ownPullRequest(
+  shell: EnvironmentThreadShell,
+  current: ThreadPullRequestLink | null,
+): BotPullRequest | null {
   if (current !== null) {
     return { url: current.url, number: current.number, snapshot: current.snapshot, branch: null };
   }
@@ -53,17 +60,19 @@ export function botThreadPullRequest(shell: EnvironmentThreadShell): BotPullRequ
     : { url: branch.url, number: branch.number, snapshot: null, branch };
 }
 
-/** The thread's merged pull requests besides the one botThreadPullRequest picks, newest first:
-    a thread row keeps showing what it already landed. */
-export function botThreadMergedPullRequests(
+/** A thread row's pull requests: its own (botThreadPullRequest's pick), then its other merged
+    ones, newest merge first, so the row keeps showing what the thread already landed. */
+export function botThreadRowPullRequests(
   shell: EnvironmentThreadShell,
 ): ReadonlyArray<BotPullRequest> {
   const current = resolveThreadCurrentPullRequestLink(shell.pullRequests);
+  const own = ownPullRequest(shell, current);
+  if (own === null) return [];
   const mergedAt = (link: (typeof shell.pullRequests)[number]) => {
     const ms = Date.parse(link.snapshot?.mergedAt ?? "");
     return Number.isNaN(ms) ? threadPullRequestUpdatedAtMs(link) : ms;
   };
-  return visibleThreadPullRequests(shell.pullRequests)
+  const merged = visibleThreadPullRequests(shell.pullRequests)
     .filter(
       (link) =>
         link.snapshot?.state === "merged" &&
@@ -71,6 +80,7 @@ export function botThreadMergedPullRequests(
     )
     .sort((left, right) => mergedAt(right) - mergedAt(left))
     .map((link) => ({ url: link.url, number: link.number, snapshot: link.snapshot, branch: null }));
+  return [own, ...merged];
 }
 
 function pullRequestsOf(shell: EnvironmentThreadShell): ReadonlyArray<BotPullRequest> {

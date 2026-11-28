@@ -37,8 +37,12 @@ import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
-import { botThreadPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
-import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
+import { botThreadRowPullRequests } from "@t3tools/client-runtime/fork-bot-digest-links";
+import {
+  BotPullRequestMark,
+  pullRequestLookOf,
+  useBotPullRequestState,
+} from "./BotPullRequestMark";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
 import {
@@ -387,12 +391,20 @@ export function useBotThreadsRow(
   const { thread, card } = row;
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
-  const pullRequest = botThreadPullRequest(thread);
+  const [pullRequest = null, ...merged] = botThreadRowPullRequests(thread);
   const {
     state: pullRequestState,
     chipState,
     checks,
   } = useBotPullRequestState(pullRequest, thread.environmentId);
+  // The row's own pull request, then its other merged ones.
+  const pullRequests =
+    pullRequest === null
+      ? []
+      : [
+          { number: pullRequest.number, state: pullRequestState, chipState, checks },
+          ...merged.map((link) => ({ number: link.number, ...pullRequestLookOf(link.snapshot) })),
+        ];
   const time = formatRelativeTimeLabel(
     thread.latestUserMessageAt ?? thread.updatedAt,
     Date.parse(`${nowMinute}:00.000Z`),
@@ -403,10 +415,8 @@ export function useBotThreadsRow(
     seed: scopedThreadKey(ref),
     title: thread.title,
     time,
-    pullRequest:
-      pullRequest === null
-        ? null
-        : { number: pullRequest.number, state: pullRequestState, chipState, checks },
+    pullRequest: pullRequests[0] ?? null,
+    pullRequests,
     branch: thread.branch,
     hasWorktree: thread.worktreePath !== null,
     current,
