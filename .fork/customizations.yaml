@@ -5913,7 +5913,8 @@
     A launch whose thread a later turn refers to moves instead to the latest such turn's last
     reply shown (referringRuns from forkLaunchedThreads, one pass over the entries: an assistant
     message whose markdown links the thread, read with shared threadLinks and cached per message
-    object, or a launched thread's work report, whose run is the wake its reply belongs to).
+    object, or a launched thread's hidden work report, whose run is the wake its reply belongs to;
+    a question or approval kept for an inline answer already draws the thread in its wake).
 
     Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
     in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can

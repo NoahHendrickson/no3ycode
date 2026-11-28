@@ -156,12 +156,13 @@ describe("launch rows", () => {
       updatedAt: at,
     },
   });
-  const order = (timelineEntries: TimelineEntry[]) =>
+  const order = (timelineEntries: TimelineEntry[], forkKeepRequestReports = false) =>
     deriveMessagesTimelineRows({
       timelineEntries,
       isWorking: false,
       turnDiffSummaries: [],
       supportsConversationRollback: false,
+      forkKeepRequestReports,
     }).flatMap((row) =>
       row.kind === "fork-thread-launch"
         ? [`launch:${row.launches.map((launch) => launch.id).join("+")}`]
@@ -227,6 +228,18 @@ describe("launch rows", () => {
         reply("woken", "run-2"),
       ]),
     ).toEqual(["reply:started", "in-reply:b", "reply:woken", "in-reply:a"]);
+    // A question answered inline draws the thread in its own wake, so the row stays put.
+    expect(
+      order(
+        [
+          launchEntry("a", "run-1"),
+          reply("started", "run-1"),
+          workReportEntry("thread-a", "run-2", "question"),
+          reply("woken", "run-2"),
+        ],
+        true,
+      ),
+    ).toEqual(["reply:started", "in-reply:a", "reply:woken"]);
   });
 
   it("keeps a launched thread's row under its launch when no later reply refers to it", () => {

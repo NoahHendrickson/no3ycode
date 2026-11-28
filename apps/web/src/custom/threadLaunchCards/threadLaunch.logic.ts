@@ -254,8 +254,8 @@ function linkedThreadIds(message: { readonly text: string }): ReadonlySet<string
 export interface ForkLaunchedThreads {
   /** Reports that draw no row, since their thread's launch row already shows it. */
   readonly hiddenReportIds: ReadonlySet<string>;
-  /** Each launched thread's referring runs: a reply that links its chip, or a wake its report
-      started. Its row hangs under the latest of these that shows a reply. */
+  /** Each launched thread's referring runs: a reply that links its chip, or a wake its hidden
+      report started. Its row hangs under the latest of these that shows a reply. */
   readonly referringRuns: ReadonlyMap<string, ReadonlySet<RunId>>;
 }
 
@@ -294,8 +294,10 @@ export function forkLaunchedThreads(
   if (launched.size > 0) {
     for (const { entry, report, threadId, launched: isLaunched } of threadReports(entries)) {
       if (!isLaunched || threadId === null) continue;
+      // A question or approval answered inline draws the thread in its own wake already.
+      if (keepRequestReports && report.requestKind !== null) continue;
+      hiddenReportIds.add(entry.id);
       refer(threadId, entry.entry.runId);
-      if (!keepRequestReports || report.requestKind === null) hiddenReportIds.add(entry.id);
     }
   }
   return { hiddenReportIds, referringRuns };
