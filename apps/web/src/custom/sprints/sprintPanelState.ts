@@ -60,6 +60,7 @@ export function openInSprintPanel(
   if (hostRef == null || scopedThreadKey(hostRef) === scopedThreadKey(target)) return false;
   const host = readThreadShell(hostRef);
   if (host === null || !isSprintThread(host.source)) return false;
+  if (!openBotThreadsChild(hostRef, target)) return false;
   setSprintPanelTab(scopedThreadKey(hostRef), "threads");
-  return openBotThreadsChild(hostRef, target);
+  return true;
 }

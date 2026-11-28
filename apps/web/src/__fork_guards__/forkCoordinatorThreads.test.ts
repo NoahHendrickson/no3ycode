@@ -195,8 +195,7 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(rules).toContain("scopes don't overlap");
     expect(rules).toContain("or restate the question");
     expect(rules).toContain('reply exactly "Nothing to report." (I answer on its card)');
-    // The server's child-question notice says to ask the user; a coordinator leaves that to the card.
-    expect(rules).toContain('"ask the user" is not for you: never ask me it yourself');
+    expect(rules).toContain("never ask me it yourself");
     expect(rules).not.toMatch(/model/i);
     expect(rules.length).toBeLessThan(800);
   });

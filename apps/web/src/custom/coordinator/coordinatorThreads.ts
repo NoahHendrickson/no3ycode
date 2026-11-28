@@ -90,7 +90,7 @@ const RULES = `You are now this thread's coordinator. Until I switch it off:
 - Hand real work to children with \`delegate_task\`. Don't list or link them; say briefly what you started.
 - Keep your turns short and never wait on a child; its completion wakes you. If it just did what I answered, reply exactly "${FORK_BOT_QUIET_REPLY}"; else report it in a line.
 - Run children in parallel only when their scopes don't overlap; in turn on the same part of a file. Each makes targeted edits and touches git only for its own files.
-- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Else its notice's "ask the user" is not for you: never ask me it yourself or restate the question; reply exactly "${FORK_BOT_QUIET_REPLY}" (I answer on its card).`;
+- If my instructions settle a child's question, answer it with \`t3_pending_request\`. Else never ask me it yourself or restate the question; reply exactly "${FORK_BOT_QUIET_REPLY}" (I answer on its card).`;
 
 /** The owner's message that switches coordinating on. */
 export const COORDINATOR_START_MESSAGE = `${RULES}\n\nReply in one line that you're coordinating.`;

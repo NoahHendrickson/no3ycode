@@ -79,19 +79,28 @@ export function coordinatorFirstSendTurns(
 
 type Outcome = { readonly _tag: string };
 
+/** Draft threads whose rules turn already created them, for the session. */
+const rulesSentThreads = new Set<ThreadId>();
+
 /** A coordinator draft's first send: the rules create the thread, the tag makes it a coordinator,
     then the owner's task follows. A failed step stops it, so the composer keeps the task in the
-    draft and reports the failure; only a sent task clears the switch. */
+    draft and reports the failure; only a sent task clears the switch. A retry after the rules
+    went out (they created the thread) sends only the tag and the task. */
 export async function sendCoordinatorFirstTurn<R extends Outcome, T extends Outcome>(
   turns: ReturnType<typeof coordinatorFirstSendTurns>,
   steps: {
+    readonly rulesSent: boolean;
     readonly startTurn: (command: StartTurnCommand) => Promise<R>;
+    readonly rulesDone: () => void;
     readonly tag: () => Promise<T>;
     readonly sent: () => void;
   },
 ): Promise<R | T> {
-  const rules = await steps.startTurn(turns.rules);
-  if (rules._tag !== "Success") return rules;
+  if (!steps.rulesSent) {
+    const rules = await steps.startTurn(turns.rules);
+    if (rules._tag !== "Success") return rules;
+    steps.rulesDone();
+  }
   // Rules on an untagged thread make no coordinator; the task waits in the draft instead.
   const tagged = await steps.tag();
   if (tagged._tag !== "Success") return tagged;
@@ -110,7 +119,9 @@ export function useCoordinatorDraftStart<R extends Outcome>(
     const { environmentId, input } = command;
     if (draftId === null || !isCoordinatorDraft(draftId, input.threadId)) return startTurn(command);
     return sendCoordinatorFirstTurn(coordinatorFirstSendTurns(command, newMessageId()), {
+      rulesSent: rulesSentThreads.has(input.threadId),
       startTurn,
+      rulesDone: () => rulesSentThreads.add(input.threadId),
       tag: () =>
         setTag({
           environmentId,

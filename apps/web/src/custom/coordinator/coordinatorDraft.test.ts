@@ -131,20 +131,44 @@ describe("sendCoordinatorFirstTurn", () => {
   it("stops before the task when the thread could not be tagged, keeping the switch", async () => {
     const startTurn = vi.fn(async () => success);
     const sent = vi.fn();
+    const rulesDone = vi.fn();
     const result = await sendCoordinatorFirstTurn(turns, {
+      rulesSent: false,
       startTurn,
+      rulesDone,
       tag: async () => failure,
       sent,
     });
     expect(result).toBe(failure);
     expect(startTurn.mock.calls).toEqual([[turns.rules]]);
+    expect(rulesDone).toHaveBeenCalledOnce();
     expect(sent).not.toHaveBeenCalled();
+  });
+
+  it("retries after the rules created the thread with only the tag and the task", async () => {
+    const startTurn = vi.fn(async () => success);
+    const tag = vi.fn(async () => success);
+    await sendCoordinatorFirstTurn(turns, {
+      rulesSent: true,
+      startTurn,
+      rulesDone: vi.fn(),
+      tag,
+      sent: vi.fn(),
+    });
+    expect(startTurn.mock.calls).toEqual([[turns.task]]);
+    expect(tag).toHaveBeenCalledOnce();
   });
 
   it("sends the task after the rules and the tag, then clears the switch", async () => {
     const startTurn = vi.fn(async () => success);
     const sent = vi.fn();
-    await sendCoordinatorFirstTurn(turns, { startTurn, tag: async () => success, sent });
+    await sendCoordinatorFirstTurn(turns, {
+      rulesSent: false,
+      startTurn,
+      rulesDone: vi.fn(),
+      tag: async () => success,
+      sent,
+    });
     expect(startTurn.mock.calls).toEqual([[turns.rules], [turns.task]]);
     expect(sent).toHaveBeenCalledOnce();
   });

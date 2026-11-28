@@ -51,28 +51,20 @@ export function childQuestionAnswers(
   return answers.length === 0 ? null : answers;
 }
 
-const sameAnswers = (left: ForkRequestAnswer[] | null, right: ForkRequestAnswer[] | null) =>
-  left === right ||
-  (left !== null &&
-    right !== null &&
-    left.length === right.length &&
-    left.every(
-      (entry, index) =>
-        entry.question === right[index]?.question && entry.answer === right[index]?.answer,
-    ));
+/** An answer never changes once given, so a card that has read one stops following its child. */
+const answeredByKey = new Map<string, ForkRequestAnswer[]>();
 
-/** By child and request, so a card re-renders only when its answer changes, not on every event of
-    a child that works on after it is answered. */
+/** Follows the child until the answer shows up: its card re-renders once, then reads the cache. */
 const answersAtomFamily = Atom.family((key: string) => {
   const [environmentId, threadId, requestId] = JSON.parse(key) as [EnvironmentId, ThreadId, string];
-  let value: ForkRequestAnswer[] | null = null;
   return Atom.make((get) => {
     const projection = Option.getOrNull(
       get(environmentThreadDetails.stateAtom(scopeThreadRef(environmentId, threadId))).data,
     );
-    const next = projection === null ? null : childQuestionAnswers(projection.turnItems, requestId);
-    if (!sameAnswers(value, next)) value = next;
-    return value;
+    const answers =
+      projection === null ? null : childQuestionAnswers(projection.turnItems, requestId);
+    if (answers !== null) answeredByKey.set(key, answers);
+    return answers;
   }).pipe(
     Atom.setIdleTTL(0),
     Atom.withLabel(
@@ -80,6 +72,12 @@ const answersAtomFamily = Atom.family((key: string) => {
     ),
   );
 });
+
+const answeredAtomFamily = Atom.family((key: string) =>
+  Atom.make<ForkRequestAnswer[] | null>(answeredByKey.get(key) ?? null).pipe(
+    Atom.withLabel("coordinator-child-answers:read"),
+  ),
+);
 
 const NO_ANSWERS = Atom.make<ForkRequestAnswer[] | null>(null).pipe(
   Atom.withLabel("coordinator-child-answers:none"),
@@ -92,9 +90,15 @@ export function useChildQuestionAnswers(
   requestId: string | null,
   kind: "question" | "approval",
 ): ForkRequestAnswer[] | null {
-  return useAtomValue(
+  const key =
     kind !== "question" || requestId === null
+      ? null
+      : JSON.stringify([thread.environmentId, thread.id, requestId]);
+  return useAtomValue(
+    key === null
       ? NO_ANSWERS
-      : answersAtomFamily(JSON.stringify([thread.environmentId, thread.id, requestId])),
+      : answeredByKey.has(key)
+        ? answeredAtomFamily(key)
+        : answersAtomFamily(key),
   );
 }
