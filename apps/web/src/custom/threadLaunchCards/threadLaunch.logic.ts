@@ -3,8 +3,11 @@
  * `.fork/customizations.yaml#fork-thread-launch-cards`. The wire keeps only the `threadId` of
  * the tool's result (compactDynamicToolOutput), so the title comes from the call's input.
  */
+import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
+import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import type {
   EnvironmentId,
+  OrchestrationV2PendingBackgroundTask,
   OrchestrationV2TurnItemStatus,
   RunId,
   ThreadId,
@@ -12,11 +15,13 @@ import type {
   ThreadPullRequestLink,
   ThreadPullRequestSnapshot,
 } from "@t3tools/contracts";
+import { isPullRequestWatchTask } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import { resolveT3McpToolId } from "@t3tools/shared/t3McpToolPresentation";
 import { compactDynamicToolOutput } from "@t3tools/shared/toolOutput";
 
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 import type { TimelineEntry } from "~/session-logic";
 
 import { resolvePullRequestChipState } from "../composerPullRequestChip.logic";
@@ -139,13 +144,19 @@ export interface ThreadLaunchPullRequest {
   readonly stage: ThreadPullRequestStage | null;
 }
 
-/** Every pull request the thread has: its links, then the one linked to it or found on its
-    branch (which the composer's chip shows, and the links can lack), each once. */
-export function threadLaunchPullRequests(thread: {
+interface ThreadPullRequestSource {
   readonly pullRequests: ReadonlyArray<ThreadPullRequestLink>;
   readonly linkedPullRequest?: ThreadLinkedPullRequest | null;
   readonly branchPullRequest?: ThreadLinkedPullRequest | null;
-}): ReadonlyArray<ThreadLaunchPullRequest> {
+}
+
+/** Every pull request the thread has: its links, then the one linked to it or found on its
+    branch (which the composer's chip shows, and the links can lack), each once. A thread still
+    at work (`idle` false) holds back "Ready to merge", since its work can change the PR. */
+export function threadLaunchPullRequests(
+  thread: ThreadPullRequestSource,
+  idle = true,
+): ReadonlyArray<ThreadLaunchPullRequest> {
   const seen = new Set<string>();
   const out: ThreadLaunchPullRequest[] = [];
   const add = (pr: ThreadLaunchPullRequest) => {
@@ -158,7 +169,7 @@ export function threadLaunchPullRequests(thread: {
       number: link.number,
       url: link.url,
       title: link.snapshot?.title ?? null,
-      stage: threadPullRequestStage(link.snapshot),
+      stage: idleStage(threadPullRequestStage(link.snapshot), idle),
     });
   }
   for (const pr of [thread.linkedPullRequest, thread.branchPullRequest]) {
@@ -167,7 +178,60 @@ export function threadLaunchPullRequests(thread: {
   return out;
 }
 
+function idleStage(
+  stage: ThreadPullRequestStage | null,
+  idle: boolean,
+): ThreadPullRequestStage | null {
+  return stage === "ready" && !idle ? null : stage;
+}
+
+/** A row's live read of its thread: its background work, and PRs that read "Ready to merge" only
+    once nothing runs. A PR watch is not work: on a ready PR it waits on the owner's merge. `ready`
+    is the current PR when it reads ready, the one place that decides it. */
+export function threadRowLiveState(
+  thread:
+    | (ThreadPullRequestSource & {
+        readonly pendingBackgroundTasks: ReadonlyArray<OrchestrationV2PendingBackgroundTask>;
+        readonly runtime: { readonly status: string } | null;
+      })
+    | null,
+  status: SidebarThreadStatus | null,
+): {
+  readonly activity: string | null;
+  readonly pullRequests: ReadonlyArray<ThreadLaunchPullRequest>;
+  readonly ready: ThreadPullRequestLink | null;
+} {
+  if (thread === null) return { activity: null, pullRequests: [], ready: null };
+  const work = thread.pendingBackgroundTasks.filter((task) => !isPullRequestWatchTask(task));
+  const activity = presentPendingBackgroundWork(work)?.title ?? null;
+  // "waiting" is also a turn blocked on a thread wait; only a parked runtime waits on its PR.
+  const parked = status === "waiting" && thread.runtime?.status === "idle";
+  const idle = (status === "ready" || parked) && activity === null;
+  const current = idle ? resolveThreadCurrentPullRequestLink(thread.pullRequests) : null;
+  return {
+    activity,
+    pullRequests: threadLaunchPullRequests(thread, idle),
+    ready:
+      current !== null && threadPullRequestStage(current.snapshot) === "ready" ? current : null,
+  };
+}
+
 type LaunchRow = Extract<MessagesTimelineRow, { kind: "fork-thread-launch" }>;
+
+/** Each work report in the entries, with the thread it names and whether that thread was
+    launched here (a launch comes before its reports). */
+function* threadReports(entries: ReadonlyArray<TimelineEntry>) {
+  const launched = new Set<string>();
+  for (const entry of entries) {
+    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
+      launched.add(entry.launch.threadId);
+    }
+    const report = forkWorkReportOfEntry(entry);
+    if (report === null) continue;
+    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
+    yield { entry, report, threadId, launched: threadId !== null && launched.has(threadId) };
+  }
+}
 
 /** A thread's row shows once, under the reply that launched it, and reads its status live there,
     so a later report of that thread draws no row; a question or approval keeps its card where the
@@ -176,18 +240,23 @@ export function launchedThreadReportIds(
   entries: ReadonlyArray<TimelineEntry>,
   keepRequestReports: boolean,
 ): ReadonlySet<string> {
-  const launched = new Set<string>();
   const hidden = new Set<string>();
-  for (const entry of entries) {
-    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
-      launched.add(entry.launch.threadId);
-    }
-    const report = forkWorkReportOfEntry(entry);
-    if (report === null || (keepRequestReports && report.requestKind !== null)) continue;
-    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
-    if (threadId !== null && launched.has(threadId)) hidden.add(entry.id);
+  for (const { entry, report, launched } of threadReports(entries)) {
+    if (launched && !(keepRequestReports && report.requestKind !== null)) hidden.add(entry.id);
   }
   return hidden;
+}
+
+/** The finished report that stays when a quiet wake hides it: each thread's latest, as its one
+    row, unless the thread shows under its launch here. An older server names the thread only in
+    the key, so each of its reports stays. */
+export function lastThreadReportIds(entries: ReadonlyArray<TimelineEntry>): ReadonlySet<string> {
+  const lastByThread = new Map<string, string>();
+  for (const { entry, report, threadId, launched } of threadReports(entries)) {
+    if (!launched && report.requestKind === null)
+      lastByThread.set(threadId ?? report.key, entry.id);
+  }
+  return new Set(lastByThread.values());
 }
 
 /** A turn's launched threads drawn by the turn's last reply, as one group, between its text and

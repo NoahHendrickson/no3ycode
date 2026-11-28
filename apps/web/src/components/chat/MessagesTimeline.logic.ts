@@ -92,6 +92,7 @@ import { type QuietWakeMode, quietBotWakeRunIds, withoutRuns } from "~/custom/bo
 import {
   type ForkThreadLaunch,
   forkThreadLaunchListsEqual,
+  lastThreadReportIds,
   launchedThreadReportIds,
   placeLaunchesUnderReplies,
 } from "~/custom/threadLaunchCards/threadLaunch.logic";
@@ -1674,6 +1675,7 @@ function timelineRowEntries(
       }),
       input.forkQuietWakes,
       input.forkKeepRequestReports === true,
+      lastThreadReportIds(entries),
     );
   }
   /* fork:end fork-bots */

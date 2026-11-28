@@ -234,8 +234,8 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(reactor).toContain('otherwise reply exactly "${FORK_BOT_QUIET_REPLY}"');
     const timeline = read("../components/chat/MessagesTimeline.tsx");
     expect(timeline).toMatch(/forkIsCoordinator\s*\?\s*"coordinator"/u);
-    expect(read("../custom/bots/quietBotWakes.ts")).toContain(
-      "coordinator: { reportedRunsOnly: true, noticeStartsRun: true, keepsDelegatedQuestions: true },",
+    expect(read("../custom/bots/quietBotWakes.ts")).toMatch(
+      /coordinator: \{\s*reportedRunsOnly: true,\s*noticeStartsRun: true,\s*keepsDelegatedQuestions: true,/u,
     );
     const row = read("../components/chat/TimelineWorkEntryRow.tsx");
     // A coordinator host only: a sprint's delegated notices stay plain notices.

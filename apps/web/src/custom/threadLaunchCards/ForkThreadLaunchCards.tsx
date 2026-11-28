@@ -29,12 +29,13 @@ import {
   forkWorkReportThreadIds,
 } from "../forkWorkReports";
 import { useForkThreadHost } from "./forkThreadHost";
+import { ForkThreadReadyToMerge } from "./ForkThreadReadyToMerge";
 import { ForkThreadRequestCard } from "./ForkThreadRequestCard";
 import {
   type ForkThreadLaunch,
   THREAD_PULL_REQUEST_STAGE_LABELS,
   threadLaunchActivityLine,
-  threadLaunchPullRequests,
+  threadRowLiveState,
 } from "./threadLaunch.logic";
 
 /** The hook that ties a row to the reply above it, or, flipped, to the card under it. */
@@ -110,19 +111,25 @@ export function ForkThreadHookRow(props: {
   const thread = useQuietThreadShell(threadRef);
   const threadKey = scopedThreadKey(threadRef);
   const localVisit = useUiStateStore((state) => state.threadLastVisitedAtById[threadKey]);
-  const status =
+  const cardStatus =
     thread === null
       ? null
       : resolveSidebarV2CardStatus(thread, {
           lastVisitedAt: resolveThreadLastVisitedAt(thread.lastVisitedAt, localVisit),
           wokeAt: null,
-        }).topStatus;
+        });
+  const status = cardStatus?.topStatus ?? null;
   const title = thread?.title ?? props.fallbackTitle ?? "Thread";
   const error =
     status?.label === "Failed" ? threadLaunchActivityLine(thread?.source.lastError) : null;
-  const pullRequests = thread === null ? [] : threadLaunchPullRequests(thread);
+  const live = threadRowLiveState(thread, cardStatus?.status ?? null);
+  const { activity } = live;
+  // A launch row offers its ready PR on the line below, so the row leaves that chip to it.
+  const ready = props.kind === "launch" ? live.ready : null;
+  const pullRequests =
+    ready === null ? live.pullRequests : live.pullRequests.filter((pr) => pr.url !== ready.url);
 
-  return (
+  const row = (
     <div
       className={ROW}
       data-fork-thread-launch-card={props.kind === "launch" ? "started" : props.kind}
@@ -161,6 +168,14 @@ export function ForkThreadHookRow(props: {
           </Fragment>
         );
       })}
+      {activity === null ? null : <span className="min-w-0 truncate text-xs">{activity}</span>}
+    </div>
+  );
+  if (ready === null || thread === null) return row;
+  return (
+    <div className="flex max-w-full flex-col gap-1">
+      {row}
+      <ForkThreadReadyToMerge thread={thread} link={ready} onOpenThread={openThread} />
     </div>
   );
 }

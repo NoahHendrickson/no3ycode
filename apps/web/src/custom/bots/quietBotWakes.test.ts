@@ -1,11 +1,13 @@
 /** Fork-owned — see `.fork/customizations.yaml#fork-bots`. */
-import type { ForkWorkRequestKind, MessageId, RunId } from "@t3tools/contracts";
+import type { ForkWorkRequestKind, MessageId, RunId, ThreadId } from "@t3tools/contracts";
+import { FORK_BOT_QUIET_REPLY } from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
 import type { TimelineAttempt, TimelineEntry } from "~/session-logic";
 import { quietBotWakeRunIds, withoutRuns } from "./quietBotWakes";
 import { workReportEntry } from "../forkWorkReportFixtures";
+import { lastThreadReportIds } from "../threadLaunchCards/threadLaunch.logic";
 import type { ChatMessage, TurnDiffSummary } from "~/types";
 
 const at = (minute: number) => `2026-11-16T14:${String(minute).padStart(2, "0")}:00.000Z`;
@@ -169,6 +171,55 @@ describe("quiet bot wakes", () => {
     expect(kept(undefined)).toEqual([]);
     // A Petal asks above its composer, so its quiet wake goes whole.
     expect(kept("question", false)).toEqual([]);
+  });
+
+  it("drops a quiet wake a thread's report started from the report on, leaving one row per thread", () => {
+    // As the server writes a report's wake: the notice (no message of its own), reads, the reply.
+    const wakeOn = (
+      threadId: string,
+      runId: string,
+      minute: number,
+      text = FORK_BOT_QUIET_REPLY,
+    ) => [
+      workReportEntry(threadId, runId),
+      item(runId, minute, { type: "dynamic_tool", status: "completed" }),
+      reply(runId, minute + 1, text),
+    ];
+    const shown = (entries: ReadonlyArray<TimelineEntry>) =>
+      withoutRuns(
+        entries,
+        quietBotWakeRunIds(entries, "bot", none),
+        "bot",
+        true,
+        lastThreadReportIds(entries),
+      ).map((entry) => entry.id);
+    const first = wakeOn("thread-a", "wake-1", 2);
+    const second = wakeOn("thread-a", "wake-2", 4);
+    // Its reads ("Worked for") go, and only the thread's latest report stays, as its row.
+    expect(shown([...first, ...second])).toEqual([second[0]!.id]);
+    // A wake with news keeps its run; the quiet one before it goes whole.
+    const news = wakeOn("thread-a", "wake-3", 6, "PR #558 is ready.");
+    expect(shown([...first, ...news])).toEqual(news.map((entry) => entry.id));
+    // Another thread keeps its own latest row.
+    const other = wakeOn("thread-b", "wake-4", 8);
+    expect(shown([...first, ...other, ...second])).toEqual([other[0]!.id, second[0]!.id]);
+    // A thread launched here shows under its launch, so its quiet wakes go whole.
+    const launch: TimelineEntry = {
+      id: "launch",
+      kind: "fork-thread-launch",
+      createdAt: at(1),
+      runId: "a" as RunId,
+      launch: {
+        title: "A",
+        threadId: "thread-a" as ThreadId,
+        environmentId: null,
+        callStatus: "started",
+      },
+    };
+    expect(shown([launch, ...first, ...second])).toEqual(["launch"]);
+    // Two threads report into one quiet wake: each keeps its row, whichever starts the run.
+    const both = [workReportEntry("thread-c", "wake-5"), ...wakeOn("thread-d", "wake-5", 10)];
+    expect(shown(both)).toEqual([both[0]!.id, both[1]!.id]);
   });
 
   it("drops a coordinator's quiet reply to its child's question, keeping the question card", () => {

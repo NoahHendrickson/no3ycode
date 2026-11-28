@@ -10,6 +10,7 @@ import {
   threadLaunchActivityLine,
   threadLaunchPullRequests,
   threadPullRequestStage,
+  threadRowLiveState,
 } from "./threadLaunch.logic";
 import {
   forkDelegatedQuestionOf,
@@ -306,6 +307,75 @@ describe("threadLaunchPullRequests", () => {
     ).toEqual([
       { number: 31, url: "https://h/o/r/pull/31", title: "Cinnabars page", stage: "merged" },
     ]);
+  });
+});
+
+describe("threadRowLiveState", () => {
+  const link = (number: number, snapshot: object) =>
+    ({
+      host: "h",
+      repository: "o/r",
+      number,
+      url: `https://h/o/r/pull/${number}`,
+      source: "created",
+      linkedAt: "2026-11-27T10:00:00.000Z",
+      snapshot,
+      stack: null,
+    }) as never;
+  const ready = link(558, {
+    state: "open",
+    isDraft: false,
+    checksState: "passing",
+    mergeability: "mergeable",
+  });
+  const failing = link(559, { state: "open", isDraft: false, checksState: "failing" });
+  const review = {
+    taskId: "task-1",
+    kind: "subagent",
+    // oxlint-disable-next-line t3code/no-untranslated-copy -- a fixture, not copy
+    description: "Neon review: sprint start page",
+  } as const;
+  const read = (
+    status: Parameters<typeof threadRowLiveState>[1],
+    pendingBackgroundTasks: ReadonlyArray<typeof review> = [],
+    runtime = "idle",
+  ) => {
+    const state = threadRowLiveState(
+      { pullRequests: [ready, failing], pendingBackgroundTasks, runtime: { status: runtime } },
+      status,
+    );
+    return {
+      activity: state.activity,
+      stages: state.pullRequests.map((pr) => pr.stage),
+      readyUrl: state.ready?.url ?? null,
+    };
+  };
+
+  it("says ready to merge only once the thread is idle with nothing in the background", () => {
+    expect(read("ready")).toEqual({
+      activity: null,
+      stages: ["ready", "checks-failing"],
+      readyUrl: "https://h/o/r/pull/558",
+    });
+    // A review still running can change the PR, so it says that instead.
+    expect(read("ready", [review])).toEqual({
+      activity: "Waiting · Neon review: sprint start page",
+      stages: [null, "checks-failing"],
+      readyUrl: null,
+    });
+    // A watch on its PR waits on the owner's merge, so it neither shows nor holds ready back.
+    const watch = {
+      taskId: "pull-request-watch:h/o/r#558",
+      kind: "monitor",
+      // oxlint-disable-next-line t3code/no-untranslated-copy -- a fixture, not copy
+      description: "Watching pull request #558",
+    } as const;
+    expect(read("waiting", [watch as never])).toEqual(read("ready"));
+    // "waiting" is also a turn blocked on a thread wait, still at work.
+    const busy = { activity: null, stages: [null, "checks-failing"], readyUrl: null };
+    expect(read("waiting", [watch as never], "running")).toEqual(busy);
+    expect(read("working")).toEqual(busy);
+    expect(read(null)).toEqual(busy);
   });
 });
 

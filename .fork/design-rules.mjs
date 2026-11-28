@@ -121,6 +121,7 @@ export const DESIGN_LINT_ALLOWLIST = [
       "ForkThreadRequestCard",
       "ForkAnsweredRequestCard",
     ],
+    "threadLaunchCards/ForkThreadReadyToMerge.tsx": ["ForkThreadReadyToMerge"],
     "sprints/SprintPanelTabs.tsx": ["SprintPanelTabStrip", "SprintPanelTabContent"],
     "sprints/SprintFileEditor.tsx": ["SprintFileEditor", "SprintFileFooter", "NoSprintFileAccess"],
     "bots/BotThreadsChild.tsx": [
@@ -194,6 +195,9 @@ export const DESIGN_LINT_ALLOWLIST = [
   }),
   ...b5Exempt("wrapper around CheckboxPill (Fork/Checkbox pill)", {
     "coordinator/CoordinatorDraftToggle.tsx": ["CoordinatorDraftToggle"],
+  }),
+  ...b5Exempt("wrapper around PullRequestChipControl (Fork/Composer PR chip)", {
+    "ComposerPullRequestChip.tsx": ["ThreadPullRequestChip"],
   }),
   ...b5Exempt("wrapper around ComposerModelPicker", {
     "scheduled/ScheduledTaskModelPicker.tsx": ["ScheduledTaskModelPicker"],
