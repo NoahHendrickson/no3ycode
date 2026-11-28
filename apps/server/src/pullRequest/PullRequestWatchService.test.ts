@@ -115,6 +115,9 @@ interface HarnessOptions {
   readonly readFailure?: PullRequestService.PullRequestError;
   readonly readState?: PullRequestSummary["state"];
   readonly readChecksState?: PullRequestSummary["checksState"];
+  /** Other threads the orchestrator holds, such as a parent or delegated children. */
+  readonly relatives?: ReadonlyArray<PullRequestTestThread>;
+  readonly childThreadIds?: ReadonlyArray<ThreadId>;
 }
 
 const makeHarness = Effect.fn("makePullRequestWatchHarness")(function* (
@@ -128,8 +131,12 @@ const makeHarness = Effect.fn("makePullRequestWatchHarness")(function* (
       getShell: () => Effect.succeed(Option.fromNullishOr(project)),
     }),
     Layer.mock(Orchestrator.OrchestratorV2)({
-      getThreadShell: (id) =>
-        Effect.succeed(id === thread?.id ? v2PullRequestThread(thread) : null),
+      getThreadShell: (id) => {
+        const found = [thread, ...(options.relatives ?? [])].find((entry) => entry?.id === id);
+        return Effect.succeed(found ? v2PullRequestThread(found) : null);
+      },
+      listAppOwnedChildThreadIds: (id) =>
+        Effect.succeed(id === thread?.id ? (options.childThreadIds ?? []) : []),
       dispatch: (command) =>
         Ref.update(commands, (recorded) => [...recorded, command]).pipe(
           Effect.as({ sequence: 1, storedEvents: [] }),
@@ -299,7 +306,61 @@ describe("PullRequestWatchService", () => {
     }),
   );
 
-  it.effect("refuses a watch from a subagent thread, whose parent owns the pull request", () =>
+  it.effect("lets only one of a parent and its delegated child watch a PR", () =>
+    Effect.gen(function* () {
+      const watched = makeLink(1, {
+        headBranch: "feature",
+        watch: {
+          startedAt: "2026-08-20T00:00:00.000Z",
+          headSha: null,
+          failedChecks: [],
+          passed: false,
+          passedChecks: [],
+          conflicting: false,
+          rebaseRequired: false,
+          remarksThrough: "2026-08-20T00:00:00.000Z",
+          remarkIds: [],
+          wakes: 0,
+        },
+      });
+      const parentId = ThreadId.make("parent");
+      const childId = ThreadId.make("child");
+      const childOf = (pullRequests: ReadonlyArray<ThreadPullRequestLink>) => ({
+        ...makeThread(pullRequests),
+        lineage: {
+          rootThreadId: parentId,
+          parentThreadId: parentId,
+          relationshipToParent: "subagent" as const,
+        },
+      });
+      const target = { repository: "t3tools/t3code", number: 1 };
+
+      const child = yield* makeHarness({
+        thread: childOf([makeLink(1, { headBranch: "feature" })]),
+        relatives: [{ ...makeThread([watched]), id: parentId }],
+      });
+      expect(yield* child.setWatching(true, target).pipe(Effect.flip)).toMatchObject({
+        _tag: "PullRequestWatchedByRelativeError",
+        holder: "parent",
+      });
+
+      const parent = yield* makeHarness({
+        thread: makeThread([makeLink(1, { headBranch: "feature" })]),
+        relatives: [{ ...childOf([watched]), id: childId }],
+        childThreadIds: [childId],
+      });
+      expect(yield* parent.setWatching(true, target).pipe(Effect.flip)).toMatchObject({
+        _tag: "PullRequestWatchedByRelativeError",
+        holder: "child",
+        threadId: childId,
+      });
+      expect([...(yield* Ref.get(child.commands)), ...(yield* Ref.get(parent.commands))]).toEqual(
+        [],
+      );
+    }),
+  );
+
+  it.effect("watches for a delegated child thread, whose wakes reach its parent", () =>
     Effect.gen(function* () {
       const harness = yield* makeHarness({
         thread: {
@@ -311,11 +372,10 @@ describe("PullRequestWatchService", () => {
           },
         },
       });
-      const error = yield* harness
-        .setWatching(true, { repository: "t3tools/t3code", number: 1 })
-        .pipe(Effect.flip);
-      expect(error).toMatchObject({ _tag: "PullRequestWatchFromSubagentError" });
-      expect(yield* Ref.get(harness.commands)).toEqual([]);
+      yield* harness.setWatching(true, { repository: "t3tools/t3code", number: 1 });
+      expect(yield* Ref.get(harness.commands)).toMatchObject([
+        { type: "thread.pull-request.watch", number: 1, watching: true },
+      ]);
     }),
   );
 });

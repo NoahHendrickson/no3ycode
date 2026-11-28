@@ -37,14 +37,18 @@ export class PullRequestWatchFailedError extends Schema.TaggedError<PullRequestW
   }
 }
 
-export class PullRequestWatchFromSubagentError extends Schema.TaggedError<PullRequestWatchFromSubagentError>()(
-  "PullRequestWatchFromSubagentError",
-  {},
+/* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+export class PullRequestWatchedByRelativeError extends Schema.TaggedError<PullRequestWatchedByRelativeError>()(
+  "PullRequestWatchedByRelativeError",
+  { holder: Schema.Literals(["parent", "child"]), threadId: ThreadId },
 ) {
   override get message(): string {
-    return "This thread is a subagent, so it cannot watch pull requests. Its parent thread owns the pull request: finish your task and report back instead.";
+    return this.holder === "parent"
+      ? "Your parent thread already watches this PR, so its wakes go there. Report the PR state to your parent and end your turn."
+      : `Your delegated child thread ${this.threadId} already watches this PR, and each wake's result reaches you as a task result. Do not watch it too: end your turn, and the child's next result wakes you.`;
   }
 }
+/* fork:end fork-delegated-children-watch-prs */
 
 export class PullRequestWatchThreadNotFoundError extends Schema.TaggedError<PullRequestWatchThreadNotFoundError>()(
   "PullRequestWatchThreadNotFoundError",
@@ -73,7 +77,7 @@ export class PullRequestWatchService extends Context.Service<
         readonly checksState?: PullRequestChecksState;
       },
       | PullRequestWatchFailedError
-      | PullRequestWatchFromSubagentError
+      | PullRequestWatchedByRelativeError
       | PullRequestWatchThreadNotFoundError
       | PullRequestTargetError
       | PullRequestUnavailableError
@@ -99,6 +103,41 @@ const make = Effect.gen(function* () {
     return thread;
   });
 
+  /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs
+     One of a parent and its delegated child watches a PR, so one PR event wakes the parent once. */
+  const relativeWatching = Effect.fn("PullRequestWatchService.relativeWatching")(
+    function* (thread: OrchestrationV2ThreadShell, target: ResolvedTarget) {
+      const watches = (shell: OrchestrationV2ThreadShell | null) =>
+        shell !== null &&
+        shell.deletedAt === null &&
+        threadPullRequestsOf(shell).some(
+          (link) =>
+            link.source !== "stack-dismissed" &&
+            link.watch !== undefined &&
+            threadPullRequestKeysEqual(link, target),
+        );
+      const parentThreadId =
+        thread.lineage.relationshipToParent === "subagent" ? thread.lineage.parentThreadId : null;
+      if (parentThreadId !== null && watches(yield* engine.getThreadShell(parentThreadId))) {
+        return new PullRequestWatchedByRelativeError({
+          holder: "parent",
+          threadId: parentThreadId,
+        });
+      }
+      for (const childThreadId of yield* engine.listAppOwnedChildThreadIds(thread.id)) {
+        if (watches(yield* engine.getThreadShell(childThreadId))) {
+          return new PullRequestWatchedByRelativeError({
+            holder: "child",
+            threadId: childThreadId,
+          });
+        }
+      }
+      return undefined;
+    },
+    Effect.mapError((cause) => new PullRequestWatchFailedError({ cause })),
+  );
+  /* fork:end fork-delegated-children-watch-prs */
+
   // Keep the registration span stable across the service extraction.
   const setWatching = Effect.fn("PullRequestsToolkit.setWatching")(function* (input: {
     readonly threadId: ThreadId;
@@ -117,11 +156,14 @@ const make = Effect.gen(function* () {
       threadPullRequestsOf(shell).find(
         (link) => link.source !== "stack-dismissed" && threadPullRequestKeysEqual(link, target),
       );
-    if (watching && thread.lineage.relationshipToParent === "subagent") {
-      return yield* new PullRequestWatchFromSubagentError();
-    }
     const before = watchedLink(thread);
     const wasWatching = before?.watch !== undefined;
+    /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+    if (watching && !wasWatching) {
+      const refusal = yield* relativeWatching(thread, target);
+      if (refusal !== undefined) return yield* refusal;
+    }
+    /* fork:end fork-delegated-children-watch-prs */
     // A watch on an ended PR could only report that it ended, so report it now instead.
     const alreadyEnded = (state: "merged" | "closed") => ({
       ...target,

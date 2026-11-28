@@ -214,6 +214,10 @@ import {
   delegatedTaskReportRuns,
   monitorUpdateRunIds,
   subagentThreadTitle,
+  /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+  backgroundMonitorRunIds,
+  isBackgroundMonitorNotice,
+  /* fork:end fork-delegated-children-watch-prs */
 } from "@t3tools/provider-core/server/subagentProjection";
 import {
   forkableSourceRunStatusError,
@@ -876,9 +880,11 @@ function mayStartSubagentFollowup(
     return false;
   if (isCompactionCommandMessage({ role: "user", ...command })) return false;
   if (command.notification !== undefined)
-    return (
-      command.notification.source.kind !== "monitor" || command.notification.outcome !== "updated"
+    /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+    return !(
+      isBackgroundMonitorNotice(command.notification) && command.notification.outcome === "updated"
     );
+  /* fork:end fork-delegated-children-watch-prs */
   return (
     command.createdBy === "user" ||
     command.creationSource === "mcp" ||
@@ -4275,32 +4281,33 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
           ? { section: sections[index] }
           : {}),
       }));
-      yield* dispatchMessage(
-        {
-          type: "message.dispatch",
-          commandId: command.commandId,
-          threadId: command.threadId,
-          messageId: wakeMessage.messageId,
-          text: wakeMessage.text,
-          notification: {
-            ...wakeMessage.notification,
-            source:
-              wake.notification.source.kind === "monitor"
-                ? {
-                    kind: "monitor",
-                    pullRequest: stamps[0]!,
-                    ...(stamps.length > 1 ? { otherPullRequests: stamps.slice(1) } : {}),
-                  }
-                : wake.notification.source,
-          },
-          attachments: [],
-          dispatchMode: { type: "queue_after_active" },
-          createdBy: "agent",
-          creationSource: "server",
+      /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+      const message: Extract<OrchestrationV2Command, { readonly type: "message.dispatch" }> = {
+        type: "message.dispatch",
+        commandId: command.commandId,
+        threadId: command.threadId,
+        messageId: wakeMessage.messageId,
+        text: wakeMessage.text,
+        notification: {
+          ...wakeMessage.notification,
+          source:
+            wake.notification.source.kind === "monitor"
+              ? {
+                  kind: "monitor",
+                  pullRequest: stamps[0]!,
+                  ...(stamps.length > 1 ? { otherPullRequests: stamps.slice(1) } : {}),
+                }
+              : wake.notification.source,
         },
-        events,
-        effects,
-      );
+        attachments: [],
+        dispatchMode: { type: "queue_after_active" },
+        createdBy: "agent",
+        creationSource: "server",
+      };
+      yield* dispatchMessage(message, events, effects);
+      // A wake on a delegated child is a follow-up task, so its result reaches the parent.
+      yield* recordSubagentFollowup(message, events).pipe(mapDispatchError(command));
+      /* fork:end fork-delegated-children-watch-prs */
     },
   );
 
@@ -4475,18 +4482,9 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
         cause: `Thread ${command.threadId} is settled or archived and cannot watch pull requests.`,
       });
     }
-    // Child tasks report to their parent, which owns PR monitoring; child watches would cause unrelated wakes.
-    if (
-      command.type === "thread.pull-request.watch" &&
-      command.watching &&
-      thread.lineage.relationshipToParent === "subagent"
-    ) {
-      return yield* new OrchestratorDispatchError({
-        commandId: command.commandId,
-        commandType: command.type,
-        cause: `Thread ${command.threadId} is a subagent; its parent thread watches pull requests.`,
-      });
-    }
+    /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs
+       A delegate_task child watches its own PRs; only native subagents, refused above, cannot. */
+    /* fork:end fork-delegated-children-watch-prs */
     // Agent watches use the latest executed run to catch calls racing Stop; users can still watch.
     if (
       command.type === "thread.pull-request.watch" &&
@@ -16546,6 +16544,13 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
           ? withSubagentParentLock(message.threadId, dispatch)
           : dispatch,
       );
+    /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+    if (command.type === "thread.pull-request-watch.sync" && command.wake !== undefined)
+      return yield* messageIntake.withLock(
+        command.threadId,
+        withSubagentParentLock(command.threadId, dispatch),
+      );
+    /* fork:end fork-delegated-children-watch-prs */
     // Answering a message-mode question can also start a follow-up.
     return yield* command.type === "runtime-request.respond"
       ? withSubagentParentLock(command.threadId, dispatch)
@@ -17048,11 +17053,9 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
             const followUpRun = child.runs
               .filter((run) => run.delegatedTaskId === input.taskId)
               .toSorted((a, b) => b.ordinal - a.ordinal)[0];
-            const monitorRunIds = new Set(
-              child.messages
-                .filter((message) => message.notification?.source.kind === "monitor")
-                .map((message) => message.runId),
-            );
+            /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+            const monitorRunIds = backgroundMonitorRunIds(child.messages);
+            /* fork:end fork-delegated-children-watch-prs */
             const activeRun = child.runs
               .filter((run) => isLiveRun(run) && !monitorRunIds.has(run.id))
               .toSorted((a, b) => b.ordinal - a.ordinal)[0];

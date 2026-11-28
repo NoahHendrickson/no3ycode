@@ -1720,7 +1720,7 @@ it.effect("hides tools for links and refuses another environment while the beta 
 );
 
 it.effect(
-  "lists watch tools only to threads that are not delegated children, and forge tools only where the project has a forge",
+  "lists watch tools to delegated children too, and forge tools only where the project has a forge",
   () =>
     Effect.scoped(
       Effect.gen(function* () {
@@ -1818,9 +1818,13 @@ it.effect(
             "unwatch_pull_request",
           ]),
         );
-        expect(childTools).toContain("link_pull_request");
-        expect(childTools).not.toContain("watch_pull_request");
-        expect(childTools).not.toContain("unwatch_pull_request");
+        expect(childTools).toEqual(
+          expect.arrayContaining([
+            "link_pull_request",
+            "watch_pull_request",
+            "unwatch_pull_request",
+          ]),
+        );
         expect(parentTools).toEqual(
           expect.arrayContaining([
             "pull_request_read",

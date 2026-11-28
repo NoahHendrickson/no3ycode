@@ -419,6 +419,32 @@ it("waits for nested work and retains the report across monitor acknowledgements
     ],
   });
   assert.equal(afterMonitorEnded.resultRun?.id, ended.id);
+  // A PR watch wake is work the task waits for, even when its outcome is "updated".
+  const pullRequestWake = delegatedTaskProgress({
+    ...projection,
+    runs: [run, report, { ...monitor, status: "running", completedAt: null }],
+    messages: [
+      {
+        ...artifacts.message,
+        runId: monitor.id,
+        notification: {
+          source: {
+            kind: "monitor",
+            pullRequest: {
+              host: "github.com",
+              repository: "acme/app",
+              number: 7,
+              watchStartedAt: "2026-07-24T10:00:00.000Z",
+              headSha: null,
+            },
+          },
+          outcome: "updated",
+          summary: "#7: new comment",
+        },
+      },
+    ],
+  });
+  assert.equal(pullRequestWake.state, "working");
 });
 
 it("keeps the report when a run queued behind it ends without assistant text", () => {

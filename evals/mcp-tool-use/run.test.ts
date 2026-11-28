@@ -711,15 +711,15 @@ it("rebuilds the template from this checkout and sends a child T3's task prompt"
   const deferred = system[2]?.split("Load them first:\n")[1]?.split("\n\n")[0]?.split("\n") ?? [];
   assert.includeMembers(deferred, ["Monitor", "mcp__t3-code__delegate_task"]);
   assert.notInclude(deferred, "mcp__t3-code__retired_tool");
-  // A delegated child is never offered the tools T3 hides from subagents.
+  // A delegated child is offered the PR watch tools too.
   assert.include(deferred, "mcp__t3-code__watch_pull_request");
   const child = buildBase(template, {
     model: "claude-sonnet-5-5",
     keepUserInstructions: false,
     subagent: true,
   });
-  assert.notInclude(String(child.system[2]?.text), "mcp__t3-code__watch_pull_request");
-  assert.notInclude(
+  assert.include(String(child.system[2]?.text), "mcp__t3-code__watch_pull_request");
+  assert.include(
     child.t3.map((tool) => tool.name),
     "mcp__t3-code__unwatch_pull_request",
   );
