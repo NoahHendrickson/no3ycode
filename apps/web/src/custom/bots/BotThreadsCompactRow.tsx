@@ -1,13 +1,15 @@
 /**
- * A bot panel's thread row on two lines (mark, title and time; then its pull request and model) —
+ * A bot panel's thread row on two lines (mark, title and time; then its pull requests and model) —
  * the sprint panel's (`fork-sprints`) and the coordinator's (`fork-coordinator-threads`); a Petal's
  * panel keeps BotThreadsPanel's row.
  */
 import { useAtomValue } from "@effect/atom-react";
+import { botThreadMergedPullRequests } from "@t3tools/client-runtime/fork-bot-digest-links";
 import type { ProviderDriverKind, ScopedThreadRef } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
 import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
+import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { serverEnvironment } from "~/state/server";
 
 import { PullRequestRowChip } from "../ComposerPullRequestChip";
@@ -25,20 +27,32 @@ export function BotThreadsCompactRow(props: {
     <BotThreadsCompactRowView
       {...useBotThreadsRow(props.row, props.current, props.onOpenThread)}
       model={useForkThreadModel(props.row.thread)}
+      mergedPullRequests={botThreadMergedPullRequests(props.row.thread).map((pullRequest) => ({
+        number: pullRequest.number,
+        state: pullRequest.snapshot === null ? null : resolvePullRequestState(pullRequest.snapshot),
+        chipState: "merged",
+        checks: null,
+      }))}
     />
   );
 }
 
+/** Merged chips after the current one; more fold into "+N". */
+const MERGED_CHIP_LIMIT = 2;
+
 /** @public — the row as drawn, from plain props; Storybook renders it on its own. Two lines per
-    thread: mark, title and time, then its pull request as the composer's chip (its row variant)
-    and the model it runs. */
+    thread: mark, title and time, then its pull request as the composer's chip (its row variant),
+    its other merged ones, and the model it runs. */
 export function BotThreadsCompactRowView(
   props: Omit<ComponentProps<typeof BotThreadsRowFrame>, "density" | "detail"> & {
     readonly pullRequest: ComponentProps<typeof PullRequestRowChip> | null;
     readonly model: ForkThreadModel | null;
+    /** The thread's other merged pull requests, newest first. */
+    readonly mergedPullRequests?: ReadonlyArray<ComponentProps<typeof PullRequestRowChip>>;
   },
 ) {
-  const { pullRequest, model } = props;
+  const { pullRequest, model, mergedPullRequests = [] } = props;
+  const hiddenMerged = mergedPullRequests.length - MERGED_CHIP_LIMIT;
   return (
     <BotThreadsRowFrame
       {...props}
@@ -46,7 +60,21 @@ export function BotThreadsCompactRowView(
       detail={
         pullRequest === null && model === null ? null : (
           <span className="flex min-w-0 items-center gap-4">
-            {pullRequest === null ? null : <PullRequestRowChip {...pullRequest} />}
+            {pullRequest === null ? null : (
+              <span className="flex shrink-0 items-center gap-1">
+                <PullRequestRowChip {...pullRequest} />
+                {mergedPullRequests.slice(0, MERGED_CHIP_LIMIT).map((merged) => (
+                  <PullRequestRowChip key={merged.number} {...merged} />
+                ))}
+                {hiddenMerged > 0 ? (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    <span aria-hidden>+{hiddenMerged}</span>
+                    {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
+                    <span className="sr-only">{`${hiddenMerged} more merged`}</span>
+                  </span>
+                ) : null}
+              </span>
+            )}
             {model === null ? null : (
               <span className="flex min-w-0 items-center gap-1 text-sm leading-5">
                 <ForkProviderMarkOr

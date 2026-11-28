@@ -15,6 +15,7 @@ import type {
   ThreadPullRequestSnapshot,
 } from "@t3tools/contracts";
 import { type ThreadLink, threadLinkCandidates } from "@t3tools/shared/threadLinks";
+import { threadPullRequestUpdatedAtMs } from "@t3tools/shared/threadPullRequests";
 
 import type { BotDigestItem } from "./forkBotDigest.ts";
 
@@ -49,6 +50,26 @@ export function botThreadPullRequest(shell: EnvironmentThreadShell): BotPullRequ
   return branch === null
     ? null
     : { url: branch.url, number: branch.number, snapshot: null, branch };
+}
+
+/** The thread's merged pull requests besides the one botThreadPullRequest picks, newest first:
+    a thread row keeps showing what it already landed. */
+export function botThreadMergedPullRequests(
+  shell: EnvironmentThreadShell,
+): ReadonlyArray<BotPullRequest> {
+  const current = resolveThreadCurrentPullRequestLink(shell.pullRequests);
+  const mergedAt = (link: (typeof shell.pullRequests)[number]) => {
+    const ms = Date.parse(link.snapshot?.mergedAt ?? "");
+    return Number.isNaN(ms) ? threadPullRequestUpdatedAtMs(link) : ms;
+  };
+  return visibleThreadPullRequests(shell.pullRequests)
+    .filter(
+      (link) =>
+        link.snapshot?.state === "merged" &&
+        (current === null || !samePullRequest(link.url, current.url)),
+    )
+    .sort((left, right) => mergedAt(right) - mergedAt(left))
+    .map((link) => ({ url: link.url, number: link.number, snapshot: link.snapshot, branch: null }));
 }
 
 function pullRequestsOf(shell: EnvironmentThreadShell): ReadonlyArray<BotPullRequest> {
