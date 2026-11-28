@@ -24,7 +24,7 @@ import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.log
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 import type { TimelineEntry } from "~/session-logic";
 
-import { resolvePullRequestChipState } from "../composerPullRequestChip.logic";
+import { pullRequestChipStateOf } from "../composerPullRequestChip.logic";
 import { forkWorkReportOfEntry, forkWorkReportThreadId } from "../forkWorkReports";
 
 export interface ForkThreadLaunch {
@@ -126,7 +126,7 @@ export function threadPullRequestStage(
   snapshot: ThreadPullRequestSnapshot | null | undefined,
 ): ThreadPullRequestStage | null {
   if (snapshot == null) return null;
-  const state = resolvePullRequestChipState({ badge: null, pr: snapshot, pullRequests: [] });
+  const state = pullRequestChipStateOf(snapshot);
   if (state !== "open") return state ?? null;
   if (snapshot.checksState === "failing") return "checks-failing";
   if (snapshot.checksState === "pending") return "checks-running";

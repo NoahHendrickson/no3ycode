@@ -404,14 +404,11 @@
 
   &[data-pr-state="open"] {
     --fork-pr-chip-fill: #1c3c2b;
-    --fork-pr-chip-fill-hover: #1c3c2b;
   }
   &[data-pr-state="merged"] {
     --fork-pr-chip-fill: #2e2645;
-    --fork-pr-chip-fill-hover: #2e2645;
   }
   &[data-pr-state="closed"] {
     --fork-pr-chip-fill: #3d2325;
-    --fork-pr-chip-fill-hover: #3d2325;
   }
 }

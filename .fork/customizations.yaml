@@ -8937,8 +8937,9 @@
     Petal panel's frame, list, search and controls (bots/BotThreadsPanel, which stays Petal-only);
     ChatView picks one or the other once. Its Threads list draws each thread on two lines
     (bots/BotThreadsCompactRow, shared with fork-coordinator-threads: mark, title and time; then
-    the PR as the composer's chip in its row variant, PullRequestChipControl variant="row", and
-    the provider mark, model and effort; owner's Figma design, Basic UI kit 551:2943,
+    the PR as the composer's chip in its row variant, ComposerPullRequestChip PullRequestRowChip,
+    and the provider mark, model and effort, ForkSubagentGroup useForkThreadModel; both bot rows
+    draw in BotThreadsRowFrame; owner's Figma design, Basic UI kit 551:2943,
     2026-11-27), leaving the checkout to the thread.
 
     A thread opened from a sprint opens in its panel, never in the main column or a split: the

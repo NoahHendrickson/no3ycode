@@ -6,7 +6,8 @@ import {
   type ThreadPr,
 } from "~/components/ThreadStatusIndicators";
 import type { PullRequestChecksState } from "@t3tools/contracts";
-import { PullRequestChipControl } from "~/custom/ComposerPullRequestChip";
+import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
+import { PullRequestChipControl, PullRequestRowChip } from "~/custom/ComposerPullRequestChip";
 import {
   resolvePullRequestChipChecks,
   resolvePullRequestChipState,
@@ -115,6 +116,29 @@ export const Checks: Story = {
       {(["pending", "passing", "failing", "none"] as const).map((checks) => (
         <Row key={checks} label={checks}>
           <Composer state="open" checks={checks} />
+        </Row>
+      ))}
+    </Stack>
+  ),
+};
+
+/** The row variant a sprint's or coordinator's panel row wears (PullRequestRowChip, Basic UI kit
+    551:2943): 22px, deeper, its CI pill 3px in. Each state, and an open PR's checks. */
+export const RowVariant: Story = {
+  parameters: { controls: { disable: true } },
+  render: () => (
+    <Stack gap={4}>
+      {(["open", "draft", "merged", "closed"] as const).map((state) => (
+        <Row key={state} label={state}>
+          <PullRequestRowChip
+            number={415}
+            state={resolvePullRequestState({
+              state: state === "draft" ? "open" : state,
+              isDraft: state === "draft",
+            })}
+            chipState={state}
+            checks={state === "open" ? "pending" : null}
+          />
         </Row>
       ))}
     </Stack>

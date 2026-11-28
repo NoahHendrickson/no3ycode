@@ -21,7 +21,13 @@ import {
 } from "@t3tools/client-runtime/state/subagent-display";
 import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
 import type { SideThreadOpenIntent } from "@t3tools/client-runtime/side-thread";
-import type { EnvironmentId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
+import type {
+  EnvironmentId,
+  ModelSelection,
+  ScopedThreadRef,
+  ServerProvider,
+  ThreadId,
+} from "@t3tools/contracts";
 import { ChevronRightIcon, ListTreeIcon } from "./icons/lucide-hugeicons";
 import { type ComponentProps, memo, type ReactNode, use, useId } from "react";
 
@@ -411,6 +417,32 @@ export function useForkSubagentEffort(
     return formatSubagentEffort({ modelSlug, modelSelection: member.modelSelection, provider });
   });
 }
+
+/** The model a thread runs and its effort, in the subagent line's words, for a bot panel's row.
+    Each value is selected on its own, so a providers update re-renders only the rows whose words
+    changed. Before providers load the label is the slug's, and there is no effort or driver. */
+export function useForkThreadModel(thread: {
+  readonly environmentId: EnvironmentId;
+  readonly modelSelection: ModelSelection;
+  readonly runtime: { readonly providerInstanceId?: string | null | undefined } | null;
+}) {
+  const { environmentId, modelSelection } = thread;
+  const instanceId = thread.runtime?.providerInstanceId ?? modelSelection.instanceId;
+  const providers = serverEnvironment.providersValueAtom(environmentId);
+  const read = (all: ReadonlyArray<ServerProvider> | null | undefined) => {
+    const provider = all?.find((candidate) => candidate.instanceId === instanceId);
+    return { provider, ...resolveSubagentMetadata({ model: null, modelSelection, provider }) };
+  };
+  const label = useAtomValue(providers, (all) => read(all).modelLabel);
+  const effort = useAtomValue(providers, (all) => {
+    const { provider, modelSlug } = read(all);
+    return formatSubagentEffort({ modelSlug, modelSelection, provider });
+  });
+  const driver = useAtomValue(providers, (all) => read(all).provider?.driver ?? null);
+  return { environmentId, instanceId, driver, label, effort };
+}
+
+export type ForkThreadModel = ReturnType<typeof useForkThreadModel>;
 
 /** The driver whose fork mark a subagent shows: none for a linked environment's task, which names
     its driver only as a label, so the avatar resolves the provider that really runs it there. */

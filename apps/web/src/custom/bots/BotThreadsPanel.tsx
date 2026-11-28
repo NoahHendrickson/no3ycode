@@ -432,8 +432,71 @@ function BotThreadsRow(props: { readonly row: BotWorkRow; readonly current: bool
   return <BotThreadsRowView {...useBotThreadsRow(props.row, props.current)} />;
 }
 
-/** @public — the row as drawn, from plain props; Storybook renders it on its own. */
-export function BotThreadsRowView(props: {
+const ROW_DENSITY = {
+  // A Petal's work panel: small type, the time muted.
+  petal: {
+    item: "gap-2.5 px-1.5",
+    lines: "gap-1",
+    title: "text-sm",
+    time: "text-xs text-muted-foreground",
+  },
+  // A sprint's and a coordinator's panel (Basic UI kit 551:2943): the title's type for both.
+  compact: {
+    item: "gap-2 px-2.5",
+    lines: "gap-1.5",
+    title: "text-base",
+    time: "text-base text-foreground",
+  },
+} as const;
+
+/** A bot panel's thread row: its status mark, then the title and time over `detail`, the
+    second line each panel draws its own way. Both panels' rows share it, so they keep one focus,
+    current and menu behaviour. */
+export function BotThreadsRowFrame(
+  props: Pick<
+    BotThreadsRowViewProps,
+    "status" | "seed" | "title" | "time" | "current" | "onOpen" | "onContextMenu"
+  > & {
+    readonly density: keyof typeof ROW_DENSITY;
+    readonly detail: ReactNode;
+  },
+) {
+  const density = ROW_DENSITY[props.density];
+  return (
+    <li>
+      <ListItem
+        aria-current={props.current ? "page" : undefined}
+        onClick={props.onOpen}
+        onContextMenu={props.onContextMenu}
+        className={cn(
+          "items-start py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          density.item,
+          props.current && "bg-accent",
+        )}
+        data-testid="bot-threads-row"
+      >
+        <span className="flex h-5 w-3 shrink-0 items-center justify-center">
+          <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
+        </span>
+        <span className={cn("flex min-w-0 flex-1 flex-col", density.lines)}>
+          <span className="flex min-w-0 items-center gap-2">
+            <span
+              className={cn("min-w-0 flex-1 truncate leading-5 text-foreground", density.title)}
+            >
+              {props.title}
+            </span>
+            <span className={cn("shrink-0 leading-5 tabular-nums", density.time)}>
+              {props.time}
+            </span>
+          </span>
+          {props.detail}
+        </span>
+      </ListItem>
+    </li>
+  );
+}
+
+interface BotThreadsRowViewProps {
   readonly status: ComponentProps<typeof SidebarV2StatusMark>["status"];
   readonly seed: string;
   readonly title: string;
@@ -445,50 +508,30 @@ export function BotThreadsRowView(props: {
   readonly current: boolean;
   readonly onOpen: () => void;
   readonly onContextMenu?: ((event: MouseEvent<HTMLButtonElement>) => void) | undefined;
-}) {
+}
+
+/** @public — the row as drawn, from plain props; Storybook renders it on its own. */
+export function BotThreadsRowView(props: BotThreadsRowViewProps) {
   return (
-    <li>
-      <ListItem
-        aria-current={props.current ? "page" : undefined}
-        onClick={props.onOpen}
-        onContextMenu={props.onContextMenu}
-        className={cn(
-          "items-start gap-2.5 px-1.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
-          props.current && "bg-accent",
-        )}
-        data-testid="bot-threads-row"
-      >
-        <span className="flex h-5 w-3 shrink-0 items-center justify-center">
-          <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
+    <BotThreadsRowFrame
+      {...props}
+      density="petal"
+      detail={
+        // Always drawn, so every row is the same height with or without a branch.
+        <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
+          {props.pullRequest === null ? null : (
+            <BotPullRequestMark number={props.pullRequest.number} state={props.pullRequest.state} />
+          )}
+          {props.branch !== null || props.hasWorktree ? (
+            <SidebarV2CheckoutMark
+              branch={props.branch}
+              hasWorktree={props.hasWorktree}
+              devServerPort={null}
+              className="flex min-w-0 items-center gap-0.5"
+            />
+          ) : null}
         </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-sm leading-5 text-foreground">
-              {props.title}
-            </span>
-            <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
-              {props.time}
-            </span>
-          </span>
-          {/* Always drawn, so every row is the same height with or without a branch. */}
-          <span className="flex h-4 min-w-0 items-center gap-3 text-xs leading-4 text-muted-foreground">
-            {props.pullRequest === null ? null : (
-              <BotPullRequestMark
-                number={props.pullRequest.number}
-                state={props.pullRequest.state}
-              />
-            )}
-            {props.branch !== null || props.hasWorktree ? (
-              <SidebarV2CheckoutMark
-                branch={props.branch}
-                hasWorktree={props.hasWorktree}
-                devServerPort={null}
-                className="flex min-w-0 items-center gap-0.5"
-              />
-            ) : null}
-          </span>
-        </span>
-      </ListItem>
-    </li>
+      }
+    />
   );
 }

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ProviderDriverKind } from "@t3tools/contracts";
+import { EnvironmentId, ProviderDriverKind } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
@@ -123,15 +123,18 @@ const CHIP_STATE = {
   "Merged PR": "merged",
   "Closed PR": "closed",
 } as const;
+const STORY_ENVIRONMENT = EnvironmentId.make("story");
 const OPUS = {
+  environmentId: STORY_ENVIRONMENT,
+  instanceId: "claudeAgent",
   driver: ProviderDriverKind.make("claudeAgent"),
-  providerName: "Claude",
   label: "Opus 5.5",
   effort: "High",
 };
 const NEON = {
+  environmentId: STORY_ENVIRONMENT,
+  instanceId: "antigravity",
   driver: ProviderDriverKind.make("antigravity"),
-  providerName: "Antigravity",
   label: "Gemini 4 Neon",
   effort: "High",
 };

@@ -12,9 +12,14 @@ import {
   resolveDisplayedThreadPr,
   useThreadDisplayedPullRequest,
 } from "~/components/ThreadStatusIndicators";
+import {
+  PullRequestGlyph,
+  type PullRequestStatePresentation,
+} from "~/components/pullRequest/pullRequestIcons";
 import { pullRequestChecksStatePresentation } from "~/components/pullRequest/pullRequestPresentation";
 import { usePullRequestActionRunner } from "~/components/pullRequest/usePullRequestActions";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
+import { cn } from "~/lib/utils";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentQuery } from "~/state/query";
 import { useRightPanelStore } from "~/rightPanelStore";
@@ -23,6 +28,7 @@ import { vcsEnvironment } from "~/state/vcs";
 import { BanIcon, GitMergeIcon } from "./icons/lucide-hugeicons";
 import { PullRequestChecksDot } from "./SidebarV2StatusIndicator";
 import {
+  type PullRequestChipState,
   resolvePullRequestChipChecks,
   resolvePullRequestChipState,
 } from "./composerPullRequestChip.logic";
@@ -136,40 +142,68 @@ export function ThreadPullRequestChip(props: {
  * content, so the checks' state joins that label. */
 export function PullRequestChipControl({
   checks,
-  variant = "composer",
   children,
   ...props
 }: ComponentProps<typeof ComposerControl> & {
   readonly checks: PullRequestChecksState | null;
-  /** `row`: the smaller, deeper chip a bot panel's thread row wears (ComposerShell.css). */
-  readonly variant?: "composer" | "row";
 }) {
-  // The row chip is a span inside its row's button, where a label is not read: its checks are
-  // read in place instead.
-  const row = variant === "row";
-  const checksLabel = checks === null ? null : pullRequestChecksStatePresentation(checks).label;
   return (
     <ComposerControl
       {...props}
-      data-fork-pr-chip-variant={row ? "row" : undefined}
       aria-label={
-        row || checksLabel === null
+        checks === null
           ? props["aria-label"]
-          : [props["aria-label"], checksLabel].filter(Boolean).join(", ")
+          : [props["aria-label"], pullRequestChecksStatePresentation(checks).label]
+              .filter(Boolean)
+              .join(", ")
       }
     >
       {children}
       {checks === null ? null : (
         <span data-fork-pr-chip-ci={checks}>
           <PullRequestChecksDot state={checks} />
-          {row ? (
-            <>
-              <span className="sr-only">{checksLabel}</span>
-              <span aria-hidden>CI</span>
-            </>
-          ) : (
-            "CI"
-          )}
+          CI
+        </span>
+      )}
+    </ComposerControl>
+  );
+}
+
+/** A pull request as a bot panel's thread row shows it (fork-sprints, fork-coordinator-threads). */
+export interface PullRequestRowChipProps {
+  readonly number: number;
+  readonly state: PullRequestStatePresentation | null;
+  /** What the chip fills by (composerPullRequestChip.logic pullRequestChipStateOf). */
+  readonly chipState: PullRequestChipState | undefined;
+  readonly checks: PullRequestChecksState | null;
+}
+
+/** The composer's PR chip in its row variant (ComposerShell.css: smaller and deeper), drawn
+    inside a row's button, so it is a span whose words are read in place. */
+export function PullRequestRowChip(props: PullRequestRowChipProps) {
+  const { state, checks } = props;
+  const Icon = state?.Icon ?? PullRequestGlyph.pullRequest;
+  return (
+    <ComposerControl
+      render={<span />}
+      size="xs"
+      data-fork-composer-status-chip="pull-request"
+      data-fork-pr-chip
+      data-fork-pr-chip-variant="row"
+      data-pr-state={props.chipState}
+    >
+      <span className={cn("contents font-normal text-xs tabular-nums", state?.toneClassName)}>
+        <span className="sr-only">
+          {state === null ? "Pull request" : `${state.label} pull request`}
+        </span>
+        <Icon aria-hidden className="shrink-0" />
+        <span>{props.number}</span>
+      </span>
+      {checks === null ? null : (
+        <span data-fork-pr-chip-ci={checks}>
+          <PullRequestChecksDot state={checks} />
+          <span className="sr-only">{pullRequestChecksStatePresentation(checks).label}</span>
+          <span aria-hidden>CI</span>
         </span>
       )}
     </ComposerControl>

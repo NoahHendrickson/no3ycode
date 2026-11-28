@@ -15,8 +15,8 @@ import { useSharedPullRequestSummary } from "~/state/pullRequests";
 
 import {
   type PullRequestChipState,
-  resolvePullRequestChipChecks,
-  resolvePullRequestChipState,
+  pullRequestChecksOf,
+  pullRequestChipStateOf,
 } from "../composerPullRequestChip.logic";
 
 import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
@@ -47,25 +47,23 @@ export function useBotPullRequestState(
           ...(host === undefined ? {} : { host }),
         },
   );
-  const snapshot = pullRequest?.snapshot ?? null;
-  if (snapshot !== null) {
-    return {
-      state: resolvePullRequestState(snapshot),
-      title: snapshot.title,
-      chipState: resolvePullRequestChipState({ badge: null, pr: snapshot, pullRequests: [] }),
-      checks: resolvePullRequestChipChecks({ badge: null, snapshot }),
-    };
-  }
-  if (summary === null) return { state: null, title: null, chipState: undefined, checks: null };
-  const pr = { state: summary.state, isDraft: summary.isDraft ?? false };
+  // A thread's own link carries the snapshot; a branch's PR, the summary the sidebar read.
+  const pr =
+    pullRequest?.snapshot ??
+    (summary === null
+      ? null
+      : {
+          state: summary.state,
+          isDraft: summary.isDraft ?? false,
+          title: summary.title,
+          checksState: summary.checksState ?? null,
+        });
+  if (pr === null) return { state: null, title: null, chipState: undefined, checks: null };
   return {
     state: resolvePullRequestState(pr),
-    title: summary.title,
-    chipState: resolvePullRequestChipState({ badge: null, pr, pullRequests: [] }),
-    checks: resolvePullRequestChipChecks({
-      badge: null,
-      snapshot: { state: summary.state, checksState: summary.checksState ?? null },
-    }),
+    title: pr.title,
+    chipState: pullRequestChipStateOf(pr),
+    checks: pullRequestChecksOf(pr),
   };
 }
 
