@@ -10774,7 +10774,7 @@
     report line after PR work says whether it watches. A PR wake run counts as the task's work
     (subagentProjection monitorUpdateRunIds, task_status and task_cancel run picks), so an
     "updated" wake that lands while the original task is open holds it open. Web and mobile
-    offer Watch on a delegated child's thread.
+    offer Watch on a delegated child's thread and hide it on a native subagent's.
   tier: 4
   files: []
   shadows: []
