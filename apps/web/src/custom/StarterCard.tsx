@@ -16,7 +16,7 @@ export function StarterCard(props: {
   return (
     <div
       data-fork-starter-card=""
-      className="pointer-events-auto flex w-full max-w-sm flex-col divide-y divide-border overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card"
+      className="flex w-full max-w-sm flex-col divide-y divide-border overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card"
     >
       {props.starters.map(({ key, label, Icon, prompt }) => (
         <button

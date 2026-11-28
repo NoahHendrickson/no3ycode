@@ -8973,6 +8973,7 @@
     - apps/web/src/custom/sprints/sprintPullRequests.logic.ts
     - apps/web/src/custom/sprints/SprintPullRequests.tsx
     - apps/web/src/custom/sprints/SprintEmptyConversation.tsx
+    - apps/web/src/custom/StarterCard.tsx
     - apps/web/src/custom/sprints/SprintPanel.tsx
     - apps/web/src/custom/sprints/sprintThreadHost.tsx
     - apps/web/src/custom/sprints/sprintFiles.ts

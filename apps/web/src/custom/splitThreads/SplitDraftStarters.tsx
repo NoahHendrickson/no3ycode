@@ -35,10 +35,12 @@ export function SplitDraftStarters(props: {
       className="pointer-events-none absolute inset-0 flex items-center justify-center px-4"
       style={{ paddingBottom: props.bottomInset }}
     >
-      <StarterCard
-        starters={STARTERS.map(({ title, ...starter }) => ({ ...starter, label: m(title) }))}
-        onPick={props.onPick}
-      />
+      <div className="pointer-events-auto flex w-full max-w-sm">
+        <StarterCard
+          starters={STARTERS.map(({ title, ...starter }) => ({ ...starter, label: m(title) }))}
+          onPick={props.onPick}
+        />
+      </div>
     </div>
   );
 }
