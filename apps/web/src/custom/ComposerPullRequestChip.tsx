@@ -28,6 +28,9 @@ import {
 } from "./composerPullRequestChip.logic";
 import { type ThreadAutoMerge, useThreadAutoMerge } from "./threadAutoMerge";
 
+// The chip's look lives with the composer's; a bot panel row draws the chip without a composer.
+import "./ComposerShell.css";
+
 /** The thread's PR as a chip above the composer (fork-composer-shell), resolved the way
  * BranchToolbarBranchSelector resolved it in the context row. Renders nothing without a PR. An
  * "Auto-merge" chip follows while the host is set to merge the PR on its own. */

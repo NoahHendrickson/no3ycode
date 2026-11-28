@@ -62,7 +62,10 @@ export function useBotPullRequestState(
     state: resolvePullRequestState(pr),
     title: summary.title,
     chipState: resolvePullRequestChipState({ badge: null, pr, pullRequests: [] }),
-    checks: null,
+    checks: resolvePullRequestChipChecks({
+      badge: null,
+      snapshot: { state: summary.state, checksState: summary.checksState ?? null },
+    }),
   };
 }
 

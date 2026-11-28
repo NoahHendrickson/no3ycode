@@ -123,9 +123,15 @@ const CHIP_STATE = {
   "Merged PR": "merged",
   "Closed PR": "closed",
 } as const;
-const OPUS = { driver: ProviderDriverKind.make("claudeAgent"), label: "Opus 5.5", effort: "High" };
+const OPUS = {
+  driver: ProviderDriverKind.make("claudeAgent"),
+  providerName: "Claude",
+  label: "Opus 5.5",
+  effort: "High",
+};
 const NEON = {
   driver: ProviderDriverKind.make("antigravity"),
+  providerName: "Antigravity",
   label: "Gemini 4 Neon",
   effort: "High",
 };

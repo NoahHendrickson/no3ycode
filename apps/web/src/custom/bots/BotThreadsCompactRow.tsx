@@ -11,9 +11,11 @@ import type {
   PullRequestChecksState,
   ScopedThreadRef,
 } from "@t3tools/contracts";
+import { resolveSelectableModel } from "@t3tools/shared/model";
 import type { ComponentProps } from "react";
 
 import { getTriggerDisplayModelName } from "~/components/chat/providerIconUtils";
+import { ProviderInstanceIcon } from "~/components/chat/ProviderInstanceIcon";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { cn } from "~/lib/utils";
 import { serverEnvironment } from "~/state/server";
@@ -47,16 +49,24 @@ function useBotThreadModel(thread: EnvironmentThreadShell): BotThreadModel | nul
   const provider = useAtomValue(serverEnvironment.providersValueAtom(thread.environmentId), (all) =>
     all?.find((candidate) => candidate.instanceId === instanceId),
   );
-  const model = provider?.models.find((candidate) => candidate.slug === selection.model);
+  // An alias or a stale slug resolves the way the picker resolves it.
+  const slug =
+    (provider === undefined
+      ? null
+      : resolveSelectableModel(provider.driver, selection.model, provider.models)) ??
+    selection.model.trim();
+  const model = provider?.models.find((candidate) => candidate.slug === slug);
   const label = model
     ? getTriggerDisplayModelName(model, provider?.driver)
     : formatForkSubagentModel(selection.model);
   if (label === null) return null;
   return {
     driver: provider?.driver ?? null,
+    providerName: provider?.displayName ?? label,
+    accentColor: provider?.accentColor,
     label,
     effort: formatSubagentEffort({
-      modelSlug: selection.model,
+      modelSlug: slug,
       modelSelection: selection,
       provider,
     }),
@@ -65,6 +75,9 @@ function useBotThreadModel(thread: EnvironmentThreadShell): BotThreadModel | nul
 
 interface BotThreadModel {
   readonly driver: ProviderDriverKind | null;
+  /** Names the provider's logo where the fork draws no mark of its own. */
+  readonly providerName: string;
+  readonly accentColor?: string | undefined;
   readonly label: string;
   readonly effort: string | null;
 }
@@ -120,12 +133,13 @@ export function BotThreadsCompactRowView(
                   data-fork-composer-status-chip="pull-request"
                   data-fork-pr-chip
                   data-pr-state={pullRequest.chipState}
-                  aria-label={
-                    pullRequest.state === null
-                      ? `Pull request #${pullRequest.number}`
-                      : `${pullRequest.state.label} pull request #${pullRequest.number}`
-                  }
                 >
+                  {/* The chip is a span inside the row's button, so its words are read in place. */}
+                  <span className="sr-only">
+                    {pullRequest.state === null
+                      ? "Pull request"
+                      : `${pullRequest.state.label} pull request`}
+                  </span>
                   <span
                     className={cn(
                       "contents font-normal text-xs tabular-nums",
@@ -139,7 +153,20 @@ export function BotThreadsCompactRowView(
               )}
               {model === null ? null : (
                 <span className="flex min-w-0 items-center gap-1 text-sm leading-5">
-                  <ForkProviderMarkOr driver={model.driver} size="0.875rem" fallback={null} />
+                  <ForkProviderMarkOr
+                    driver={model.driver}
+                    size="0.875rem"
+                    fallback={
+                      model.driver === null ? null : (
+                        <ProviderInstanceIcon
+                          driverKind={model.driver}
+                          displayName={model.providerName}
+                          accentColor={model.accentColor}
+                          iconClassName="size-3.5"
+                        />
+                      )
+                    }
+                  />
                   <span className="truncate text-foreground">{model.label}</span>
                   {model.effort === null ? null : (
                     <span className="shrink-0 text-muted-foreground">{model.effort}</span>
