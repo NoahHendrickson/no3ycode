@@ -30,10 +30,11 @@ describe("fork guard: fork-thread-launch-cards", () => {
     );
   });
 
-  it("shows each pull request's stage beside its chip", () => {
-    expect(readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx")).toContain(
-      "THREAD_PULL_REQUEST_STAGE_LABELS[link.stage]",
-    );
+  it("draws each pull request with the state-coloured row PR chip and no loose stage label", () => {
+    const cards = readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx");
+    expect(cards).toContain("<PullRequestRowChip");
+    expect(cards).toContain("pullRequestLookOf(link.snapshot)");
+    expect(cards).not.toContain("THREAD_PULL_REQUEST_STAGE_LABELS");
   });
 
   it("draws a work report's notice as the reporting thread's row", () => {

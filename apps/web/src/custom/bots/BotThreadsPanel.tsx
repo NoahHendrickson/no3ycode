@@ -31,6 +31,7 @@ import { buildThreadRouteParams } from "~/threadRoutes";
 import { formatRelativeTimeLabel } from "~/timestampFormat";
 import { useUiStateStore } from "~/uiStateStore";
 
+import { pullRequestLookOf } from "../ComposerPullRequestChip";
 import { ListItem } from "../ListItem";
 import { SidebarV2SectionLabel } from "../SidebarV2SectionLabel";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
@@ -38,11 +39,7 @@ import { SidebarV2CheckoutMark } from "../SidebarV2ThreadCardMeta";
 import { openSidebarThreadMenu } from "../sidebarActionsBridge";
 import { StagePanelCloseButton } from "../stageColumns/StagePanelCloseButton";
 import { botThreadRowPullRequests } from "@t3tools/client-runtime/fork-bot-digest-links";
-import {
-  BotPullRequestMark,
-  pullRequestLookOf,
-  useBotPullRequestState,
-} from "./BotPullRequestMark";
+import { BotPullRequestMark, useBotPullRequestState } from "./BotPullRequestMark";
 import { BotThreadsPanelControls } from "./BotThreadsPanelControls";
 import { type BotWorkGroupKey, type BotWorkRow, filterBotWork, groupBotWork } from "./botWork";
 import {

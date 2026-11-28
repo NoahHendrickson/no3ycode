@@ -3,6 +3,7 @@ import type {
   PullRequestChecksState,
   ScopedThreadRef,
   ThreadPullRequestLink,
+  ThreadPullRequestSnapshot,
 } from "@t3tools/contracts";
 import type { ComponentProps, MouseEvent } from "react";
 
@@ -16,7 +17,10 @@ import {
   PullRequestGlyph,
   type PullRequestStatePresentation,
 } from "~/components/pullRequest/pullRequestIcons";
-import { pullRequestChecksStatePresentation } from "~/components/pullRequest/pullRequestPresentation";
+import {
+  pullRequestChecksStatePresentation,
+  resolvePullRequestState,
+} from "~/components/pullRequest/pullRequestPresentation";
 import { usePullRequestActionRunner } from "~/components/pullRequest/usePullRequestActions";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
 import { cn } from "~/lib/utils";
@@ -29,6 +33,8 @@ import { BanIcon, GitMergeIcon } from "./icons/lucide-hugeicons";
 import { PullRequestChecksDot } from "./SidebarV2StatusIndicator";
 import {
   type PullRequestChipState,
+  pullRequestChecksOf,
+  pullRequestChipStateOf,
   resolvePullRequestChipChecks,
   resolvePullRequestChipState,
 } from "./composerPullRequestChip.logic";
@@ -162,35 +168,65 @@ export function PullRequestChipControl({
   );
 }
 
-/** A pull request as a bot panel's thread row shows it (fork-sprints, fork-coordinator-threads). */
-export interface PullRequestRowChipProps {
+/** What a pull request's mark and row chip show, from what is known of it; nothing known reads
+    neutral. */
+export function pullRequestLookOf(
+  pr: Pick<ThreadPullRequestSnapshot, "state" | "isDraft" | "checksState"> | null,
+): {
+  readonly state: PullRequestStatePresentation | null;
+  readonly chipState: PullRequestChipState | undefined;
+  readonly checks: PullRequestChecksState | null;
+} {
+  if (pr === null) return { state: null, chipState: undefined, checks: null };
+  return {
+    state: resolvePullRequestState(pr),
+    chipState: pullRequestChipStateOf(pr),
+    checks: pullRequestChecksOf(pr),
+  };
+}
+
+/** A pull request as a thread row shows it: bot panels (fork-sprints, fork-coordinator-threads)
+    and inline transcript thread rows (fork-thread-launch-cards). */
+export type PullRequestRowChipProps = Omit<
+  ComponentProps<typeof ComposerControl>,
+  "size" | "children"
+> & {
   readonly number: number;
   readonly state: PullRequestStatePresentation | null;
   /** What the chip fills by (composerPullRequestChip.logic pullRequestChipStateOf). */
   readonly chipState: PullRequestChipState | undefined;
   readonly checks: PullRequestChecksState | null;
-}
+  /** Optional PR title read for screen readers alongside the chip's state and number. */
+  readonly prTitle?: string | null | undefined;
+};
 
-/** The composer's PR chip in its row variant (ComposerShell.css: smaller and deeper), drawn
-    inside a row's button, so it is a span whose words are read in place. */
-export function PullRequestRowChip(props: PullRequestRowChipProps) {
-  const { state, checks } = props;
+/** The composer's PR chip in its row variant (ComposerShell.css: smaller and deeper). Pass
+    `render={<span />}` when drawn inside a row's button; omit it for an interactive chip button. */
+export function PullRequestRowChip({
+  number,
+  state,
+  chipState,
+  checks,
+  prTitle,
+  ...props
+}: PullRequestRowChipProps) {
   const Icon = state?.Icon ?? PullRequestGlyph.pullRequest;
   return (
     <ComposerControl
-      render={<span />}
+      {...props}
       size="xs"
       data-fork-composer-status-chip="pull-request"
       data-fork-pr-chip
       data-fork-pr-chip-variant="row"
-      data-pr-state={props.chipState}
+      data-pr-state={chipState}
     >
       <span className={cn("contents font-normal text-xs tabular-nums", state?.toneClassName)}>
         <span className="sr-only">
           {state === null ? "Pull request" : `${state.label} pull request`}
         </span>
         <Icon aria-hidden className="shrink-0" />
-        <span>{props.number}</span>
+        <span>{number}</span>
+        {prTitle ? <span className="sr-only">{`: ${prTitle}`}</span> : null}
       </span>
       {checks === null ? null : (
         <span data-fork-pr-chip-ci={checks}>

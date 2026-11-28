@@ -371,10 +371,11 @@
   }
 }
 
-/* The row variant: a bot panel's thread row wears the chip smaller and deeper (Basic UI kit,
-   thread row PR chip): 22px tall, 6px in, 8px corners, the 12px number, and a darker fill under
-   the same edge. The CI pill is 16px, so it sits 3px from the chip's top, bottom and end: it
-   reaches 3px into the end padding, which the chip keeps at 6px when there is no CI. */
+/* The row variant: a bot panel's or inline transcript's thread row wears the chip smaller and
+   deeper (Basic UI kit 551:2943 / 552:1425): 22px tall, 6px in, 8px corners, the 12px number, and
+   a darker fill under the same edge. The CI pill is 16px, so it sits 3px from the chip's top,
+   bottom and end: it reaches 3px into the end padding, which the chip keeps at 6px when there is
+   no CI. */
 :root[data-fork="noahhendrickson-t3code"]
   [data-fork-composer-status-chip="pull-request"][data-fork-pr-chip-variant="row"] {
   --fork-status-chip-height: calc(var(--spacing) * 5.5);
@@ -383,11 +384,14 @@
   border-radius: calc(var(--spacing) * 2);
   font-size: var(--text-xs);
   line-height: var(--text-xs--line-height);
-  /* A span inside the row's button: no press shrink, no hover fill of its own. */
-  scale: none;
 
-  &:is([data-pr-state="open"], [data-pr-state="merged"], [data-pr-state="closed"]):hover {
-    background: var(--fork-pr-chip-fill);
+  /* A span inside a row's button: no press shrink, no hover fill of its own. */
+  &:not(a, button) {
+    scale: none;
+
+    &:is([data-pr-state="open"], [data-pr-state="merged"], [data-pr-state="closed"]):hover {
+      background: var(--fork-pr-chip-fill);
+    }
   }
 
   & > [data-fork-pr-chip-ci] {
@@ -408,11 +412,14 @@
 
   &[data-pr-state="open"] {
     --fork-pr-chip-fill: #1c3c2b;
+    --fork-pr-chip-fill-hover: #224834;
   }
   &[data-pr-state="merged"] {
     --fork-pr-chip-fill: #2e2645;
+    --fork-pr-chip-fill-hover: #372e52;
   }
   &[data-pr-state="closed"] {
     --fork-pr-chip-fill: #3d2325;
+    --fork-pr-chip-fill-hover: #492a2c;
   }
 }

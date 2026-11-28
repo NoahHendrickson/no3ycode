@@ -142,6 +142,7 @@ export interface ThreadLaunchPullRequest {
   readonly number: number;
   readonly url: string;
   readonly title: string | null;
+  readonly snapshot: ThreadPullRequestSnapshot | null;
   readonly stage: ThreadPullRequestStage | null;
 }
 
@@ -170,11 +171,13 @@ export function threadLaunchPullRequests(
       number: link.number,
       url: link.url,
       title: link.snapshot?.title ?? null,
+      snapshot: link.snapshot ?? null,
       stage: idleStage(threadPullRequestStage(link.snapshot), idle),
     });
   }
   for (const pr of [thread.linkedPullRequest, thread.branchPullRequest]) {
-    if (pr != null) add({ number: pr.number, url: pr.url, title: null, stage: null });
+    if (pr != null)
+      add({ number: pr.number, url: pr.url, title: null, snapshot: null, stage: null });
   }
   return out;
 }

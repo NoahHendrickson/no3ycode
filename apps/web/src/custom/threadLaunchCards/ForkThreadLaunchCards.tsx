@@ -6,7 +6,7 @@
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
 import { useRouter } from "@tanstack/react-router";
-import { Fragment, type ReactNode, use } from "react";
+import { type ReactNode, use } from "react";
 
 import { TimelineRowCtx } from "~/components/chat/timelineRowContext";
 import { resolveThreadLastVisitedAt } from "~/components/Sidebar.logic";
@@ -16,7 +16,7 @@ import { useEnvironmentThreadRefs, useQuietThreadShell } from "~/state/entities"
 import { buildThreadRouteParams } from "~/threadRoutes";
 import { useUiStateStore } from "~/uiStateStore";
 
-import { GitMergeIcon, GitPullRequestIcon } from "../icons/lucide-hugeicons";
+import { PullRequestRowChip, pullRequestLookOf } from "../ComposerPullRequestChip";
 import { resolveSidebarV2CardStatus } from "../sidebarV2CardStatus";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
 import { morphSplitPairs } from "../splitThreads/splitMorph";
@@ -33,7 +33,6 @@ import { ForkThreadReadyToMerge } from "./ForkThreadReadyToMerge";
 import { FORK_THREAD_CARD_SURFACE, ForkThreadRequestCard } from "./ForkThreadRequestCard";
 import {
   type ForkThreadLaunch,
-  THREAD_PULL_REQUEST_STAGE_LABELS,
   threadLaunchActivityLine,
   threadRowLiveState,
 } from "./threadLaunch.logic";
@@ -147,28 +146,16 @@ export function ForkThreadHookRow(props: {
         </span>
         {error === null ? null : <span className="min-w-0 truncate text-xs">{error}</span>}
       </button>
-      {pullRequests.map((link) => {
-        const Icon = link.stage === "merged" ? GitMergeIcon : GitPullRequestIcon;
-        const stage = link.stage === null ? null : THREAD_PULL_REQUEST_STAGE_LABELS[link.stage];
-        return (
-          <Fragment key={link.url}>
-            <button
-              type="button"
-              aria-label={`Pull request #${link.number}${link.title === null ? "" : `: ${link.title}`}${stage === null ? "" : `, ${stage.toLowerCase()}`}`}
-              className="inline-flex h-5 shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 text-xs hover:text-foreground"
-              onClick={(event) => openPrLink(event, link.url)}
-              onAuxClick={(event) => openPrLink(event, link.url)}
-            >
-              <Icon className="size-3" />#{link.number}
-            </button>
-            {stage === null ? null : (
-              <span aria-hidden className="shrink-0 text-xs">
-                {stage}
-              </span>
-            )}
-          </Fragment>
-        );
-      })}
+      {pullRequests.map((link) => (
+        <PullRequestRowChip
+          key={link.url}
+          number={link.number}
+          prTitle={link.title}
+          {...pullRequestLookOf(link.snapshot)}
+          onClick={(event) => openPrLink(event, link.url)}
+          onAuxClick={(event) => openPrLink(event, link.url)}
+        />
+      ))}
       {activity === null ? null : <span className="min-w-0 truncate text-xs">{activity}</span>}
     </div>
   );

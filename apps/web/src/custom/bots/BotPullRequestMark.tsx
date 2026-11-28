@@ -3,44 +3,19 @@
  * `.fork/customizations.yaml#fork-bot-digest`: its thread rows and its digest draw the same mark.
  */
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import type {
-  EnvironmentId,
-  PullRequestChecksState,
-  ThreadPullRequestSnapshot,
-} from "@t3tools/contracts";
+import type { EnvironmentId, PullRequestChecksState } from "@t3tools/contracts";
 
 import {
   PullRequestGlyph,
   type PullRequestStatePresentation,
 } from "~/components/pullRequest/pullRequestIcons";
-import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
 import { cn } from "~/lib/utils";
 import { useSharedPullRequestSummary } from "~/state/pullRequests";
 
-import {
-  type PullRequestChipState,
-  pullRequestChecksOf,
-  pullRequestChipStateOf,
-} from "../composerPullRequestChip.logic";
+import { pullRequestLookOf } from "../ComposerPullRequestChip";
+import type { PullRequestChipState } from "../composerPullRequestChip.logic";
 
 import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
-
-/** What a pull request's mark and chip show, from what is known of it; nothing known reads
-    neutral. */
-export function pullRequestLookOf(
-  pr: Pick<ThreadPullRequestSnapshot, "state" | "isDraft" | "checksState"> | null,
-): {
-  readonly state: PullRequestStatePresentation | null;
-  readonly chipState: PullRequestChipState | undefined;
-  readonly checks: PullRequestChecksState | null;
-} {
-  if (pr === null) return { state: null, chipState: undefined, checks: null };
-  return {
-    state: resolvePullRequestState(pr),
-    chipState: pullRequestChipStateOf(pr),
-    checks: pullRequestChecksOf(pr),
-  };
-}
 
 /** Its state and title: a thread's own link carries them; for a branch's pull request, the
     summary the sidebar badge already read, if it has. */
