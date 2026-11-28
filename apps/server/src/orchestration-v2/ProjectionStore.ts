@@ -259,6 +259,10 @@ export type ProjectionSettlementCandidate = Pick<
 > &
   Pick<OrchestrationV2AppThread, "lastSnoozeWakeAt"> & {
     readonly latestUserAuthoredMessageAt: DateTime.Utc | null;
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+    /** A subagent whose checkout differs from its parent's: its work is its own. */
+    readonly ownCheckout?: boolean;
+    /* fork:end fork-own-checkout-child-settlement */
   };
 
 const ProjectionCheckpointContext = Schema.Struct({
@@ -1326,7 +1330,11 @@ type SettlementThreadRow = Pick<
   | "latest_run_completed_at"
   | "latest_user_message_at"
   | "latest_user_authored_message_at"
->;
+> & {
+  /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+  readonly own_checkout: number;
+  /* fork:end fork-own-checkout-child-settlement */
+};
 
 type ShellRunItemCountRow = {
   readonly thread_id: string;
@@ -8883,6 +8891,19 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
       return { providerThreadsByThreadId, pendingTurnItemsByThreadId };
     });
 
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement
+       A subagent in a checkout of its own (a worktree delegate) has its own work, so it does not
+       wait for its parent and does not settle with it. */
+    const subagentOwnCheckout = sql`(
+      json_extract(t.payload_json, '$.lineage.relationshipToParent') IS 'subagent'
+      AND EXISTS (
+        SELECT 1 FROM orchestration_v2_projection_threads checkout_parent
+        WHERE checkout_parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
+          AND json_extract(checkout_parent.payload_json, '$.worktreePath')
+            IS NOT json_extract(t.payload_json, '$.worktreePath')
+      )
+    )`;
+    /* fork:end fork-own-checkout-child-settlement */
     const getSettlementCandidates: ProjectionStoreV2Shape["getSettlementCandidates"] = (threadId) =>
       sql
         .withTransaction(
@@ -8910,7 +8931,10 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                   AND NOT ${isIdleCompactionMessage("message")}
                 ORDER BY message.updated_at DESC, message.message_id DESC
                 LIMIT 1
-              ) AS latest_user_authored_message_at
+              ) AS latest_user_authored_message_at,
+              -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
+              ${subagentOwnCheckout} AS own_checkout
+              -- fork:end fork-own-checkout-child-settlement
             FROM orchestration_v2_projection_threads t
             LEFT JOIN orchestration_v2_projection_runs r ON r.run_id = (
               SELECT latest.run_id FROM orchestration_v2_projection_runs latest
@@ -8926,6 +8950,9 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
               AND json_extract(t.payload_json, '$.autoSettleDisabledAt') IS NULL
               AND (
                 json_extract(t.payload_json, '$.lineage.relationshipToParent') IS NOT 'subagent'
+                -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
+                OR ${subagentOwnCheckout}
+                -- fork:end fork-own-checkout-child-settlement
                 OR NOT EXISTS (
                   SELECT 1 FROM orchestration_v2_projection_threads parent
                   WHERE parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
@@ -9018,6 +9045,9 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                     hasActiveRun: false,
                     pullRequests: thread.pullRequests,
                   }),
+                  /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+                  ownCheckout: row.own_checkout === 1,
+                  /* fork:end fork-own-checkout-child-settlement */
                 } satisfies ProjectionSettlementCandidate;
               }),
             );

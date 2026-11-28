@@ -10649,3 +10649,24 @@
     - apps/web/src/__fork_guards__/forkBotWorkThreads.test.ts
     - apps/web/src/__fork_guards__/forkSprints.test.ts
     - apps/web/src/custom/threadLaunchCards/threadLaunch.logic.test.ts
+- id: fork-own-checkout-child-settlement
+  intent: >
+    Upstream settles a subagent with its parent: the settlement store returns a subagent only once
+    its parent is settled or archived, and the sweep then settles it with no pull request check.
+    That fits a native subagent working in its parent's checkout, but a worktree delegate
+    (delegate_task with its own checkout, as every coordinator child runs) has its own branch and
+    pull request. On 2026-11-27 a coordinator auto-settled when the last pull request it linked
+    merged, and all eight of its children settled with it, including ones with unmerged branches
+    and no pull request yet. A subagent whose worktreePath differs from its parent's now settles
+    like any thread, on its own pull request or inactivity, and never with its parent; one in its
+    parent's checkout still settles with it (ProjectionStore getSettlementCandidates own_checkout,
+    ThreadSettlementService settlesWithParent).
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/server/src/orchestration-v2/ProjectionStore.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.ts
+    - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
+  verify:
+    - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts

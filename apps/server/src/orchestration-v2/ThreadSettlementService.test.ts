@@ -1233,6 +1233,90 @@ describe("ThreadSettlementServiceV2 worker", () => {
       }).pipe(Effect.provide(projectionStoreSql)),
   );
 
+  // fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement
+  it.effect(
+    "a child in its own checkout settles on its own pull request, never with its parent",
+    () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(Date.parse(NOW));
+        const store = yield* ProjectionStore.ProjectionStoreV2;
+        const parent = appThread("checkout-parent", null, "/worktrees/parent");
+        const child = (id: string, overrides: Partial<OrchestrationV2AppThread>) => ({
+          ...appThread(id, null),
+          lineage: {
+            rootThreadId: parent.id,
+            parentThreadId: parent.id,
+            relationshipToParent: "subagent" as const,
+          },
+          ...overrides,
+        });
+        const link = persistedLink("open", DateTime.makeUnsafe("2026-08-20T00:00:00.000Z"));
+        const shared = child("shared-checkout", { worktreePath: "/worktrees/parent" });
+        const ownMerged = child("own-merged", {
+          worktreePath: "/worktrees/own-merged",
+          pullRequests: [
+            { ...link, snapshot: { ...link.snapshot!, state: "merged", mergedAt: NOW } },
+          ],
+        });
+        const ownUnfinished = child("own-unfinished", { worktreePath: "/worktrees/own" });
+        const marker = appThread("marker", "settled");
+        for (const thread of [parent, shared, ownMerged, ownUnfinished, marker]) {
+          yield* store.apply({
+            type: "thread.created",
+            id: EventId.make(`created:${thread.id}`),
+            threadId: thread.id,
+            occurredAt: thread.createdAt,
+            payload: thread,
+          });
+        }
+        const fixture = yield* makeHarness({
+          snapshot: makeSnapshot([]),
+          projections: store,
+          settings: {
+            ...DEFAULT_SERVER_SETTINGS,
+            sidebarAutoSettleOnMerge: true,
+            sidebarAutoSettleAfterDays: null,
+          },
+          onDispatch: (command) =>
+            store.getThread(command.threadId).pipe(
+              Effect.flatMap((thread) =>
+                store.apply(
+                  settledEvent({
+                    ...thread,
+                    settledOverride: "settled",
+                    settledAt: DateTime.makeUnsafe(NOW),
+                  }),
+                ),
+              ),
+              Effect.orDie,
+            ),
+        });
+        yield* Effect.gen(function* () {
+          const service = yield* ThreadSettlementService.ThreadSettlementServiceV2;
+          yield* startHarness(service, fixture.activation, fixture.snapshotReads);
+          expect((yield* Ref.get(fixture.commands)).map((command) => command.threadId)).toEqual([
+            ownMerged.id,
+          ]);
+          const event = settledEvent({
+            ...parent,
+            settledOverride: "settled",
+            settledAt: DateTime.makeUnsafe(NOW),
+          });
+          yield* store.apply(event);
+          yield* fixture.publishEvent(event);
+          yield* fixture.publishEvent(settledEvent(marker));
+          expect(yield* Queue.take(fixture.closedIdle)).toEqual({ threadId: parent.id });
+          expect(yield* Queue.take(fixture.closedIdle)).toEqual({ threadId: marker.id });
+          yield* service.drain;
+          expect((yield* Ref.get(fixture.commands)).map((command) => command.threadId)).toEqual([
+            ownMerged.id,
+            shared.id,
+          ]);
+        }).pipe(Effect.provide(fixture.layer));
+      }).pipe(Effect.provide(projectionStoreSql)),
+  );
+  // fork:end fork-own-checkout-child-settlement
+
   it.effect(
     "coalesces bulk cleanup wakes and still drains children discovered during a sweep",
     () =>
