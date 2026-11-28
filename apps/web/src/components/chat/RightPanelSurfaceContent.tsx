@@ -230,8 +230,16 @@ export function RightPanelSurfaceContent(props: {
           }}
         />
       );
+    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
     case "pull-requests":
-      return <ThreadPullRequestsPanel threadRef={threadRef} />;
+      return (
+        <ThreadPullRequestsPanel
+          key={surface.id}
+          threadRef={surface.threadRef ?? threadRef}
+          panelRef={threadRef}
+        />
+      );
+    /* fork:end fork-embedded-pr-list */
     case "thread":
       // Not lazy: revealing a suspended tiptap editor tears down its view and crashes the composer.
       return (

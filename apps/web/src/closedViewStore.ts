@@ -63,8 +63,14 @@ const isClosedViewEntry = (entry: unknown): entry is ClosedViewEntry => {
   switch (surface.kind) {
     case "diff":
     case "files":
-    case "pull-requests":
       return surface.id === surface.kind;
+    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+    case "pull-requests":
+      return surface.threadRef === undefined
+        ? surface.id === "pull-requests"
+        : isThreadRef(surface.threadRef) &&
+            surface.id === `pull-requests:${scopedThreadKey(surface.threadRef)}`;
+    /* fork:end fork-embedded-pr-list */
     case "preview":
       return surface.resourceId === null || typeof surface.resourceId === "string";
     case "file":

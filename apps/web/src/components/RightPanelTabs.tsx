@@ -983,10 +983,24 @@ function RightPanelTab(
       ? scopeThreadRef(props.environmentId, surface.threadId)
       : null,
   );
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  const pullRequestsThreadShell = useQuietThreadShell(
+    surface.kind === "pull-requests" ? (surface.threadRef ?? null) : null,
+  );
+  const pullRequestsThreadTitle =
+    pullRequestsThreadShell === null
+      ? null
+      : (pullRequestsThreadShell.lineage.sideChat === true
+          ? pullRequestsThreadShell.title
+          : formatSubagentDisplayTitle(pullRequestsThreadShell.title)
+        ).trim() || null;
+  /* fork:end fork-embedded-pr-list */
   const title =
     sideChatShell === null
-      ? props.title
-      : sideChatShell.lineage.sideChat === true
+      ? /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+        (pullRequestsThreadTitle ?? props.title)
+      : /* fork:end fork-embedded-pr-list */
+        sideChatShell.lineage.sideChat === true
         ? sideChatShell.title
         : formatSubagentDisplayTitle(sideChatShell.title);
   const sideChatState = sideChatTabState(sideChatShell);
@@ -1089,7 +1103,11 @@ function RightPanelTab(
                 environmentId={props.environmentId}
                 title={title}
               />
+            ) : /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+            pullRequestsThreadTitle !== null ? (
+              `${props.title} · ${pullRequestsThreadTitle}`
             ) : (
+              /* fork:end fork-embedded-pr-list */
               title
             )}
           </TooltipPopup>

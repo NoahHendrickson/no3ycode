@@ -3824,11 +3824,9 @@
     canStopBackgroundWork), since mid-turn the composer owns Stop.
     Neither shows on the draft hero. An embedded thread (a side chat, or a
     thread opened in a sprint's or coordinator's panel) shows its PR chip too,
-    unchanged, but a stack's click opens its current PR, since a list would
-    open in the host's panel (ThreadPullRequestBadgeControl takes a null list
-    opener). On narrow
-    composers the
-    control row wraps so the left context slot never gets squeezed
+    unchanged, and clicking a stack or multi-PR chip opens that child's PR list
+    in the host's right panel (see fork-embedded-pr-list). On narrow composers
+    the control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is
     omitted so nothing slabs onto the collapsed pill. ScheduledTaskEditor keeps
@@ -10710,3 +10708,38 @@
     - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/orchestration-v2/SubagentProjection.test.ts
     - apps/server/src/storageCleanup.test.ts
+
+- id: fork-embedded-pr-list
+  intent: >
+    The right panel's pull-requests surface remembers which thread it belongs to
+    when opened from an embedded thread (a side chat, or a child opened in a
+    sprint's or coordinator's panel). For a normal thread opened in its own
+    panel, the surface stays upstream's singleton `{ id: "pull-requests", kind:
+    "pull-requests" }` with no `threadRef`, and renders and titles itself
+    identically to upstream. When a hosted guest opens `"pull-requests"` via
+    `useRightPanelStore.open` or `toggle`, `pullRequestsSurfaceFor` keys the
+    surface by that guest (`id: "pull-requests:<scopedThreadKey>"`, `threadRef`)
+    so it does not collide with the host's own list or another child's list, and
+    survives persistence, migration, and closed-tab reopen (`openPullRequests`).
+    `RightPanelSurfaceContent` renders `ThreadPullRequestsPanel` with
+    `threadRef={surface.threadRef ?? threadRef}` and `panelRef={threadRef}`, and
+    `ThreadPullRequestsPanel` forwards `panelRef` to `useOpenPrLink` and
+    `ThreadDetailsIssueRows`, so clicking a PR or issue opens in the visible
+    host panel even after the embedded child closes or the page reloads.
+    `RightPanelTabs` labels a foreign PR-list tab with that child thread's title
+    (tooltip `"Linked items · <title>"`) while normal tabs keep `"Linked items"`.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/web/src/rightPanelStore.ts
+    - apps/web/src/closedViewStore.ts
+    - apps/web/src/reopenClosedView.ts
+    - apps/web/src/components/chat/RightPanelSurfaceContent.tsx
+    - apps/web/src/components/RightPanelTabs.tsx
+    - apps/web/src/components/pullRequest/ThreadPullRequestsPanel.tsx
+    - apps/web/src/components/chat/ThreadDetailsIssueRows.tsx
+    - apps/web/src/lib/openPullRequestLink.ts
+  verify:
+    - apps/web/src/__fork_guards__/forkEmbeddedPrList.test.ts
+    - apps/web/src/custom/embeddedPrList.browser.test.tsx

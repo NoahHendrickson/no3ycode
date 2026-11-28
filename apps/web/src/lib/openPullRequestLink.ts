@@ -259,9 +259,11 @@ export function useOpenChangeRequestLink(
   };
 }
 
-export function useOpenPrLink(threadRef?: ScopedThreadRef) {
-  const openChangeRequest = useOpenChangeRequestLink(threadRef);
-  const openLink = useOpenLink(threadRef);
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+export function useOpenPrLink(threadRef?: ScopedThreadRef, panelRef?: ScopedThreadRef) {
+  const openChangeRequest = useOpenChangeRequestLink(threadRef, panelRef);
+  const openLink = useOpenLink(panelRef ?? threadRef);
+  /* fork:end fork-embedded-pr-list */
   return (event: MouseEvent<HTMLElement>, prUrl: string, targetThreadRef?: ScopedThreadRef) => {
     if (event.button > 1) return false;
     event.stopPropagation();
@@ -274,7 +276,10 @@ export function useOpenPrLink(threadRef?: ScopedThreadRef) {
     event.preventDefault();
     if (!openInBrowser && openChangeRequest(event, prUrl, targetThreadRef)) return true;
 
-    void openLink(prUrl, { event, threadRef: targetThreadRef }).catch((error: unknown) => {
+    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+    const linkThreadRef = panelRef ?? targetThreadRef;
+    void openLink(prUrl, { event, threadRef: linkThreadRef }).catch((error: unknown) => {
+      /* fork:end fork-embedded-pr-list */
       console.error(error);
       toastManager.add(
         stackedThreadToast({

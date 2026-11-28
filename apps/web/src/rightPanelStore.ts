@@ -87,7 +87,15 @@ export type RightPanelSurface =
       revealUrl?: string;
       detailTab?: PullRequestDetailTab;
     }
-  | { id: "pull-requests"; kind: "pull-requests" }
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list
+     Remember the thread when opened from an embedded child (side chat, sprint/coordinator child);
+     absent for the panel's own thread, keeping id "pull-requests" unchanged. */
+  | {
+      id: "pull-requests" | `pull-requests:${string}`;
+      kind: "pull-requests";
+      threadRef?: ScopedThreadRef;
+    }
+  /* fork:end fork-embedded-pr-list */
   /**
    * An issue opened in the issues list's shared panel, or beside a thread. Like `pull-request`,
    * the reference lives in the id so several issues can stay open as peer tabs.
@@ -225,6 +233,10 @@ interface RightPanelStoreState {
       detailTab?: PullRequestDetailTab;
     },
   ) => void;
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  /** Opens a thread's PR list in `ref`'s panel (defaulting to `ref` itself). */
+  openPullRequests: (ref: ScopedThreadRef, targetRef?: ScopedThreadRef) => void;
+  /* fork:end fork-embedded-pr-list */
   openIssue: (ref: ScopedThreadRef, target: IssueSurfaceTarget) => void;
   setPullRequestDetailTab: (
     ref: ScopedThreadRef,
@@ -343,6 +355,49 @@ const terminalSurface = (terminalId: string): RightPanelSurface => ({
 });
 
 export type PullRequestSurface = Extract<RightPanelSurface, { kind: "pull-request" }>;
+
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+export type PullRequestsSurface = Extract<RightPanelSurface, { kind: "pull-requests" }>;
+
+const pullRequestsSurfaceFor = (
+  ref: ScopedThreadRef,
+  host: ScopedThreadRef,
+): PullRequestsSurface =>
+  scopedThreadKey(ref) === scopedThreadKey(host)
+    ? { id: "pull-requests", kind: "pull-requests" }
+    : {
+        id: `pull-requests:${scopedThreadKey(ref)}`,
+        kind: "pull-requests",
+        threadRef: ref,
+      };
+
+export function decodePullRequestsSurface(surface: object): PullRequestsSurface | null {
+  const { id, kind, threadRef } = surface as Record<string, unknown>;
+  if (kind !== "pull-requests") return null;
+  if (threadRef === undefined) {
+    return id === "pull-requests" ? { id: "pull-requests", kind: "pull-requests" } : null;
+  }
+  if (
+    !threadRef ||
+    typeof threadRef !== "object" ||
+    typeof (threadRef as Record<string, unknown>).environmentId !== "string" ||
+    (threadRef as Record<string, unknown>).environmentId === "" ||
+    typeof (threadRef as Record<string, unknown>).threadId !== "string" ||
+    (threadRef as Record<string, unknown>).threadId === ""
+  ) {
+    return null;
+  }
+  const ref = scopeThreadRef(
+    EnvironmentId.make((threadRef as { environmentId: string }).environmentId),
+    ThreadId.make((threadRef as { threadId: string }).threadId),
+  );
+  return {
+    id: `pull-requests:${scopedThreadKey(ref)}`,
+    kind: "pull-requests",
+    threadRef: ref,
+  };
+}
+/* fork:end fork-embedded-pr-list */
 
 export function pullRequestSurfaceId(target: {
   environmentId?: string;
@@ -675,6 +730,12 @@ export function migratePersistedRightPanelState(persistedState: unknown): {
                         }),
                       ];
                     }
+                    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+                    if (surface.kind === "pull-requests") {
+                      const decoded = decodePullRequestsSurface(surface);
+                      return decoded === null ? [] : [decoded];
+                    }
+                    /* fork:end fork-embedded-pr-list */
                     if (surface.kind === "issue") {
                       if (
                         typeof surface.projectId !== "string" ||
@@ -864,6 +925,11 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
               const existing = current.surfaces.find((surface) => surface.kind === "preview");
               return upsertSurface(current, existing ?? browserSurface(null));
             }
+            /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+            if (kind === "pull-requests") {
+              return upsertSurface(current, pullRequestsSurfaceFor(ref, rightPanelHostRef(ref)));
+            }
+            /* fork:end fork-embedded-pr-list */
             return upsertSurface(current, singletonSurface(kind));
           }),
         ),
@@ -975,6 +1041,17 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             };
           }),
         ),
+      /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+      openPullRequests: (ref, targetRef) =>
+        set((state) =>
+          userAction(state, scopedThreadKey(ref), (current) =>
+            upsertSurface(
+              current,
+              pullRequestsSurfaceFor(targetRef ?? ref, rightPanelHostRef(ref)),
+            ),
+          ),
+        ),
+      /* fork:end fork-embedded-pr-list */
       openIssue: (ref, target) =>
         set((state) =>
           userAction(state, scopedThreadKey(ref), (current) => {
@@ -1338,6 +1415,15 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             const active = current.surfaces.find(
               (surface) => surface.id === current.activeSurfaceId,
             );
+            /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+            if (kind === "pull-requests") {
+              const target = pullRequestsSurfaceFor(ref, rightPanelHostRef(ref));
+              if (current.isOpen && active?.id === target.id) {
+                return { ...current, isOpen: false };
+              }
+              return upsertSurface(current, target);
+            }
+            /* fork:end fork-embedded-pr-list */
             if (current.isOpen && active?.kind === kind) {
               return { ...current, isOpen: false };
             }

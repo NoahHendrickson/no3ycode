@@ -26,12 +26,18 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 function LinkedIssueRow({
   link,
   threadRef,
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  panelRef,
+  /* fork:end fork-embedded-pr-list */
   compact,
   mountScope,
   onOpen,
 }: {
   link: ThreadIssueLink;
   threadRef: ScopedThreadRef;
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  panelRef: ScopedThreadRef;
+  /* fork:end fork-embedded-pr-list */
   compact: boolean;
   mountScope: "thread-details" | "linked-items" | "sidebar-tooltip";
   onOpen: (() => void) | undefined;
@@ -53,7 +59,14 @@ function LinkedIssueRow({
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       if (configs.get(threadRef.environmentId)?.environment.capabilities.issues !== true) return;
       event.preventDefault();
-      useRightPanelStore.getState().openIssue(threadRef, link);
+      /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+      useRightPanelStore.getState().openIssue(panelRef, {
+        ...(panelRef.environmentId === threadRef.environmentId
+          ? {}
+          : { environmentId: threadRef.environmentId }),
+        ...link,
+      });
+      /* fork:end fork-embedded-pr-list */
       onOpen?.();
     },
   };
@@ -147,12 +160,18 @@ function LinkedIssueRow({
 export function ThreadDetailsIssueRows({
   links,
   threadRef,
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  panelRef = threadRef,
+  /* fork:end fork-embedded-pr-list */
   compact = true,
   mountScope = "thread-details",
   onOpen,
 }: {
   links: ReadonlyArray<ThreadIssueLink>;
   threadRef: ScopedThreadRef;
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  panelRef?: ScopedThreadRef;
+  /* fork:end fork-embedded-pr-list */
   compact?: boolean;
   mountScope?: "thread-details" | "linked-items" | "sidebar-tooltip";
   onOpen?: () => void;
@@ -169,6 +188,9 @@ export function ThreadDetailsIssueRows({
           key={threadIssueKeyOf(link)}
           link={link}
           threadRef={threadRef}
+          /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+          panelRef={panelRef}
+          /* fork:end fork-embedded-pr-list */
           compact={compact}
           mountScope={mountScope}
           onOpen={onOpen}
