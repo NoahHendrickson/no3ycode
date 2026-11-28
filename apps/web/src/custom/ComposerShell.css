@@ -382,7 +382,7 @@
   /* A span inside the row's button: no press shrink, no hover fill of its own. */
   scale: none;
 
-  &:hover {
+  &:is([data-pr-state="open"], [data-pr-state="merged"], [data-pr-state="closed"]):hover {
     background: var(--fork-pr-chip-fill);
   }
 

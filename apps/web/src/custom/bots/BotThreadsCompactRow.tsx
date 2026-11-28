@@ -64,6 +64,7 @@ function useBotThreadModel(thread: EnvironmentThreadShell): BotThreadModel | nul
     driver: provider?.driver ?? null,
     providerName: provider?.displayName ?? label,
     accentColor: provider?.accentColor,
+    iconUrl: provider?.iconUrl,
     label,
     effort: formatSubagentEffort({
       modelSlug: slug,
@@ -78,6 +79,7 @@ interface BotThreadModel {
   /** Names the provider's logo where the fork draws no mark of its own. */
   readonly providerName: string;
   readonly accentColor?: string | undefined;
+  readonly iconUrl?: string | undefined;
   readonly label: string;
   readonly effort: string | null;
 }
@@ -162,6 +164,8 @@ export function BotThreadsCompactRowView(
                           driverKind={model.driver}
                           displayName={model.providerName}
                           accentColor={model.accentColor}
+                          acpRegistryIconUrl={model.iconUrl}
+                          className="z-auto"
                           iconClassName="size-3.5"
                         />
                       )

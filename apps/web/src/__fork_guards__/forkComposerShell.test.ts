@@ -602,7 +602,7 @@ describe("fork guard: fork-composer-shell", () => {
       expect(shellCss.split(`&[data-pr-state="${state}"]`).length - 1).toBe(3);
     }
     expect(shellCss).toContain('[data-fork-pr-chip-variant="row"]');
-    expect(prChip).toContain('data-fork-pr-chip-variant={variant === "row" ? "row" : undefined}');
+    expect(prChip).toContain('data-fork-pr-chip-variant={row ? "row" : undefined}');
     expect(
       ruleBodyFor(rules, [
         MARKER,

@@ -144,23 +144,32 @@ export function PullRequestChipControl({
   /** `row`: the smaller, deeper chip a bot panel's thread row wears (ComposerShell.css). */
   readonly variant?: "composer" | "row";
 }) {
+  // The row chip is a span inside its row's button, where a label is not read: its checks are
+  // read in place instead.
+  const row = variant === "row";
+  const checksLabel = checks === null ? null : pullRequestChecksStatePresentation(checks).label;
   return (
     <ComposerControl
       {...props}
-      data-fork-pr-chip-variant={variant === "row" ? "row" : undefined}
+      data-fork-pr-chip-variant={row ? "row" : undefined}
       aria-label={
-        checks === null
+        row || checksLabel === null
           ? props["aria-label"]
-          : [props["aria-label"], pullRequestChecksStatePresentation(checks).label]
-              .filter(Boolean)
-              .join(", ")
+          : [props["aria-label"], checksLabel].filter(Boolean).join(", ")
       }
     >
       {children}
       {checks === null ? null : (
         <span data-fork-pr-chip-ci={checks}>
           <PullRequestChecksDot state={checks} />
-          CI
+          {row ? (
+            <>
+              <span className="sr-only">{checksLabel}</span>
+              <span aria-hidden>CI</span>
+            </>
+          ) : (
+            "CI"
+          )}
         </span>
       )}
     </ComposerControl>
