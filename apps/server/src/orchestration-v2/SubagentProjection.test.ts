@@ -165,7 +165,15 @@ it.effect.each(["provider", "mcp"] as const)(
       assert.isNull(childThread.pinOrderKey);
       assert.isNull(childThread.autoSettleDisabledAt);
 
-      for (const thread of [parentThread, childThread]) {
+      /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+      // A worktree delegate has its own checkout, so it neither waits for nor settles with it.
+      const ownCheckoutThread = {
+        ...childThread,
+        id: ThreadId.make("thread:subagent-own-checkout"),
+        worktreePath: "/tmp/own-worktree",
+      };
+      /* fork:end fork-own-checkout-child-settlement */
+      for (const thread of [parentThread, childThread, ownCheckoutThread]) {
         yield* store.apply({
           id: EventId.make(`event:${thread.id}`),
           type: "thread.created",
@@ -179,7 +187,13 @@ it.effect.each(["provider", "mcp"] as const)(
       assert.equal(savedParent.pinOrderKey, "a0");
       assert.deepEqual(savedParent.autoSettleDisabledAt, parentCreatedAt);
       // A subagent child waits for its parent, so settle the pinned parent first.
-      assert.deepEqual(yield* store.getSettlementCandidates(), []);
+      assert.deepEqual(
+        (yield* store.getSettlementCandidates()).map((candidate) => [
+          candidate.id,
+          candidate.settlesWithParent,
+        ]),
+        [[ownCheckoutThread.id, false]],
+      );
       yield* store.apply({
         id: EventId.make(`event:${parentThreadId}:settled`),
         type: "thread.settled",
@@ -193,10 +207,12 @@ it.effect.each(["provider", "mcp"] as const)(
           pinOrderKey: null,
         },
       });
-      const candidates = yield* store.getSettlementCandidates();
+      const candidates = (yield* store.getSettlementCandidates()).filter(
+        (candidate) => candidate.id !== ownCheckoutThread.id,
+      );
       assert.deepEqual(
-        candidates.map((candidate) => candidate.id),
-        [childThreadId],
+        candidates.map((candidate) => [candidate.id, candidate.settlesWithParent]),
+        [[childThreadId, true]],
       );
       const settledAt = resolveAutoSettlementAt({
         thread: candidates[0]!,

@@ -182,7 +182,13 @@ function pullRequestSettles(
 }
 
 export function isAutoSettlementCandidate(
-  thread: Omit<ProjectionStore.ProjectionSettlementCandidate, "latestUserAuthoredMessageAt">,
+  thread: Omit<
+    ProjectionStore.ProjectionSettlementCandidate,
+    | "latestUserAuthoredMessageAt"
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+    | "settlesWithParent"
+    /* fork:end fork-own-checkout-child-settlement */
+  >,
   nowMs: number,
 ): boolean {
   if (thread.archivedAt !== null || thread.settledOverride !== null) return false;
@@ -236,14 +242,6 @@ export function isSnoozed(
     (snoozedAtMs === null || (completedAtMs !== null && completedAtMs > snoozedAtMs));
   return !wokeOnError;
 }
-
-/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-/** A subagent in its parent's checkout is part of the parent's work and settles with it; one in
-    its own checkout (a worktree delegate) settles on its own pull request, like any thread. */
-function settlesWithParent(thread: ProjectionStore.ProjectionSettlementCandidate): boolean {
-  return thread.lineage.relationshipToParent === "subagent" && thread.ownCheckout !== true;
-}
-/* fork:end fork-own-checkout-child-settlement */
 
 export function resolveAutoSettlementAt(input: {
   readonly thread: ProjectionStore.ProjectionSettlementCandidate;
@@ -398,7 +396,7 @@ export const make = Effect.gen(function* () {
     const candidates = threads.filter(
       (thread) =>
         /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-        (automaticSettlementEnabled || settlesWithParent(thread)) &&
+        (automaticSettlementEnabled || thread.settlesWithParent) &&
         /* fork:end fork-own-checkout-child-settlement */
         isAutoSettlementCandidate(thread, nowMs),
     );
@@ -407,7 +405,7 @@ export const make = Effect.gen(function* () {
     const settleThread = Effect.fnUntraced(
       function* (thread: (typeof candidates)[number], pullRequest: SettlementPullRequest | null) {
         /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-        if (settlesWithParent(thread)) {
+        if (thread.settlesWithParent) {
           /* fork:end fork-own-checkout-child-settlement */
           if (yield* terminals.hasActiveSubprocess({ threadId: thread.id })) return null;
           // The store returns a subagent only once its parent is done, so it
@@ -465,7 +463,7 @@ export const make = Effect.gen(function* () {
       candidates,
       (thread) => {
         /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-        if (settlesWithParent(thread)) return settleThread(thread, null);
+        if (thread.settlesWithParent) return settleThread(thread, null);
         /* fork:end fork-own-checkout-child-settlement */
         const projectSettings = resolveProjectSettings(settings, thread.projectId).settings;
         // Skip no-op decisions; actual settlement still reads fresh settings before dispatch.

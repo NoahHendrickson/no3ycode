@@ -260,8 +260,8 @@ export type ProjectionSettlementCandidate = Pick<
   Pick<OrchestrationV2AppThread, "lastSnoozeWakeAt"> & {
     readonly latestUserAuthoredMessageAt: DateTime.Utc | null;
     /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-    /** A subagent whose checkout differs from its parent's: its work is its own. */
-    readonly ownCheckout?: boolean;
+    /** A subagent in its parent's checkout: it waits for the parent and settles with it. */
+    readonly settlesWithParent: boolean;
     /* fork:end fork-own-checkout-child-settlement */
   };
 
@@ -1332,7 +1332,7 @@ type SettlementThreadRow = Pick<
   | "latest_user_authored_message_at"
 > & {
   /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-  readonly own_checkout: number;
+  readonly settles_with_parent: number;
   /* fork:end fork-own-checkout-child-settlement */
 };
 
@@ -8892,15 +8892,15 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
     });
 
     /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement
-       A subagent in a checkout of its own (a worktree delegate) has its own work, so it does not
-       wait for its parent and does not settle with it. */
-    const subagentOwnCheckout = sql`(
+       A subagent in its parent's checkout settles with the parent; one in its own checkout (a
+       worktree delegate) settles on its own work. The settle action's shared-worktree check in
+       ThreadSettlementService cleanUpSettledThread asks the same question. */
+    const settlesWithParent = sql`(
       json_extract(t.payload_json, '$.lineage.relationshipToParent') IS 'subagent'
-      AND EXISTS (
-        SELECT 1 FROM orchestration_v2_projection_threads checkout_parent
-        WHERE checkout_parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
-          AND json_extract(checkout_parent.payload_json, '$.worktreePath')
-            IS NOT json_extract(t.payload_json, '$.worktreePath')
+      AND (
+        parent.thread_id IS NULL
+        OR json_extract(parent.payload_json, '$.worktreePath')
+          IS json_extract(t.payload_json, '$.worktreePath')
       )
     )`;
     /* fork:end fork-own-checkout-child-settlement */
@@ -8933,9 +8933,13 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                 LIMIT 1
               ) AS latest_user_authored_message_at,
               -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
-              ${subagentOwnCheckout} AS own_checkout
+              ${settlesWithParent} AS settles_with_parent
               -- fork:end fork-own-checkout-child-settlement
             FROM orchestration_v2_projection_threads t
+            -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
+            LEFT JOIN orchestration_v2_projection_threads parent
+              ON parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
+            -- fork:end fork-own-checkout-child-settlement
             LEFT JOIN orchestration_v2_projection_runs r ON r.run_id = (
               SELECT latest.run_id FROM orchestration_v2_projection_runs latest
               WHERE latest.thread_id = t.thread_id
@@ -8948,19 +8952,15 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
               AND json_extract(t.payload_json, '$.settledOverride') IS NULL
               AND json_extract(t.payload_json, '$.pinnedAt') IS NULL
               AND json_extract(t.payload_json, '$.autoSettleDisabledAt') IS NULL
+              -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
               AND (
-                json_extract(t.payload_json, '$.lineage.relationshipToParent') IS NOT 'subagent'
-                -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
-                OR ${subagentOwnCheckout}
-                -- fork:end fork-own-checkout-child-settlement
-                OR NOT EXISTS (
-                  SELECT 1 FROM orchestration_v2_projection_threads parent
-                  WHERE parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
-                    AND parent.deleted_at IS NULL
-                    AND json_extract(parent.payload_json, '$.archivedAt') IS NULL
-                    AND json_extract(parent.payload_json, '$.settledOverride') IS NOT 'settled'
-                )
+                NOT ${settlesWithParent}
+                OR parent.thread_id IS NULL
+                OR parent.deleted_at IS NOT NULL
+                OR json_extract(parent.payload_json, '$.archivedAt') IS NOT NULL
+                OR json_extract(parent.payload_json, '$.settledOverride') IS 'settled'
               )
+              -- fork:end fork-own-checkout-child-settlement
               AND NOT EXISTS (
                 SELECT 1 FROM orchestration_v2_projection_runs active
                 WHERE active.thread_id = t.thread_id
@@ -9046,7 +9046,7 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                     pullRequests: thread.pullRequests,
                   }),
                   /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-                  ownCheckout: row.own_checkout === 1,
+                  settlesWithParent: row.settles_with_parent === 1,
                   /* fork:end fork-own-checkout-child-settlement */
                 } satisfies ProjectionSettlementCandidate;
               }),

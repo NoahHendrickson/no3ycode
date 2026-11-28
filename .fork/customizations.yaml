@@ -10659,8 +10659,9 @@
     merged, and all eight of its children settled with it, including ones with unmerged branches
     and no pull request yet. A subagent whose worktreePath differs from its parent's now settles
     like any thread, on its own pull request or inactivity, and never with its parent; one in its
-    parent's checkout still settles with it (ProjectionStore getSettlementCandidates own_checkout,
-    ThreadSettlementService settlesWithParent).
+    parent's checkout still settles with it. The store names that one fact, settlesWithParent
+    (getSettlementCandidates joins the parent once), and the sweep's settle-with-parent shortcut
+    reads it; ThreadSettlementService's settle-action shared-worktree check asks the same question.
   tier: 4
   files: []
   shadows: []
@@ -10668,5 +10669,8 @@
     - apps/server/src/orchestration-v2/ProjectionStore.ts
     - apps/server/src/orchestration-v2/ThreadSettlementService.ts
     - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
+    - apps/server/src/orchestration-v2/SubagentProjection.test.ts
+    - apps/server/src/orchestration-v2/ProjectionSettlement.test.ts
   verify:
     - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
+    - apps/server/src/orchestration-v2/SubagentProjection.test.ts
