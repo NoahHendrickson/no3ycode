@@ -31,8 +31,8 @@ export function ComposerPullRequestChip(props: {
   readonly branch: string | null;
   /** ChatView's git-status cwd, so this reads its subscription. */
   readonly cwd: string | null;
-  /** In a side chat or a sprint's panel, whose PR list would open with the host thread's PRs. */
-  readonly embedded: boolean;
+  /** False in an embedded thread, whose list would open in its host's panel with the host's PRs. */
+  readonly canOpenList: boolean;
 }) {
   const { threadRef } = props;
   const thread = useQuietThreadShell(threadRef);
@@ -55,12 +55,10 @@ export function ComposerPullRequestChip(props: {
     branchPr,
     status.data?.sourceControlProvider,
   );
-  // Embedded, the chip is the current PR's, not a list; its hover still lists them all.
-  const badge = props.embedded ? null : pr.badge;
   const openPrLink = useOpenPrLink(threadRef);
   const prUrl = pr.url;
   const state = resolvePullRequestChipState({
-    badge,
+    badge: pr.badge,
     pr: pr.pr,
     pullRequests: thread?.pullRequests ?? [],
   });
@@ -71,7 +69,7 @@ export function ComposerPullRequestChip(props: {
         render={
           <PullRequestChipControl
             checks={resolvePullRequestChipChecks({
-              badge,
+              badge: pr.badge,
               snapshot: pr.currentLink?.snapshot,
             })}
             size="xs"
@@ -80,12 +78,16 @@ export function ComposerPullRequestChip(props: {
             data-pr-state={state}
           />
         }
-        badge={badge}
+        badge={pr.badge}
         pullRequests={thread?.pullRequests ?? []}
         number={pr.number}
         url={pr.url}
         status={pr.status}
-        onOpenList={() => useRightPanelStore.getState().open(threadRef, "pull-requests")}
+        onOpenList={
+          props.canOpenList
+            ? () => useRightPanelStore.getState().open(threadRef, "pull-requests")
+            : null
+        }
         onOpenPullRequest={(event, targetUrl) => {
           const url = targetUrl ?? prUrl;
           if (url) openPrLink(event, url);

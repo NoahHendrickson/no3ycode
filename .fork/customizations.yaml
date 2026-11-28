@@ -3831,7 +3831,9 @@
     canStopBackgroundWork), since mid-turn the composer owns Stop.
     Neither shows on the draft hero. An embedded thread (a side chat, or a
     thread opened in a sprint's or coordinator's panel) shows its PR chip too,
-    as its current PR, since a list would open in the host's panel. On narrow
+    unchanged, but a stack's click opens its current PR, since a list would
+    open in the host's panel (ThreadPullRequestBadgeControl takes a null list
+    opener). On narrow
     composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed

@@ -3544,7 +3544,7 @@ export default function ChatView(props: ChatViewProps) {
           threadRef={activeThreadRef}
           branch={activeThreadBranch}
           cwd={gitStatusCwd}
-          embedded={embedded}
+          canOpenList={!embedded}
         />
         {composerBackgroundWork.length > 0 ? (
           <ComposerBackgroundWorkChip
