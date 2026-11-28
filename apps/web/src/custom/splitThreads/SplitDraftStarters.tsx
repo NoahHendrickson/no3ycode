@@ -5,6 +5,7 @@ import { msg, useMessages } from "gt-react";
 
 import { DEV_SERVER_SUGGESTION } from "../draftLaunchpadSuggestions";
 import { EyeIcon, PlayIcon } from "../icons/lucide-hugeicons";
+import { StarterCard } from "../StarterCard";
 
 const STARTERS = [
   {
@@ -34,22 +35,10 @@ export function SplitDraftStarters(props: {
       className="pointer-events-none absolute inset-0 flex items-center justify-center px-4"
       style={{ paddingBottom: props.bottomInset }}
     >
-      <div
-        data-fork-split-draft-starters=""
-        className="pointer-events-auto flex w-full max-w-sm flex-col divide-y divide-border overflow-hidden rounded-(--fork-composer-radius) border border-border bg-card"
-      >
-        {STARTERS.map(({ key, title, Icon, prompt }) => (
-          <button
-            key={key}
-            type="button"
-            className="flex h-11 w-full min-w-0 cursor-pointer select-none items-center gap-2.5 px-3.5 text-left text-foreground text-sm outline-none hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground"
-            onClick={() => props.onPick(prompt)}
-          >
-            <Icon className="size-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 flex-1 truncate">{m(title)}</span>
-          </button>
-        ))}
-      </div>
+      <StarterCard
+        starters={STARTERS.map(({ title, ...starter }) => ({ ...starter, label: m(title) }))}
+        onPick={props.onPick}
+      />
     </div>
   );
 }

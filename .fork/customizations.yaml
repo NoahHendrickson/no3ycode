@@ -7032,7 +7032,7 @@
     picker): it opens as a plain empty thread with the composer at the
     bottom, still showing the workspace strip (same project, branch and worktree as
     its partner), and a centred card of starters (Review this branch,
-    Start the dev server) that add their prompt to the composer. Until it is sent, a split
+    Start the dev server; custom/StarterCard, shared with an empty sprint) that add their prompt to the composer. Until it is sent, a split
     draft carries an X in its header that hands the route to the other pane
     and dissolves the pair; an empty draft is discarded, while one the user
     has written in stays a draft of its own. Dragging one sidebar card or
@@ -7170,6 +7170,7 @@
     - apps/web/src/custom/splitThreads/splitMorph.ts
     - apps/web/src/custom/splitThreads/SplitPaneHeaderControls.tsx
     - apps/web/src/custom/splitThreads/SplitDraftStarters.tsx
+    - apps/web/src/custom/StarterCard.tsx
     - apps/web/src/custom/splitThreads/splitPaneNavigation.ts
     - apps/web/src/custom/splitThreads/floatFrame.ts
     - apps/web/src/custom/splitThreads/floatWindow.tsx
@@ -8947,7 +8948,7 @@
     section above the Petals (custom/sprints/SidebarV2SprintsSection; folds like the Petals,
     per device), as an ordinary thread card: isPetalThread keeps the mascot, its menu, the
     Petals section and the Petal empty conversation for Petals alone. An empty sprint shows
-    starter chips instead (custom/sprints/SprintEmptyConversation, through BotEmptyConversation)
+    starters instead, in the split draft's card (custom/sprints/SprintEmptyConversation, through BotEmptyConversation)
     that write a prompt into the composer draft and never send it. Archiving a sprint wraps it up: its threads list again,
     and unarchiving brings it back. Web and desktop only: the mobile app has no sprint support yet.
   tier: 4
