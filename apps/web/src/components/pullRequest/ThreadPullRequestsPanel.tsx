@@ -97,9 +97,6 @@ function ChecksGlyph({
 function LinkRowImpl({
   line,
   threadRef,
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  panelRef,
-  /* fork:end fork-embedded-pr-list */
   projectId,
   speedMode,
   onUnlink,
@@ -109,9 +106,6 @@ function LinkRowImpl({
 }: {
   line: PullRequestListLine;
   threadRef: ScopedThreadRef;
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  panelRef: ScopedThreadRef;
-  /* fork:end fork-embedded-pr-list */
   projectId: ProjectId | null;
   speedMode: boolean;
   onUnlink: (link: ThreadPullRequestLink) => void;
@@ -121,9 +115,7 @@ function LinkRowImpl({
 }) {
   const gt = useGT();
   const resolve = useMessages();
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  const openPrLink = useOpenPrLink(threadRef, panelRef);
-  /* fork:end fork-embedded-pr-list */
+  const openPrLink = useOpenPrLink(threadRef);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const menuAnchor = menuPosition
@@ -411,16 +403,7 @@ function latestSyncedAt(links: ReadonlyArray<ThreadPullRequestLink>): string | n
 const lineKey = (line: PullRequestListLine) =>
   `${line.link.host}/${line.link.repository}#${line.link.number}`;
 
-/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-export function ThreadPullRequestsPanel({
-  threadRef,
-  panelRef = threadRef,
-}: {
-  threadRef: ScopedThreadRef;
-  /** The host panel that opens clicked PRs and issues; defaults to `threadRef`. */
-  panelRef?: ScopedThreadRef;
-}) {
-  /* fork:end fork-embedded-pr-list */
+export function ThreadPullRequestsPanel({ threadRef }: { threadRef: ScopedThreadRef }) {
   const gt = useGT();
   const configs = useServerConfigs();
   if (configs.get(threadRef.environmentId) === undefined) {
@@ -431,18 +414,10 @@ export function ThreadPullRequestsPanel({
       />
     );
   }
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  return <EnabledThreadPullRequestsPanel threadRef={threadRef} panelRef={panelRef} />;
+  return <EnabledThreadPullRequestsPanel threadRef={threadRef} />;
 }
 
-function EnabledThreadPullRequestsPanel({
-  threadRef,
-  panelRef,
-}: {
-  threadRef: ScopedThreadRef;
-  panelRef: ScopedThreadRef;
-}) {
-  /* fork:end fork-embedded-pr-list */
+function EnabledThreadPullRequestsPanel({ threadRef }: { threadRef: ScopedThreadRef }) {
   const gt = useGT();
   const thread = useThreadShell(threadRef);
   const issues = thread?.issues ?? [];
@@ -533,9 +508,6 @@ function EnabledThreadPullRequestsPanel({
     thread,
     opensInApp,
     primaryEnvironmentId,
-    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-    panelRef,
-    /* fork:end fork-embedded-pr-list */
   };
 
   if (linkCount === 0 && issues.length === 0) {
@@ -578,9 +550,6 @@ function EnabledThreadPullRequestsPanel({
                   <ThreadDetailsIssueRows
                     links={issues}
                     threadRef={threadRef}
-                    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-                    panelRef={panelRef}
-                    /* fork:end fork-embedded-pr-list */
                     compact={false}
                     mountScope="linked-items"
                   />
@@ -597,9 +566,6 @@ function EnabledThreadPullRequestsPanel({
             <LinkRow
               line={line}
               threadRef={threadRef}
-              /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-              panelRef={panelRef}
-              /* fork:end fork-embedded-pr-list */
               projectId={
                 capabilities !== undefined
                   ? (findProjectForChangeRequest(environmentProjects, line.link)?.id ??

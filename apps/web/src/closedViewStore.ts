@@ -12,7 +12,13 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { decodeLinkedThreadSurface } from "./linkedThreadSurface";
 import { resolveStorage } from "./lib/storage";
 import { randomUUID } from "./lib/utils";
-import { decodeThreadSurface, type RightPanelSurface } from "./rightPanelStore";
+import {
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  decodePullRequestsSurface,
+  /* fork:end fork-embedded-pr-list */
+  decodeThreadSurface,
+  type RightPanelSurface,
+} from "./rightPanelStore";
 
 export type ClosedView =
   | {
@@ -66,10 +72,7 @@ const isClosedViewEntry = (entry: unknown): entry is ClosedViewEntry => {
       return surface.id === surface.kind;
     /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
     case "pull-requests":
-      return surface.threadRef === undefined
-        ? surface.id === "pull-requests"
-        : isThreadRef(surface.threadRef) &&
-            surface.id === `pull-requests:${scopedThreadKey(surface.threadRef)}`;
+      return decodePullRequestsSurface(surface)?.id === surface.id;
     /* fork:end fork-embedded-pr-list */
     case "preview":
       return surface.resourceId === null || typeof surface.resourceId === "string";
@@ -105,7 +108,10 @@ const isClosedViewEntry = (entry: unknown): entry is ClosedViewEntry => {
         surface.number > 0 &&
         (surface.environmentId === undefined || typeof surface.environmentId === "string") &&
         (surface.host === undefined || typeof surface.host === "string") &&
-        (surface.url === undefined || typeof surface.url === "string")
+        (surface.url === undefined || typeof surface.url === "string") &&
+        /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+        (surface.listThreadRef === undefined || isThreadRef(surface.listThreadRef))
+        /* fork:end fork-embedded-pr-list */
       );
     case "issue":
       return (

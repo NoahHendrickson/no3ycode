@@ -15,6 +15,7 @@ const environmentId = EnvironmentId.make("local");
 const projectId = ProjectId.make("project-1");
 const hostRef = scopeThreadRef(environmentId, ThreadId.make("sprint-host"));
 const childRef = scopeThreadRef(environmentId, ThreadId.make("sprint-child"));
+const deletedChildRef = scopeThreadRef(environmentId, ThreadId.make("sprint-child-deleted"));
 
 const project = {
   id: projectId,
@@ -74,6 +75,7 @@ const threadsByKey = new Map([
       title: "Sprint coordinator",
       branch: "sprint-main",
       worktreePath: null,
+      deletedAt: null,
       lineage: {},
       pullRequests: [hostPr],
       issues: [],
@@ -88,6 +90,7 @@ const threadsByKey = new Map([
       title: "Embedded child thread",
       branch: "feat-top",
       worktreePath: null,
+      deletedAt: null,
       lineage: {},
       pullRequests: [childBasePr, childTopPr],
       issues: [],
@@ -119,6 +122,11 @@ vi.mock("../state/entities", async (original) => ({
   useQuietThreadShell: (ref: { environmentId: EnvironmentId; threadId: ThreadId } | null) =>
     ref ? (threadsByKey.get(scopedThreadKey(ref)) ?? null) : null,
   useServerConfigs: () => serverConfigs,
+}));
+
+vi.mock("../state/shell", async (original) => ({
+  ...(await original<typeof import("../state/shell")>()),
+  useEnvironmentShellStatus: () => "live",
 }));
 
 vi.mock("../state/server", async (original) => {
@@ -177,6 +185,10 @@ import {
 } from "../rightPanelStore";
 import { AppAtomRegistryProvider } from "../rpc/atomRegistry";
 import { ComposerPullRequestChip } from "./ComposerPullRequestChip";
+import {
+  EmbeddedThreadPullRequestsPanel,
+  useEmbeddedPullRequestDetailProps,
+} from "./EmbeddedThreadPullRequestsPanel";
 
 function setup() {
   __setClientSettingsForTests({
@@ -191,8 +203,31 @@ function setup() {
   });
 }
 
+function DetailPropsProbe() {
+  const surface = useRightPanelStore((state) =>
+    selectActiveRightPanelSurface(state.byThreadKey, hostRef),
+  );
+  const { context, onBack } = useEmbeddedPullRequestDetailProps({
+    surface,
+    hostPanelRef: hostRef,
+    hostPullRequest: {
+      projectId,
+      pullRequests: [hostPr],
+      linkedPullRequest: null,
+      branchPullRequest: null,
+      onBack: undefined,
+    },
+  });
+  return (
+    <div>
+      <span data-testid="detail-context">{context}</span>
+      {onBack ? <button type="button" data-testid="detail-back" onClick={onBack} /> : null}
+    </div>
+  );
+}
+
 describe("embedded child PR list", () => {
-  it("opens the embedded child's PR list in the host panel and opens clicked PRs there even after unhosting", async () => {
+  it("opens the embedded child's PR list, opens clicked PRs in the host panel with child Back/context, and guards missing threads", async () => {
     setup();
     const unhost = hostRightPanel(childRef, hostRef);
     let surface: ReturnType<typeof selectActiveRightPanelSurface> = null;
@@ -217,16 +252,17 @@ describe("embedded child PR list", () => {
       unhost();
     }
 
-    // Even after the embedded child unmounts/unhosts, rendering the panel for that surface shows
-    // the child's stack (not the host's PR) and opens clicked PRs in the host panel.
+    // Even after the embedded child unmounts/unhosts, rendering the panel shows only the child's
+    // stack, opens clicked PRs in the host panel with listThreadRef, and derives child Back/context.
     expect(surface?.kind).toBe("pull-requests");
     const listThreadRef =
       surface?.kind === "pull-requests" ? (surface.threadRef ?? hostRef) : hostRef;
     await using panelScreen = await render(
       <AppAtomRegistryProvider>
         <div style={{ display: "flex", flexDirection: "column", height: 480, width: 360 }}>
-          <ThreadPullRequestsPanel threadRef={listThreadRef} panelRef={hostRef} />
+          <EmbeddedThreadPullRequestsPanel threadRef={listThreadRef} panelRef={hostRef} />
         </div>
+        <DetailPropsProbe />
       </AppAtomRegistryProvider>,
     );
 
@@ -235,16 +271,41 @@ describe("embedded child PR list", () => {
     expect(panelScreen.container.textContent).not.toContain("Host sprint umbrella PR");
 
     await userEvent.click(panelScreen.getByText("Child stack top PR"));
-    expect(
-      selectActiveRightPanelSurface(useRightPanelStore.getState().byThreadKey, hostRef)?.id,
-    ).toBe(
-      pullRequestSurfaceId({
+    const openedPr = selectActiveRightPanelSurface(
+      useRightPanelStore.getState().byThreadKey,
+      hostRef,
+    );
+    expect(openedPr).toMatchObject({
+      id: pullRequestSurfaceId({
         projectId,
         host: "github.com",
         repository: "noahhendrickson/no3ycode",
         number: 202,
       }),
+      listThreadRef: childRef,
+    });
+    await expect.element(panelScreen.getByTestId("detail-context")).toHaveTextContent("thread");
+
+    // Clicking Back returns to the child's PR list, not the host's.
+    await userEvent.click(panelScreen.getByTestId("detail-back"));
+    expect(
+      selectActiveRightPanelSurface(useRightPanelStore.getState().byThreadKey, hostRef),
+    ).toEqual({
+      id: `pull-requests:${scopedThreadKey(childRef)}`,
+      kind: "pull-requests",
+      threadRef: childRef,
+    });
+
+    // A deleted/missing embedded child renders an unavailable notice with no Link button.
+    await using missingScreen = await render(
+      <AppAtomRegistryProvider>
+        <EmbeddedThreadPullRequestsPanel threadRef={deletedChildRef} panelRef={hostRef} />
+      </AppAtomRegistryProvider>,
     );
+    await expect
+      .element(missingScreen.getByText("This thread is no longer available."))
+      .toBeVisible();
+    expect(missingScreen.container.textContent).not.toContain("Link pull request");
   });
 
   it("keeps normal threads listing their own PRs and opening them in their own panel", async () => {
@@ -256,12 +317,10 @@ describe("embedded child PR list", () => {
     );
     expect(surface).toEqual({ id: "pull-requests", kind: "pull-requests" });
 
-    const listThreadRef =
-      surface?.kind === "pull-requests" ? (surface.threadRef ?? hostRef) : hostRef;
     await using panelScreen = await render(
       <AppAtomRegistryProvider>
         <div style={{ display: "flex", flexDirection: "column", height: 480, width: 360 }}>
-          <ThreadPullRequestsPanel threadRef={listThreadRef} panelRef={hostRef} />
+          <ThreadPullRequestsPanel threadRef={hostRef} />
         </div>
       </AppAtomRegistryProvider>,
     );
@@ -270,9 +329,11 @@ describe("embedded child PR list", () => {
     expect(panelScreen.container.textContent).not.toContain("Child stack base PR");
 
     await userEvent.click(panelScreen.getByText("Host sprint umbrella PR"));
-    expect(
-      selectActiveRightPanelSurface(useRightPanelStore.getState().byThreadKey, hostRef)?.id,
-    ).toBe(
+    const openedPr = selectActiveRightPanelSurface(
+      useRightPanelStore.getState().byThreadKey,
+      hostRef,
+    );
+    expect(openedPr?.id).toBe(
       pullRequestSurfaceId({
         projectId,
         host: "github.com",
@@ -280,5 +341,6 @@ describe("embedded child PR list", () => {
         number: 100,
       }),
     );
+    expect(openedPr).not.toHaveProperty("listThreadRef");
   });
 });

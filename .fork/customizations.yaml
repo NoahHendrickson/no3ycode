@@ -10717,19 +10717,26 @@
     panel, the surface stays upstream's singleton `{ id: "pull-requests", kind:
     "pull-requests" }` with no `threadRef`, and renders and titles itself
     identically to upstream. When a hosted guest opens `"pull-requests"` via
-    `useRightPanelStore.open` or `toggle`, `pullRequestsSurfaceFor` keys the
-    surface by that guest (`id: "pull-requests:<scopedThreadKey>"`, `threadRef`)
-    so it does not collide with the host's own list or another child's list, and
-    survives persistence, migration, and closed-tab reopen (`openPullRequests`).
-    `RightPanelSurfaceContent` renders `ThreadPullRequestsPanel` with
-    `threadRef={surface.threadRef ?? threadRef}` and `panelRef={threadRef}`, and
-    `ThreadPullRequestsPanel` forwards `panelRef` to `useOpenPrLink` and
-    `ThreadDetailsIssueRows`, so clicking a PR or issue opens in the visible
-    host panel even after the embedded child closes or the page reloads.
-    `RightPanelTabs` labels a foreign PR-list tab with that child thread's title
-    (tooltip `"Linked items · <title>"`) while normal tabs keep `"Linked items"`.
+    `useRightPanelStore.open`, `pullRequestsSurfaceFor` keys the surface by that
+    guest (`id: "pull-requests:<scopedThreadKey>"`, `threadRef`) so it does not
+    collide with the host's own list or another child's list, and survives
+    persistence, migration (`decodePullRequestsSurface`), and closed-tab reopen
+    (`openPullRequests`). `RightPanelSurfaceContent` renders foreign PR lists
+    through `EmbeddedThreadPullRequestsPanel`, which guards unloaded/deleted
+    child threads (avoiding an empty state with a live Link button) and provides
+    `RightPanelOwnerContext` so `useOpenPrLink` and `ThreadDetailsIssueRows`
+    open clicked PRs and issues in the visible host panel even after the child
+    unmounts or the page reloads. PRs opened from a foreign thread's list carry
+    `listThreadRef` so `useEmbeddedPullRequestDetailProps` derives Back and
+    detail context from that child instead of the host, and `openIssue` strips
+    redundant same-environment `environmentId`s. `RightPanelTabs` shares one
+    shell subscription for `thread` and foreign `pull-requests` tabs and labels
+    foreign PR-list tabs `"<title> · Linked items"` so they never collide with
+    a side-chat tab of the same thread.
   tier: 4
-  files: []
+  files:
+    - apps/web/src/custom/rightPanelOwnerContext.ts
+    - apps/web/src/custom/EmbeddedThreadPullRequestsPanel.tsx
   shadows: []
   watch:
     - apps/web/src/rightPanelStore.ts
@@ -10737,7 +10744,6 @@
     - apps/web/src/reopenClosedView.ts
     - apps/web/src/components/chat/RightPanelSurfaceContent.tsx
     - apps/web/src/components/RightPanelTabs.tsx
-    - apps/web/src/components/pullRequest/ThreadPullRequestsPanel.tsx
     - apps/web/src/components/chat/ThreadDetailsIssueRows.tsx
     - apps/web/src/lib/openPullRequestLink.ts
   verify:

@@ -209,6 +209,7 @@ export const DESIGN_LINT_ALLOWLIST = [
   ...b5Exempt("wrapper around an upstream control that reads live state itself", {
     "ComposerModelPicker.tsx": ["ComposerModelPicker"],
     "DraftMachineChip.tsx": ["DraftMachineChip"],
+    "EmbeddedThreadPullRequestsPanel.tsx": ["EmbeddedThreadPullRequestsPanel"],
   }),
 ];
 

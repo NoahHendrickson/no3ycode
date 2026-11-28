@@ -3,7 +3,10 @@ import {
   scopedThreadKey,
   scopeThreadRef,
 } from "@t3tools/client-runtime/environment";
-import { EnvironmentId, RunId, ThreadId, type ScopedThreadRef } from "@t3tools/contracts";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+import { EnvironmentId, RunId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
+import * as Schema from "effect/Schema";
+/* fork:end fork-embedded-pr-list */
 import { msg } from "gt-react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -86,6 +89,10 @@ export type RightPanelSurface =
       /** A clicked link waiting for the panel to show where it points; cleared once shown. */
       revealUrl?: string;
       detailTab?: PullRequestDetailTab;
+      /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+      /** Set when opened from an embedded child's PR list so Back and detail context follow that child. */
+      listThreadRef?: ScopedThreadRef;
+      /* fork:end fork-embedded-pr-list */
     }
   /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list
      Remember the thread when opened from an embedded child (side chat, sprint/coordinator child);
@@ -231,6 +238,9 @@ interface RightPanelStoreState {
       /** A clicked link to reveal; reopening a surface passes only its `url`. */
       revealUrl?: string;
       detailTab?: PullRequestDetailTab;
+      /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+      listThreadRef?: ScopedThreadRef;
+      /* fork:end fork-embedded-pr-list */
     },
   ) => void;
   /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
@@ -359,43 +369,27 @@ export type PullRequestSurface = Extract<RightPanelSurface, { kind: "pull-reques
 /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
 export type PullRequestsSurface = Extract<RightPanelSurface, { kind: "pull-requests" }>;
 
+const isThreadRef = Schema.is(ScopedThreadRef);
+
+const keyedPullRequestsSurface = (ref: ScopedThreadRef): PullRequestsSurface => ({
+  id: `pull-requests:${scopedThreadKey(ref)}`,
+  kind: "pull-requests",
+  threadRef: ref,
+});
+
 const pullRequestsSurfaceFor = (
   ref: ScopedThreadRef,
-  host: ScopedThreadRef,
+  host: ScopedThreadRef = rightPanelHostRef(ref),
 ): PullRequestsSurface =>
   scopedThreadKey(ref) === scopedThreadKey(host)
     ? { id: "pull-requests", kind: "pull-requests" }
-    : {
-        id: `pull-requests:${scopedThreadKey(ref)}`,
-        kind: "pull-requests",
-        threadRef: ref,
-      };
+    : keyedPullRequestsSurface(ref);
 
 export function decodePullRequestsSurface(surface: object): PullRequestsSurface | null {
   const { id, kind, threadRef } = surface as Record<string, unknown>;
   if (kind !== "pull-requests") return null;
-  if (threadRef === undefined) {
-    return id === "pull-requests" ? { id: "pull-requests", kind: "pull-requests" } : null;
-  }
-  if (
-    !threadRef ||
-    typeof threadRef !== "object" ||
-    typeof (threadRef as Record<string, unknown>).environmentId !== "string" ||
-    (threadRef as Record<string, unknown>).environmentId === "" ||
-    typeof (threadRef as Record<string, unknown>).threadId !== "string" ||
-    (threadRef as Record<string, unknown>).threadId === ""
-  ) {
-    return null;
-  }
-  const ref = scopeThreadRef(
-    EnvironmentId.make((threadRef as { environmentId: string }).environmentId),
-    ThreadId.make((threadRef as { threadId: string }).threadId),
-  );
-  return {
-    id: `pull-requests:${scopedThreadKey(ref)}`,
-    kind: "pull-requests",
-    threadRef: ref,
-  };
+  if (threadRef === undefined) return id === "pull-requests" ? { id, kind } : null;
+  return isThreadRef(threadRef) ? keyedPullRequestsSurface(threadRef) : null;
 }
 /* fork:end fork-embedded-pr-list */
 
@@ -453,6 +447,9 @@ export function pullRequestSurface(target: {
   number: number;
   url?: string;
   detailTab?: PullRequestDetailTab;
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  listThreadRef?: ScopedThreadRef;
+  /* fork:end fork-embedded-pr-list */
 }): PullRequestSurface {
   return {
     id: pullRequestSurfaceId(target),
@@ -464,6 +461,9 @@ export function pullRequestSurface(target: {
     number: target.number,
     ...(typeof target.url === "string" ? { url: target.url } : {}),
     ...(target.detailTab === undefined ? {} : { detailTab: target.detailTab }),
+    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+    ...(target.listThreadRef === undefined ? {} : { listThreadRef: target.listThreadRef }),
+    /* fork:end fork-embedded-pr-list */
   };
 }
 
@@ -722,11 +722,14 @@ export function migratePersistedRightPanelState(persistedState: unknown): {
                       ) {
                         return [];
                       }
-                      const { environmentId, ...rest } = surface;
+                      const { environmentId, listThreadRef, ...rest } = surface;
                       return [
                         pullRequestSurface({
                           ...rest,
                           ...(typeof environmentId === "string" ? { environmentId } : {}),
+                          /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+                          ...(isThreadRef(listThreadRef) ? { listThreadRef } : {}),
+                          /* fork:end fork-embedded-pr-list */
                         }),
                       ];
                     }
@@ -927,7 +930,7 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             }
             /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
             if (kind === "pull-requests") {
-              return upsertSurface(current, pullRequestsSurfaceFor(ref, rightPanelHostRef(ref)));
+              return upsertSurface(current, pullRequestsSurfaceFor(ref));
             }
             /* fork:end fork-embedded-pr-list */
             return upsertSurface(current, singletonSurface(kind));
@@ -1029,13 +1032,17 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             const surface = pullRequestSurface(target);
             const next = upsertSurface(current, surface);
             const { url, revealUrl } = target;
-            if (!url && !revealUrl) return next;
+            /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+            if (!url && !revealUrl && target.listThreadRef === undefined) return next;
+            /* fork:end fork-embedded-pr-list */
             return {
               ...next,
               surfaces: next.surfaces.map((entry) => {
                 if (entry.id !== surface.id || entry.kind !== "pull-request") return entry;
                 // A later link replaces one not yet shown.
-                const { revealUrl: _previous, ...rest } = entry;
+                /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+                const { revealUrl: _previous, listThreadRef: _prevList, ...rest } = entry;
+                /* fork:end fork-embedded-pr-list */
                 return { ...rest, ...surface, ...(revealUrl ? { revealUrl } : {}) };
               }),
             };
@@ -1055,7 +1062,14 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
       openIssue: (ref, target) =>
         set((state) =>
           userAction(state, scopedThreadKey(ref), (current) => {
-            const surface = issueSurface(target);
+            /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+            const { environmentId, ...restTarget } = target;
+            const normalizedTarget =
+              environmentId !== undefined && environmentId !== rightPanelHostRef(ref).environmentId
+                ? { ...restTarget, environmentId }
+                : restTarget;
+            const surface = issueSurface(normalizedTarget);
+            /* fork:end fork-embedded-pr-list */
             const next = upsertSurface(current, surface);
             return target.url
               ? {
@@ -1415,15 +1429,6 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             const active = current.surfaces.find(
               (surface) => surface.id === current.activeSurfaceId,
             );
-            /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-            if (kind === "pull-requests") {
-              const target = pullRequestsSurfaceFor(ref, rightPanelHostRef(ref));
-              if (current.isOpen && active?.id === target.id) {
-                return { ...current, isOpen: false };
-              }
-              return upsertSurface(current, target);
-            }
-            /* fork:end fork-embedded-pr-list */
             if (current.isOpen && active?.kind === kind) {
               return { ...current, isOpen: false };
             }

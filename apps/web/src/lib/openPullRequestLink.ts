@@ -3,7 +3,11 @@ import { parsePullRequestAnchor } from "@t3tools/shared/pullRequestAnchor";
 import type { EnvironmentId, ScopedThreadRef } from "@t3tools/contracts";
 import { useAtomValue } from "@effect/atom-react";
 import { useNavigate } from "@tanstack/react-router";
-import { type MouseEvent } from "react";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+import { scopedThreadKey } from "@t3tools/client-runtime/environment";
+import { type MouseEvent, useContext } from "react";
+import { RightPanelOwnerContext } from "../custom/rightPanelOwnerContext";
+/* fork:end fork-embedded-pr-list */
 import { msg } from "gt-react";
 
 import {
@@ -18,7 +22,9 @@ import { useOpenLink } from "../browser/useOpenLink";
 import { useClientSettings } from "../hooks/useSettings";
 import { stackedThreadToast, toastManager } from "../components/ui/toast";
 import { m } from "../i18n/messages";
-import { PULL_REQUESTS_PANEL_REF, useRightPanelStore } from "../rightPanelStore";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+import { ISSUES_PANEL_REF, PULL_REQUESTS_PANEL_REF, useRightPanelStore } from "../rightPanelStore";
+/* fork:end fork-embedded-pr-list */
 import {
   selectThreadBranchBaseRef,
   selectThreadDiffPanelSelection,
@@ -117,6 +123,15 @@ export function useOpenChangeRequestLink(
         selectedEnvironmentId: project.environmentId,
       };
       if (resolvedPanelRef) {
+        /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+        const listThreadRef =
+          resolvedThreadRef !== undefined &&
+          resolvedPanelRef !== PULL_REQUESTS_PANEL_REF &&
+          resolvedPanelRef !== ISSUES_PANEL_REF &&
+          scopedThreadKey(resolvedPanelRef) !== scopedThreadKey(resolvedThreadRef)
+            ? resolvedThreadRef
+            : undefined;
+        /* fork:end fork-embedded-pr-list */
         useRightPanelStore.getState().openPullRequest(resolvedPanelRef, {
           // The standalone PR panel has a synthetic ref; each tab keeps its real environment.
           ...(resolvedPanelRef.environmentId === project.environmentId
@@ -128,6 +143,9 @@ export function useOpenChangeRequestLink(
           url: targetUrl,
           ...(revealUrl === undefined ? {} : { revealUrl }),
           number,
+          /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+          ...(listThreadRef === undefined ? {} : { listThreadRef }),
+          /* fork:end fork-embedded-pr-list */
         });
         // The pull request list keeps its selection in the URL; the Issues page's panel does not.
         if (resolvedPanelRef === PULL_REQUESTS_PANEL_REF) {
@@ -259,8 +277,9 @@ export function useOpenChangeRequestLink(
   };
 }
 
-/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-export function useOpenPrLink(threadRef?: ScopedThreadRef, panelRef?: ScopedThreadRef) {
+export function useOpenPrLink(threadRef?: ScopedThreadRef) {
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  const panelRef = useContext(RightPanelOwnerContext) ?? undefined;
   const openChangeRequest = useOpenChangeRequestLink(threadRef, panelRef);
   const openLink = useOpenLink(panelRef ?? threadRef);
   /* fork:end fork-embedded-pr-list */

@@ -2,7 +2,10 @@ import { threadIssueKeyOf, type ScopedThreadRef, type ThreadIssueLink } from "@t
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { useGT } from "gt-react";
 import { MessageSquareIcon } from "lucide-react";
-import { useState, type MouseEvent } from "react";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+import { useContext, useState, type MouseEvent } from "react";
+import { RightPanelOwnerContext } from "~/custom/rightPanelOwnerContext";
+/* fork:end fork-embedded-pr-list */
 
 import { cn } from "~/lib/utils";
 import { useRightPanelStore } from "~/rightPanelStore";
@@ -26,24 +29,21 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 function LinkedIssueRow({
   link,
   threadRef,
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  panelRef,
-  /* fork:end fork-embedded-pr-list */
   compact,
   mountScope,
   onOpen,
 }: {
   link: ThreadIssueLink;
   threadRef: ScopedThreadRef;
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  panelRef: ScopedThreadRef;
-  /* fork:end fork-embedded-pr-list */
   compact: boolean;
   mountScope: "thread-details" | "linked-items" | "sidebar-tooltip";
   onOpen: (() => void) | undefined;
 }) {
   const gt = useGT();
   const configs = useServerConfigs();
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  const panelRef = useContext(RightPanelOwnerContext) ?? threadRef;
+  /* fork:end fork-embedded-pr-list */
   const detail = useLinkedIssueDetail(threadRef.environmentId, link, mountScope);
   const trackerPresentation = issueTrackerPresentation(link.tracker);
   const state = detail === null ? null : issueStatePresentation(detail.state);
@@ -57,13 +57,15 @@ function LinkedIssueRow({
     onClick: (event: MouseEvent<HTMLElement>) => {
       event.stopPropagation();
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      if (configs.get(threadRef.environmentId)?.environment.capabilities.issues !== true) return;
-      event.preventDefault();
       /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+      if (
+        configs.get(threadRef.environmentId)?.environment.capabilities.issues !== true ||
+        configs.get(panelRef.environmentId)?.environment.capabilities.issues !== true
+      )
+        return;
+      event.preventDefault();
       useRightPanelStore.getState().openIssue(panelRef, {
-        ...(panelRef.environmentId === threadRef.environmentId
-          ? {}
-          : { environmentId: threadRef.environmentId }),
+        environmentId: threadRef.environmentId,
         ...link,
       });
       /* fork:end fork-embedded-pr-list */
@@ -160,18 +162,12 @@ function LinkedIssueRow({
 export function ThreadDetailsIssueRows({
   links,
   threadRef,
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  panelRef = threadRef,
-  /* fork:end fork-embedded-pr-list */
   compact = true,
   mountScope = "thread-details",
   onOpen,
 }: {
   links: ReadonlyArray<ThreadIssueLink>;
   threadRef: ScopedThreadRef;
-  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-  panelRef?: ScopedThreadRef;
-  /* fork:end fork-embedded-pr-list */
   compact?: boolean;
   mountScope?: "thread-details" | "linked-items" | "sidebar-tooltip";
   onOpen?: () => void;
@@ -188,9 +184,6 @@ export function ThreadDetailsIssueRows({
           key={threadIssueKeyOf(link)}
           link={link}
           threadRef={threadRef}
-          /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
-          panelRef={panelRef}
-          /* fork:end fork-embedded-pr-list */
           compact={compact}
           mountScope={mountScope}
           onOpen={onOpen}
