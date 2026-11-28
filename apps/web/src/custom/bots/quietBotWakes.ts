@@ -11,7 +11,6 @@ import type { TimelineEntry } from "~/session-logic";
 
 import {
   forkWorkReportOfEntry,
-  forkWorkReportThreadId,
   isForkDelegatedCompletionReport,
   isForkDelegatedQuestionReport,
   isForkWorkRequestReport,
@@ -28,13 +27,26 @@ interface QuietWakePolicy {
   readonly noticeStartsRun: boolean;
   /** A delegated child's question notice survives its hidden run: it draws the owner's card. */
   readonly keepsDelegatedQuestions: boolean;
+  /** A thread's work report, which is no message entry, starts the run it wakes, so the reads
+      before the quiet reply go too. */
+  readonly reportStartsRun: boolean;
 }
 
 const QUIET_WAKE_POLICIES: Readonly<Record<QuietWakeMode, QuietWakePolicy>> = {
   // Any quiet run, from its first message or the work report that woke it.
-  bot: { reportedRunsOnly: false, noticeStartsRun: false, keepsDelegatedQuestions: false },
+  bot: {
+    reportedRunsOnly: false,
+    noticeStartsRun: false,
+    keepsDelegatedQuestions: false,
+    reportStartsRun: true,
+  },
   // Only a child's question or completion wake (or a request report) ends on the quiet reply.
-  coordinator: { reportedRunsOnly: true, noticeStartsRun: true, keepsDelegatedQuestions: true },
+  coordinator: {
+    reportedRunsOnly: true,
+    noticeStartsRun: true,
+    keepsDelegatedQuestions: true,
+    reportStartsRun: false,
+  },
 };
 
 /** The run an entry belongs to, user messages and events included (unlike the fold helpers). */
@@ -121,43 +133,27 @@ export function quietBotWakeRunIds(
   return quiet;
 }
 
-/** A thread's last finished report, when that thread has no launch row here, keeps a quiet wake's
-    notice as the thread's one row; its earlier quiet wakes go whole. Keyed by report id. */
-function lastReportRows(entries: ReadonlyArray<TimelineEntry>): ReadonlySet<string> {
-  const launched = new Set<string>();
-  const lastByThread = new Map<string, string>();
-  for (const entry of entries) {
-    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
-      launched.add(entry.launch.threadId);
-    }
-    const report = forkWorkReportOfEntry(entry);
-    if (report === null || report.requestKind !== null) continue;
-    // An older server names the thread only in the key, so each of its reports keeps its row.
-    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
-    lastByThread.set(threadId ?? report.key, entry.id);
-  }
-  for (const threadId of launched) lastByThread.delete(threadId);
-  return new Set(lastByThread.values());
-}
+const NO_REPORTS: ReadonlySet<string> = new Set();
 
-/** Drops each run from its start: its first message, the report that woke it, or a coordinator's
-    delegated notice. A resumed subagent card listed earlier keeps its turn. With
-    `keepRequestReports` (a host answers inline) a question or approval report stays, as does a
-    coordinator's delegated question: each carries a card. */
+/** Drops each run from its start: its first message, or the report or notice that woke it, by the
+    mode's policy. A resumed subagent card listed earlier keeps its turn. With `keepRequestReports`
+    (a host answers inline) a question or approval report stays, as does a coordinator's delegated
+    question: each carries a card. `keepReportIds` are reports that stay as their thread's row. */
 export function withoutRuns(
   entries: ReadonlyArray<TimelineEntry>,
   runIds: ReadonlySet<RunId>,
   mode: QuietWakeMode,
   keepRequestReports = false,
+  keepReportIds = NO_REPORTS,
 ): ReadonlyArray<TimelineEntry> {
   if (runIds.size === 0) return entries;
-  const { noticeStartsRun, keepsDelegatedQuestions } = QUIET_WAKE_POLICIES[mode];
+  const { noticeStartsRun, keepsDelegatedQuestions, reportStartsRun } = QUIET_WAKE_POLICIES[mode];
   const startIndex = new Map<RunId, number>();
   entries.forEach((entry, index) => {
     const runId =
       entry.kind === "message"
         ? entry.message.runId
-        : forkWorkReportOfEntry(entry) !== null ||
+        : (reportStartsRun && forkWorkReportOfEntry(entry) !== null) ||
             (noticeStartsRun &&
               (isForkDelegatedQuestionReport(entry) || isForkDelegatedCompletionReport(entry)))
           ? entryOwningRunId(entry)
@@ -166,14 +162,13 @@ export function withoutRuns(
       startIndex.set(runId, index);
     }
   });
-  const reportRows = lastReportRows(entries);
   return entries.filter((entry, index) => {
     const runId = entryOwningRunId(entry);
     const start = runId === null ? undefined : startIndex.get(runId);
     return (
       start === undefined ||
       index < start ||
-      (index === start && reportRows.has(entry.id)) ||
+      keepReportIds.has(entry.id) ||
       (keepRequestReports && isForkWorkRequestReport(entry)) ||
       (keepsDelegatedQuestions && isForkDelegatedQuestionReport(entry))
     );

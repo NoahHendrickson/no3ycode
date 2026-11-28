@@ -590,7 +590,7 @@ describe("fork guard: fork-composer-shell", () => {
     const branchSelector = readSibling("../components/BranchToolbarBranchSelector.tsx");
     const prChip = readSibling("../custom/ComposerPullRequestChip.tsx");
     expect(prChip).toContain("data-fork-pr-chip");
-    expect(prChip).toContain("data-pr-state={state}");
+    expect(prChip).toContain("data-pr-state={resolvePullRequestChipState({");
     expect(prChip).toContain("resolvePullRequestChipState(");
     expect(branchSelector).toContain("data-fork-branch-group");
     expect(shellCss).toMatch(

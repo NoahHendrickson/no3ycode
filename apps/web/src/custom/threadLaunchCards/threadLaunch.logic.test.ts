@@ -338,15 +338,16 @@ describe("threadRowLiveState", () => {
   const read = (
     status: Parameters<typeof threadRowLiveState>[1],
     pendingBackgroundTasks: ReadonlyArray<typeof review> = [],
+    runtime = "idle",
   ) => {
     const state = threadRowLiveState(
-      { pullRequests: [ready, failing], pendingBackgroundTasks },
+      { pullRequests: [ready, failing], pendingBackgroundTasks, runtime: { status: runtime } },
       status,
     );
     return {
       activity: state.activity,
       stages: state.pullRequests.map((pr) => pr.stage),
-      readyUrl: state.readyUrl,
+      readyUrl: state.ready?.url ?? null,
     };
   };
 
@@ -370,7 +371,9 @@ describe("threadRowLiveState", () => {
       description: "Watching pull request #558",
     } as const;
     expect(read("waiting", [watch as never])).toEqual(read("ready"));
+    // "waiting" is also a turn blocked on a thread wait, still at work.
     const busy = { activity: null, stages: [null, "checks-failing"], readyUrl: null };
+    expect(read("waiting", [watch as never], "running")).toEqual(busy);
     expect(read("working")).toEqual(busy);
     expect(read(null)).toEqual(busy);
   });

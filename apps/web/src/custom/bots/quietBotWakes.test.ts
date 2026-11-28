@@ -7,6 +7,7 @@ import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.l
 import type { TimelineAttempt, TimelineEntry } from "~/session-logic";
 import { quietBotWakeRunIds, withoutRuns } from "./quietBotWakes";
 import { workReportEntry } from "../forkWorkReportFixtures";
+import { lastThreadReportIds } from "../threadLaunchCards/threadLaunch.logic";
 import type { ChatMessage, TurnDiffSummary } from "~/types";
 
 const at = (minute: number) => `2026-11-16T14:${String(minute).padStart(2, "0")}:00.000Z`;
@@ -185,9 +186,13 @@ describe("quiet bot wakes", () => {
       reply(runId, minute + 1, text),
     ];
     const shown = (entries: ReadonlyArray<TimelineEntry>) =>
-      withoutRuns(entries, quietBotWakeRunIds(entries, "bot", none), "bot", true).map(
-        (entry) => entry.id,
-      );
+      withoutRuns(
+        entries,
+        quietBotWakeRunIds(entries, "bot", none),
+        "bot",
+        true,
+        lastThreadReportIds(entries),
+      ).map((entry) => entry.id);
     const first = wakeOn("thread-a", "wake-1", 2);
     const second = wakeOn("thread-a", "wake-2", 4);
     // Its reads ("Worked for") go, and only the thread's latest report stays, as its row.
@@ -212,6 +217,9 @@ describe("quiet bot wakes", () => {
       },
     };
     expect(shown([launch, ...first, ...second])).toEqual(["launch"]);
+    // Two threads report into one quiet wake: each keeps its row, whichever starts the run.
+    const both = [workReportEntry("thread-c", "wake-5"), ...wakeOn("thread-d", "wake-5", 10)];
+    expect(shown(both)).toEqual([both[0]!.id, both[1]!.id]);
   });
 
   it("drops a coordinator's quiet reply to its child's question, keeping the question card", () => {

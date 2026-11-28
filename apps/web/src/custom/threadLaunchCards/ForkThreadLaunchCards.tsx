@@ -122,15 +122,12 @@ export function ForkThreadHookRow(props: {
   const title = thread?.title ?? props.fallbackTitle ?? "Thread";
   const error =
     status?.label === "Failed" ? threadLaunchActivityLine(thread?.source.lastError) : null;
-  const live =
-    thread === null
-      ? { activity: null, pullRequests: [], readyUrl: null }
-      : threadRowLiveState(thread, cardStatus?.status ?? null);
+  const live = threadRowLiveState(thread, cardStatus?.status ?? null);
   const { activity } = live;
   // A launch row offers its ready PR on the line below, so the row leaves that chip to it.
-  const readyUrl = props.kind === "launch" ? live.readyUrl : null;
+  const ready = props.kind === "launch" ? live.ready : null;
   const pullRequests =
-    readyUrl === null ? live.pullRequests : live.pullRequests.filter((pr) => pr.url !== readyUrl);
+    ready === null ? live.pullRequests : live.pullRequests.filter((pr) => pr.url !== ready.url);
 
   const row = (
     <div
@@ -174,11 +171,11 @@ export function ForkThreadHookRow(props: {
       {activity === null ? null : <span className="min-w-0 truncate text-xs">{activity}</span>}
     </div>
   );
-  if (readyUrl === null || thread === null) return row;
+  if (ready === null || thread === null) return row;
   return (
     <div className="flex max-w-full flex-col gap-1">
       {row}
-      <ForkThreadReadyToMerge thread={thread} onOpenThread={openThread} />
+      <ForkThreadReadyToMerge thread={thread} link={ready} onOpenThread={openThread} />
     </div>
   );
 }

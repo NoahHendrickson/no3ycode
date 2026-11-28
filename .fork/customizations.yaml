@@ -5958,9 +5958,12 @@
     only watches left counts as idle).
     Then a launch row hands that PR to one slim line under it (ForkThreadReadyToMerge, owner's
     request 2026-11-27: light, made of existing controls, no card chrome): the composer's PR chip,
-    "Ready to merge", the Merge PR pill's look, which merges on the host after a confirm (the
-    owner's click is the approval; held while auto-merge is armed, as the composer pill is), and
-    a quiet Go to thread. A launched thread shows once, so the line does too.
+    "Ready to merge", a Merge PR chip, which merges on the host after a confirm (the owner's click
+    is the approval; held while auto-merge is armed, as the composer pill is, and left to the PR
+    page for a stacked PR or a host without merge, as the PR list's Merge is), and a quiet Go to
+    thread. threadRowLiveState alone decides readiness and hands the line its link (the chip is
+    ComposerPullRequestChip ThreadPullRequestChip, shared with the composer). A launched thread
+    shows once, so the line does too.
     The row opens
     the thread in a split beside the conversation (splitThreadStore.pair through
     morphSplitPairs) where the window can split, else navigates to it; a chip opens its PR. A run
@@ -8278,7 +8281,8 @@
     always shows. A run hides from its prompt on, or from the work report that
     woke it, so its reads ("Worked for") go too; a resumed subagent card
     listed earlier stays in its turn. A thread's last finished report keeps its notice as the
-    thread's one row unless the thread has a launch row in the conversation
+    thread's one row unless the thread has a launch row in the conversation (which reports stay
+    is fork-thread-launch-cards lastThreadReportIds, passed in; reportStartsRun is per mode)
     (maintainer's report, 2026-11-27: each quiet wake stacked a row and a "Worked for"). ChatView's text-less entries (prompt history, follow) still
     hold them, as they cannot tell a quiet reply apart.
     The tags and the bot predicate live in @t3tools/shared/forkBotTags, read

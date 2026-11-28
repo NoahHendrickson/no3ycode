@@ -1,4 +1,9 @@
-import type { EnvironmentId, PullRequestChecksState, ScopedThreadRef } from "@t3tools/contracts";
+import type {
+  EnvironmentId,
+  PullRequestChecksState,
+  ScopedThreadRef,
+  ThreadPullRequestLink,
+} from "@t3tools/contracts";
 import type { ComponentProps, MouseEvent } from "react";
 
 import { ComposerControl } from "~/components/chat/ComposerControl";
@@ -57,32 +62,12 @@ export function ComposerPullRequestChip(props: {
   );
   const openPrLink = useOpenPrLink(threadRef);
   const prUrl = pr.url;
-  const state = resolvePullRequestChipState({
-    badge: pr.badge,
-    pr: pr.pr,
-    pullRequests: thread?.pullRequests ?? [],
-  });
   const autoMerge = useThreadAutoMerge(threadRef.environmentId, thread?.projectId, pr.currentLink);
   return (
     <>
-      <ThreadPullRequestBadgeControl
-        render={
-          <PullRequestChipControl
-            checks={resolvePullRequestChipChecks({
-              badge: pr.badge,
-              snapshot: pr.currentLink?.snapshot,
-            })}
-            size="xs"
-            data-fork-composer-status-chip="pull-request"
-            data-fork-pr-chip
-            data-pr-state={state}
-          />
-        }
-        badge={pr.badge}
+      <ThreadPullRequestChip
+        pr={pr}
         pullRequests={thread?.pullRequests ?? []}
-        number={pr.number}
-        url={pr.url}
-        status={pr.status}
         onOpenList={
           props.canOpenList
             ? () => useRightPanelStore.getState().open(threadRef, "pull-requests")
@@ -101,6 +86,45 @@ export function ComposerPullRequestChip(props: {
         />
       ) : null}
     </>
+  );
+}
+
+/** The thread's PR as the composer's chip: the shared badge, filled by the PR's state, with an
+ * open PR's CI pill. A conversation's thread row draws it too (fork-thread-launch-cards). */
+export function ThreadPullRequestChip(props: {
+  readonly pr: ReturnType<typeof useThreadDisplayedPullRequest>;
+  readonly pullRequests: ReadonlyArray<ThreadPullRequestLink>;
+  /** Null where the list has nowhere to open (an embedded thread). */
+  readonly onOpenList: (() => void) | null;
+  readonly onOpenPullRequest: (event: MouseEvent<HTMLElement>, url?: string) => void;
+}) {
+  const { pr } = props;
+  return (
+    <ThreadPullRequestBadgeControl
+      render={
+        <PullRequestChipControl
+          checks={resolvePullRequestChipChecks({
+            badge: pr.badge,
+            snapshot: pr.currentLink?.snapshot,
+          })}
+          size="xs"
+          data-fork-composer-status-chip="pull-request"
+          data-fork-pr-chip
+          data-pr-state={resolvePullRequestChipState({
+            badge: pr.badge,
+            pr: pr.pr,
+            pullRequests: props.pullRequests,
+          })}
+        />
+      }
+      badge={pr.badge}
+      pullRequests={props.pullRequests}
+      number={pr.number}
+      url={pr.url}
+      status={pr.status}
+      onOpenList={props.onOpenList}
+      onOpenPullRequest={props.onOpenPullRequest}
+    />
   );
 }
 
