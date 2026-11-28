@@ -146,7 +146,7 @@ const NEON = {
 };
 
 /** The same threads on two lines each, as a sprint's and a coordinator's panels list them: the
-    pull request as the composer's chip (its row variant), the thread's earlier merged ones (two,
+    pull request as the composer's chip (its row variant), the thread's earlier merged ones (one,
     then "+N"), then the model the thread runs. */
 export const Compact: Story = {
   render: () => (

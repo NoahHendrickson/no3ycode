@@ -7,6 +7,7 @@ import type { EnvironmentThreadShell } from "./state/models.ts";
 import { sourceControlClients } from "./sourceControlClients.ts";
 import {
   resolveThreadCurrentPullRequestLink,
+  threadPullRequestKeysEqual,
   visibleThreadPullRequests,
 } from "./threadPullRequests.ts";
 import type {
@@ -66,7 +67,7 @@ export function botThreadMergedPullRequests(
     .filter(
       (link) =>
         link.snapshot?.state === "merged" &&
-        (current === null || !samePullRequest(link.url, current.url)),
+        (current === null || !threadPullRequestKeysEqual(link, current)),
     )
     .sort((left, right) => mergedAt(right) - mergedAt(left))
     .map((link) => ({ url: link.url, number: link.number, snapshot: link.snapshot, branch: null }));

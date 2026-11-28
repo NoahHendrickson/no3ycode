@@ -37,8 +37,8 @@ export function BotThreadsCompactRow(props: {
   );
 }
 
-/** Merged chips after the current one; more fold into "+N". */
-const MERGED_CHIP_LIMIT = 2;
+/** Merged chips after the current one; more fold into "+N", so the line fits the narrowest panel. */
+const MERGED_CHIP_LIMIT = 1;
 
 /** @public — the row as drawn, from plain props; Storybook renders it on its own. Two lines per
     thread: mark, title and time, then its pull request as the composer's chip (its row variant),
@@ -76,7 +76,7 @@ export function BotThreadsCompactRowView(
               </span>
             )}
             {model === null ? null : (
-              <span className="flex min-w-0 items-center gap-1 text-sm leading-5">
+              <span className="flex min-w-0 items-center gap-1 overflow-hidden text-sm leading-5">
                 <ForkProviderMarkOr
                   driver={model.driver}
                   size="0.875rem"
