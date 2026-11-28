@@ -176,14 +176,18 @@ export function isForkDelegatedQuestionReport(entry: TimelineEntry): boolean {
   return item?.type === "notification" && forkDelegatedQuestionOf(item) !== null;
 }
 
-/** A work report of a thread's question or approval, which carries the card the owner answers on. */
-export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
-  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+/** A timeline entry read as a work report: null for anything but a report's notification. */
+export function forkWorkReportOfEntry(entry: TimelineEntry): ForkWorkReport | null {
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return null;
   const item = entry.entry.projectedItem?.item;
-  const report = forkWorkReportOf({
+  return forkWorkReportOf({
     id: entry.id,
     summary: entry.entry.label,
     source: item?.type === "notification" ? item.source : undefined,
   });
-  return report?.requestKind != null;
+}
+
+/** A work report of a thread's question or approval, which carries the card the owner answers on. */
+export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
+  return forkWorkReportOfEntry(entry)?.requestKind != null;
 }

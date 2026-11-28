@@ -92,6 +92,7 @@ import { type QuietWakeMode, quietBotWakeRunIds, withoutRuns } from "~/custom/bo
 import {
   type ForkThreadLaunch,
   forkThreadLaunchListsEqual,
+  launchedThreadReportIds,
   placeLaunchesUnderReplies,
 } from "~/custom/threadLaunchCards/threadLaunch.logic";
 /* fork:end fork-thread-launch-cards */
@@ -1787,9 +1788,18 @@ export function deriveMessagesTimelineRows(
      shows, since it explains the request. */
   const forkLiveReplies = input.forkHoldLiveReplies === true ? forkLiveReplyIds(input) : [];
   const timelineEntries = timelineRowEntries(input, forkLiveReplies);
-  const forkUnshownReplyId =
-    input.forkShowLatestHeldReply === true ? null : (forkLiveReplies.at(-1) ?? null);
+  // Entries that stay, so they still split turns, but draw no row.
+  const forkUnshownEntryIds = new Set<string>();
+  const forkHeldReplyId =
+    input.forkShowLatestHeldReply === true ? undefined : forkLiveReplies.at(-1);
+  if (forkHeldReplyId !== undefined) forkUnshownEntryIds.add(forkHeldReplyId);
   /* fork:end fork-quiet-live-turn */
+  /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
+  const forkKeepRequestReports = input.forkKeepRequestReports === true;
+  for (const id of launchedThreadReportIds(timelineEntries, forkKeepRequestReports)) {
+    forkUnshownEntryIds.add(id);
+  }
+  /* fork:end fork-thread-launch-cards */
   const embeddedResultRunIds = new Set<RunId>();
   for (const entry of timelineEntries) {
     if ((entry.kind === "html-render" || entry.kind === "mcp-app") && entry.runId !== null) {
@@ -2191,6 +2201,9 @@ export function deriveMessagesTimelineRows(
     if (activeWorkEntryIds.has(timelineEntry.id)) {
       continue;
     }
+    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
+    if (forkUnshownEntryIds.has(timelineEntry.id)) continue;
+    /* fork:end fork-quiet-live-turn */
 
     if (
       timelineEntry.kind === "work" &&
@@ -2494,9 +2507,6 @@ export function deriveMessagesTimelineRows(
       continue;
     }
 
-    /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
-    if (timelineEntry.id === forkUnshownReplyId) continue;
-    /* fork:end fork-quiet-live-turn */
     const compactionRunId = timelineEntry.message.runId;
     const compactionRun =
       compactionRunId !== null && isCompactionCommandMessage(timelineEntry.message);

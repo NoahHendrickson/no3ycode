@@ -17,8 +17,10 @@ import { resolveT3McpToolId } from "@t3tools/shared/t3McpToolPresentation";
 import { compactDynamicToolOutput } from "@t3tools/shared/toolOutput";
 
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import type { TimelineEntry } from "~/session-logic";
 
 import { resolvePullRequestChipState } from "../composerPullRequestChip.logic";
+import { forkWorkReportOfEntry, forkWorkReportThreadId } from "../forkWorkReports";
 
 export interface ForkThreadLaunch {
   /** The input's title; null when an oversized input was cut down on the wire. */
@@ -166,6 +168,27 @@ export function threadLaunchPullRequests(thread: {
 }
 
 type LaunchRow = Extract<MessagesTimelineRow, { kind: "fork-thread-launch" }>;
+
+/** A thread's row shows once, under the reply that launched it, and reads its status live there,
+    so a later report of that thread draws no row; a question or approval keeps its card where the
+    conversation answers inline. The entries stay: a report notice starts its wake's turn. */
+export function launchedThreadReportIds(
+  entries: ReadonlyArray<TimelineEntry>,
+  keepRequestReports: boolean,
+): ReadonlySet<string> {
+  const launched = new Set<string>();
+  const hidden = new Set<string>();
+  for (const entry of entries) {
+    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
+      launched.add(entry.launch.threadId);
+    }
+    const report = forkWorkReportOfEntry(entry);
+    if (report === null || (keepRequestReports && report.requestKind !== null)) continue;
+    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
+    if (threadId !== null && launched.has(threadId)) hidden.add(entry.id);
+  }
+  return hidden;
+}
 
 /** A turn's launched threads drawn by the turn's last reply, as one group, between its text and
     its actions, so the reply that says it started them sits above them and the three hover as one.

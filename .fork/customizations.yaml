@@ -5891,7 +5891,8 @@
     Threads hang off the replies they belong to, as a light tree (maintainer's request,
     2026-11-27, after Claude Projects' coordinator video): the threads a reply started hang under
     it, one hooked row each, and a reply that a thread's work report started opens with that
-    thread's row. Any thread, sprint or Petal shows them.
+    thread's row unless the thread already shows under the reply that launched it: each thread
+    shows once. Any thread, sprint or Petal shows them.
 
     Launches: session-logic lifts each `t3_thread_launch` call out of the work stream into a
     "fork-thread-launch" entry (custom/threadLaunchCards/threadLaunch.logic: the wire keeps only
@@ -5910,6 +5911,12 @@
     so a row never subscribes to every thread shell). All reading of report ids and summaries is in
     custom/forkWorkReports. TimelineWorkEntryRow draws the notification as that thread's row,
     title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
+    A report of a thread the conversation launched adds nothing its launch row, which reads the
+    thread live, does not already show, so deriveMessagesTimelineRows draws no row for it
+    (launchedThreadReportIds in threadLaunch.logic, added to fork-quiet-live-turn's
+    forkUnshownEntryIds; maintainer's bug report, 2026-11-27: the row drew twice), except a
+    question or approval where the host answers inline. The entry stays: a report notice is its
+    wake's turn boundary, which the folds and the working row read.
 
     Questions and approvals: only where the conversation has a host that answers inline
     (custom/threadLaunchCards/forkThreadHost, a React context ThreadTimeline sets; a sprint
@@ -6759,7 +6766,8 @@
     everything after the response boundary, except a revealed message, a
     steer's answer and a final-answer reply) until the turn ends, except the
     newest, which stays in the entries but draws no row
-    (deriveMessagesTimelineRows skips it). It still splits the turn, so the
+    (deriveMessagesTimelineRows skips it: forkUnshownEntryIds, the one set of entries that
+    stay but draw no row, which fork-thread-launch-cards adds to). It still splits the turn, so the
     steps before it close into one summary row whose counts climb with each
     update (a row per stretch was tried in v0.1.112 and rejected Nov 26: too
     many rows on long turns), and the steps since it fold into the status line
