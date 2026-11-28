@@ -2,7 +2,11 @@ import type { EnvironmentThreadShell } from "./state/models.ts";
 import { EnvironmentId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveBotDigestLinks, waitingQuestionThread } from "./forkBotDigestLinks.ts";
+import {
+  botThreadRowPullRequests,
+  resolveBotDigestLinks,
+  waitingQuestionThread,
+} from "./forkBotDigestLinks.ts";
 import { parseBotDigest } from "./forkBotDigest.ts";
 
 const environmentId = EnvironmentId.make("env-1");
@@ -87,6 +91,42 @@ describe("resolveBotDigestLinks", () => {
     expect(links.pullRequests).toEqual([
       { url: branch.url, number: 5, snapshot: null, branch, thread: docs },
     ]);
+  });
+});
+
+describe("botThreadRowPullRequests", () => {
+  const pr = (number: number, state: string, mergedAt: string | null = null) => ({
+    url: `https://github.com/acme/app/pull/${number}`,
+    number,
+    host: "github.com",
+    repository: "acme/app",
+    linkedAt: "2026-11-01T00:00:00.000Z",
+    source: "manual",
+    stack: null,
+    snapshot: { ...SNAPSHOT, isDraft: false, state, mergedAt, updatedAt: mergedAt },
+  });
+
+  it("lists the current open one, then the merged ones newest merge first, leaving closed and dismissed out", () => {
+    const thread = shell("thread-1", {
+      pullRequests: [
+        pr(560, "merged", "2026-11-20T00:00:00.000Z"),
+        pr(564, "open"),
+        pr(562, "merged", "2026-11-27T00:00:00.000Z"),
+        pr(563, "closed"),
+        { ...pr(561, "merged", "2026-11-26T00:00:00.000Z"), source: "stack-dismissed" },
+      ],
+    } as unknown as Partial<EnvironmentThreadShell>);
+    expect(botThreadRowPullRequests(thread).map((link) => link.number)).toEqual([564, 562, 560]);
+  });
+
+  it("lists the merged one the row already shows once when none is open", () => {
+    const thread = shell("thread-1", {
+      pullRequests: [
+        pr(560, "merged", "2026-11-20T00:00:00.000Z"),
+        pr(562, "merged", "2026-11-27T00:00:00.000Z"),
+      ],
+    } as unknown as Partial<EnvironmentThreadShell>);
+    expect(botThreadRowPullRequests(thread).map((link) => link.number)).toEqual([562, 560]);
   });
 });
 

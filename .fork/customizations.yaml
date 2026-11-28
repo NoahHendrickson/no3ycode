@@ -8937,7 +8937,9 @@
     ChatView picks one or the other once. Its Threads list draws each thread on two lines
     (bots/BotThreadsCompactRow, shared with fork-coordinator-threads: mark, title and time; then
     the PR as the composer's chip in its row variant, ComposerPullRequestChip PullRequestRowChip,
-    and the provider mark, model and effort, ForkSubagentGroup useForkThreadModel; both bot rows
+    then its newest other merged PR as a merged chip with the rest folded into "+N"
+    (fork-bot-digest-links botThreadRowPullRequests; one merged chip so the line fits the 224px
+    minimum), and the provider mark, model and effort, ForkSubagentGroup useForkThreadModel; both bot rows
     draw in BotThreadsRowFrame; owner's Figma design, Basic UI kit 551:2943,
     2026-11-27), leaving the checkout to the thread.
 

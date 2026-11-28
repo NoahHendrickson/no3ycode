@@ -3,6 +3,7 @@ import { EnvironmentId, ProviderDriverKind } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
+import { pullRequestLookOf } from "~/custom/bots/BotPullRequestMark";
 import { BotThreadsCompactRowView } from "~/custom/bots/BotThreadsCompactRow";
 import { BotThreadsRowView } from "~/custom/bots/BotThreadsPanel";
 import { BotThreadsPanelControls } from "~/custom/bots/BotThreadsPanelControls";
@@ -123,6 +124,12 @@ const CHIP_STATE = {
   "Merged PR": "merged",
   "Closed PR": "closed",
 } as const;
+const MERGED = pullRequestLookOf({ state: "merged", isDraft: false, checksState: null });
+/** What each row has already landed: one merged, then more than the row shows. */
+const MERGED_BEFORE: Partial<Record<string, ReadonlyArray<number>>> = {
+  "Open PR": [358],
+  "Draft PR": [355, 352, 349, 344],
+};
 const STORY_ENVIRONMENT = EnvironmentId.make("story");
 const OPUS = {
   environmentId: STORY_ENVIRONMENT,
@@ -140,7 +147,8 @@ const NEON = {
 };
 
 /** The same threads on two lines each, as a sprint's and a coordinator's panels list them: the
-    pull request as the composer's chip (its row variant), then the model the thread runs. */
+    pull request as the composer's chip (its row variant), the thread's earlier merged ones (one,
+    then "+N"), then the model the thread runs. */
 export const Compact: Story = {
   render: () => (
     <>
@@ -149,14 +157,17 @@ export const Compact: Story = {
           key={name}
           {...row}
           seed={name}
-          pullRequest={
+          pullRequests={
             row.pullRequest === null
-              ? null
-              : {
-                  ...row.pullRequest,
-                  chipState: CHIP_STATE[name as keyof typeof CHIP_STATE],
-                  checks: name === "Open PR" ? "pending" : null,
-                }
+              ? []
+              : [
+                  {
+                    ...row.pullRequest,
+                    chipState: CHIP_STATE[name as keyof typeof CHIP_STATE],
+                    checks: name === "Open PR" ? "pending" : null,
+                  },
+                  ...(MERGED_BEFORE[name] ?? []).map((number) => ({ number, ...MERGED })),
+                ]
           }
           model={name === "Closed PR" ? NEON : OPUS}
         />

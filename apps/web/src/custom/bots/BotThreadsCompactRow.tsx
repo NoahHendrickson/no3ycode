@@ -1,5 +1,5 @@
 /**
- * A bot panel's thread row on two lines (mark, title and time; then its pull request and model) —
+ * A bot panel's thread row on two lines (mark, title and time; then its pull requests and model) —
  * the sprint panel's (`fork-sprints`) and the coordinator's (`fork-coordinator-threads`); a Petal's
  * panel keeps BotThreadsPanel's row.
  */
@@ -29,26 +29,46 @@ export function BotThreadsCompactRow(props: {
   );
 }
 
+/** The thread's own chip and one merged one; more fold into "+N", so the line fits the narrowest
+    panel. */
+const ROW_CHIP_LIMIT = 2;
+
 /** @public — the row as drawn, from plain props; Storybook renders it on its own. Two lines per
-    thread: mark, title and time, then its pull request as the composer's chip (its row variant)
-    and the model it runs. */
+    thread: mark, title and time, then its pull request as the composer's chip (its row variant),
+    its other merged ones, and the model it runs. */
 export function BotThreadsCompactRowView(
   props: Omit<ComponentProps<typeof BotThreadsRowFrame>, "density" | "detail"> & {
-    readonly pullRequest: ComponentProps<typeof PullRequestRowChip> | null;
+    /** Its own pull request, then its other merged ones, newest first. */
+    readonly pullRequests: ReadonlyArray<ComponentProps<typeof PullRequestRowChip>>;
     readonly model: ForkThreadModel | null;
   },
 ) {
-  const { pullRequest, model } = props;
+  const { pullRequests, model } = props;
+  const hiddenMerged = pullRequests.length - ROW_CHIP_LIMIT;
   return (
     <BotThreadsRowFrame
       {...props}
       density="compact"
       detail={
-        pullRequest === null && model === null ? null : (
+        pullRequests.length === 0 && model === null ? null : (
           <span className="flex min-w-0 items-center gap-4">
-            {pullRequest === null ? null : <PullRequestRowChip {...pullRequest} />}
+            {pullRequests.length === 0 ? null : (
+              <span className="flex shrink-0 items-center gap-1">
+                {pullRequests.slice(0, ROW_CHIP_LIMIT).map((pullRequest, index) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- positional: own chip, then newest merged
+                  <PullRequestRowChip key={index} {...pullRequest} />
+                ))}
+                {hiddenMerged > 0 ? (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    <span aria-hidden>+{hiddenMerged}</span>
+                    {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
+                    <span className="sr-only">{`${hiddenMerged} more merged`}</span>
+                  </span>
+                ) : null}
+              </span>
+            )}
             {model === null ? null : (
-              <span className="flex min-w-0 items-center gap-1 text-sm leading-5">
+              <span className="flex min-w-0 items-center gap-1 overflow-hidden text-sm leading-5">
                 <ForkProviderMarkOr
                   driver={model.driver}
                   size="0.875rem"
