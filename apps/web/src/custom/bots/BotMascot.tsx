@@ -92,7 +92,7 @@ export function BotEmptyConversation(props: {
   const threadRef = parseScopedThreadKey(props.threadKey);
   const shell = useQuietThreadShell(threadRef);
   if (shell !== null && threadRef !== null && isSprintThread(shell.source)) {
-    return <SprintEmptyConversation sprintRef={threadRef} title={shell.title} />;
+    return <SprintEmptyConversation sprintRef={threadRef} />;
   }
   if (shell === null || !isPetalThread(shell.source)) return props.fallback;
   return (
