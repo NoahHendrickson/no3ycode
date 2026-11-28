@@ -19,6 +19,20 @@ export function workReportEntry(
   runId: string,
   request?: ForkWorkRequestKind,
 ): TimelineEntry {
+  return reportEntry(threadId, runId, request, true);
+}
+
+/** A finished run's report from an older server, whose source names no thread: only its id does. */
+export function legacyWorkReportEntry(threadId: string, runId: string): TimelineEntry {
+  return reportEntry(threadId, runId, undefined, false);
+}
+
+function reportEntry(
+  threadId: string,
+  runId: string,
+  request: ForkWorkRequestKind | undefined,
+  named: boolean,
+): TimelineEntry {
   const reported = request === undefined ? `${runId}:completed` : "request-1";
   const id = `turn-item:message:${encodeURIComponent(
     `message:fork-bot-work-report:${threadId}:${reported}`,
@@ -66,7 +80,7 @@ export function workReportEntry(
           completedAt: time,
           updatedAt: time,
           type: "notification",
-          source: { kind: "system", forkWorkReport },
+          source: named ? { kind: "system", forkWorkReport } : { kind: "system" },
           outcome: "completed",
           summary,
         },
