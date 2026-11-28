@@ -20,12 +20,12 @@ describe("fork guard: fork-usage-page", () => {
     expect(isAppModalPage("/settings/general")).toBe(true);
   });
 
-  it("renders Usage in the page shell, opened from the sidebar's Usage row", () => {
+  it("renders Usage in the page shell, opened from the sidebar footer's Usage icon", () => {
     const page = readSibling("../components/usage/UsagePage.tsx");
     expect(page).not.toContain("<AppRouteModal");
     expect(page).toContain('<SidebarInset className="h-dvh min-h-0 overflow-hidden');
     expect(page).toContain('data-fork-stage-card=""');
-    const rows = readSibling("../custom/SidebarV2ChromeRows.tsx");
-    expect(rows).toContain('void navigate({ to: "/usage" });');
+    const chrome = readSibling("../components/sidebar/SidebarChrome.tsx");
+    expect(chrome).toContain('void navigate({ to: "/usage" });');
   });
 });

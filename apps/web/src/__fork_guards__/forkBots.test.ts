@@ -274,6 +274,10 @@ describe("fork guard: fork-bots", () => {
 
   it("paints Bots above a collapsible Threads section, with the bots' own density", () => {
     expect(sidebar).toContain("<SidebarV2BotsRow");
+    // Hidden while empty, unless the chrome's New petal row is naming one.
+    expect(sidebar).toMatch(
+      /botThreads\.length === 0 && !namingBot \? null : \(\s*<SidebarV2BotsRow/u,
+    );
     expect(sidebar).toMatch(/renderOneThreadRow\(bot, "active", \{\s+petalView,/);
     expect(sidebar).toContain('options.petalView === "compact") ??');
     expect(sidebar).not.toContain("createPortal");

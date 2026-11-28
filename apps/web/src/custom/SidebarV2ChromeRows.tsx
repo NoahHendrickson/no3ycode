@@ -1,5 +1,5 @@
 /**
- * The Sidebar V2 control rows — search, new agent, usage, automations, pull
+ * The Sidebar V2 control rows — search, new agent, new petal, new sprint, automations, pull
  * requests, and the Threads row (add project, sort, filter) — see `.fork/customizations.yaml#fork-sidebar-chrome`.
  *
  * Metrics from Figma t3-fork node 364:11246: the action rows are the
@@ -40,12 +40,13 @@ import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "./icons/lucid
 // file is fork-owned, so there is no upstream import site to preserve.
 import {
   ArrowUpDownIcon,
-  ChartDonutIcon,
+  BotIcon,
   CircleSlashIcon,
   EllipsisVerticalIcon,
   FoldersIcon,
   GitPullRequestIcon,
   NavigationArrowIcon,
+  RocketIcon,
   SettingsIcon,
   ZapIcon,
 } from "./icons/lucide-hugeicons";
@@ -113,8 +114,8 @@ const CHROME_ACTION = "h-auto w-full";
 
 type ChromeIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
-/** New agent, Usage, Automations, and Pull requests share one shape; Search keeps its own
-    (a div label, see ChromeSearchRow). onClick is optional so Usage can hand
+/** New agent, New petal, New sprint, Automations, and Pull requests share one shape; Search
+    keeps its own (a div label, see ChromeSearchRow). onClick is optional so a row can hand
     the same button to PopoverTrigger / DialogTrigger via `render`. Extra
     props (ref, aria-expanded) forward onto the button. */
 function ChromeLabeledAction({
@@ -138,9 +139,8 @@ function ChromeLabeledAction({
   readonly disabled?: boolean | undefined;
   /** Holds the row in its hover fill. The New agent row is "active" while the
       open draft has no project yet — the column it opened is still the
-      row's own until a project is chosen and the draft gets a card. Usage
-      uses the same fill while the overlay is open, Scheduled while its page
-      is the one on screen. */
+      row's own until a project is chosen and the draft gets a card. Scheduled
+      uses the same fill while its page is the one on screen. */
   readonly active?: boolean | undefined;
   readonly onClick?: () => void;
   readonly trailing?: ReactNode;
@@ -208,7 +208,7 @@ function ChromeSearchRow(props: { readonly commandPaletteShortcutLabel: string |
   );
 }
 
-/** Search + New agent + Usage + Automations + Pull requests share one group so Figma's
+/** Search + New agent + New petal + New sprint + Automations + Pull requests share one group so Figma's
  *  stacked action block (364:11246) does not pick up inter-group padding: the
  *  block starts flush under the header and stacks its rows 2px apart inside
  *  the panel's 8px inset. */
@@ -221,6 +221,10 @@ export function SidebarV2ChromeActionRows(props: {
       chosen, which is when the draft leaves this row for a card. */
   readonly newThreadActive: boolean;
   readonly onNewThread: () => void;
+  /** Names a new Petal in its section (fork-bots). */
+  readonly onNewBot: () => void;
+  /** Opens the New sprint dialog (fork-sprints). */
+  readonly onNewSprint: () => void;
 }) {
   const newThreadDisabledReason = props.newThreadDisabled
     ? "Add a project to start an agent"
@@ -244,7 +248,20 @@ export function SidebarV2ChromeActionRows(props: {
         active={props.newThreadActive}
         onClick={props.onNewThread}
       />
-      <ChromeUsageRow />
+      <ChromeLabeledAction
+        icon={BotIcon}
+        label="New petal"
+        ariaLabel="New petal"
+        testId="sidebar-v2-new-bot"
+        onClick={props.onNewBot}
+      />
+      <ChromeLabeledAction
+        icon={RocketIcon}
+        label="New sprint"
+        ariaLabel="New sprint"
+        testId="sidebar-v2-new-sprint"
+        onClick={props.onNewSprint}
+      />
       <ChromeAutomationsRow />
       <ChromePullRequestsRow />
     </SidebarChromeGroup>
@@ -272,26 +289,6 @@ export function SidebarV2ChatActionRows() {
         onClick={() => void startNewChat()}
       />
     </SidebarChromeGroup>
-  );
-}
-
-/** Opens the /usage page, as upstream's footer icon does, and lights while it is open. */
-function ChromeUsageRow() {
-  const navigate = useNavigate();
-  const { isMobile, setOpenMobile } = useSidebar();
-  const isOnUsage = useLocation({ select: (location) => location.pathname === "/usage" });
-  return (
-    <ChromeLabeledAction
-      icon={ChartDonutIcon}
-      label="Usage"
-      ariaLabel="Usage"
-      testId="sidebar-v2-usage"
-      active={isOnUsage}
-      onClick={() => {
-        if (isMobile) setOpenMobile(false);
-        void navigate({ to: "/usage" });
-      }}
-    />
   );
 }
 

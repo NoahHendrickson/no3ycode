@@ -3,7 +3,6 @@
  * density, naming a new bot, and what folds it and the Threads list under it.
  */
 import * as Schema from "effect/Schema";
-import { PlusIcon } from "../icons/lucide-hugeicons";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
@@ -196,12 +195,11 @@ export function PetalViewOptionsMenu(props: {
   );
 }
 
-/** The Bots section above the Threads row, in its shape: label, fold chevron, view options
-    and a plus that names a new bot. Its cards are its children. */
+/** The Bots section above the Threads row, in its shape: label, fold chevron and view options.
+    Its cards are its children; the sidebar's New petal row opens the naming row. */
 export function SidebarV2BotsRow(props: {
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
-  readonly onNewBot: () => void;
   readonly layout: PetalLayout;
   readonly onLayoutChange: (layout: PetalLayout) => void;
   /** The bots' own card density, independent of the threads' Compact cards; the list's alone. */
@@ -253,22 +251,6 @@ export function SidebarV2BotsRow(props: {
               onCompactCardsChange={props.onCompactCardsChange}
             />
           </Menu>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <SidebarChromeButton
-                  shape="icon"
-                  type="button"
-                  aria-label="New petal"
-                  data-testid="sidebar-v2-new-bot"
-                  onClick={props.onNewBot}
-                />
-              }
-            >
-              <PlusIcon className="size-4 shrink-0" />
-            </TooltipTrigger>
-            <TooltipPopup side="right">New petal</TooltipPopup>
-          </Tooltip>
         </div>
       </div>
       {/* The thread list's tooltip timing, so a bot card's hover card opens like a thread's. */}

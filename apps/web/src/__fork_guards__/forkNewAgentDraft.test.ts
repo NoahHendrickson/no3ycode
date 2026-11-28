@@ -357,10 +357,6 @@ describe("fork guard: fork-new-agent-draft", () => {
     expect(chatView).toMatch(/observeResize\([^)]*updateHeight/u);
   });
 
-  it("keeps Usage as the chrome's fourth row", () => {
-    expect(chromeRows).toContain("<ChromeUsageRow />");
-  });
-
   it("keeps the folder mark over upstream's title monogram where the fork names one", () => {
     // Upstream #11572 draws a monogram for any titled project before it looks
     // at fallbackIcon, which would hide the launchpad's and the draft project

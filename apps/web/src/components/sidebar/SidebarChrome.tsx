@@ -239,16 +239,7 @@ function SidebarUtilityItem({
   );
 }
 
-const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
-  /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome
-     The V2 sidebar carries Usage as a labeled row in its chrome, so its footer
-     drops the icon rather than offering the same door twice. Surfaces without
-     that row (the split-threads pane) keep it. */
-  hideUsage = false,
-}: {
-  hideUsage?: boolean;
-  /* fork:end fork-sidebar-chrome */
-} = {}) {
+const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
   const navigate = useNavigate();
   const navigateToMainApp = useNavigateToMainApp();
   const gt = useGT();
@@ -312,15 +303,11 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
               onClick={handleIssuesClick}
             />
           ) : null}
-          {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
-          {hideUsage ? null : (
-            <SidebarUtilityItem
-              icon={<ChartNoAxesColumnIcon />}
-              label={gt("Usage")}
-              onClick={handleUsageClick}
-            />
-          )}
-          {/* fork:end fork-sidebar-chrome */}
+          <SidebarUtilityItem
+            icon={<ChartNoAxesColumnIcon />}
+            label={gt("Usage")}
+            onClick={handleUsageClick}
+          />
         </>
       )}
       {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
@@ -335,13 +322,7 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu({
   );
 });
 
-export const SidebarChromeFooter = memo(function SidebarChromeFooter({
-  /* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */
-  hideUsage = false,
-}: {
-  hideUsage?: boolean;
-  /* fork:end fork-sidebar-chrome */
-}) {
+export const SidebarChromeFooter = memo(function SidebarChromeFooter() {
   return (
     <SidebarFooter>
       <SidebarProviderUpdatePill />
@@ -349,9 +330,7 @@ export const SidebarChromeFooter = memo(function SidebarChromeFooter({
       {/* fork:begin fork-music-panel — see .fork/customizations.yaml#fork-music-panel */}
       <SidebarMusicStrip />
       {/* fork:end fork-music-panel */}
-      {/* fork:begin fork-sidebar-chrome — see .fork/customizations.yaml#fork-sidebar-chrome */}
-      <SidebarUtilityMenu hideUsage={hideUsage} />
-      {/* fork:end fork-sidebar-chrome */}
+      <SidebarUtilityMenu />
     </SidebarFooter>
   );
 });

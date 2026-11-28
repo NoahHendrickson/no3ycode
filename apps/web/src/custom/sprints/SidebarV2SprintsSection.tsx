@@ -1,7 +1,8 @@
 /**
  * The sidebar's Sprints section and the dialog that starts one — see
  * `.fork/customizations.yaml#fork-sprints`. The row has the Petals row's shape: a label that
- * folds the section and a plus. Its cards are ordinary thread cards, its children.
+ * folds the section. Its cards are ordinary thread cards, its children. The sidebar's New sprint
+ * row opens the dialog.
  */
 import { scopedProjectKey, scopeProjectRef } from "@t3tools/client-runtime/environment";
 import type { EnvironmentProject } from "@t3tools/client-runtime/state/models";
@@ -29,13 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { useScratchProject } from "~/hooks/useScratchProject";
 import { useProjects } from "~/state/entities";
 
-import { ChevronDownIcon, PlusIcon, XIcon } from "../icons/lucide-hugeicons";
+import { ChevronDownIcon, XIcon } from "../icons/lucide-hugeicons";
 import { scheduledTaskDraftSelection } from "../scheduled/scheduledTaskModel.logic";
-import { SidebarChromeButton } from "../SidebarChromeButton";
 import { SidebarV2ListSection } from "../SidebarV2ListSection";
 import { sprintDefaultModel } from "./sprintModel";
 import { SprintModelPicker } from "./SprintModelPicker";
@@ -45,11 +44,8 @@ import { useSprintModelChoices } from "./useSprintModelChoices";
 export function SidebarV2SprintsRow(props: {
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
-  /** The project a new sprint starts in, when the open thread has one. */
-  readonly defaultProject: { readonly environmentId: string; readonly projectId: string } | null;
   readonly children: ReactNode;
 }) {
-  const [creating, setCreating] = useState(false);
   return (
     <SidebarV2ListSection
       data-fork-sprints-row=""
@@ -57,32 +53,6 @@ export function SidebarV2SprintsRow(props: {
       testId="sidebar-v2-sprints-section-toggle"
       collapsed={props.collapsed}
       onToggleCollapsed={props.onToggleCollapsed}
-      actions={
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <SidebarChromeButton
-                shape="icon"
-                type="button"
-                aria-label="New sprint"
-                data-testid="sidebar-v2-new-sprint"
-                onClick={() => setCreating(true)}
-              />
-            }
-          >
-            <PlusIcon className="size-4 shrink-0" />
-          </TooltipTrigger>
-          <TooltipPopup side="right">New sprint</TooltipPopup>
-        </Tooltip>
-      }
-      after={
-        creating ? (
-          <NewSprintDialog
-            defaultProject={props.defaultProject}
-            onDone={() => setCreating(false)}
-          />
-        ) : null
-      }
     >
       {props.children}
     </SidebarV2ListSection>
@@ -105,7 +75,8 @@ function useSprintProjects(): ReadonlyArray<EnvironmentProject> {
 const projectKeyOf = (project: EnvironmentProject) =>
   scopedProjectKey(scopeProjectRef(project.environmentId, project.id));
 
-function NewSprintDialog(props: {
+export function NewSprintDialog(props: {
+  /** The project a new sprint starts in, when the open thread has one. */
   readonly defaultProject: { readonly environmentId: string; readonly projectId: string } | null;
   readonly onDone: () => void;
 }) {

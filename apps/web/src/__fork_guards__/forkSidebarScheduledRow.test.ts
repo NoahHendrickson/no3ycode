@@ -3,10 +3,10 @@
  * Fork guard — see `.fork/README.md` §4b and
  * `.fork/customizations.yaml#fork-sidebar-scheduled-row`.
  *
- * The V2 sidebar carries an Automations row under Usage that opens the
- * fork's /scheduled page. A sync that drops the row, moves it above
- * Usage, or renames the route it targets leaves scheduled tasks reachable
- * only through Settings again.
+ * The V2 sidebar carries an Automations row under New sprint that opens the
+ * fork's /scheduled page. A sync that drops the row, moves it out of the
+ * action group, or renames the route it targets leaves scheduled tasks
+ * reachable only through Settings again.
  */
 
 import * as NodeFS from "node:fs";
@@ -24,18 +24,18 @@ const mainAppLocation = readSibling("../components/sidebar/mainAppLocation.ts");
 const sidebarDocs = readSibling("../../../../docs/user/thread-sidebar.md");
 
 describe("fork guard: fork-sidebar-scheduled-row", () => {
-  it("renders Automations as the chrome row directly under Usage", () => {
+  it("renders Automations as the chrome row directly under New sprint", () => {
     expect(chromeRows).toContain("<ChromeAutomationsRow />");
     expect(chromeRows).toContain('testId="sidebar-v2-scheduled"');
     expect(chromeRows).toContain('label="Automations"');
     expect(chromeRows).toContain("icon={ZapIcon}");
-    const usageAt = chromeRows.indexOf("<ChromeUsageRow />");
+    const sprintAt = chromeRows.indexOf('testId="sidebar-v2-new-sprint"');
     const scheduledAt = chromeRows.indexOf("<ChromeAutomationsRow />");
-    expect(usageAt).toBeGreaterThan(-1);
-    expect(scheduledAt).toBeGreaterThan(usageAt);
+    expect(sprintAt).toBeGreaterThan(-1);
+    expect(scheduledAt).toBeGreaterThan(sprintAt);
     // Both rows sit in the one action group, so nothing between them picks
     // up inter-group padding.
-    expect(chromeRows.slice(usageAt, scheduledAt)).not.toContain("</SidebarGroup>");
+    expect(chromeRows.slice(sprintAt, scheduledAt)).not.toContain("</SidebarChromeGroup>");
   });
 
   it("navigates to the fork's scheduled page", () => {
@@ -67,7 +67,7 @@ describe("fork guard: fork-sidebar-scheduled-row", () => {
   });
 
   it("tells users where the row goes", () => {
-    expect(sidebarDocs).toContain("**Automations** below **Usage**");
+    expect(sidebarDocs).toContain("**Automations** below **New sprint**");
     expect(sidebarDocs).toContain("fork:begin fork-sidebar-scheduled-row");
   });
 });

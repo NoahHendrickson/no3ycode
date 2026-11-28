@@ -281,7 +281,11 @@ describe("fork guard: fork-sprints", () => {
   });
 
   it("draws the Sprints section and tags a new sprint `sprint` before `bot`", () => {
-    expect(readSibling("../components/Sidebar.tsx")).toContain("<SidebarV2SprintsRow");
+    const sidebar = readSibling("../components/Sidebar.tsx");
+    expect(sidebar).toContain("<SidebarV2SprintsRow");
+    // Hidden while empty: the chrome's New sprint row is the only way to start one.
+    expect(sidebar).toMatch(/sprintThreads\.length === 0 \? null : \(\s*<SidebarV2SprintsRow/u);
+    expect(sidebar).toContain("onNewSprint={() => setCreatingSprint(true)}");
     expect(readSibling("../custom/sprints/useCreateSprint.ts")).toContain(
       "[FORK_SPRINT_TAG, FORK_BOT_THREAD_TAG]",
     );

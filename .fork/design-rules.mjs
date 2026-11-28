@@ -95,6 +95,7 @@ export const DESIGN_LINT_ALLOWLIST = [
       "BotThreadsList",
     ],
     "sprints/SprintPanel.tsx": ["SprintPanel"],
+    "sprints/SidebarV2SprintsSection.tsx": ["NewSprintDialog"],
     "coordinator/CoordinatorPanel.tsx": ["CoordinatorPanel"],
     "designMode/panel/ForkDesignPanel.tsx": ["ForkDesignPanel"],
     "designMode/ForkLayersTree.tsx": ["ForkLayersTree"],
