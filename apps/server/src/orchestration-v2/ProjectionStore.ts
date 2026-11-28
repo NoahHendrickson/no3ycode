@@ -140,6 +140,9 @@ import {
 } from "./forkBotReport.ts";
 import { FORK_BOT_QUIET_REPLIES, FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
+/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+import { FORK_DELEGATED_TASK_THREAD_PREFIX } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-own-checkout-child-settlement */
 
 export class ProjectionStoreApplyEventError extends Schema.TaggedError<ProjectionStoreApplyEventError>()(
   "ProjectionStoreApplyEventError",
@@ -259,6 +262,10 @@ export type ProjectionSettlementCandidate = Pick<
 > &
   Pick<OrchestrationV2AppThread, "lastSnoozeWakeAt"> & {
     readonly latestUserAuthoredMessageAt: DateTime.Utc | null;
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+    /** A subagent in its parent's checkout: it waits for the parent and settles with it. */
+    readonly settlesWithParent: boolean;
+    /* fork:end fork-own-checkout-child-settlement */
   };
 
 const ProjectionCheckpointContext = Schema.Struct({
@@ -1326,7 +1333,11 @@ type SettlementThreadRow = Pick<
   | "latest_run_completed_at"
   | "latest_user_message_at"
   | "latest_user_authored_message_at"
->;
+> & {
+  /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+  readonly settles_with_parent: number;
+  /* fork:end fork-own-checkout-child-settlement */
+};
 
 type ShellRunItemCountRow = {
   readonly thread_id: string;
@@ -8883,6 +8894,20 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
       return { providerThreadsByThreadId, pendingTurnItemsByThreadId };
     });
 
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement
+       A subagent settles with its parent unless it is a delegate in a checkout of its own: the
+       SQL form of @t3tools/shared/forkBotTags isForkOwnCheckoutDelegate. */
+    const settlesWithParent = sql`(
+      json_extract(t.payload_json, '$.lineage.relationshipToParent') IS 'subagent'
+      AND (
+        parent.thread_id IS NULL
+        OR substr(t.thread_id, 1, ${FORK_DELEGATED_TASK_THREAD_PREFIX.length})
+          IS NOT ${FORK_DELEGATED_TASK_THREAD_PREFIX}
+        OR json_extract(parent.payload_json, '$.worktreePath')
+          IS json_extract(t.payload_json, '$.worktreePath')
+      )
+    )`;
+    /* fork:end fork-own-checkout-child-settlement */
     const getSettlementCandidates: ProjectionStoreV2Shape["getSettlementCandidates"] = (threadId) =>
       sql
         .withTransaction(
@@ -8910,8 +8935,15 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                   AND NOT ${isIdleCompactionMessage("message")}
                 ORDER BY message.updated_at DESC, message.message_id DESC
                 LIMIT 1
-              ) AS latest_user_authored_message_at
+              ) AS latest_user_authored_message_at,
+              -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
+              ${settlesWithParent} AS settles_with_parent
+              -- fork:end fork-own-checkout-child-settlement
             FROM orchestration_v2_projection_threads t
+            -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
+            LEFT JOIN orchestration_v2_projection_threads parent
+              ON parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
+            -- fork:end fork-own-checkout-child-settlement
             LEFT JOIN orchestration_v2_projection_runs r ON r.run_id = (
               SELECT latest.run_id FROM orchestration_v2_projection_runs latest
               WHERE latest.thread_id = t.thread_id
@@ -8924,16 +8956,15 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
               AND json_extract(t.payload_json, '$.settledOverride') IS NULL
               AND json_extract(t.payload_json, '$.pinnedAt') IS NULL
               AND json_extract(t.payload_json, '$.autoSettleDisabledAt') IS NULL
+              -- fork:begin fork-own-checkout-child-settlement - see .fork/customizations.yaml#fork-own-checkout-child-settlement
               AND (
-                json_extract(t.payload_json, '$.lineage.relationshipToParent') IS NOT 'subagent'
-                OR NOT EXISTS (
-                  SELECT 1 FROM orchestration_v2_projection_threads parent
-                  WHERE parent.thread_id = json_extract(t.payload_json, '$.lineage.parentThreadId')
-                    AND parent.deleted_at IS NULL
-                    AND json_extract(parent.payload_json, '$.archivedAt') IS NULL
-                    AND json_extract(parent.payload_json, '$.settledOverride') IS NOT 'settled'
-                )
+                NOT ${settlesWithParent}
+                OR parent.thread_id IS NULL
+                OR parent.deleted_at IS NOT NULL
+                OR json_extract(parent.payload_json, '$.archivedAt') IS NOT NULL
+                OR json_extract(parent.payload_json, '$.settledOverride') IS 'settled'
               )
+              -- fork:end fork-own-checkout-child-settlement
               AND NOT EXISTS (
                 SELECT 1 FROM orchestration_v2_projection_runs active
                 WHERE active.thread_id = t.thread_id
@@ -9018,6 +9049,9 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
                     hasActiveRun: false,
                     pullRequests: thread.pullRequests,
                   }),
+                  /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+                  settlesWithParent: row.settles_with_parent === 1,
+                  /* fork:end fork-own-checkout-child-settlement */
                 } satisfies ProjectionSettlementCandidate;
               }),
             );

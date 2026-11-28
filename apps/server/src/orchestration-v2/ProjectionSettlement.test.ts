@@ -350,6 +350,9 @@ it.effect(
             thread: {
               ...expected,
               latestUserAuthoredMessageAt: candidate.latestUserAuthoredMessageAt,
+              /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+              settlesWithParent: candidate.settlesWithParent,
+              /* fork:end fork-own-checkout-child-settlement */
             },
           }),
         );
