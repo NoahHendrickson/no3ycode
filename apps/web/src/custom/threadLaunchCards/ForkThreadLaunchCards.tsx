@@ -30,7 +30,7 @@ import {
 } from "../forkWorkReports";
 import { useForkThreadHost } from "./forkThreadHost";
 import { ForkThreadReadyToMerge } from "./ForkThreadReadyToMerge";
-import { ForkThreadRequestCard } from "./ForkThreadRequestCard";
+import { FORK_THREAD_CARD_SURFACE, ForkThreadRequestCard } from "./ForkThreadRequestCard";
 import {
   type ForkThreadLaunch,
   THREAD_PULL_REQUEST_STAGE_LABELS,
@@ -129,12 +129,13 @@ export function ForkThreadHookRow(props: {
   const pullRequests =
     ready === null ? live.pullRequests : live.pullRequests.filter((pr) => pr.url !== ready.url);
 
+  const hasCard = ready !== null && thread !== null;
   const row = (
     <div
       className={ROW}
       data-fork-thread-launch-card={props.kind === "launch" ? "started" : props.kind}
     >
-      <Hook arm={props.arm} />
+      <Hook arm={hasCard ? "down" : props.arm} />
       <button
         type="button"
         className="flex min-w-0 items-center gap-1.5 rounded-sm text-left outline-none hover:text-foreground focus-visible:text-foreground"
@@ -171,11 +172,14 @@ export function ForkThreadHookRow(props: {
       {activity === null ? null : <span className="min-w-0 truncate text-xs">{activity}</span>}
     </div>
   );
-  if (ready === null || thread === null) return row;
+  if (!hasCard) return row;
   return (
     <div className="flex max-w-full flex-col gap-1">
-      {row}
-      <ForkThreadReadyToMerge thread={thread} link={ready} onOpenThread={openThread} />
+      {/* Set in from the card's edge, so the arm drops onto the card rather than its corner. */}
+      <div className="ps-3">{row}</div>
+      <div className={`${FORK_THREAD_CARD_SURFACE} w-fit max-w-xl px-3 py-2.5`}>
+        <ForkThreadReadyToMerge thread={thread} link={ready} onOpenThread={openThread} />
+      </div>
     </div>
   );
 }

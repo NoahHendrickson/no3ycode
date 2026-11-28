@@ -5965,12 +5965,14 @@
     A PR watch is not background work there: a sprint child keeps one on its PR, which on a ready
     PR only waits on the owner's merge (isPullRequestWatchTask; a parked "waiting" runtime with
     only watches left counts as idle).
-    Then a launch row hands that PR to one slim line under it (ForkThreadReadyToMerge, owner's
-    request 2026-11-27: light, made of existing controls, no card chrome): the composer's PR chip,
-    "Ready to merge", a Merge PR chip, which merges on the host after a confirm (the owner's click
-    is the approval; held while auto-merge is armed, as the composer pill is, and left to the PR
-    page for a stacked PR or a host without merge, as the PR list's Merge is), and a quiet Go to
-    thread. threadRowLiveState alone decides readiness and hands the line its link (the chip is
+    Then a launch row hands that PR to a card below it sharing the answered-request card surface
+    (FORK_THREAD_CARD_SURFACE in ForkThreadRequestCard, with the row's connector arm turned down
+    into the card, inset ps-3 as RequestFrame does), containing ForkThreadReadyToMerge's composer
+    controls: the PR chip, a Merge PR chip, which merges on the host after a confirm (the owner's
+    click is the approval; held while auto-merge is armed, as the composer pill is, and left to the
+    PR page for a stacked PR or a host without merge, as the PR list's Merge is), and an outlined
+    Go to thread chip (same composer status-chip pill geometry with transparent fill).
+    threadRowLiveState alone decides readiness and hands the line its link (the chip is
     ComposerPullRequestChip ThreadPullRequestChip, shared with the composer). A launched thread
     shows once, so the line does too.
     The row opens

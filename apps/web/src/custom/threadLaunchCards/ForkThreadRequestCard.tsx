@@ -26,9 +26,11 @@ import { CheckIcon } from "../icons/lucide-hugeicons";
 import { ForkThreadHookRow, useOpenThreadBeside } from "./ForkThreadLaunchCards";
 import { type ForkRequestAnswer, useForkThreadHost } from "./forkThreadHost";
 
+/** Shared inline card surface under a thread row (question, answered request, ready-to-merge). */
+export const FORK_THREAD_CARD_SURFACE = "overflow-hidden rounded-xl border border-border";
+
 /** Ruled into sections as the Questions card above the composer is; only the question is filled. */
-const CARD =
-  "max-w-xl overflow-hidden rounded-xl border border-border [&_[data-fork-pending-user-input-question]]:bg-card [&_[data-fork-pending-user-input-question]]:border-b [&_[data-fork-pending-user-input-question]]:border-border";
+const CARD = `max-w-xl ${FORK_THREAD_CARD_SURFACE} [&_[data-fork-pending-user-input-question]]:bg-card [&_[data-fork-pending-user-input-question]]:border-b [&_[data-fork-pending-user-input-question]]:border-border`;
 
 function RequestFrame(props: {
   readonly thread: EnvironmentThreadShell;

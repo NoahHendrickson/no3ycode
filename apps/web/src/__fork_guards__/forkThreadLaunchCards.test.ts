@@ -58,7 +58,12 @@ describe("fork guard: fork-thread-launch-cards", () => {
     // Launch rows (including moved ones) keep kind="launch" so ForkThreadReadyToMerge moves with them.
     const cards = readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx");
     expect(cards).toContain('const ready = props.kind === "launch" ? live.ready : null;');
+    expect(cards).toContain('arm={hasCard ? "down" : props.arm}');
+    expect(cards).toContain("FORK_THREAD_CARD_SURFACE");
     expect(cards).toContain("<ForkThreadReadyToMerge");
+    const readyCard = readSibling("../custom/threadLaunchCards/ForkThreadReadyToMerge.tsx");
+    expect(readyCard).toContain('data-fork-composer-status-chip="outline"');
+    expect(readyCard).not.toContain("THREAD_PULL_REQUEST_STAGE_LABELS");
   });
 
   it("answers a thread's open question or approval inline, and only inline in a sprint", () => {
