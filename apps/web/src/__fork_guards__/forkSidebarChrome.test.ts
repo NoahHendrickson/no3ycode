@@ -178,28 +178,29 @@ describe("fork guard: fork-sidebar-chrome", () => {
     expect(rows).toContain('data-testid="command-palette-trigger"');
     expect(rows).toContain('testId="sidebar-v2-new-thread"');
     expect(rows).toContain('data-testid="sidebar-v2-add-project"');
-    expect(rows).toContain('testId="sidebar-v2-usage"');
+    expect(rows).toContain('testId="sidebar-v2-new-bot"');
+    expect(rows).toContain('testId="sidebar-v2-new-sprint"');
+    expect(rows).not.toContain('testId="sidebar-v2-usage"');
     expect(rows).toContain('testId="sidebar-v2-pull-requests"');
     expect(rows).toContain('data-testid="sidebar-v2-project-filter"');
     expect(rows).toMatch(/>Search</u);
     expect(rows).toContain('label="New agent"');
     expect(rows).toContain('label="Pull requests"');
+    expect(rows).toContain('label="New petal"');
+    expect(rows).toContain('label="New sprint"');
     // Add a project is the Threads row's icon button, not a labeled row.
     expect(rows).not.toMatch(/(?<![-\w])label="Add a project"/u);
     expect(rows).toMatch(/<ChromeAutomationsRow \/>\s*<ChromePullRequestsRow \/>/u);
     expect(rows).not.toContain("New thread");
-    // The Usage row navigates itself; Sidebar passes it no handler.
     expect(sidebarV2).not.toContain("onUsage=");
-    expect(sidebarV2).not.toContain('void router.navigate({ to: "/usage" });');
-    // One door, not two: the footer hides its Usage icon and drops upstream's
-    // Pull requests icon, since the rows above open the same pages. Upstream
-    // always shows the undo notice in its utility menu.
-    expect(sidebarV2).toContain("<SidebarChromeFooter hideUsage />");
+    // One door, not two: Usage is upstream's footer icon beside Settings, and the footer
+    // drops upstream's Pull requests icon, since the row above opens the same page.
+    expect(sidebarV2).toContain("<SidebarChromeFooter />");
     expect(chrome).not.toContain('label="Pull requests"');
+    expect(chrome).not.toContain("hideUsage");
     expect(chrome).toMatch(
-      /hideUsage \? null : \(\s*<SidebarUtilityItem\s+icon=\{<ChartNoAxesColumnIcon/u,
+      /<SidebarUtilityItem\s+icon=\{<ChartNoAxesColumnIcon \/>\}\s+label=\{gt\("Usage"\)\}/u,
     );
-    expect(chrome).toContain("<SidebarUtilityMenu hideUsage={hideUsage} />");
   });
 
   it("draws the action rows as the design system's ghost button", () => {

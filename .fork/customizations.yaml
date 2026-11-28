@@ -2944,16 +2944,16 @@
     one leaves the other subtracting from a stale number, and the cards drift
     off the chrome icons' axis with nothing failing.
 
-    Action rows (Search, New agent, Usage, Automations, Pull requests) are the design
+    Action rows (Search, New agent, New petal, New sprint, Automations, Pull requests) are the design
     system's ghost Button at its default size (Figma 364:11246 / 364:10544):
     32px tall, 10px corners, 12px inline padding, a 16px icon 6px from a
     Label/14 Regular label, icon and label alike at the panel's foreground,
     stacked 2px apart inside the panel's 8px inset and flush under the header.
-    No shortcut chips; the shortcut rides the accessible name. Usage opens the
-    /usage page (fork-usage-page) and Pull requests opens /pull-requests under
-    Automations. The V2 sidebar's footer hides its own Usage icon so the row is
-    the one door there; the footer takes a hideUsage flag rather than losing the
-    item, so upstream's default footer keeps it. Upstream's footer Pull requests
+    No shortcut chips; the shortcut rides the accessible name. New petal names a
+    Petal in its section (fork-bots) and New sprint opens the New sprint dialog
+    (fork-sprints); the sections' own plus buttons are gone, so these rows are the
+    one door. Pull requests opens /pull-requests under Automations. Usage is
+    upstream's footer icon beside Settings, unchanged. Upstream's footer Pull requests
     icon is deleted outright: the V2 sidebar is the footer's only consumer, so
     the labeled row is the one owner. Upstream always
     shows the undo notice in the footer's utility menu (#26874). Type is literal 0.875rem so the panel's 13px text-xs remap cannot
@@ -2986,7 +2986,7 @@
 
     The header draws no brand: the pixel flower and the "no3y" wordmark were
     removed, so the Code / Chat tabs take ml-auto to hold the trailing edge and
-    the width probe measures the controls alone. Search, New agent, Usage, Automations and Pull requests remain
+    the width probe measures the controls alone. Search, New agent, New petal, New sprint, Automations and Pull requests remain
     labeled action rows; Threads remains a static label whose trailing add,
     sort and filter buttons own adding a project, the sort order and the
     scope / group-by menu.
@@ -3095,15 +3095,14 @@
     sidebar inset with Glass's stage card and the workspace header (no close
     button), and mainAppLocation counts /usage as a utility page (Back in the
     sidebar footer) instead of an app modal, so the chat layout renders it
-    in place of the thread. The V2 sidebar's Usage row navigates there and
-    lights while it is open. Upstream's return-location browser test closes
+    in place of the thread. The sidebar footer's Usage icon navigates there. Upstream's return-location browser test closes
     Settings instead, the one modal left. Under Inlet the page is a panel set
     into the frame (fork-inlet-theme).
   tier: 4
-  files:
-    - apps/web/src/custom/SidebarV2ChromeRows.tsx
+  files: []
   shadows: []
   watch:
+    - apps/web/src/components/sidebar/SidebarChrome.tsx
     - apps/web/src/components/usage/UsagePage.tsx
     - apps/web/src/components/sidebar/mainAppLocation.ts
     - apps/web/src/components/sidebar/mainAppLocation.browser.test.tsx
@@ -3201,12 +3200,12 @@
 
 - id: fork-sidebar-scheduled-row
   intent: >
-    The V2 sidebar's action block ends with a Scheduled row directly under
-    Usage: the chrome door to every scheduled task across every project and
-    environment. It is a labeled action in the same shape as New agent, Add a
-    project and Usage (ZapIcon, the lightning bolt the Automations page
+    The V2 sidebar's action block carries a Scheduled row directly under
+    New sprint: the chrome door to every scheduled task across every project and
+    environment. It is a labeled action in the same shape as New agent and
+    New sprint (ZapIcon, the lightning bolt the Automations page
     header also wears), stacked in the one action group so no inter-group
-    padding opens between it and Usage. Clicking it navigates to a page
+    padding opens between it and New sprint. Clicking it navigates to a page
     rather than opening a popover: Usage is a
     dashboard you glance at over the thread, while scheduled tasks are a
     managed list with an editor dialog, a deliveries dialog and a per-task
@@ -8192,8 +8191,9 @@
     section, a view-options gear with a List / Grid layout picker
     (custom/bots/PetalLayoutPicker, each option sketched) and, for List, the
     bots' own Compact cards (both per device, off by default, apart from
-    sidebar-v2-compact-cards), and a plus that names
-    a new bot in place. Its cards are its children, one per bot, oldest first,
+    sidebar-v2-compact-cards). The chrome's New petal row (fork-sidebar-chrome) names
+    a new bot in place in that section, the one way to start one; the section is hidden while
+    there are no bots and none is being named. Its cards are its children, one per bot, oldest first,
     built by the same row factory as the threads; a folded Bots section keeps
     the open bot's card. Chat lists chats alone, so it has no Bots row. Bots
     never appear among the threads (filterSidebarV2VisibleThreads).
@@ -8853,7 +8853,8 @@
     without `bot`.
 
     Unlike a Petal it belongs to a real project, picked when it starts (the New sprint dialog
-    off the Sprints row's plus, the open thread's project first), and launches its threads there
+    off the chrome's New sprint row, which owns it (custom/sprints/NewSprintDialog), the open
+    thread's project first), and launches its threads there
     unless the work belongs to another project. Its folder sits under the No-project workspace
     (sprints/<name>-<id>), out of the project's checkout, and is its working folder, so its
     rules, hooks and memory work as a Petal's. Its seeded CLAUDE.md
@@ -8945,7 +8946,7 @@
     agent (SplitPaneHeaderControls paneActions; Unsplit stays while a launched thread is open
     beside it), no terminal drawer or right panel toggle. It lists in its own Sprints
     section above the Petals (custom/sprints/SidebarV2SprintsSection; folds like the Petals,
-    per device), as an ordinary thread card: isPetalThread keeps the mascot, its menu, the
+    per device, hidden while there are no sprints), as an ordinary thread card: isPetalThread keeps the mascot, its menu, the
     Petals section and the Petal empty conversation for Petals alone. An empty sprint shows
     starter chips instead (custom/sprints/SprintEmptyConversation, through BotEmptyConversation)
     that write a prompt into the composer draft and never send it. Archiving a sprint wraps it up: its threads list again,
@@ -8957,6 +8958,7 @@
     - apps/web/src/custom/sprints/useCreateSprint.ts
     - apps/web/src/custom/sprints/useIsSprintThread.ts
     - apps/web/src/custom/sprints/SidebarV2SprintsSection.tsx
+    - apps/web/src/custom/sprints/NewSprintDialog.tsx
     - apps/web/src/custom/sprints/SprintGoal.tsx
     - apps/web/src/custom/sprints/SprintThreadModel.tsx
     - apps/web/src/custom/sprints/sprintModel.ts
@@ -10587,6 +10589,7 @@
     - apps/web/src/custom/coordinator/coordinatorAnswers.ts
     - apps/web/src/custom/coordinator/SidebarV2CoordinatorsSection.tsx
     - apps/web/src/custom/SidebarV2ListSection.tsx
+    - apps/web/src/custom/sidebarV2SectionThreads.ts
     - apps/web/src/custom/coordinator/CoordinatorDraftToggle.tsx
     - apps/web/src/custom/CheckboxPill.tsx
     - apps/web/src/custom/CheckboxPill.css

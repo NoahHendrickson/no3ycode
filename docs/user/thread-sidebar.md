@@ -136,13 +136,13 @@ the filter button picks how the list is grouped and checks off which projects it
 as many as you like; **All projects** clears the filter. Choose **Manual**
 with grouping on to arrange projects yourself: drag a project header above or below another. Hover a project's
 section to reveal its header buttons: the three dots open a menu with **Settle all threads** (every
-active thread in that project) and **Settings**, and the plus starts a thread in it directly. **Usage** below **Add a project** opens the Usage page.
+active thread in that project) and **Settings**, and the plus starts a thread in it directly.
 
 <!-- fork:end fork-new-agent-draft -->
 
 <!-- fork:begin fork-sidebar-scheduled-row — see .fork/customizations.yaml#fork-sidebar-scheduled-row -->
 
-**Automations** below **Usage** opens the Automations page: every automation across your projects
+**Automations** below **New sprint** opens the Automations page: every automation across your projects
 and environments in one list. Open an automation to change its trigger, instructions, model, and
 workspace, or switch to **Run history** to see what it did; every run is a thread you can open
 and reply to. **All runs** lists runs from every automation, newest first; use **Older** and
@@ -459,11 +459,12 @@ answer its questions.
 
 A petal is a long-running agent with one ongoing conversation, such as one that
 checks your inbox each morning or watches a repository. Petals have their own
-section above **Threads** in the sidebar and never appear among your threads.
+section above **Threads** in the sidebar and never appear among your threads. The section
+appears once you have a petal.
 With the sidebar collapsed, their mascots sit beside the project switcher at the
 top; pick one to open that petal.
 
-Press the plus beside **Petals**, name the petal, and tell it its job in plain
+Press **New petal** near the top of the sidebar, name the petal, and tell it its job in plain
 words. It writes the job down, schedules its own wake-ups, and asks for anything
 it needs, such as access to an account. Change the job later the same way, by
 telling it. To give a petal a different mascot, pick one under **Mascot** in its

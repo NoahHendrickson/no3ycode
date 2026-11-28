@@ -101,7 +101,7 @@ describe("fork guard: fork-music-panel", () => {
     expect(sidebarChrome).toMatch(fenced("<SidebarMusicButton />"));
     // The strip sits directly above the footer's icon row, the button right after Settings.
     expect(sidebarChrome.indexOf("<SidebarMusicStrip />")).toBeLessThan(
-      sidebarChrome.indexOf("<SidebarUtilityMenu hideUsage={hideUsage} />"),
+      sidebarChrome.indexOf("<SidebarUtilityMenu />"),
     );
     expect(sidebarChrome.indexOf('label="Settings"')).toBeLessThan(
       sidebarChrome.indexOf("<SidebarMusicButton />"),

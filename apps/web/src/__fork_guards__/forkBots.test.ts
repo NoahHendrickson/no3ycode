@@ -274,6 +274,12 @@ describe("fork guard: fork-bots", () => {
 
   it("paints Bots above a collapsible Threads section, with the bots' own density", () => {
     expect(sidebar).toContain("<SidebarV2BotsRow");
+    // Hidden while empty, but kept from New petal until the created Petal reaches the store.
+    expect(sidebar).toMatch(/const botsSection = !newPetal\.shown \? null/u);
+    expect(sidebar).toContain("{botsSection}");
+    expect(readSibling("../custom/bots/SidebarV2BotsSection.tsx")).toContain(
+      "shown: botKeys.length > 0 || naming || pendingKey !== null,",
+    );
     expect(sidebar).toMatch(/renderOneThreadRow\(bot, "active", \{\s+petalView,/);
     expect(sidebar).toContain('options.petalView === "compact") ??');
     expect(sidebar).not.toContain("createPortal");

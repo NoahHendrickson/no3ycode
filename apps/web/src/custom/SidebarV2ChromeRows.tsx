@@ -1,5 +1,5 @@
 /**
- * The Sidebar V2 control rows — search, new agent, usage, automations, pull
+ * The Sidebar V2 control rows — search, new agent, new petal, new sprint, automations, pull
  * requests, and the Threads row (add project, sort, filter) — see `.fork/customizations.yaml#fork-sidebar-chrome`.
  *
  * Metrics from Figma t3-fork node 364:11246: the action rows are the
@@ -16,12 +16,12 @@
  * carries collapses to call sites.
  *
  * The prop surface is wide because these rows are genuinely interactive — a
- * command palette trigger, a radio group, three labeled actions and a
+ * command palette trigger, a radio group, labeled actions and a
  * per-project overflow action. It is all data and callbacks, though: no
  * upstream state is reached into, so an upstream refactor of how that state
- * is produced cannot break this file. The Automations row and Chat's New
- * chat row are the exceptions: they read the router and app state
- * themselves, so the Sidebar.tsx call site gains no props for them.
+ * is produced cannot break this file. The Automations, Pull requests and New
+ * sprint rows and Chat's New chat row are the exceptions: they own their
+ * router reads, state or dialog, so the Sidebar.tsx call site stays small.
  */
 import type { SidebarProjectSortOrder } from "@t3tools/contracts/settings";
 import type {
@@ -40,12 +40,13 @@ import { CheckIcon, FolderIcon, FolderPlusIcon, SearchIcon } from "./icons/lucid
 // file is fork-owned, so there is no upstream import site to preserve.
 import {
   ArrowUpDownIcon,
-  ChartDonutIcon,
+  BotIcon,
   CircleSlashIcon,
   EllipsisVerticalIcon,
   FoldersIcon,
   GitPullRequestIcon,
   NavigationArrowIcon,
+  RocketIcon,
   SettingsIcon,
   ZapIcon,
 } from "./icons/lucide-hugeicons";
@@ -90,6 +91,7 @@ import { useComposerDraftStore } from "~/composerDraftStore";
 import { useShownThreadRouteTarget } from "~/hooks/useShownThreadRouteTarget";
 import { isChatDraft } from "./chatMode";
 import { useStartNewChat } from "./useChatMode";
+import { NewSprintDialog } from "./sprints/NewSprintDialog";
 
 /** Structural on purpose: the four fields these rows read, no more. The row is
     generic over anything satisfying it, so the callbacks hand back upstream's
@@ -99,6 +101,8 @@ export interface SidebarV2ChromeProjectGroup extends ProjectFaviconProject {
   readonly projectKey: string;
   readonly displayName: string;
 }
+
+type NewSprintDefaultProject = ComponentProps<typeof NewSprintDialog>["defaultProject"];
 
 const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
   updated_at: "Last user message",
@@ -113,8 +117,8 @@ const CHROME_ACTION = "h-auto w-full";
 
 type ChromeIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
-/** New agent, Usage, Automations, and Pull requests share one shape; Search keeps its own
-    (a div label, see ChromeSearchRow). onClick is optional so Usage can hand
+/** New agent, New petal, New sprint, Automations, and Pull requests share one shape; Search
+    keeps its own (a div label, see ChromeSearchRow). onClick is optional so a row can hand
     the same button to PopoverTrigger / DialogTrigger via `render`. Extra
     props (ref, aria-expanded) forward onto the button. */
 function ChromeLabeledAction({
@@ -138,9 +142,8 @@ function ChromeLabeledAction({
   readonly disabled?: boolean | undefined;
   /** Holds the row in its hover fill. The New agent row is "active" while the
       open draft has no project yet — the column it opened is still the
-      row's own until a project is chosen and the draft gets a card. Usage
-      uses the same fill while the overlay is open, Scheduled while its page
-      is the one on screen. */
+      row's own until a project is chosen and the draft gets a card. Scheduled
+      uses the same fill while its page is the one on screen. */
   readonly active?: boolean | undefined;
   readonly onClick?: () => void;
   readonly trailing?: ReactNode;
@@ -208,7 +211,7 @@ function ChromeSearchRow(props: { readonly commandPaletteShortcutLabel: string |
   );
 }
 
-/** Search + New agent + Usage + Automations + Pull requests share one group so Figma's
+/** Search + New agent + New petal + New sprint + Automations + Pull requests share one group so Figma's
  *  stacked action block (364:11246) does not pick up inter-group padding: the
  *  block starts flush under the header and stacks its rows 2px apart inside
  *  the panel's 8px inset. */
@@ -221,6 +224,10 @@ export function SidebarV2ChromeActionRows(props: {
       chosen, which is when the draft leaves this row for a card. */
   readonly newThreadActive: boolean;
   readonly onNewThread: () => void;
+  /** Names a new Petal in its section (fork-bots). */
+  readonly onNewBot: () => void;
+  /** The project a new sprint starts in, when the open thread has one (fork-sprints). */
+  readonly newSprintDefaultProject: NewSprintDefaultProject;
 }) {
   const newThreadDisabledReason = props.newThreadDisabled
     ? "Add a project to start an agent"
@@ -244,7 +251,14 @@ export function SidebarV2ChromeActionRows(props: {
         active={props.newThreadActive}
         onClick={props.onNewThread}
       />
-      <ChromeUsageRow />
+      <ChromeLabeledAction
+        icon={BotIcon}
+        label="New petal"
+        ariaLabel="New petal"
+        testId="sidebar-v2-new-bot"
+        onClick={props.onNewBot}
+      />
+      <ChromeNewSprintRow defaultProject={props.newSprintDefaultProject} />
       <ChromeAutomationsRow />
       <ChromePullRequestsRow />
     </SidebarChromeGroup>
@@ -275,23 +289,23 @@ export function SidebarV2ChatActionRows() {
   );
 }
 
-/** Opens the /usage page, as upstream's footer icon does, and lights while it is open. */
-function ChromeUsageRow() {
-  const navigate = useNavigate();
-  const { isMobile, setOpenMobile } = useSidebar();
-  const isOnUsage = useLocation({ select: (location) => location.pathname === "/usage" });
+/** Opens the New sprint dialog. It owns the dialog, since the Sprints section is hidden until a
+    sprint exists. */
+function ChromeNewSprintRow(props: { readonly defaultProject: NewSprintDefaultProject }) {
+  const [creating, setCreating] = useState(false);
   return (
-    <ChromeLabeledAction
-      icon={ChartDonutIcon}
-      label="Usage"
-      ariaLabel="Usage"
-      testId="sidebar-v2-usage"
-      active={isOnUsage}
-      onClick={() => {
-        if (isMobile) setOpenMobile(false);
-        void navigate({ to: "/usage" });
-      }}
-    />
+    <>
+      <ChromeLabeledAction
+        icon={RocketIcon}
+        label="New sprint"
+        ariaLabel="New sprint"
+        testId="sidebar-v2-new-sprint"
+        onClick={() => setCreating(true)}
+      />
+      {creating ? (
+        <NewSprintDialog defaultProject={props.defaultProject} onDone={() => setCreating(false)} />
+      ) : null}
+    </>
   );
 }
 

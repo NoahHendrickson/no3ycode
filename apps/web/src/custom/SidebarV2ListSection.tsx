@@ -1,7 +1,7 @@
 /**
  * A sidebar list section of thread cards — the Sprints row (`fork-sprints`) and the Coordinators
- * row (`fork-coordinator-threads`): a heading whose label folds it, optional header actions, and
- * its cards, the caller's children.
+ * row (`fork-coordinator-threads`): a heading whose label folds it, and its cards, the caller's
+ * children.
  */
 import type { ReactNode } from "react";
 
@@ -17,15 +17,11 @@ export function SidebarV2ListSection(props: {
   readonly testId: string;
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
-  /** Buttons at the header's end, such as a plus. */
-  readonly actions?: ReactNode;
-  /** Rendered after the list, inside the section: a dialog the header opens. */
-  readonly after?: ReactNode;
   readonly children: ReactNode;
   /** The section's hook for styles and tests, e.g. `data-fork-sprints-row`. */
   readonly [dataAttribute: `data-${string}`]: string | undefined;
 }) {
-  const { label, testId, collapsed, onToggleCollapsed, actions, after, children, ...data } = props;
+  const { label, testId, collapsed, onToggleCollapsed, children, ...data } = props;
   return (
     <SidebarChromeGroup {...data} className="mt-6">
       <div className="flex min-h-8 items-center gap-1.5 px-3">
@@ -34,9 +30,6 @@ export function SidebarV2ListSection(props: {
             {label}
           </SidebarV2SectionLabel>
         </span>
-        {actions === undefined ? null : (
-          <div className="-me-3 flex shrink-0 items-center">{actions}</div>
-        )}
       </div>
       {/* The thread list's tooltip timing, so a card's hover card opens like a thread's. */}
       <TooltipProvider delay={150} closeDelay={0} timeout={400}>
@@ -47,7 +40,6 @@ export function SidebarV2ListSection(props: {
           {children}
         </ul>
       </TooltipProvider>
-      {after}
     </SidebarChromeGroup>
   );
 }

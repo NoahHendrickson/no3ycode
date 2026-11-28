@@ -2,8 +2,9 @@
  * The sidebar's Bots section — see `.fork/customizations.yaml#fork-bots`: its row, its cards'
  * density, naming a new bot, and what folds it and the Threads list under it.
  */
+import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
+import type { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
-import { PlusIcon } from "../icons/lucide-hugeicons";
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Menu, MenuPopup, MenuSeparator, MenuTrigger } from "~/components/ui/menu";
@@ -21,6 +22,7 @@ import { BotMascot, BotMascotTile } from "./BotMascot";
 import { BOT_MASCOT_SHAPES, type BotMascotShape } from "./botMascotArt";
 import { PetalLayout, PetalLayoutPicker } from "./PetalLayoutPicker";
 import type { SidebarV2CardView } from "./SidebarV2BotCardBody";
+import { useCreateBot } from "./useCreateBot";
 
 export type SidebarV2ListSection = "bots" | "sprints" | "coordinators" | "threads";
 
@@ -63,6 +65,30 @@ const BOTS_LAYOUT_STORAGE_KEY = "t3code:fork:sidebar-v2-bots-layout:v1";
 /** Petals as a list of cards, or as a grid of mascot tiles with their names under them. */
 export function useSidebarV2BotsLayout(): [PetalLayout, (value: PetalLayout) => void] {
   return useLocalStorage(BOTS_LAYOUT_STORAGE_KEY, "list", PetalLayout);
+}
+
+/** Naming a new Petal from the chrome's New petal row, and whether the Petals section shows: while
+    there are Petals, while one is being named, and from its creation until its thread reaches the
+    store, so the first Petal's section never unmounts in between. */
+export function useNewPetal(
+  bots: ReadonlyArray<{ readonly environmentId: EnvironmentId; readonly id: ThreadId }>,
+) {
+  const createBot = useCreateBot();
+  const botKeys = bots.map((bot) => scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)));
+  const [naming, setNaming] = useState(false);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  if (pendingKey !== null && botKeys.includes(pendingKey)) setPendingKey(null);
+  return {
+    naming,
+    shown: botKeys.length > 0 || naming || pendingKey !== null,
+    start: () => setNaming(true),
+    stop: () => setNaming(false),
+    create: async (name: string, mascot: BotMascotShape) => {
+      const created = await createBot(name, mascot);
+      if (created !== null) setPendingKey(scopedThreadKey(created));
+      return created;
+    },
+  };
 }
 
 /** Names a new bot in place: Enter creates it, Escape or leaving the field empty cancels. Drawn
@@ -196,12 +222,11 @@ export function PetalViewOptionsMenu(props: {
   );
 }
 
-/** The Bots section above the Threads row, in its shape: label, fold chevron, view options
-    and a plus that names a new bot. Its cards are its children. */
+/** The Bots section above the Threads row, in its shape: label, fold chevron and view options.
+    Its cards are its children; the sidebar's New petal row opens the naming row. */
 export function SidebarV2BotsRow(props: {
   readonly collapsed: boolean;
   readonly onToggleCollapsed: () => void;
-  readonly onNewBot: () => void;
   readonly layout: PetalLayout;
   readonly onLayoutChange: (layout: PetalLayout) => void;
   /** The bots' own card density, independent of the threads' Compact cards; the list's alone. */
@@ -253,22 +278,6 @@ export function SidebarV2BotsRow(props: {
               onCompactCardsChange={props.onCompactCardsChange}
             />
           </Menu>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <SidebarChromeButton
-                  shape="icon"
-                  type="button"
-                  aria-label="New petal"
-                  data-testid="sidebar-v2-new-bot"
-                  onClick={props.onNewBot}
-                />
-              }
-            >
-              <PlusIcon className="size-4 shrink-0" />
-            </TooltipTrigger>
-            <TooltipPopup side="right">New petal</TooltipPopup>
-          </Tooltip>
         </div>
       </div>
       {/* The thread list's tooltip timing, so a bot card's hover card opens like a thread's. */}
