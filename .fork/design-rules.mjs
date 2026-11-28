@@ -121,6 +121,7 @@ export const DESIGN_LINT_ALLOWLIST = [
       "ForkThreadRequestCard",
       "ForkAnsweredRequestCard",
     ],
+    "threadLaunchCards/ForkThreadReadyToMerge.tsx": ["ForkThreadReadyToMerge"],
     "sprints/SprintPanelTabs.tsx": ["SprintPanelTabStrip", "SprintPanelTabContent"],
     "sprints/SprintFileEditor.tsx": ["SprintFileEditor", "SprintFileFooter", "NoSprintFileAccess"],
     "bots/BotThreadsChild.tsx": [

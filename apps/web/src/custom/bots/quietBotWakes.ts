@@ -10,6 +10,8 @@ import { isForkBotQuietReply } from "@t3tools/shared/forkBotTags";
 import type { TimelineEntry } from "~/session-logic";
 
 import {
+  forkWorkReportOfEntry,
+  forkWorkReportThreadId,
   isForkDelegatedCompletionReport,
   isForkDelegatedQuestionReport,
   isForkWorkRequestReport,
@@ -29,7 +31,7 @@ interface QuietWakePolicy {
 }
 
 const QUIET_WAKE_POLICIES: Readonly<Record<QuietWakeMode, QuietWakePolicy>> = {
-  // Any quiet run, from its first message: a sprint's quiet completion wake keeps its notice.
+  // Any quiet run, from its first message or the work report that woke it.
   bot: { reportedRunsOnly: false, noticeStartsRun: false, keepsDelegatedQuestions: false },
   // Only a child's question or completion wake (or a request report) ends on the quiet reply.
   coordinator: { reportedRunsOnly: true, noticeStartsRun: true, keepsDelegatedQuestions: true },
@@ -119,10 +121,29 @@ export function quietBotWakeRunIds(
   return quiet;
 }
 
-/** Drops each run from its start on: its first message, or a coordinator's delegated notice
-    before it. A resumed subagent card listed before that keeps its place in the earlier turn.
-    With `keepRequestReports` (a host answers inline, fork-thread-launch-cards) a question or
-    approval report stays, as does a coordinator's delegated question: each carries a card. */
+/** A thread's last finished report, when that thread has no launch row here, keeps a quiet wake's
+    notice as the thread's one row; its earlier quiet wakes go whole. Keyed by report id. */
+function lastReportRows(entries: ReadonlyArray<TimelineEntry>): ReadonlySet<string> {
+  const launched = new Set<string>();
+  const lastByThread = new Map<string, string>();
+  for (const entry of entries) {
+    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
+      launched.add(entry.launch.threadId);
+    }
+    const report = forkWorkReportOfEntry(entry);
+    if (report === null || report.requestKind !== null) continue;
+    // An older server names the thread only in the key, so each of its reports keeps its row.
+    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
+    lastByThread.set(threadId ?? report.key, entry.id);
+  }
+  for (const threadId of launched) lastByThread.delete(threadId);
+  return new Set(lastByThread.values());
+}
+
+/** Drops each run from its start: its first message, the report that woke it, or a coordinator's
+    delegated notice. A resumed subagent card listed earlier keeps its turn. With
+    `keepRequestReports` (a host answers inline) a question or approval report stays, as does a
+    coordinator's delegated question: each carries a card. */
 export function withoutRuns(
   entries: ReadonlyArray<TimelineEntry>,
   runIds: ReadonlySet<RunId>,
@@ -136,20 +157,23 @@ export function withoutRuns(
     const runId =
       entry.kind === "message"
         ? entry.message.runId
-        : noticeStartsRun &&
-            (isForkDelegatedQuestionReport(entry) || isForkDelegatedCompletionReport(entry))
+        : forkWorkReportOfEntry(entry) !== null ||
+            (noticeStartsRun &&
+              (isForkDelegatedQuestionReport(entry) || isForkDelegatedCompletionReport(entry)))
           ? entryOwningRunId(entry)
           : null;
     if (runId !== null && runIds.has(runId) && !startIndex.has(runId)) {
       startIndex.set(runId, index);
     }
   });
+  const reportRows = lastReportRows(entries);
   return entries.filter((entry, index) => {
     const runId = entryOwningRunId(entry);
     const start = runId === null ? undefined : startIndex.get(runId);
     return (
       start === undefined ||
       index < start ||
+      (index === start && reportRows.has(entry.id)) ||
       (keepRequestReports && isForkWorkRequestReport(entry)) ||
       (keepsDelegatedQuestions && isForkDelegatedQuestionReport(entry))
     );

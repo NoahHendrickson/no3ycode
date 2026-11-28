@@ -3,8 +3,11 @@
  * `.fork/customizations.yaml#fork-thread-launch-cards`. The wire keeps only the `threadId` of
  * the tool's result (compactDynamicToolOutput), so the title comes from the call's input.
  */
+import { presentPendingBackgroundWork } from "@t3tools/client-runtime/state/thread-execution";
+import { resolveThreadCurrentPullRequestLink } from "@t3tools/client-runtime/thread-pull-requests";
 import type {
   EnvironmentId,
+  OrchestrationV2PendingBackgroundTask,
   OrchestrationV2TurnItemStatus,
   RunId,
   ThreadId,
@@ -17,6 +20,7 @@ import { resolveT3McpToolId } from "@t3tools/shared/t3McpToolPresentation";
 import { compactDynamicToolOutput } from "@t3tools/shared/toolOutput";
 
 import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.logic";
+import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 import type { TimelineEntry } from "~/session-logic";
 
 import { resolvePullRequestChipState } from "../composerPullRequestChip.logic";
@@ -165,6 +169,34 @@ export function threadLaunchPullRequests(thread: {
     if (pr != null) add({ number: pr.number, url: pr.url, title: null, stage: null });
   }
   return out;
+}
+
+/** A row's live read of its thread: its background work while any runs (a review, a monitor, a
+    subagent), and its pull requests, which read "Ready to merge" only once the thread is idle with
+    nothing in the background, since work still running can change the PR. `readyUrl` is the
+    thread's current PR when it reads so, which a launch row offers to merge. */
+export function threadRowLiveState(
+  thread: Parameters<typeof threadLaunchPullRequests>[0] & {
+    readonly pendingBackgroundTasks: ReadonlyArray<OrchestrationV2PendingBackgroundTask>;
+  },
+  status: SidebarThreadStatus | null,
+): {
+  readonly activity: string | null;
+  readonly pullRequests: ReadonlyArray<ThreadLaunchPullRequest>;
+  readonly readyUrl: string | null;
+} {
+  const activity = presentPendingBackgroundWork(thread.pendingBackgroundTasks)?.title ?? null;
+  const idle = status === "ready" && activity === null;
+  const pullRequests = threadLaunchPullRequests(thread);
+  const current = idle ? resolveThreadCurrentPullRequestLink(thread.pullRequests) : null;
+  return {
+    activity,
+    pullRequests: idle
+      ? pullRequests
+      : pullRequests.map((pr) => (pr.stage === "ready" ? { ...pr, stage: null } : pr)),
+    readyUrl:
+      current !== null && threadPullRequestStage(current.snapshot) === "ready" ? current.url : null,
+  };
 }
 
 type LaunchRow = Extract<MessagesTimelineRow, { kind: "fork-thread-launch" }>;
