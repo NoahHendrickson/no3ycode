@@ -845,14 +845,13 @@
     emerald, deliberately diverging from the sky the mobile Live Activity
     still uses; mobile has not been migrated.
 
-    The working duration and the hover actions share one crossfade cell in the
-    title line's trailing group; the status mark is a cell of its own after
-    them, so the opacity-crossfade hit-path bug that used to eat settle clicks
-    cannot return. The PR badge sits on the repo line (364:14308), glyph then
-    number in its state colour, handed to the meta as a required prSlot: it is
-    a link to the PR, and a control you can reach only by not pointing at its
-    row is not a control, so it must never join the stack that fades the
-    duration out.
+    The hover actions hold one cell in the title line's trailing group; the
+    status mark is a cell of its own after them, so the opacity-crossfade
+    hit-path bug that used to eat settle clicks cannot return. The PR badge
+    sits on the repo line (364:14308), glyph then number in its state colour,
+    handed to the meta as a required prSlot: it is a link to the PR, and a
+    control you can reach only by pointing at its row is not a control, so it
+    must never join the hover actions, which are invisible at rest.
 
     Card metrics from Figma t3-fork nodes 364:17299 (the card) and 364:11496
     (the list): px-12 py-8, 4px between the two rows. The title line is 18px —
