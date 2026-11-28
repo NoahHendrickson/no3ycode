@@ -1,10 +1,11 @@
 /** Fork-owned — see `.fork/customizations.yaml#fork-bots`. */
-import type { MessageId, RunId } from "@t3tools/contracts";
+import type { ForkWorkRequestKind, MessageId, RunId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
 import type { TimelineAttempt, TimelineEntry } from "~/session-logic";
 import { quietBotWakeRunIds, withoutRuns } from "./quietBotWakes";
+import { workReportEntry } from "../forkWorkReportFixtures";
 import type { ChatMessage, TurnDiffSummary } from "~/types";
 
 const at = (minute: number) => `2026-11-16T14:${String(minute).padStart(2, "0")}:00.000Z`;
@@ -153,34 +154,21 @@ describe("quiet bot wakes", () => {
   });
 
   it("drops a quiet wake a thread's question or approval started, all but its card where it is answered inline", () => {
-    const report = (summary: string): TimelineEntry => ({
-      id: `turn-item:message:${encodeURIComponent("message:fork-bot-work-report:work-1:request-1")}`,
-      kind: "work",
-      createdAt: at(3),
-      entry: {
-        id: "report",
-        createdAt: at(3),
-        runId: "wake-1" as RunId,
-        label: summary,
-        tone: "info",
-        itemType: "notification",
-      },
-    });
-    const kept = (summary: string, inline = true) => {
+    const kept = (request: ForkWorkRequestKind | undefined, inline = true) => {
       const entries = [
         wake("wake-1", 2),
-        report(summary),
+        workReportEntry("work-1", "wake-1", request),
         reply("wake-1", 4, "Nothing to report."),
       ];
       return withoutRuns(entries, quietBotWakeRunIds(entries, "bot", none), "bot", inline).map(
         (entry) => entry.kind,
       );
     };
-    expect(kept("Rate limiting has a question")).toEqual(["work"]);
-    expect(kept("Rate limiting needs an approval")).toEqual(["work"]);
-    expect(kept("Rate limiting finished")).toEqual([]);
+    expect(kept("question")).toEqual(["work"]);
+    expect(kept("approval")).toEqual(["work"]);
+    expect(kept(undefined)).toEqual([]);
     // A Petal asks above its composer, so its quiet wake goes whole.
-    expect(kept("Rate limiting has a question", false)).toEqual([]);
+    expect(kept("question", false)).toEqual([]);
   });
 
   it("drops a coordinator's quiet reply to its child's question, keeping the question card", () => {

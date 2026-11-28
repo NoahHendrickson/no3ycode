@@ -176,43 +176,18 @@ export function isForkDelegatedQuestionReport(entry: TimelineEntry): boolean {
   return item?.type === "notification" && forkDelegatedQuestionOf(item) !== null;
 }
 
-/** A thread's row shows once, under the reply that launched it, and reads its status live there,
-    so a later report of that thread draws no row; a question or approval keeps its card where the
-    conversation answers inline. The entries stay: a report notice starts its wake's turn. */
-export function launchedThreadReportIds(
-  entries: ReadonlyArray<TimelineEntry>,
-  keepRequestReports: boolean,
-): ReadonlySet<string> {
-  const launched = new Set<string>();
-  const hidden = new Set<string>();
-  for (const entry of entries) {
-    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
-      launched.add(entry.launch.threadId);
-    }
-    if (launched.size === 0 || entry.kind !== "work" || entry.entry.itemType !== "notification") {
-      continue;
-    }
-    const item = entry.entry.projectedItem?.item;
-    const report = forkWorkReportOf({
-      id: entry.id,
-      summary: entry.entry.label,
-      source: item?.type === "notification" ? item.source : undefined,
-    });
-    if (report === null || (keepRequestReports && report.requestKind !== null)) continue;
-    const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
-    if (threadId !== null && launched.has(threadId)) hidden.add(entry.id);
-  }
-  return hidden;
-}
-
-/** A work report of a thread's question or approval, which carries the card the owner answers on. */
-export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
-  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+/** A timeline entry read as a work report: null for anything but a report's notification. */
+export function forkWorkReportOfEntry(entry: TimelineEntry): ForkWorkReport | null {
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return null;
   const item = entry.entry.projectedItem?.item;
-  const report = forkWorkReportOf({
+  return forkWorkReportOf({
     id: entry.id,
     summary: entry.entry.label,
     source: item?.type === "notification" ? item.source : undefined,
   });
-  return report?.requestKind != null;
+}
+
+/** A work report of a thread's question or approval, which carries the card the owner answers on. */
+export function isForkWorkRequestReport(entry: TimelineEntry): boolean {
+  return forkWorkReportOfEntry(entry)?.requestKind != null;
 }

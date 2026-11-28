@@ -20,6 +20,7 @@ import {
   forkWorkReportThreadId,
 } from "../forkWorkReports";
 import { pendingRequestFor } from "../childRequestControls";
+import { workReportEntry } from "../forkWorkReportFixtures";
 
 describe("forkThreadLaunchFromToolItem", () => {
   const input = { title: "Optimize images", message: "Swap the hero to next/image" };
@@ -196,33 +197,6 @@ describe("launch rows", () => {
   });
 
   it("shows a launched thread once: its later turn reports add no second row", () => {
-    const report = (threadId: string, runId: string, request?: "question"): TimelineEntry => {
-      const id = `turn-item:message:${encodeURIComponent(
-        `message:fork-bot-work-report:${threadId}:${request === undefined ? `${runId}:completed` : "request-1"}`,
-      )}`;
-      const forkWorkReport = {
-        threadId: ThreadId.make(threadId),
-        ...(request === undefined
-          ? {}
-          : { request: { id: RuntimeRequestId.make("request-1"), kind: request } }),
-      };
-      return {
-        id,
-        kind: "work",
-        createdAt: at,
-        entry: {
-          id,
-          createdAt: at,
-          runId: RunId.make(runId),
-          label: `${threadId} ${request === undefined ? "finished" : "has a question"}`,
-          tone: "info",
-          itemType: "notification",
-          projectedItem: {
-            item: { type: "notification", source: { kind: "system", forkWorkReport } },
-          } as never,
-        },
-      };
-    };
     const read: TimelineEntry = {
       id: "read",
       kind: "work",
@@ -248,12 +222,11 @@ describe("launch rows", () => {
       );
     // The launched thread finished a turn, twice. Each notice still starts its wake, so the
     // launching turn keeps its fold and the working row sits below it.
-    expect(shown([report("thread-a", "run-2"), report("thread-a", "run-3")], "run-3")).toEqual([
-      "turn-fold:run-1",
-      "working-indicator-row",
-    ]);
+    expect(
+      shown([workReportEntry("thread-a", "run-2"), workReportEntry("thread-a", "run-3")], "run-3"),
+    ).toEqual(["turn-fold:run-1", "working-indicator-row"]);
     // A question keeps its card where the conversation answers inline; a Petal draws only the row.
-    const asked = [report("thread-a", "run-2", "question")];
+    const asked = [workReportEntry("thread-a", "run-2", "question")];
     expect(shown(asked, "run-2")).toEqual([
       "turn-fold:run-1",
       "thread-a has a question",
@@ -261,7 +234,7 @@ describe("launch rows", () => {
     ]);
     expect(shown(asked, "run-2", false)).toEqual(["turn-fold:run-1", "working-indicator-row"]);
     // A thread never launched here keeps its report row.
-    expect(shown([report("thread-elsewhere", "run-2")], "run-2")).toEqual([
+    expect(shown([workReportEntry("thread-elsewhere", "run-2")], "run-2")).toEqual([
       "turn-fold:run-1",
       "thread-elsewhere finished",
       "working-indicator-row",

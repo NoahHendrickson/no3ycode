@@ -43,9 +43,9 @@ describe("fork guard: fork-thread-launch-cards", () => {
   });
 
   it("drops a launched thread's turn reports, so its row shows once", () => {
-    expect(readSibling("../components/chat/MessagesTimeline.logic.ts")).toContain(
-      "if (forkLaunchedReportIds.has(timelineEntry.id)) continue;",
-    );
+    const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
+    expect(logic).toContain("launchedThreadReportIds(timelineEntries, forkKeepRequestReports)");
+    expect(logic).toContain("if (forkUnshownEntryIds.has(timelineEntry.id)) continue;");
   });
 
   it("hangs a turn's launches under its last reply", () => {

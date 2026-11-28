@@ -5920,7 +5920,8 @@
     title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
     A report of a thread the conversation launched adds nothing its launch row, which reads the
     thread live, does not already show, so deriveMessagesTimelineRows draws no row for it
-    (launchedThreadReportIds; maintainer's bug report, 2026-11-27: the row drew twice), except a
+    (launchedThreadReportIds in threadLaunch.logic, added to fork-quiet-live-turn's
+    forkUnshownEntryIds; maintainer's bug report, 2026-11-27: the row drew twice), except a
     question or approval where the host answers inline. The entry stays: a report notice is its
     wake's turn boundary, which the folds and the working row read.
 
@@ -6772,7 +6773,8 @@
     everything after the response boundary, except a revealed message, a
     steer's answer and a final-answer reply) until the turn ends, except the
     newest, which stays in the entries but draws no row
-    (deriveMessagesTimelineRows skips it). It still splits the turn, so the
+    (deriveMessagesTimelineRows skips it: forkUnshownEntryIds, the one set of entries that
+    stay but draw no row, which fork-thread-launch-cards adds to). It still splits the turn, so the
     steps before it close into one summary row whose counts climb with each
     update (a row per stretch was tried in v0.1.112 and rejected Nov 26: too
     many rows on long turns), and the steps since it fold into the status line
