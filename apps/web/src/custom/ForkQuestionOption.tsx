@@ -15,7 +15,7 @@ function OptionControl({ multiSelect, selected }: { multiSelect: boolean; select
       className={cn(
         "flex size-4 shrink-0 items-center justify-center border border-foreground/50",
         multiSelect ? "rounded-sm" : "rounded-full",
-        selected && "border-transparent",
+        selected && "border-transparent bg-(--fork-question-accent) text-(--fork-white)",
       )}
     >
       {selected ? (
@@ -51,10 +51,8 @@ export function ForkQuestionOption(props: {
       onClick={props.onSelect}
       className={cn(
         props.textAlignClassName,
-        "group flex w-full flex-col gap-1 rounded-xl border p-2 outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/40",
-        selected
-          ? "border-foreground/24 bg-foreground/8 text-foreground"
-          : "border-transparent hover:bg-foreground/4",
+        "group flex w-full flex-col gap-1 rounded-xl border border-transparent p-2 outline-none transition-colors duration-150 hover:bg-foreground/4 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/40",
+        selected && "text-foreground",
         disabled && "cursor-not-allowed opacity-50",
         !disabled && "cursor-pointer",
       )}

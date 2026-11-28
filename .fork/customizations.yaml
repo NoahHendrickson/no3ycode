@@ -5173,9 +5173,10 @@
     with position/total progress (questionIndex + 1, only when there are 2+
     questions), the active question prompt, and option rows with the control
     on the left (checkbox for multi-select, radio for single-select), label
-    beside it, and description indented under the label. Selection uses a
-    theme-adaptive foreground/alpha fill and hairline (readable in Light and
-    Dark) rather than upstream primary tint or white-alpha. The unselected
+    beside it, and description indented under the label. A picked answer
+    fills its control with --fork-question-accent (blue, white mark) and
+    leaves the row plain with the same hover wash; ForkQuestionOption draws
+    it, so every Questions card, docked or inline, matches. The unselected
     control ring is foreground/50 (Figma neutral/50), not --input: every fork
     dark palette's --input sits within a few points of the card fill, so the
     ring vanished, worst under the hover wash. Number-key

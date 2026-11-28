@@ -2762,25 +2762,9 @@
   }
 }
 
-/* A picked answer shows as a blue control; the row itself stays plain, with the hover wash.
-   Every Questions card wears it, docked over the composer or inline in a sprint's chat. */
-:root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input] {
+/* A Questions card's picked answer (custom/ForkQuestionOption.tsx). */
+:root[data-fork="noahhendrickson-t3code"] {
   --fork-question-accent: #3b8bff;
-
-  & [data-fork-question-option][aria-checked="true"] {
-    border-color: transparent;
-    background: transparent;
-  }
-
-  & [data-fork-question-option][aria-checked="true"]:hover {
-    background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  }
-
-  & [data-fork-question-option][aria-checked="true"] [data-fork-question-control] {
-    border-color: transparent;
-    background: var(--fork-question-accent);
-    color: var(--fork-white);
-  }
 }
 
 /* The / and @ menu is a card like the queue and the stash (fork-composer-command-card): the
