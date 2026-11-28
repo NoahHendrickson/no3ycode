@@ -3540,14 +3540,12 @@ export default function ChatView(props: ChatViewProps) {
   const composerStatusChips =
     activeThread && activeThreadRef && !isDraftHeroState ? (
       <>
-        {/* A side chat mounts no right panel for the PR list to open in. */}
-        {embedded ? null : (
-          <ComposerPullRequestChip
-            threadRef={activeThreadRef}
-            branch={activeThreadBranch}
-            cwd={gitStatusCwd}
-          />
-        )}
+        <ComposerPullRequestChip
+          threadRef={activeThreadRef}
+          branch={activeThreadBranch}
+          cwd={gitStatusCwd}
+          embedded={embedded}
+        />
         {composerBackgroundWork.length > 0 ? (
           <ComposerBackgroundWorkChip
             items={composerBackgroundWork}

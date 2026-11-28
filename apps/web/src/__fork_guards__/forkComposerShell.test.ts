@@ -895,6 +895,9 @@ describe("fork guard: fork-composer-shell", () => {
     // The PR chip left the branch group for the row above.
     expect(prChip).toContain("<ThreadPullRequestBadgeControl");
     expect(branchSelector).not.toContain("<ThreadPullRequestBadgeControl");
+    // A thread opened in a sprint's or coordinator's panel (embedded) still shows its own PR.
+    expect(chatView).toMatch(/<ComposerPullRequestChip[^>]*embedded=\{embedded\}/u);
+    expect(chatView).not.toMatch(/embedded \? null : \(\s*<ComposerPullRequestChip/u);
     // Nothing of the work rides the usage drawer or the context row any more.
     expect(usage).not.toContain("backgroundWork");
     expect(chatView).not.toContain("composerContextTrailing");
