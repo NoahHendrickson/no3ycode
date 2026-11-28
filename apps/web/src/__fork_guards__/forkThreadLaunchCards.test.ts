@@ -44,14 +44,14 @@ describe("fork guard: fork-thread-launch-cards", () => {
 
   it("drops a launched thread's turn reports, so its row shows once", () => {
     const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
-    expect(logic).toContain("launchedThreadReportIds(timelineEntries, forkKeepRequestReports)");
+    expect(logic).toContain("forkLaunchedThreads(timelineEntries, forkKeepRequestReports)");
     expect(logic).toContain("if (forkUnshownEntryIds.has(timelineEntry.id)) continue;");
   });
 
-  it("hangs a turn's launches under its last reply", () => {
-    expect(readSibling("../components/chat/MessagesTimeline.logic.ts")).toContain(
-      "const result = placeLaunchesUnderReplies(",
-    );
+  it("hangs a turn's launches under its last reply, or the latest reply about the thread", () => {
+    const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
+    expect(logic).toContain("const result = placeLaunchesUnderReplies(");
+    expect(logic).toContain("forkLaunched.referringRuns,");
   });
 
   it("answers a thread's open question or approval inline, and only inline in a sprint", () => {

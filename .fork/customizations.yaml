@@ -5896,7 +5896,10 @@
     2026-11-27, after Claude Projects' coordinator video): the threads a reply started hang under
     it, one hooked row each, and a reply that a thread's work report started opens with that
     thread's row unless the thread already shows under the reply that launched it: each thread
-    shows once. Any thread, sprint or Petal shows them.
+    shows once. A launched thread's row follows the conversation about it: it hangs under the
+    latest reply that links its thread chip or that its work report started, and stays under its
+    launch reply when none does (maintainer's request, 2026-11-27). Any thread, sprint or Petal
+    shows them.
 
     Launches: session-logic lifts each `t3_thread_launch` call out of the work stream into a
     "fork-thread-launch" entry (custom/threadLaunchCards/threadLaunch.logic: the wire keeps only
@@ -5907,6 +5910,10 @@
     one group, onto the turn's last reply shown (forkLaunches), which draws them between its text
     and its hover-only actions (TimelineAssistantRows), so the three hover as one; a turn with no
     reply shown keeps them where the calls happened, one run's consecutive calls in one row.
+    A launch whose thread a later turn refers to moves instead to the latest such turn's last
+    reply shown (referringRuns from forkLaunchedThreads, one pass over the entries: an assistant
+    message whose markdown links the thread, read with shared threadLinks and cached per message
+    object, or a launched thread's work report, whose run is the wake its reply belongs to).
 
     Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
     in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can
@@ -5917,7 +5924,7 @@
     title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
     A report of a thread the conversation launched adds nothing its launch row, which reads the
     thread live, does not already show, so deriveMessagesTimelineRows draws no row for it
-    (launchedThreadReportIds in threadLaunch.logic, added to fork-quiet-live-turn's
+    (forkLaunchedThreads' hiddenReportIds in threadLaunch.logic, added to fork-quiet-live-turn's
     forkUnshownEntryIds; maintainer's bug report, 2026-11-27: the row drew twice), except a
     question or approval where the host answers inline. The entry stays: a report notice is its
     wake's turn boundary, which the folds and the working row read.

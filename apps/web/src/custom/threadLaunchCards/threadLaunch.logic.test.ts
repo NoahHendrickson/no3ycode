@@ -142,7 +142,7 @@ describe("launch rows", () => {
     ]);
   });
 
-  const reply = (id: string, runId: string): TimelineEntry => ({
+  const reply = (id: string, runId: string, text = id): TimelineEntry => ({
     id,
     kind: "message",
     createdAt: at,
@@ -150,7 +150,7 @@ describe("launch rows", () => {
       id: MessageId.make(id),
       role: "assistant",
       runId: RunId.make(runId),
-      text: id,
+      text,
       streaming: false,
       createdAt: at,
       updatedAt: at,
@@ -195,6 +195,50 @@ describe("launch rows", () => {
       "launch:a",
       "reply:other",
     ]);
+  });
+
+  it("moves a launched thread's row to the latest reply that links its chip", () => {
+    expect(
+      order([
+        launchEntry("a", "run-1"),
+        reply("started", "run-1"),
+        reply("mentions", "run-2", "Its findings ([Land PRs](t3-thread://v1/thread-a)):"),
+        reply("other", "run-3", "Unrelated."),
+        reply("again", "run-4", "Still on <t3-thread://v1/thread-a>."),
+        reply("after", "run-5", "Later."),
+      ]),
+    ).toEqual([
+      "reply:started",
+      "reply:mentions",
+      "reply:other",
+      "reply:again",
+      "in-reply:a",
+      "reply:after",
+    ]);
+  });
+
+  it("moves a launched thread's row to the reply its work report started", () => {
+    expect(
+      order([
+        launchEntry("a", "run-1"),
+        launchEntry("b", "run-1"),
+        reply("started", "run-1"),
+        workReportEntry("thread-a", "run-2"),
+        reply("woken", "run-2"),
+      ]),
+    ).toEqual(["reply:started", "in-reply:b", "reply:woken", "in-reply:a"]);
+  });
+
+  it("keeps a launched thread's row under its launch when no later reply refers to it", () => {
+    expect(
+      order([
+        launchEntry("a", "run-1"),
+        reply("started", "run-1"),
+        reply("other", "run-2", "See [another](t3-thread://v1/thread-elsewhere)."),
+        workReportEntry("thread-elsewhere", "run-3"),
+        reply("woken", "run-3"),
+      ]),
+    ).toEqual(["reply:started", "in-reply:a", "reply:other", "reply:woken"]);
   });
 
   it("shows a launched thread once: its later turn reports add no second row", () => {

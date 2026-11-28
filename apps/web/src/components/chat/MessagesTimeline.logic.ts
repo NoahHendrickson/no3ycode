@@ -91,9 +91,9 @@ import { type QuietWakeMode, quietBotWakeRunIds, withoutRuns } from "~/custom/bo
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import {
   type ForkThreadLaunch,
+  forkLaunchedThreads,
   forkThreadLaunchListsEqual,
   lastThreadReportIds,
-  launchedThreadReportIds,
   placeLaunchesUnderReplies,
 } from "~/custom/threadLaunchCards/threadLaunch.logic";
 /* fork:end fork-thread-launch-cards */
@@ -1798,9 +1798,8 @@ export function deriveMessagesTimelineRows(
   /* fork:end fork-quiet-live-turn */
   /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
   const forkKeepRequestReports = input.forkKeepRequestReports === true;
-  for (const id of launchedThreadReportIds(timelineEntries, forkKeepRequestReports)) {
-    forkUnshownEntryIds.add(id);
-  }
+  const forkLaunched = forkLaunchedThreads(timelineEntries, forkKeepRequestReports);
+  for (const id of forkLaunched.hiddenReportIds) forkUnshownEntryIds.add(id);
   /* fork:end fork-thread-launch-cards */
   const embeddedResultRunIds = new Set<RunId>();
   for (const entry of timelineEntries) {
@@ -2667,6 +2666,7 @@ export function deriveMessagesTimelineRows(
     attachTrailingToolGroupsToAssistant(
       attachCreatedThreadSummaries(nextRows, timelineEntries, collapsedFoldMemberIds),
     ),
+    forkLaunched.referringRuns,
   );
   /* fork:end fork-thread-launch-cards */
   return result.map((row, index) => {
