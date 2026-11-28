@@ -56,7 +56,7 @@ export function BotThreadsCompactRowView(
               <span className="flex shrink-0 items-center gap-1">
                 {pullRequests.slice(0, ROW_CHIP_LIMIT).map((pullRequest, index) => (
                   // oxlint-disable-next-line react/no-array-index-key -- positional: own chip, then newest merged
-                  <PullRequestRowChip key={index} {...pullRequest} />
+                  <PullRequestRowChip key={index} {...pullRequest} render={<span />} />
                 ))}
                 {hiddenMerged > 0 ? (
                   <span className="text-xs text-muted-foreground tabular-nums">

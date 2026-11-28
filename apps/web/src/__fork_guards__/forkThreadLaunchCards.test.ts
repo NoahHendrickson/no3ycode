@@ -33,9 +33,8 @@ describe("fork guard: fork-thread-launch-cards", () => {
   it("draws each pull request with the state-coloured row PR chip and no loose stage label", () => {
     const cards = readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx");
     expect(cards).toContain("<PullRequestRowChip");
-    expect(cards).toContain("chipState={link.state ?? undefined}");
-    expect(cards).toContain("checks={link.checks}");
-    expect(cards).not.toContain('<span aria-hidden className="shrink-0 text-xs">');
+    expect(cards).toContain("pullRequestLookOf(link.snapshot)");
+    expect(cards).not.toContain("THREAD_PULL_REQUEST_STAGE_LABELS");
   });
 
   it("draws a work report's notice as the reporting thread's row", () => {

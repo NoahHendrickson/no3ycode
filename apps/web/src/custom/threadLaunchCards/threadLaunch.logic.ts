@@ -9,7 +9,6 @@ import type {
   EnvironmentId,
   OrchestrationV2PendingBackgroundTask,
   OrchestrationV2TurnItemStatus,
-  PullRequestChecksState,
   RunId,
   ThreadId,
   ThreadLinkedPullRequest,
@@ -26,11 +25,7 @@ import type { MessagesTimelineRow } from "~/components/chat/MessagesTimeline.log
 import type { SidebarThreadStatus } from "~/components/Sidebar.logic";
 import type { TimelineEntry } from "~/session-logic";
 
-import {
-  type PullRequestChipState,
-  pullRequestChecksOf,
-  pullRequestChipStateOf,
-} from "../composerPullRequestChip.logic";
+import { pullRequestChipStateOf } from "../composerPullRequestChip.logic";
 import { forkWorkReportOfEntry, forkWorkReportThreadId } from "../forkWorkReports";
 
 export interface ForkThreadLaunch {
@@ -147,10 +142,7 @@ export interface ThreadLaunchPullRequest {
   readonly number: number;
   readonly url: string;
   readonly title: string | null;
-  /** Open, draft, merged or closed, as the composer's PR chip fills; null until synced. */
-  readonly state: PullRequestChipState | null;
-  /** Open PR's CI state for the chip's inner pill; null when closed, merged or unknown. */
-  readonly checks: PullRequestChecksState | null;
+  readonly snapshot: ThreadPullRequestSnapshot | null;
   readonly stage: ThreadPullRequestStage | null;
 }
 
@@ -179,14 +171,13 @@ export function threadLaunchPullRequests(
       number: link.number,
       url: link.url,
       title: link.snapshot?.title ?? null,
-      state: pullRequestChipStateOf(link.snapshot) ?? null,
-      checks: pullRequestChecksOf(link.snapshot),
+      snapshot: link.snapshot ?? null,
       stage: idleStage(threadPullRequestStage(link.snapshot), idle),
     });
   }
   for (const pr of [thread.linkedPullRequest, thread.branchPullRequest]) {
     if (pr != null)
-      add({ number: pr.number, url: pr.url, title: null, state: null, checks: null, stage: null });
+      add({ number: pr.number, url: pr.url, title: null, snapshot: null, stage: null });
   }
   return out;
 }
