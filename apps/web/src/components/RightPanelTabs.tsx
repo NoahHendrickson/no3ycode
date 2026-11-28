@@ -978,17 +978,31 @@ function RightPanelTab(
     id: surface.id,
     disabled: props.dragDisabled,
   });
-  const sideChatShell = useQuietThreadShell(
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list
+     Share one shell subscription and title formatter across `thread` tabs and foreign `pull-requests` tabs. */
+  const tabThreadShell = useQuietThreadShell(
     surface.kind === "thread" && props.environmentId !== null
       ? scopeThreadRef(props.environmentId, surface.threadId)
-      : null,
+      : surface.kind === "pull-requests"
+        ? (surface.threadRef ?? null)
+        : null,
   );
+  const sideChatShell = surface.kind === "thread" ? tabThreadShell : null;
+  const formattedTabThreadTitle =
+    tabThreadShell === null
+      ? null
+      : tabThreadShell.lineage.sideChat === true
+        ? tabThreadShell.title
+        : formatSubagentDisplayTitle(tabThreadShell.title);
   const title =
-    sideChatShell === null
+    formattedTabThreadTitle === null
       ? props.title
-      : sideChatShell.lineage.sideChat === true
-        ? sideChatShell.title
-        : formatSubagentDisplayTitle(sideChatShell.title);
+      : surface.kind === "pull-requests"
+        ? formattedTabThreadTitle.trim()
+          ? `${formattedTabThreadTitle.trim()} · ${props.title}`
+          : props.title
+        : formattedTabThreadTitle;
+  /* fork:end fork-embedded-pr-list */
   const sideChatState = sideChatTabState(sideChatShell);
   const content = (
     <>

@@ -158,6 +158,11 @@ export async function reopenClosedView(
     case "pull-request":
       panels.openPullRequest(ref, surface);
       break;
+    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+    case "pull-requests":
+      panels.openPullRequests(ref, surface.threadRef);
+      break;
+    /* fork:end fork-embedded-pr-list */
     case "issue":
       panels.openIssue(ref, surface);
       break;
