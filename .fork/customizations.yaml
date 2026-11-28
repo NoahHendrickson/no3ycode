@@ -3822,7 +3822,12 @@
     once); after it settles only the pending list counts. The Stop square is
     drawn only when upstream's row would enable Stop (useThreadLifecycle's
     canStopBackgroundWork), since mid-turn the composer owns Stop.
-    Neither shows on the draft hero. On narrow composers the
+    Neither shows on the draft hero. An embedded thread (a side chat, or a
+    thread opened in a sprint's or coordinator's panel) shows its PR chip too,
+    unchanged, but a stack's click opens its current PR, since a list would
+    open in the host's panel (ThreadPullRequestBadgeControl takes a null list
+    opener). On narrow
+    composers the
     control row wraps so the left context slot never gets squeezed
     off-screen; while collapsed
     on mobile or showing mobile pending answers, the in-vessel context slot is

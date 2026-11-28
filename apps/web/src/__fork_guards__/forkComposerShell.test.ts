@@ -895,6 +895,13 @@ describe("fork guard: fork-composer-shell", () => {
     // The PR chip left the branch group for the row above.
     expect(prChip).toContain("<ThreadPullRequestBadgeControl");
     expect(branchSelector).not.toContain("<ThreadPullRequestBadgeControl");
+    // An embedded thread (a side chat, or one opened in a sprint's or coordinator's panel) still
+    // shows its own PR, ungated; only its list opener is withheld, so a stack opens its current PR.
+    expect(chatView).toMatch(/<>\s*<ComposerPullRequestChip[^>]*canOpenList=\{!embedded\}/u);
+    expect(prChip).toMatch(/onOpenList=\{\s*props\.canOpenList\s*\?[^:]+:\s*null\s*\}/u);
+    expect(readSibling("../components/ThreadStatusIndicators.tsx")).toContain(
+      'onOpenList !== null && badge !== null && (badge.kind === "stack" || badge.others > 0)',
+    );
     // Nothing of the work rides the usage drawer or the context row any more.
     expect(usage).not.toContain("backgroundWork");
     expect(chatView).not.toContain("composerContextTrailing");

@@ -409,7 +409,11 @@ export function ThreadPullRequestBadgeControl({
   number?: number | undefined;
   url?: string | undefined;
   status: PrStatusIndicator | null;
-  onOpenList: () => void;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell
+     Null where no list can open (an embedded thread's would open in its host's panel): an
+     aggregate badge then opens its current PR, keeping its aggregate look. */
+  onOpenList: (() => void) | null;
+  /* fork:end fork-composer-shell */
   onOpenPullRequest: (event: MouseEvent<HTMLElement>, url?: string) => void;
 }) {
   const m = useMessages();
@@ -419,7 +423,11 @@ export function ThreadPullRequestBadgeControl({
     <PullRequestBadge
       render={render}
       presentation={presentation}
-      opensList={badge !== null && (badge.kind === "stack" || badge.others > 0)}
+      /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+      opensList={
+        onOpenList !== null && badge !== null && (badge.kind === "stack" || badge.others > 0)
+      }
+      /* fork:end fork-composer-shell */
       url={url}
       number={number}
       status={status}
@@ -448,14 +456,18 @@ function PullRequestBadge({
   number: number | undefined;
   status: PrStatusIndicator | null;
   pullRequests: ReadonlyArray<ThreadPullRequestLink>;
-  onOpenList: () => void;
+  /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+  onOpenList: (() => void) | null;
+  /* fork:end fork-composer-shell */
   onOpenPullRequest: (event: MouseEvent<HTMLElement>, url?: string) => void;
 }) {
   const onClick = opensList
     ? (event: MouseEvent<HTMLElement>) => {
         event.preventDefault();
         event.stopPropagation();
-        onOpenList();
+        /* fork:begin fork-composer-shell — see .fork/customizations.yaml#fork-composer-shell */
+        onOpenList?.();
+        /* fork:end fork-composer-shell */
       }
     : onOpenPullRequest;
   const element = opensList ? (

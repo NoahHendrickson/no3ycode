@@ -31,6 +31,8 @@ export function ComposerPullRequestChip(props: {
   readonly branch: string | null;
   /** ChatView's git-status cwd, so this reads its subscription. */
   readonly cwd: string | null;
+  /** False in an embedded thread, whose list would open in its host's panel with the host's PRs. */
+  readonly canOpenList: boolean;
 }) {
   const { threadRef } = props;
   const thread = useQuietThreadShell(threadRef);
@@ -81,7 +83,11 @@ export function ComposerPullRequestChip(props: {
         number={pr.number}
         url={pr.url}
         status={pr.status}
-        onOpenList={() => useRightPanelStore.getState().open(threadRef, "pull-requests")}
+        onOpenList={
+          props.canOpenList
+            ? () => useRightPanelStore.getState().open(threadRef, "pull-requests")
+            : null
+        }
         onOpenPullRequest={(event, targetUrl) => {
           const url = targetUrl ?? prUrl;
           if (url) openPrLink(event, url);
