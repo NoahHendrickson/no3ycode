@@ -28,6 +28,13 @@ export function resolvePullRequestChipState(input: {
     );
     return badge.state === "open" && !confirmedOpen ? undefined : badge.state;
   }
+  return pullRequestChipStateOf(pr);
+}
+
+/** One PR's chip state: a draft while open and a draft, else its own state. */
+export function pullRequestChipStateOf(
+  pr: Pick<NonNullable<ThreadPr>, "state" | "isDraft"> | null,
+): PullRequestChipState | undefined {
   if (!pr) return undefined;
   return pr.state === "open" && pr.isDraft === true ? "draft" : pr.state;
 }
@@ -41,5 +48,12 @@ export function resolvePullRequestChipChecks(input: {
 }): PullRequestChecksState | null {
   const { badge, snapshot } = input;
   if (badge !== null && (badge.kind === "stack" || badge.others > 0)) return null;
+  return pullRequestChecksOf(snapshot);
+}
+
+/** One PR's CI, shown while it is open. */
+export function pullRequestChecksOf(
+  snapshot: Pick<ThreadPullRequestSnapshot, "state" | "checksState"> | null | undefined,
+): PullRequestChecksState | null {
   return snapshot?.state === "open" ? (snapshot.checksState ?? null) : null;
 }

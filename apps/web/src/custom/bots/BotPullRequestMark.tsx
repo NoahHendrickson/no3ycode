@@ -3,7 +3,7 @@
  * `.fork/customizations.yaml#fork-bot-digest`: its thread rows and its digest draw the same mark.
  */
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import type { EnvironmentId } from "@t3tools/contracts";
+import type { EnvironmentId, PullRequestChecksState } from "@t3tools/contracts";
 
 import {
   PullRequestGlyph,
@@ -13,6 +13,12 @@ import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPre
 import { cn } from "~/lib/utils";
 import { useSharedPullRequestSummary } from "~/state/pullRequests";
 
+import {
+  type PullRequestChipState,
+  pullRequestChecksOf,
+  pullRequestChipStateOf,
+} from "../composerPullRequestChip.logic";
+
 import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
 
 /** Its state and title: a thread's own link carries them; for a branch's pull request, the
@@ -20,7 +26,13 @@ import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-lin
 export function useBotPullRequestState(
   pullRequest: BotPullRequest | null,
   environmentId: EnvironmentId,
-): { readonly state: PullRequestStatePresentation | null; readonly title: string | null } {
+): {
+  readonly state: PullRequestStatePresentation | null;
+  readonly title: string | null;
+  /** What the composer's PR chip fills by, and its CI pill. */
+  readonly chipState: PullRequestChipState | undefined;
+  readonly checks: PullRequestChecksState | null;
+} {
   const branch = pullRequest?.branch ?? null;
   const host =
     branch === null ? undefined : sourceControlClients.parseChangeRequestUrl(branch.url)?.link.host;
@@ -35,12 +47,23 @@ export function useBotPullRequestState(
           ...(host === undefined ? {} : { host }),
         },
   );
-  const snapshot = pullRequest?.snapshot ?? null;
-  if (snapshot !== null) return { state: resolvePullRequestState(snapshot), title: snapshot.title };
-  if (summary === null) return { state: null, title: null };
+  // A thread's own link carries the snapshot; a branch's PR, the summary the sidebar read.
+  const pr =
+    pullRequest?.snapshot ??
+    (summary === null
+      ? null
+      : {
+          state: summary.state,
+          isDraft: summary.isDraft ?? false,
+          title: summary.title,
+          checksState: summary.checksState ?? null,
+        });
+  if (pr === null) return { state: null, title: null, chipState: undefined, checks: null };
   return {
-    state: resolvePullRequestState({ state: summary.state, isDraft: summary.isDraft ?? false }),
-    title: summary.title,
+    state: resolvePullRequestState(pr),
+    title: pr.title,
+    chipState: pullRequestChipStateOf(pr),
+    checks: pullRequestChecksOf(pr),
   };
 }
 

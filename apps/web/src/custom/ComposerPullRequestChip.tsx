@@ -12,9 +12,14 @@ import {
   resolveDisplayedThreadPr,
   useThreadDisplayedPullRequest,
 } from "~/components/ThreadStatusIndicators";
+import {
+  PullRequestGlyph,
+  type PullRequestStatePresentation,
+} from "~/components/pullRequest/pullRequestIcons";
 import { pullRequestChecksStatePresentation } from "~/components/pullRequest/pullRequestPresentation";
 import { usePullRequestActionRunner } from "~/components/pullRequest/usePullRequestActions";
 import { useOpenPrLink } from "~/lib/openPullRequestLink";
+import { cn } from "~/lib/utils";
 import { useQuietThreadShell } from "~/state/entities";
 import { useEnvironmentQuery } from "~/state/query";
 import { useRightPanelStore } from "~/rightPanelStore";
@@ -23,10 +28,14 @@ import { vcsEnvironment } from "~/state/vcs";
 import { BanIcon, GitMergeIcon } from "./icons/lucide-hugeicons";
 import { PullRequestChecksDot } from "./SidebarV2StatusIndicator";
 import {
+  type PullRequestChipState,
   resolvePullRequestChipChecks,
   resolvePullRequestChipState,
 } from "./composerPullRequestChip.logic";
 import { type ThreadAutoMerge, useThreadAutoMerge } from "./threadAutoMerge";
+
+// The chip's look lives with the composer's; a bot panel row draws the chip without a composer.
+import "./ComposerShell.css";
 
 /** The thread's PR as a chip above the composer (fork-composer-shell), resolved the way
  * BranchToolbarBranchSelector resolved it in the context row. Renders nothing without a PR. An
@@ -154,6 +163,47 @@ export function PullRequestChipControl({
         <span data-fork-pr-chip-ci={checks}>
           <PullRequestChecksDot state={checks} />
           CI
+        </span>
+      )}
+    </ComposerControl>
+  );
+}
+
+/** A pull request as a bot panel's thread row shows it (fork-sprints, fork-coordinator-threads). */
+export interface PullRequestRowChipProps {
+  readonly number: number;
+  readonly state: PullRequestStatePresentation | null;
+  /** What the chip fills by (composerPullRequestChip.logic pullRequestChipStateOf). */
+  readonly chipState: PullRequestChipState | undefined;
+  readonly checks: PullRequestChecksState | null;
+}
+
+/** The composer's PR chip in its row variant (ComposerShell.css: smaller and deeper), drawn
+    inside a row's button, so it is a span whose words are read in place. */
+export function PullRequestRowChip(props: PullRequestRowChipProps) {
+  const { state, checks } = props;
+  const Icon = state?.Icon ?? PullRequestGlyph.pullRequest;
+  return (
+    <ComposerControl
+      render={<span />}
+      size="xs"
+      data-fork-composer-status-chip="pull-request"
+      data-fork-pr-chip
+      data-fork-pr-chip-variant="row"
+      data-pr-state={props.chipState}
+    >
+      <span className={cn("contents font-normal text-xs tabular-nums", state?.toneClassName)}>
+        <span className="sr-only">
+          {state === null ? "Pull request" : `${state.label} pull request`}
+        </span>
+        <Icon aria-hidden className="shrink-0" />
+        <span>{props.number}</span>
+      </span>
+      {checks === null ? null : (
+        <span data-fork-pr-chip-ci={checks}>
+          <PullRequestChecksDot state={checks} />
+          <span className="sr-only">{pullRequestChecksStatePresentation(checks).label}</span>
+          <span aria-hidden>CI</span>
         </span>
       )}
     </ComposerControl>

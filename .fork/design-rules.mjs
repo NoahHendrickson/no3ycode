@@ -196,6 +196,9 @@ export const DESIGN_LINT_ALLOWLIST = [
   ...b5Exempt("wrapper around CheckboxPill (Fork/Checkbox pill)", {
     "coordinator/CoordinatorDraftToggle.tsx": ["CoordinatorDraftToggle"],
   }),
+  ...b5Exempt("wrapper: the frame both storied bot rows draw in (Fork/Petal work row)", {
+    "bots/BotThreadsPanel.tsx": ["BotThreadsRowFrame"],
+  }),
   ...b5Exempt("wrapper around PullRequestChipControl (Fork/Composer PR chip)", {
     "ComposerPullRequestChip.tsx": ["ThreadPullRequestChip"],
   }),
