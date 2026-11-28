@@ -378,12 +378,9 @@ import {
 import { botMascotMood, botMascotShape, nextBotMascotShape } from "~/custom/bots/botMascotTags";
 import { isPetalThread, listSidebarBots } from "~/custom/bots/botThreads";
 /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-import { NewSprintDialog, SidebarV2SprintsRow } from "~/custom/sprints/SidebarV2SprintsSection";
-import {
-  listSidebarSprints,
-  sprintDefaultProject,
-  visibleSidebarSprints,
-} from "~/custom/sprints/sprintThreads";
+import { SidebarV2SprintsRow } from "~/custom/sprints/SidebarV2SprintsSection";
+import { visibleSectionThreads } from "~/custom/sidebarV2SectionThreads";
+import { listSidebarSprints, sprintDefaultProject } from "~/custom/sprints/sprintThreads";
 /* fork:end fork-sprints */
 /* fork:begin fork-sprint-rules-refresh — see .fork/customizations.yaml#fork-sprint-rules-refresh */
 import { useRefreshSprintRules } from "~/custom/sprints/useRefreshSprintRules";
@@ -402,8 +399,8 @@ import {
   useSidebarV2BotsLayout,
   useSidebarV2CollapsedListSections,
   useSidebarV2CompactBots,
+  useNewPetal,
 } from "~/custom/bots/SidebarV2BotsSection";
-import { useCreateBot } from "~/custom/bots/useCreateBot";
 import { useSetBotMascot } from "~/custom/bots/useSetBotMascot";
 /* fork:end fork-bots */
 /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
@@ -2485,15 +2482,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   // One view from the two saved settings: Compact cards is the list's alone.
   const petalView: SidebarV2CardView =
     botsLayout === "grid" ? "grid" : compactBots ? "compact" : "card";
-  const [namingBot, setNamingBot] = useState(false);
-  const createBot = useCreateBot();
+  const newPetal = useNewPetal(botThreads);
   const setBotMascot = useSetBotMascot();
   /* fork:end fork-bots */
   /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
      Sprints list in their own section above the Petals, in Code only, like the Petals. */
   const sprintThreads = listSidebarSprints(threads);
   const sprintsSectionCollapsed = isListSectionCollapsed("sprints");
-  const [creatingSprint, setCreatingSprint] = useState(false);
   /* fork:end fork-sprints */
   /* fork:begin fork-sprint-rules-refresh — see .fork/customizations.yaml#fork-sprint-rules-refresh */
   useRefreshSprintRules(sprintThreads, projectByKey);
@@ -5433,17 +5428,67 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         collapsed={coordinatorsSectionCollapsed}
         onToggleCollapsed={() => toggleListSectionCollapsed("coordinators")}
       >
-        {coordinatorThreads
-          .filter(
-            (thread) =>
-              !coordinatorsSectionCollapsed ||
-              routeRowThreadKey ===
-                scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
-          )
-          .map((thread) => renderOneThreadRow(thread, "active"))}
+        {visibleSectionThreads(
+          coordinatorThreads,
+          coordinatorsSectionCollapsed,
+          routeRowThreadKey,
+        ).map((thread) => renderOneThreadRow(thread, "active"))}
       </SidebarV2CoordinatorsRow>
     );
   /* fork:end fork-coordinator-threads */
+  /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
+     Hidden while there are none; the New sprint row starts one. */
+  const sprintsSection =
+    sprintThreads.length === 0 ? null : (
+      <SidebarV2SprintsRow
+        collapsed={sprintsSectionCollapsed}
+        onToggleCollapsed={() => toggleListSectionCollapsed("sprints")}
+      >
+        {visibleSectionThreads(sprintThreads, sprintsSectionCollapsed, routeRowThreadKey).map(
+          (sprint) =>
+            renderOneThreadRow(sprint, "active", {
+              botWork:
+                botWorkByKey.get(
+                  scopedThreadKey(scopeThreadRef(sprint.environmentId, sprint.id)),
+                ) ?? null,
+            }),
+        )}
+      </SidebarV2SprintsRow>
+    );
+  /* fork:end fork-sprints */
+  /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
+     Hidden while there are none, except while the New petal row names one. */
+  const botsSection = !newPetal.shown ? null : (
+    <SidebarV2BotsRow
+      collapsed={botsSectionCollapsed}
+      onToggleCollapsed={() => toggleListSectionCollapsed("bots")}
+      layout={botsLayout}
+      onLayoutChange={setBotsLayout}
+      compactCards={compactBots}
+      onCompactCardsChange={setCompactBots}
+      naming={
+        newPetal.naming ? (
+          <SidebarV2NewBotRow
+            view={petalView}
+            initialMascot={nextBotMascotShape(botThreads.map((bot) => botMascotShape(bot.source)))}
+            onCreate={newPetal.create}
+            onDone={newPetal.stop}
+          />
+        ) : null
+      }
+    >
+      {visibleSectionThreads(botThreads, botsSectionCollapsed, routeRowThreadKey).map((bot) =>
+        renderOneThreadRow(bot, "active", {
+          petalView,
+          /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
+          botWork:
+            botWorkByKey.get(scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id))) ?? null,
+          /* fork:end fork-bot-work-threads */
+        }),
+      )}
+    </SidebarV2BotsRow>
+  );
+  /* fork:end fork-bots */
   return (
     <SidebarFolderDrop>
       <SidebarChromeHeader
@@ -5481,87 +5526,19 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
               onNewThread={handleNewThreadClick}
               /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
               onNewBot={() => {
-                setNamingBot(true);
+                newPetal.start();
                 if (botsSectionCollapsed) toggleListSectionCollapsed("bots");
               }}
               /* fork:end fork-bots */
               /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-              onNewSprint={() => setCreatingSprint(true)}
+              newSprintDefaultProject={sprintDefaultProject(threads, routeThreadRef)}
               /* fork:end fork-sprints */
             />
-            {/* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints
-                Hidden while there are none; the New sprint row above starts one. */}
-            {creatingSprint ? (
-              <NewSprintDialog
-                defaultProject={sprintDefaultProject(threads, routeThreadRef)}
-                onDone={() => setCreatingSprint(false)}
-              />
-            ) : null}
-            {sprintThreads.length === 0 ? null : (
-              <SidebarV2SprintsRow
-                collapsed={sprintsSectionCollapsed}
-                onToggleCollapsed={() => toggleListSectionCollapsed("sprints")}
-              >
-                {/* A folded Sprints section keeps the open sprint's card. */}
-                {visibleSidebarSprints(
-                  sprintThreads,
-                  sprintsSectionCollapsed,
-                  routeRowThreadKey,
-                ).map((sprint) =>
-                  renderOneThreadRow(sprint, "active", {
-                    botWork:
-                      botWorkByKey.get(
-                        scopedThreadKey(scopeThreadRef(sprint.environmentId, sprint.id)),
-                      ) ?? null,
-                  }),
-                )}
-              </SidebarV2SprintsRow>
-            )}
+            {/* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */}
+            {sprintsSection}
             {/* fork:end fork-sprints */}
-            {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
-                Hidden while there are none, unless the New petal row is naming one. */}
-            {botThreads.length === 0 && !namingBot ? null : (
-              <SidebarV2BotsRow
-                collapsed={botsSectionCollapsed}
-                onToggleCollapsed={() => toggleListSectionCollapsed("bots")}
-                layout={botsLayout}
-                onLayoutChange={setBotsLayout}
-                compactCards={compactBots}
-                onCompactCardsChange={setCompactBots}
-                naming={
-                  namingBot ? (
-                    <SidebarV2NewBotRow
-                      view={petalView}
-                      initialMascot={nextBotMascotShape(
-                        botThreads.map((bot) => botMascotShape(bot.source)),
-                      )}
-                      onCreate={createBot}
-                      onDone={() => setNamingBot(false)}
-                    />
-                  ) : null
-                }
-              >
-                {/* A folded Bots section keeps the open bot's card. */}
-                {botThreads
-                  .filter(
-                    (bot) =>
-                      !botsSectionCollapsed ||
-                      routeRowThreadKey ===
-                        scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
-                  )
-                  .map((bot) =>
-                    renderOneThreadRow(bot, "active", {
-                      petalView,
-                      /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
-                      botWork:
-                        botWorkByKey.get(
-                          scopedThreadKey(scopeThreadRef(bot.environmentId, bot.id)),
-                        ) ?? null,
-                      /* fork:end fork-bot-work-threads */
-                    }),
-                  )}
-              </SidebarV2BotsRow>
-            )}
+            {/* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */}
+            {botsSection}
             {/* fork:end fork-bots */}
             {/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */}
             {coordinatorsSection}

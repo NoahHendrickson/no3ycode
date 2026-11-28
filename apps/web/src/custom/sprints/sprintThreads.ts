@@ -5,7 +5,6 @@
  *
  * No runtime imports from bots/botThreads here: botThreads reads this module.
  */
-import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { type EnvironmentId, ModelSelection, type ScopedThreadRef } from "@t3tools/contracts";
 import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 import * as Option from "effect/Option";
@@ -41,17 +40,6 @@ export function listSidebarSprints<
   return threads
     .filter((thread) => thread.archivedAt === null && isSprintThread(thread.source))
     .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt));
-}
-
-/** The sprints the Sprints section shows: all of them, or while it is folded the open one alone. */
-export function visibleSidebarSprints<
-  T extends { readonly environmentId: EnvironmentId; readonly id: ScopedThreadRef["threadId"] },
->(sprints: ReadonlyArray<T>, collapsed: boolean, routeThreadKey: string | null): T[] {
-  return sprints.filter(
-    (sprint) =>
-      !collapsed ||
-      routeThreadKey === scopedThreadKey(scopeThreadRef(sprint.environmentId, sprint.id)),
-  );
 }
 
 /** The project a new sprint starts in: the open thread's, when there is one. */

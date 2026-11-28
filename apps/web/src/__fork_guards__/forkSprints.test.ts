@@ -226,7 +226,7 @@ describe("fork guard: fork-sprints", () => {
   });
 
   it("lets the owner pick the sprint's model in the dialog", () => {
-    const dialog = readSibling("../custom/sprints/SidebarV2SprintsSection.tsx");
+    const dialog = readSibling("../custom/sprints/NewSprintDialog.tsx");
     expect(dialog).toContain("<SprintModelPicker");
     expect(dialog).toContain("useSprintModelChoices(");
     expect(readSibling("../custom/sprints/useSprintModelChoices.ts")).toContain(
@@ -283,9 +283,13 @@ describe("fork guard: fork-sprints", () => {
   it("draws the Sprints section and tags a new sprint `sprint` before `bot`", () => {
     const sidebar = readSibling("../components/Sidebar.tsx");
     expect(sidebar).toContain("<SidebarV2SprintsRow");
-    // Hidden while empty: the chrome's New sprint row is the only way to start one.
-    expect(sidebar).toMatch(/sprintThreads\.length === 0 \? null : \(\s*<SidebarV2SprintsRow/u);
-    expect(sidebar).toContain("onNewSprint={() => setCreatingSprint(true)}");
+    // Hidden while empty, so the chrome's New sprint row owns the dialog that starts one.
+    expect(sidebar).toMatch(/const sprintsSection =\s*sprintThreads\.length === 0 \? null/u);
+    expect(sidebar).toContain("{sprintsSection}");
+    expect(sidebar).not.toContain("<NewSprintDialog");
+    const rows = readSibling("../custom/SidebarV2ChromeRows.tsx");
+    expect(rows).toContain("function ChromeNewSprintRow");
+    expect(rows).toContain("<NewSprintDialog defaultProject={props.defaultProject}");
     expect(readSibling("../custom/sprints/useCreateSprint.ts")).toContain(
       "[FORK_SPRINT_TAG, FORK_BOT_THREAD_TAG]",
     );

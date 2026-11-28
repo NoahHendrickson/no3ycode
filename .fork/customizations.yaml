@@ -3200,12 +3200,12 @@
 
 - id: fork-sidebar-scheduled-row
   intent: >
-    The V2 sidebar's action block ends with a Scheduled row directly under
-    Usage: the chrome door to every scheduled task across every project and
-    environment. It is a labeled action in the same shape as New agent, Add a
-    project and Usage (ZapIcon, the lightning bolt the Automations page
+    The V2 sidebar's action block carries a Scheduled row directly under
+    New sprint: the chrome door to every scheduled task across every project and
+    environment. It is a labeled action in the same shape as New agent and
+    New sprint (ZapIcon, the lightning bolt the Automations page
     header also wears), stacked in the one action group so no inter-group
-    padding opens between it and Usage. Clicking it navigates to a page
+    padding opens between it and New sprint. Clicking it navigates to a page
     rather than opening a popover: Usage is a
     dashboard you glance at over the thread, while scheduled tasks are a
     managed list with an editor dialog, a deliveries dialog and a per-task
@@ -8853,7 +8853,8 @@
     without `bot`.
 
     Unlike a Petal it belongs to a real project, picked when it starts (the New sprint dialog
-    off the chrome's New sprint row, the open thread's project first), and launches its threads there
+    off the chrome's New sprint row, which owns it (custom/sprints/NewSprintDialog), the open
+    thread's project first), and launches its threads there
     unless the work belongs to another project. Its folder sits under the No-project workspace
     (sprints/<name>-<id>), out of the project's checkout, and is its working folder, so its
     rules, hooks and memory work as a Petal's. Its seeded CLAUDE.md
@@ -8957,6 +8958,7 @@
     - apps/web/src/custom/sprints/useCreateSprint.ts
     - apps/web/src/custom/sprints/useIsSprintThread.ts
     - apps/web/src/custom/sprints/SidebarV2SprintsSection.tsx
+    - apps/web/src/custom/sprints/NewSprintDialog.tsx
     - apps/web/src/custom/sprints/SprintGoal.tsx
     - apps/web/src/custom/sprints/SprintThreadModel.tsx
     - apps/web/src/custom/sprints/sprintModel.ts
@@ -10587,6 +10589,7 @@
     - apps/web/src/custom/coordinator/coordinatorAnswers.ts
     - apps/web/src/custom/coordinator/SidebarV2CoordinatorsSection.tsx
     - apps/web/src/custom/SidebarV2ListSection.tsx
+    - apps/web/src/custom/sidebarV2SectionThreads.ts
     - apps/web/src/custom/coordinator/CoordinatorDraftToggle.tsx
     - apps/web/src/custom/CheckboxPill.tsx
     - apps/web/src/custom/CheckboxPill.css

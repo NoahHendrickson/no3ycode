@@ -136,7 +136,7 @@ the filter button picks how the list is grouped and checks off which projects it
 as many as you like; **All projects** clears the filter. Choose **Manual**
 with grouping on to arrange projects yourself: drag a project header above or below another. Hover a project's
 section to reveal its header buttons: the three dots open a menu with **Settle all threads** (every
-active thread in that project) and **Settings**, and the plus starts a thread in it directly. **Usage** beside **Settings** at the bottom of the sidebar opens the Usage page.
+active thread in that project) and **Settings**, and the plus starts a thread in it directly.
 
 <!-- fork:end fork-new-agent-draft -->
 
@@ -459,7 +459,8 @@ answer its questions.
 
 A petal is a long-running agent with one ongoing conversation, such as one that
 checks your inbox each morning or watches a repository. Petals have their own
-section above **Threads** in the sidebar and never appear among your threads.
+section above **Threads** in the sidebar and never appear among your threads. The section
+appears once you have a petal.
 With the sidebar collapsed, their mascots sit beside the project switcher at the
 top; pick one to open that petal.
 

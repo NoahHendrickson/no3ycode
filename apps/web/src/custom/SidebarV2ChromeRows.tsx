@@ -16,12 +16,12 @@
  * carries collapses to call sites.
  *
  * The prop surface is wide because these rows are genuinely interactive — a
- * command palette trigger, a radio group, three labeled actions and a
+ * command palette trigger, a radio group, labeled actions and a
  * per-project overflow action. It is all data and callbacks, though: no
  * upstream state is reached into, so an upstream refactor of how that state
- * is produced cannot break this file. The Automations row and Chat's New
- * chat row are the exceptions: they read the router and app state
- * themselves, so the Sidebar.tsx call site gains no props for them.
+ * is produced cannot break this file. The Automations, Pull requests and New
+ * sprint rows and Chat's New chat row are the exceptions: they own their
+ * router reads, state or dialog, so the Sidebar.tsx call site stays small.
  */
 import type { SidebarProjectSortOrder } from "@t3tools/contracts/settings";
 import type {
@@ -91,6 +91,7 @@ import { useComposerDraftStore } from "~/composerDraftStore";
 import { useShownThreadRouteTarget } from "~/hooks/useShownThreadRouteTarget";
 import { isChatDraft } from "./chatMode";
 import { useStartNewChat } from "./useChatMode";
+import { NewSprintDialog } from "./sprints/NewSprintDialog";
 
 /** Structural on purpose: the four fields these rows read, no more. The row is
     generic over anything satisfying it, so the callbacks hand back upstream's
@@ -100,6 +101,8 @@ export interface SidebarV2ChromeProjectGroup extends ProjectFaviconProject {
   readonly projectKey: string;
   readonly displayName: string;
 }
+
+type NewSprintDefaultProject = ComponentProps<typeof NewSprintDialog>["defaultProject"];
 
 const SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string> = {
   updated_at: "Last user message",
@@ -223,8 +226,8 @@ export function SidebarV2ChromeActionRows(props: {
   readonly onNewThread: () => void;
   /** Names a new Petal in its section (fork-bots). */
   readonly onNewBot: () => void;
-  /** Opens the New sprint dialog (fork-sprints). */
-  readonly onNewSprint: () => void;
+  /** The project a new sprint starts in, when the open thread has one (fork-sprints). */
+  readonly newSprintDefaultProject: NewSprintDefaultProject;
 }) {
   const newThreadDisabledReason = props.newThreadDisabled
     ? "Add a project to start an agent"
@@ -255,13 +258,7 @@ export function SidebarV2ChromeActionRows(props: {
         testId="sidebar-v2-new-bot"
         onClick={props.onNewBot}
       />
-      <ChromeLabeledAction
-        icon={RocketIcon}
-        label="New sprint"
-        ariaLabel="New sprint"
-        testId="sidebar-v2-new-sprint"
-        onClick={props.onNewSprint}
-      />
+      <ChromeNewSprintRow defaultProject={props.newSprintDefaultProject} />
       <ChromeAutomationsRow />
       <ChromePullRequestsRow />
     </SidebarChromeGroup>
@@ -289,6 +286,26 @@ export function SidebarV2ChatActionRows() {
         onClick={() => void startNewChat()}
       />
     </SidebarChromeGroup>
+  );
+}
+
+/** Opens the New sprint dialog. It owns the dialog, since the Sprints section is hidden until a
+    sprint exists. */
+function ChromeNewSprintRow(props: { readonly defaultProject: NewSprintDefaultProject }) {
+  const [creating, setCreating] = useState(false);
+  return (
+    <>
+      <ChromeLabeledAction
+        icon={RocketIcon}
+        label="New sprint"
+        ariaLabel="New sprint"
+        testId="sidebar-v2-new-sprint"
+        onClick={() => setCreating(true)}
+      />
+      {creating ? (
+        <NewSprintDialog defaultProject={props.defaultProject} onDone={() => setCreating(false)} />
+      ) : null}
+    </>
   );
 }
 

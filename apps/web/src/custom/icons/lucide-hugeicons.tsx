@@ -553,8 +553,8 @@ export const CalendarArrowDownIcon = icon(
 export const CalendarArrowUpIcon = icon("calendar-arrow-up", Hg.CalendarArrowUpIcon, "stroke");
 
 // Fork-only glyphs with no lucide counterpart: the sidebar chrome's New agent
-// and Usage rows (Figma 364:11246) and the thread card's blocked-on-you
-// status mark (364:17299). Exported through the shim so every fork icon
+// row (Figma 364:11246), the chart ring the Figma kit's icon set maps through
+// Code Connect, and the thread card's blocked-on-you status mark (364:17299). Exported through the shim so every fork icon
 // shares one weight policy and one `lucide` class prefix.
 export const NavigationArrowIcon = icon("navigation-arrow", Hg.Navigation03Icon, "themed");
 export const ChartDonutIcon = icon("chart-donut", Hg.ChartRingIcon, "themed");
