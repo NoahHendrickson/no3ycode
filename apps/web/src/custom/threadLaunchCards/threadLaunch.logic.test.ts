@@ -217,6 +217,23 @@ describe("launch rows", () => {
       "in-reply:a",
       "reply:after",
     ]);
+    // A folded intermediate narration linking the thread does not pull the row onto a terminal reply
+    // that does not link it.
+    const step: TimelineEntry = {
+      id: "step",
+      kind: "work",
+      createdAt: at,
+      entry: { id: "step", createdAt: at, runId: RunId.make("run-2"), label: "read", tone: "tool" },
+    };
+    expect(
+      order([
+        launchEntry("a", "run-1"),
+        reply("started", "run-1"),
+        reply("narration", "run-2", "Checking [Land PRs](t3-thread://v1/thread-a)..."),
+        step,
+        reply("done", "run-2", "All clear."),
+      ]),
+    ).toEqual(["reply:started", "in-reply:a", "reply:done"]);
   });
 
   it("moves a launched thread's row to the reply its work report started", () => {
@@ -229,14 +246,15 @@ describe("launch rows", () => {
         reply("woken", "run-2"),
       ]),
     ).toEqual(["reply:started", "in-reply:b", "reply:woken", "in-reply:a"]);
-    // A question answered inline draws the thread in its own wake, so the row stays put.
+    // A question answered inline draws the thread in its own wake, so the row stays put — even if
+    // the wake's reply also links the thread's chip.
     expect(
       order(
         [
           launchEntry("a", "run-1"),
           reply("started", "run-1"),
           workReportEntry("thread-a", "run-2", "question"),
-          reply("woken", "run-2"),
+          reply("woken", "run-2", "Answer [a](t3-thread://v1/thread-a) above."),
         ],
         true,
       ),

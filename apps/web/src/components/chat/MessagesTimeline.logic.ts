@@ -2666,7 +2666,7 @@ export function deriveMessagesTimelineRows(
     attachTrailingToolGroupsToAssistant(
       attachCreatedThreadSummaries(nextRows, timelineEntries, collapsedFoldMemberIds),
     ),
-    forkLaunched.referringRuns,
+    forkLaunched,
   );
   /* fork:end fork-thread-launch-cards */
   return result.map((row, index) => {

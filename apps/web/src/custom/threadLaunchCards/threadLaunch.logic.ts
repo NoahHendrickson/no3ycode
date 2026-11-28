@@ -254,9 +254,21 @@ function linkedThreadIds(message: { readonly text: string }): ReadonlySet<string
 export interface ForkLaunchedThreads {
   /** Reports that draw no row, since their thread's launch row already shows it. */
   readonly hiddenReportIds: ReadonlySet<string>;
-  /** Each launched thread's referring runs: a reply that links its chip, or a wake its hidden
-      report started. Its row hangs under the latest of these that shows a reply. */
+  /** Each launched thread's hidden-report wake runs, which can pull its launch row down. */
   readonly referringRuns: ReadonlyMap<string, ReadonlySet<RunId>>;
+  /** Runs where a kept request report already draws the thread inline, so they never pull its
+      launch row too (even if the wake's reply links its chip). */
+  readonly requestReportRuns: ReadonlyMap<string, ReadonlySet<RunId>>;
+}
+
+function addRun(map: Map<string, Set<RunId>>, threadId: string, runId: RunId | null | undefined) {
+  if (runId == null) return;
+  let runs = map.get(threadId);
+  if (runs === undefined) {
+    runs = new Set();
+    map.set(threadId, runs);
+  }
+  runs.add(runId);
 }
 
 /** A thread's row shows once, under the latest reply about it, and reads its status live there,
@@ -266,41 +278,20 @@ export function forkLaunchedThreads(
   entries: ReadonlyArray<TimelineEntry>,
   keepRequestReports: boolean,
 ): ForkLaunchedThreads {
-  const launched = new Set<string>();
   const hiddenReportIds = new Set<string>();
   const referringRuns = new Map<string, Set<RunId>>();
-  const refer = (threadId: string, runId: RunId | null | undefined) => {
-    if (runId == null) return;
-    let runs = referringRuns.get(threadId);
-    if (runs === undefined) {
-      runs = new Set();
-      referringRuns.set(threadId, runs);
+  const requestReportRuns = new Map<string, Set<RunId>>();
+  for (const { entry, report, threadId, launched } of threadReports(entries)) {
+    if (!launched || threadId === null) continue;
+    // A question or approval answered inline draws the thread in its own wake already.
+    if (keepRequestReports && report.requestKind !== null) {
+      addRun(requestReportRuns, threadId, entry.entry.runId);
+      continue;
     }
-    runs.add(runId);
-  };
-  for (const entry of entries) {
-    if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
-      launched.add(entry.launch.threadId);
-    } else if (
-      launched.size > 0 &&
-      entry.kind === "message" &&
-      entry.message.role === "assistant"
-    ) {
-      for (const threadId of linkedThreadIds(entry.message)) {
-        if (launched.has(threadId)) refer(threadId, entry.message.runId);
-      }
-    }
+    hiddenReportIds.add(entry.id);
+    addRun(referringRuns, threadId, entry.entry.runId);
   }
-  if (launched.size > 0) {
-    for (const { entry, report, threadId, launched: isLaunched } of threadReports(entries)) {
-      if (!isLaunched || threadId === null) continue;
-      // A question or approval answered inline draws the thread in its own wake already.
-      if (keepRequestReports && report.requestKind !== null) continue;
-      hiddenReportIds.add(entry.id);
-      refer(threadId, entry.entry.runId);
-    }
-  }
-  return { hiddenReportIds, referringRuns };
+  return { hiddenReportIds, referringRuns, requestReportRuns };
 }
 
 /** The finished report that stays when a quiet wake hides it: each thread's latest, as its one
@@ -316,43 +307,72 @@ export function lastThreadReportIds(entries: ReadonlyArray<TimelineEntry>): Read
 }
 
 /** A turn's launched threads drawn by its last reply shown, between its text and actions, or by a
-    later turn's when that turn refers to the thread (`referringRuns`), so a row follows the talk
-    about it. With no reply shown they stay where the calls were, one run's consecutive calls in one
-    row. Rows come one per call; this is the only place they group. */
+    later turn's when that turn's reply links the thread or a hidden work report woke it, so a row
+    follows the talk about it. With no reply shown they stay where the calls were, one run's
+    consecutive calls in one row. Rows come one per call; this is the only place they group. */
 export function placeLaunchesUnderReplies(
   rows: ReadonlyArray<MessagesTimelineRow>,
-  referringRuns: ReadonlyMap<string, ReadonlySet<RunId>>,
+  launched: Pick<ForkLaunchedThreads, "referringRuns" | "requestReportRuns">,
 ): MessagesTimelineRow[] {
-  const replyByRun = new Map<RunId, number>();
+  const launchedThreadIds = new Set<string>();
+  const replyByRun = new Map<
+    RunId,
+    { readonly index: number; readonly message: { readonly text: string } }
+  >();
   rows.forEach((row, index) => {
-    if (row.kind === "message" && row.message.role === "assistant" && row.message.runId != null)
-      replyByRun.set(row.message.runId, index);
+    if (row.kind === "fork-thread-launch") {
+      const threadId = row.launches[0]?.launch.threadId;
+      if (threadId != null) launchedThreadIds.add(threadId);
+    } else if (
+      row.kind === "message" &&
+      row.message.role === "assistant" &&
+      row.message.runId != null
+    ) {
+      replyByRun.set(row.message.runId, { index, message: row.message });
+    }
   });
-  const anchorRun = (row: LaunchRow): RunId | null => {
-    const threadId = row.launches[0]?.launch.threadId;
-    const later = (threadId == null ? undefined : referringRuns.get(threadId)) ?? [];
-    let anchor: RunId | null = null;
-    let anchorIndex = -1;
-    for (const runId of [row.runId, ...later]) {
-      const index = runId === null ? undefined : replyByRun.get(runId);
-      if (index !== undefined && index > anchorIndex) {
-        anchor = runId;
-        anchorIndex = index;
+  const linkedRuns = new Map<string, Set<RunId>>();
+  if (launchedThreadIds.size > 0) {
+    for (const [runId, reply] of replyByRun) {
+      for (const threadId of linkedThreadIds(reply.message)) {
+        if (launchedThreadIds.has(threadId)) addRun(linkedRuns, threadId, runId);
       }
     }
+  }
+  const anchorRun = (row: LaunchRow, rowIndex: number): RunId | null => {
+    const threadId = row.launches[0]?.launch.threadId;
+    const excluded = threadId == null ? undefined : launched.requestReportRuns.get(threadId);
+    const reportRuns = threadId == null ? undefined : launched.referringRuns.get(threadId);
+    const chipRuns = threadId == null ? undefined : linkedRuns.get(threadId);
+    let anchor: RunId | null = null;
+    let anchorIndex = -1;
+    const consider = (runId: RunId | null, allowBeforeLaunch: boolean) => {
+      if (runId === null || excluded?.has(runId)) return;
+      const reply = replyByRun.get(runId);
+      if (reply === undefined) return;
+      if (!allowBeforeLaunch && reply.index < rowIndex) return;
+      if (reply.index > anchorIndex) {
+        anchor = runId;
+        anchorIndex = reply.index;
+      }
+    };
+    consider(row.runId, true);
+    if (reportRuns !== undefined) for (const runId of reportRuns) consider(runId, false);
+    if (chipRuns !== undefined) for (const runId of chipRuns) consider(runId, false);
     return anchor;
   };
   const placed = new Set<string>();
   const groups = new Map<RunId, LaunchRow[]>();
-  for (const row of rows) {
-    if (row.kind !== "fork-thread-launch") continue;
-    const runId = anchorRun(row);
-    if (runId === null) continue;
+  rows.forEach((row, rowIndex) => {
+    if (row.kind !== "fork-thread-launch") return;
+    const runId = anchorRun(row, rowIndex);
+    if (runId === null) return;
     placed.add(row.id);
     groups.set(runId, [...(groups.get(runId) ?? []), row]);
-  }
+  });
   const runAtReply = new Map<number, RunId>();
-  for (const [runId, index] of replyByRun) if (groups.has(runId)) runAtReply.set(index, runId);
+  for (const [runId, reply] of replyByRun)
+    if (groups.has(runId)) runAtReply.set(reply.index, runId);
   const out: MessagesTimelineRow[] = [];
   rows.forEach((row, index) => {
     if (row.kind === "fork-thread-launch") {

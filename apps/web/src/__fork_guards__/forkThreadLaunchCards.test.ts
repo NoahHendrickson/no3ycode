@@ -51,7 +51,7 @@ describe("fork guard: fork-thread-launch-cards", () => {
   it("hangs a turn's launches under its last reply, or the latest reply about the thread", () => {
     const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
     expect(logic).toContain("const result = placeLaunchesUnderReplies(");
-    expect(logic).toContain("forkLaunched.referringRuns,");
+    expect(logic).toContain("forkLaunched,");
     expect(readSibling("../components/chat/TimelineAssistantRows.tsx")).toContain(
       "<ForkThreadLaunchList launches={row.forkLaunches}",
     );

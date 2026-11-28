@@ -5911,10 +5911,11 @@
     and its hover-only actions (TimelineAssistantRows), so the three hover as one; a turn with no
     reply shown keeps them where the calls happened, one run's consecutive calls in one row.
     A launch whose thread a later turn refers to moves instead to the latest such turn's last
-    reply shown (referringRuns from forkLaunchedThreads: assistant messages whose markdown links
-    the thread, read with shared threadLinks and cached per message object, and launched threads'
-    hidden work reports via shared threadReports, whose run is the wake the reply belongs to; a
-    question or approval kept for an inline answer already draws the thread in its wake).
+    reply shown: forkLaunchedThreads reads shared threadReports in one pass for hidden work-report
+    wakes (referringRuns) and kept inline question/approval wakes (requestReportRuns, excluded from
+    anchor selection so a wake that renders the inline request card never pulls the launch row too),
+    while placeLaunchesUnderReplies matches chip links on each run's visible anchor reply (shared
+    threadLinks, cached per message object) so folded narration never pulls a row.
 
     Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
     in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can
