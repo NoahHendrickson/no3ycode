@@ -21,6 +21,9 @@ import type {
   ThreadId,
 } from "@t3tools/contracts";
 import { resolveWorktreeCleanup } from "@t3tools/shared/projectSettings";
+/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+import { isForkOwnCheckoutDelegate } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-own-checkout-child-settlement */
 import { resolveWorktreeT3Home } from "@t3tools/shared/devHome";
 import { makeDrainableWorker } from "@t3tools/shared/DrainableWorker";
 import * as Context from "effect/Context";
@@ -274,6 +277,10 @@ function worktreeSettlementChain(
     const parent = byId.get(current.lineage.parentThreadId!);
     if (
       parent === undefined ||
+      /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+      // A delegate's own checkout is not settled by its parent's settlement.
+      isForkOwnCheckoutDelegate(current, parent) ||
+      /* fork:end fork-own-checkout-child-settlement */
       chain.some((member) => member.id === parent.id) ||
       parent.projectId !== thread.projectId ||
       parent.lineage.rootThreadId !== thread.lineage.rootThreadId ||

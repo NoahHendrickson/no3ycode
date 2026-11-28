@@ -32,6 +32,9 @@ import * as StorageCleanup from "./storageCleanup.ts";
 import * as GitVcsDriver from "./vcs/GitVcsDriver.ts";
 import * as TaskFolders from "./workspace/TaskFolders.ts";
 import { layerTaskFoldersWithGit } from "./workspace/TaskFolders.testkit.ts";
+/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+import { FORK_DELEGATED_TASK_THREAD_PREFIX } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-own-checkout-child-settlement */
 import * as GitManager from "./git/GitManager.ts";
 import * as GitWorkflowService from "./git/GitWorkflowService.ts";
 import * as Settings from "./serverSettings.ts";
@@ -1325,6 +1328,9 @@ describe("subagent worktree ownership", () => {
     "fork",
     "missing-parent",
     "cycle",
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+    "delegate",
+    /* fork:end fork-own-checkout-child-settlement */
   ] as const)("checks isolated subagent settlement (%s)", (scenario) =>
     Effect.gen(function* () {
       yield* TestClock.setTime(NOW_MS);
@@ -1345,7 +1351,12 @@ describe("subagent worktree ownership", () => {
         updatedAt: scenario === "settle-grace" ? at(-30_000) : at(-10 * DAY_MS),
       });
       const child = shell({
-        id: ThreadId.make("child"),
+        /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+        // A delegate's own checkout is not settled by its parent's settlement.
+        id: ThreadId.make(
+          scenario === "delegate" ? `${FORK_DELEGATED_TASK_THREAD_PREFIX}child` : "child",
+        ),
+        /* fork:end fork-own-checkout-child-settlement */
         branch: "feature",
         worktreePath: fixture.worktree,
         lineage: {

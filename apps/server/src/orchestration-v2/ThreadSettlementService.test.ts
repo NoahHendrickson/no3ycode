@@ -38,6 +38,9 @@ import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 import { TestClock } from "effect/testing";
 
+/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+import { FORK_DELEGATED_TASK_THREAD_PREFIX } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-own-checkout-child-settlement */
 import * as GitManager from "../git/GitManager.ts";
 import * as SqlitePersistence from "../persistence/Sqlite.ts";
 import * as ProjectSetupScriptRunner from "../project/ProjectSetupScriptRunner.ts";
@@ -1076,7 +1079,10 @@ describe("ThreadSettlementServiceV2 worker", () => {
           child("opted-out", { autoSettleDisabledAt: DateTime.makeUnsafe(NOW) }),
           /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
           // A worktree delegate's work is its own: its parent settling does not settle it.
-          child("own-checkout", { worktreePath: "/worktrees/own", branch: null }),
+          child(`${FORK_DELEGATED_TASK_THREAD_PREFIX}own-checkout`, {
+            worktreePath: "/worktrees/own",
+            branch: null,
+          }),
           /* fork:end fork-own-checkout-child-settlement */
         ]) {
           yield* store.apply({
@@ -2186,14 +2192,29 @@ describe("ThreadSettlementServiceV2 worker", () => {
         latestUserMessageAt: DateTime.makeUnsafe("2026-08-27T00:00:00.000Z"),
         linkedPullRequest: cachedSibling.branchPullRequest,
       });
+      /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+      // The owner links (watches) its delegate's pull request; the merge is the delegate's own.
+      const delegate = makeThread(`${FORK_DELEGATED_TASK_THREAD_PREFIX}delegate`, {
+        branch: "feature",
+        worktreePath: "/worktrees/delegate",
+        createdAt: DateTime.makeUnsafe("2026-08-27T00:00:00.000Z"),
+        latestUserMessageAt: DateTime.makeUnsafe("2026-08-27T00:00:00.000Z"),
+        lineage: {
+          rootThreadId: owner.id,
+          parentThreadId: owner.id,
+          relationshipToParent: "subagent",
+        },
+      });
+      /* fork:end fork-own-checkout-child-settlement */
       const fixture = yield* makeHarness({
-        snapshot: makeSnapshot([owner, sibling, legacyOwner, cachedSibling]),
+        snapshot: makeSnapshot([owner, sibling, legacyOwner, cachedSibling, delegate]),
         settings: {
           ...DEFAULT_SERVER_SETTINGS,
           sidebarAutoSettleOnMerge: true,
           sidebarAutoSettleAfterDays: null,
         },
         branchPullRequest: () => Effect.succeed(makeBranchPullRequest("merged")),
+        existingWorktreePaths: ["/worktrees/delegate/.git"],
       });
 
       yield* Effect.gen(function* () {
@@ -2207,7 +2228,7 @@ describe("ThreadSettlementServiceV2 worker", () => {
           [
             ...new Set((yield* Ref.get(fixture.commands)).map((command) => command.threadId)),
           ].toSorted(),
-        ).toEqual([legacyOwner.id, owner.id].toSorted());
+        ).toEqual([delegate.id, legacyOwner.id, owner.id].toSorted());
       }).pipe(Effect.provide(fixture.layer));
     }),
   );

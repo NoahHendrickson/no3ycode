@@ -10653,17 +10653,22 @@
   intent: >
     Upstream settles a subagent with its parent: the settlement store returns a subagent only once
     its parent is settled or archived, and the sweep then settles it with no pull request check.
-    That fits a native subagent working in its parent's checkout, but a worktree delegate
+    That fits a native subagent, which works in its parent's checkout, but a worktree delegate
     (delegate_task with its own checkout, as every coordinator child runs) has its own branch and
     pull request. On 2026-11-27 a coordinator auto-settled when the last pull request it linked
     merged, and all eight of its children settled with it, including ones with unmerged branches
-    and no pull request yet. A subagent whose worktreePath differs from its parent's now settles
-    like any thread, on its own pull request or inactivity, and never with its parent; one in its
-    parent's checkout still settles with it. The store names that one fact, settlesWithParent
-    (getSettlementCandidates joins the parent once), and the sweep's settle-with-parent shortcut
-    reads it; ThreadSettlementService's settle-action shared-worktree check asks the same question.
+    and no pull request yet. A delegate (the delegate_task thread id prefix, fixed at creation) in
+    a checkout other than its parent's now settles like any thread, on its own pull request or
+    inactivity, never with its parent; every other subagent still settles with it, even after its
+    parent moves checkout (@t3tools/shared/forkBotTags isForkOwnCheckoutDelegate, and its SQL form
+    in ProjectionStore getSettlementCandidates, which returns settlesWithParent for the sweep's
+    shortcut). A delegate's pull request that only its parent links (the coordinator watching it)
+    still settles the delegate on merge (ThreadSettlementService linkedByAnotherThread), and
+    storage cleanup never borrows the parent's settlement to remove a delegate's own worktree
+    (storageCleanup worktreeSettlementChain).
   tier: 4
-  files: []
+  files:
+    - apps/web/src/__fork_guards__/forkOwnCheckoutChildSettlement.test.ts
   shadows: []
   watch:
     - apps/server/src/orchestration-v2/ProjectionStore.ts
@@ -10671,6 +10676,11 @@
     - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/orchestration-v2/SubagentProjection.test.ts
     - apps/server/src/orchestration-v2/ProjectionSettlement.test.ts
+    - apps/server/src/storageCleanup.ts
+    - apps/server/src/storageCleanup.test.ts
+    - packages/shared/src/forkBotTags.ts
   verify:
+    - apps/web/src/__fork_guards__/forkOwnCheckoutChildSettlement.test.ts
     - apps/server/src/orchestration-v2/ThreadSettlementService.test.ts
     - apps/server/src/orchestration-v2/SubagentProjection.test.ts
+    - apps/server/src/storageCleanup.test.ts

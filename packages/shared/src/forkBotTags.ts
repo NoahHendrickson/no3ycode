@@ -68,6 +68,19 @@ export const FORK_DELEGATED_QUESTION_MESSAGE_PREFIX = "message:delegated-task-qu
 /** The thread id prefix of a delegate_task child (provider-core IdAllocator delegatedTaskThread). */
 export const FORK_DELEGATED_TASK_THREAD_PREFIX = "thread:delegated-task:";
 
+/** A delegate_task child in a checkout other than its parent's: its work is its own, so it never
+    settles with its parent, even after the parent moves (a native subagent always does). The
+    settlement store's getSettlementCandidates asks the same question in SQL. */
+export function isForkOwnCheckoutDelegate(
+  thread: { readonly id: string; readonly worktreePath: string | null },
+  parent: { readonly worktreePath: string | null },
+): boolean {
+  return (
+    thread.id.startsWith(FORK_DELEGATED_TASK_THREAD_PREFIX) &&
+    thread.worktreePath !== parent.worktreePath
+  );
+}
+
 /** What a bot replies when a wake found nothing. */
 export const FORK_BOT_QUIET_REPLY = "Nothing to report.";
 const quietReply = FORK_BOT_QUIET_REPLY.toLowerCase();

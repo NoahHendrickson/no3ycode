@@ -537,20 +537,43 @@ export const make = Effect.gen(function* () {
     const groups = Map.groupBy(lookupCandidates, lookupKey);
     // A thread with no link of its own does not settle from a pull request another thread links,
     // archived threads included.
-    const explicitlyLinked = new Set(
+    /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+    // Who links each pull request: a delegate's parent links (watches) the child's pull request,
+    // and that link does not make it another thread's.
+    const explicitlyLinked = Map.groupBy(
       groups.size === 0
         ? []
         : (yield* projections.getThreadsWithPullRequests(undefined, {
             includeArchived: true,
           })).flatMap((thread) =>
-            visibleThreadPullRequests(thread.pullRequests ?? []).map(threadPullRequestKeyOf),
+            visibleThreadPullRequests(thread.pullRequests ?? []).map((link) => ({
+              key: threadPullRequestKeyOf(link),
+              threadId: thread.id,
+            })),
           ),
+      (link) => link.key,
     );
-    const ownedByAnotherThread = (pullRequest: GitManager.GitBranchPullRequest | null) => {
+    const linkedByAnotherThread = (
+      key: string,
+      group: ReadonlyArray<(typeof lookupCandidates)[number]>,
+    ) =>
+      (explicitlyLinked.get(key) ?? []).some(
+        ({ threadId }) =>
+          !group.every(
+            (thread) =>
+              thread.lineage.relationshipToParent === "subagent" &&
+              thread.lineage.parentThreadId === threadId,
+          ),
+      );
+    const ownedByAnotherThread = (
+      pullRequest: GitManager.GitBranchPullRequest | null,
+      group: ReadonlyArray<(typeof lookupCandidates)[number]>,
+    ) => {
       if (pullRequest === null || pullRequest.state === "open") return false;
       const key = branchPullRequestKey(pullRequest);
-      return key !== null && explicitlyLinked.has(key);
+      return key !== null && linkedByAnotherThread(key, group);
     };
+    /* fork:end fork-own-checkout-child-settlement */
 
     // wouldSettle and pullRequestFor run per lookup group; the git and pull request reads they make carry the spans.
     const wouldSettle = Effect.fnUntraced(function* (
@@ -582,7 +605,9 @@ export const make = Effect.gen(function* () {
       if (
         thread.linkedPullRequest == null &&
         reference != null &&
-        explicitlyLinked.has(threadPullRequestKeyOf(legacyThreadPullRequestKey(reference)))
+        /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+        linkedByAnotherThread(threadPullRequestKeyOf(legacyThreadPullRequestKey(reference)), group)
+        /* fork:end fork-own-checkout-child-settlement */
       ) {
         return undefined;
       }
@@ -663,14 +688,18 @@ export const make = Effect.gen(function* () {
         { refresh, confirmTerminal: false },
       );
       noPullRequestRechecks.record(key, nowMs, remembered !== null);
-      if (ownedByAnotherThread(remembered)) return undefined;
+      /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+      if (ownedByAnotherThread(remembered, group)) return undefined;
+      /* fork:end fork-own-checkout-child-settlement */
       if (refresh || remembered === null || remembered.state === "open") return remembered;
       if (!(yield* wouldSettle(group, remembered))) return undefined;
       const fresh = yield* git.branchPullRequest(
         { cwd, branch: thread.branch },
         { freshGitState: true },
       );
-      return ownedByAnotherThread(fresh) ? undefined : fresh;
+      /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+      return ownedByAnotherThread(fresh, group) ? undefined : fresh;
+      /* fork:end fork-own-checkout-child-settlement */
     });
 
     // A merge, a shell close and a thread's own events read at once; only scheduled sweeps wait.

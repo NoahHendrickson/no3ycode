@@ -140,6 +140,9 @@ import {
 } from "./forkBotReport.ts";
 import { FORK_BOT_QUIET_REPLIES, FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
+/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+import { FORK_DELEGATED_TASK_THREAD_PREFIX } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-own-checkout-child-settlement */
 
 export class ProjectionStoreApplyEventError extends Schema.TaggedError<ProjectionStoreApplyEventError>()(
   "ProjectionStoreApplyEventError",
@@ -8892,13 +8895,14 @@ export const layer: Layer.Layer<ProjectionStoreV2, never, SqlClient.SqlClient> =
     });
 
     /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement
-       A subagent in its parent's checkout settles with the parent; one in its own checkout (a
-       worktree delegate) settles on its own work. The settle action's shared-worktree check in
-       ThreadSettlementService cleanUpSettledThread asks the same question. */
+       A subagent settles with its parent unless it is a delegate in a checkout of its own: the
+       SQL form of @t3tools/shared/forkBotTags isForkOwnCheckoutDelegate. */
     const settlesWithParent = sql`(
       json_extract(t.payload_json, '$.lineage.relationshipToParent') IS 'subagent'
       AND (
         parent.thread_id IS NULL
+        OR substr(t.thread_id, 1, ${FORK_DELEGATED_TASK_THREAD_PREFIX.length})
+          IS NOT ${FORK_DELEGATED_TASK_THREAD_PREFIX}
         OR json_extract(parent.payload_json, '$.worktreePath')
           IS json_extract(t.payload_json, '$.worktreePath')
       )

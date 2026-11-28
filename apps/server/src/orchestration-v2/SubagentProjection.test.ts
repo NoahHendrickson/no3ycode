@@ -1,3 +1,6 @@
+/* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
+import { FORK_DELEGATED_TASK_THREAD_PREFIX } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-own-checkout-child-settlement */
 import { assert, it } from "@effect/vitest";
 import {
   CommandId,
@@ -166,14 +169,20 @@ it.effect.each(["provider", "mcp"] as const)(
       assert.isNull(childThread.autoSettleDisabledAt);
 
       /* fork:begin fork-own-checkout-child-settlement — see .fork/customizations.yaml#fork-own-checkout-child-settlement */
-      // A worktree delegate has its own checkout, so it neither waits for nor settles with it.
+      // A delegate in its own checkout neither waits for nor settles with it; a native subagent
+      // left on another path by its parent's move still does.
       const ownCheckoutThread = {
         ...childThread,
-        id: ThreadId.make("thread:subagent-own-checkout"),
+        id: ThreadId.make(`${FORK_DELEGATED_TASK_THREAD_PREFIX}own-checkout`),
         worktreePath: "/tmp/own-worktree",
       };
+      const movedNativeThread = {
+        ...childThread,
+        id: ThreadId.make("thread:subagent-moved-native"),
+        worktreePath: "/tmp/old-worktree",
+      };
       /* fork:end fork-own-checkout-child-settlement */
-      for (const thread of [parentThread, childThread, ownCheckoutThread]) {
+      for (const thread of [parentThread, childThread, ownCheckoutThread, movedNativeThread]) {
         yield* store.apply({
           id: EventId.make(`event:${thread.id}`),
           type: "thread.created",
@@ -212,7 +221,10 @@ it.effect.each(["provider", "mcp"] as const)(
       );
       assert.deepEqual(
         candidates.map((candidate) => [candidate.id, candidate.settlesWithParent]),
-        [[childThreadId, true]],
+        [
+          [childThreadId, true],
+          [movedNativeThread.id, true],
+        ],
       );
       const settledAt = resolveAutoSettlementAt({
         thread: candidates[0]!,
