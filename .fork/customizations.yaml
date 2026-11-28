@@ -5908,15 +5908,16 @@
     MessagesTimeline draws it. Not being a work entry, the turn's "Worked for" fold never swallows
     it. placeLaunchesUnderReplies, the only place launches group, then moves a turn's launches, as
     one group, onto the turn's last reply shown (forkLaunches), which draws them between its text
-    and its hover-only actions (TimelineAssistantRows), so the three hover as one; a turn with no
-    reply shown keeps them where the calls happened, one run's consecutive calls in one row.
-    A launch whose thread a later turn refers to moves instead to the latest such turn's last
-    reply shown: forkLaunchedThreads reads shared threadReports in one pass for hidden work-report
-    wakes (reportThreadsByRun) and kept inline question/approval wakes (inlineThreadsByRun,
-    excluded so a wake that renders the inline request card never pulls the launch row too), while
-    placeLaunchesUnderReplies sweeps visible anchor replies once to record the latest reply about
-    each launched thread (matching chip links via replaceThreadLinks as a visitor, cached per
-    message object, so folded narration never pulls a row).
+    and its hover-only actions (TimelineAssistantRows), so the three hover as one; a launch stays
+    where the call happened (one run's consecutive calls in one row) only when neither its launch
+    turn nor any later referring turn shows a reply.
+    A launch whose thread a later settled turn refers to moves instead to the latest such turn's
+    last reply shown: forkLaunchedThreads reads shared threadReports in one pass for hidden
+    work-report wakes (reportThreadsByRun) and kept inline question/approval wakes
+    (inlineThreadsByRun, excluded so a wake that renders the inline request card never pulls the
+    launch row too), while placeLaunchesUnderReplies sweeps settled visible anchor replies once to
+    record the latest reply about each launched thread (matching chip links via replaceThreadLinks
+    as a visitor, cached per message object, so folded or in-progress narration never pulls a row).
 
     Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
     in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can

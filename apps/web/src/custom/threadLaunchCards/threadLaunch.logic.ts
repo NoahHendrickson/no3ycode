@@ -328,16 +328,19 @@ function launchThreadId(row: LaunchRow): ThreadId | null {
   return row.launches[0]!.launch.threadId;
 }
 
-/** A turn's launched threads drawn by its last reply shown, between its text and actions, or by a
-    later turn's when that turn's reply links the thread or a hidden work report woke it, so a row
-    follows the talk about it. With no reply shown they stay where the calls were, one run's
-    consecutive calls in one row. Rows come one per call; this is the only place they group. */
+/** Moves each launch onto its turn's last reply, or onto a later settled turn's reply that links
+    the thread or woke from its hidden work report. Stays where the call happened (one run's
+    consecutive calls in one row) only when neither its launch turn nor any later referring turn
+    shows a reply. Rows come one per call; this is the only place they group. */
 export function placeLaunchesUnderReplies(
   rows: ReadonlyArray<MessagesTimelineRow>,
   launched: ForkLaunchedThreads,
 ): MessagesTimelineRow[] {
   const launchedThreadIds = new Set<ThreadId>();
-  const replyByRun = new Map<RunId, { readonly index: number; readonly message: MessageText }>();
+  const replyByRun = new Map<
+    RunId,
+    { readonly index: number; readonly message: MessageText; readonly settled: boolean }
+  >();
   rows.forEach((row, index) => {
     if (row.kind === "fork-thread-launch") {
       const threadId = launchThreadId(row);
@@ -349,12 +352,18 @@ export function placeLaunchesUnderReplies(
     ) {
       // Delete first so iteration stays in ascending reply-index order across runs.
       replyByRun.delete(row.message.runId);
-      replyByRun.set(row.message.runId, { index, message: row.message });
+      replyByRun.set(row.message.runId, {
+        index,
+        message: row.message,
+        settled: !row.assistantCopyStreaming,
+      });
     }
   });
   const latestAbout = new Map<ThreadId, { readonly runId: RunId; readonly index: number }>();
   if (launchedThreadIds.size > 0) {
-    for (const [runId, { index, message }] of replyByRun) {
+    for (const [runId, { index, message, settled }] of replyByRun) {
+      // Wait until a later turn settles so mid-turn narration cannot pull a row back and forth.
+      if (!settled) continue;
       const inline = launched.inlineThreadsByRun.get(runId);
       for (const threadId of [
         ...(launched.reportThreadsByRun.get(runId) ?? []),

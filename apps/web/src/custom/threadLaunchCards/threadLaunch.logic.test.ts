@@ -234,6 +234,28 @@ describe("launch rows", () => {
         reply("done", "run-2", "All clear."),
       ]),
     ).toEqual(["reply:started", "in-reply:a", "reply:done"]);
+    // While a later turn is still live, its narration does not pull the row back and forth.
+    const live = deriveMessagesTimelineRows({
+      timelineEntries: [
+        launchEntry("a", "run-1"),
+        reply("started", "run-1"),
+        reply("narration", "run-2", "Checking [Land PRs](t3-thread://v1/thread-a)..."),
+      ],
+      isWorking: true,
+      runningRunId: RunId.make("run-2"),
+      turnDiffSummaries: [],
+      supportsConversationRollback: false,
+    }).flatMap((row) =>
+      row.kind === "message"
+        ? [
+            `reply:${row.message.id}`,
+            ...(row.forkLaunches === undefined
+              ? []
+              : [`in-reply:${row.forkLaunches.map((launch) => launch.id).join("+")}`]),
+          ]
+        : [],
+    );
+    expect(live).toEqual(["reply:started", "in-reply:a", "reply:narration"]);
   });
 
   it("moves a launched thread's row to the reply its work report started", () => {
