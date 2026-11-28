@@ -198,7 +198,7 @@ describe("launch rows", () => {
   it("shows a launched thread once: its later turn reports add no second row", () => {
     const report = (threadId: string, runId: string, request?: "question"): TimelineEntry => {
       const id = `turn-item:message:${encodeURIComponent(
-        `message:fork-bot-work-report:${threadId}:${request === undefined ? "run:1:completed" : "request-1"}`,
+        `message:fork-bot-work-report:${threadId}:${request === undefined ? `${runId}:completed` : "request-1"}`,
       )}`;
       const forkWorkReport = {
         threadId: ThreadId.make(threadId),
@@ -223,29 +223,49 @@ describe("launch rows", () => {
         },
       };
     };
-    const reports = deriveMessagesTimelineRows({
-      timelineEntries: [
-        launchEntry("a", "run-1"),
-        reply("started", "run-1"),
-        // The launched thread finished a turn, twice; another thread was never launched here.
-        report("thread-a", "run-2"),
-        report("thread-a", "run-3"),
-        report("thread-a", "run-4", "question"),
-        report("thread-elsewhere", "run-5"),
-      ],
-      isWorking: true,
-      runningRunId: RunId.make("run-5"),
-      turnDiffSummaries: [],
-      supportsConversationRollback: false,
-    }).flatMap((row) =>
-      row.kind === "work"
-        ? row.groupedEntries.flatMap((entry) =>
-            entry.itemType === "notification" ? [entry.label] : [],
-          )
-        : [],
-    );
-    // A question still needs its card; only the bare "finished" reports of thread-a go.
-    expect(reports).toEqual(["thread-a has a question", "thread-elsewhere finished"]);
+    const read: TimelineEntry = {
+      id: "read",
+      kind: "work",
+      createdAt: at,
+      entry: { id: "read", createdAt: at, runId: RunId.make("run-1"), label: "read", tone: "tool" },
+    };
+    const shown = (wakes: TimelineEntry[], runningRunId: string, forkKeepRequestReports = true) =>
+      deriveMessagesTimelineRows({
+        timelineEntries: [read, launchEntry("a", "run-1"), reply("started", "run-1"), ...wakes],
+        isWorking: true,
+        runningRunId: RunId.make(runningRunId),
+        turnDiffSummaries: [],
+        supportsConversationRollback: false,
+        forkKeepRequestReports,
+      }).flatMap((row) =>
+        row.kind === "work"
+          ? row.groupedEntries.flatMap((entry) =>
+              entry.itemType === "notification" ? [entry.label] : [],
+            )
+          : row.kind === "turn-fold" || row.kind === "working"
+            ? [row.id]
+            : [],
+      );
+    // The launched thread finished a turn, twice. Each notice still starts its wake, so the
+    // launching turn keeps its fold and the working row sits below it.
+    expect(shown([report("thread-a", "run-2"), report("thread-a", "run-3")], "run-3")).toEqual([
+      "turn-fold:run-1",
+      "working-indicator-row",
+    ]);
+    // A question keeps its card where the conversation answers inline; a Petal draws only the row.
+    const asked = [report("thread-a", "run-2", "question")];
+    expect(shown(asked, "run-2")).toEqual([
+      "turn-fold:run-1",
+      "thread-a has a question",
+      "working-indicator-row",
+    ]);
+    expect(shown(asked, "run-2", false)).toEqual(["turn-fold:run-1", "working-indicator-row"]);
+    // A thread never launched here keeps its report row.
+    expect(shown([report("thread-elsewhere", "run-2")], "run-2")).toEqual([
+      "turn-fold:run-1",
+      "thread-elsewhere finished",
+      "working-indicator-row",
+    ]);
   });
 });
 

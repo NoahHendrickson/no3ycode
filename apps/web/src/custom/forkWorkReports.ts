@@ -176,31 +176,33 @@ export function isForkDelegatedQuestionReport(entry: TimelineEntry): boolean {
   return item?.type === "notification" && forkDelegatedQuestionOf(item) !== null;
 }
 
-/** A thread's row shows once, under the reply that launched it, and reads its status live there. A
-    later report that only says it finished a turn would draw the same row again, so it goes; a
-    question or approval keeps its card, and a thread launched elsewhere keeps its report row. */
-export function withoutLaunchedThreadReports(
+/** A thread's row shows once, under the reply that launched it, and reads its status live there,
+    so a later report of that thread draws no row; a question or approval keeps its card where the
+    conversation answers inline. The entries stay: a report notice starts its wake's turn. */
+export function launchedThreadReportIds(
   entries: ReadonlyArray<TimelineEntry>,
-): ReadonlyArray<TimelineEntry> {
+  keepRequestReports: boolean,
+): ReadonlySet<string> {
   const launched = new Set<string>();
+  const hidden = new Set<string>();
   for (const entry of entries) {
     if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
       launched.add(entry.launch.threadId);
     }
-  }
-  if (launched.size === 0) return entries;
-  return entries.filter((entry) => {
-    if (entry.kind !== "work" || entry.entry.itemType !== "notification") return true;
+    if (launched.size === 0 || entry.kind !== "work" || entry.entry.itemType !== "notification") {
+      continue;
+    }
     const item = entry.entry.projectedItem?.item;
     const report = forkWorkReportOf({
       id: entry.id,
       summary: entry.entry.label,
       source: item?.type === "notification" ? item.source : undefined,
     });
-    if (report === null || report.requestKind !== null) return true;
+    if (report === null || (keepRequestReports && report.requestKind !== null)) continue;
     const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
-    return threadId === null || !launched.has(threadId);
-  });
+    if (threadId !== null && launched.has(threadId)) hidden.add(entry.id);
+  }
+  return hidden;
 }
 
 /** A work report of a thread's question or approval, which carries the card the owner answers on. */

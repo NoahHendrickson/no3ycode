@@ -5918,10 +5918,11 @@
     so a row never subscribes to every thread shell). All reading of report ids and summaries is in
     custom/forkWorkReports. TimelineWorkEntryRow draws the notification as that thread's row,
     title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
-    A report that only says the thread finished a turn (no question or approval) adds nothing its
-    launch row, which reads the thread live, does not already show, so withoutLaunchedThreadReports
-    drops it where MessagesTimeline.logic picks the shown entries whenever the conversation holds
-    that thread's launch (maintainer's bug report, 2026-11-27: the row drew twice).
+    A report of a thread the conversation launched adds nothing its launch row, which reads the
+    thread live, does not already show, so deriveMessagesTimelineRows draws no row for it
+    (launchedThreadReportIds; maintainer's bug report, 2026-11-27: the row drew twice), except a
+    question or approval where the host answers inline. The entry stays: a report notice is its
+    wake's turn boundary, which the folds and the working row read.
 
     Questions and approvals: only where the conversation has a host that answers inline
     (custom/threadLaunchCards/forkThreadHost, a React context ThreadTimeline sets; a sprint
