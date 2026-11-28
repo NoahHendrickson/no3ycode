@@ -156,7 +156,11 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
   it("gives the card's trailing cell room for a 24px target", () => {
     // Title line is 14px; the cell holding the actions has to be 24 or the
     // button is clipped. It centres in the line and overhangs into py-2/gap-2.
-    expect(sidebarV2).toContain("grid h-6 shrink-0 grid-cols-1 items-center justify-items-end");
+    // Matched on w-0, the actions cell's own zero-width collapse.
+    const cardActions = /"((?:[^"\s]+\s)*w-0\s[^"]*)"/u.exec(sidebarV2)?.[1];
+    expect(cardActions).toBeDefined();
+    expect(cardActions).toMatch(/\bh-6\b/u);
+    expect(cardActions).toMatch(/\bshrink-0\b/u);
   });
 
   it("nudges both row variants onto the trailing column's axis", () => {
@@ -198,13 +202,15 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     // Settled shelves each carry the chevron.
     const shelfChevrons = [...sidebarV2.matchAll(/SIDEBAR_V2_TRAILING_OFFSET\.shelfChevron/gu)];
     expect(shelfChevrons.length).toBe(3);
-    // Positioned, so the card's actions share a paint layer with the subagent
-    // count the crossfade turns into a stacking context — see the call site.
-    // Matched on w-0, which is the actions wrapper's own collapse and not
-    // something the count it shares the cell with ever carries.
-    const cardActions = /"([^"]*col-start-1 row-start-1[^"]*\bw-0\b[^"]*)"/u.exec(sidebarV2)?.[1];
+    // The actions cell widens and shows on hover or focus. group-any-hover
+    // (upstream #15536): a secondary hovering pointer on a touch-primary
+    // device reveals the actions too.
+    const cardActions = /"((?:[^"\s]+\s)*w-0\s[^"]*)"/u.exec(sidebarV2)?.[1];
     expect(cardActions).toBeDefined();
-    expect(cardActions).toContain("relative");
+    expect(cardActions).toContain(
+      "group-any-hover/v2-row:w-auto group-any-hover/v2-row:opacity-100",
+    );
+    expect(cardActions).toContain("focus-within:w-auto focus-within:overflow-visible");
     // The chrome rows' share of the same axis: 4px, and only 4px — the list
     // pays for its own scroll gutter now (fork-sidebar-chrome guards that), so
     // a scrollbar term reappearing here would double-count it.
@@ -268,29 +274,14 @@ describe("fork guard: sidebar-v2-row-action-hit-area", () => {
     expect(sidebarV2).toMatch(
       /\{topStatus === null && !showDiscardDraft \? null : \(\s*<span className="pointer-events-none flex size-\[14px\][^"]*">\s*<SidebarV2StatusMark status=\{topStatus\} seed=\{threadKey\} idle="draft" \/>/u,
     );
-    // Order inside the card's trailing group: the actions grid closes before
+    // Order inside the card's trailing group: the actions cell closes before
     // the status box opens, so the two can never share a stacking context.
-    const actionsGrid = sidebarV2.indexOf(
-      "grid h-6 shrink-0 grid-cols-1 items-center justify-items-end",
-    );
+    const actionsCell = sidebarV2.indexOf('data-fork-thread-card-actions=""');
     const cardStatus = sidebarV2.search(statusMark("dot"));
-    expect(actionsGrid).toBeGreaterThanOrEqual(0);
-    expect(cardStatus).toBeGreaterThan(actionsGrid);
-    expect(sidebarV2.slice(actionsGrid, cardStatus)).toContain(
+    expect(actionsCell).toBeGreaterThanOrEqual(0);
+    expect(cardStatus).toBeGreaterThan(actionsCell);
+    expect(sidebarV2.slice(actionsCell, cardStatus)).toContain(
       "SIDEBAR_V2_CARD_ALIGNMENT.statusBox",
     );
-    // The trailing cell still fades the subagent count when the hover
-    // actions will replace it; that decoration must stay out of the hit path
-    // for the same reason status used to. The fade class is gated separately
-    // (no actions → nothing to yield to → no fade), so the base string is the
-    // anchor here.
-    const subagentCountClass =
-      /"(pointer-events-none[^"]*col-start-1 row-start-1 flex items-center[^"]*)"/u.exec(
-        sidebarV2,
-      )?.[1];
-    expect(subagentCountClass).toBeDefined();
-    // group-any-hover (upstream #15536): a secondary hovering pointer on a
-    // touch-primary device reveals the actions too.
-    expect(sidebarV2).toContain("transition-opacity group-any-hover/v2-row:opacity-0");
   });
 });

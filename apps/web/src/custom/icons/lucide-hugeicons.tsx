@@ -661,12 +661,10 @@ const stroked =
   (props) => <HugeGlyph {...props} data={data} filled={false} />;
 
 /**
- * Fork glyphs drawn stroked in every theme: design mode's panel and layers rail, and the sidebar
- * card's subagent count. Kept off `*Icon` exports, which the project icon picker lists
- * (lucideIconByName).
+ * Fork glyphs drawn stroked in every theme: design mode's panel and layers rail. Kept off
+ * `*Icon` exports, which the project icon picker lists (lucideIconByName).
  */
 export const StrokeGlyphs = {
-  ChatBot: stroked(Hg.ChatBotIcon),
   // Layers rail.
   Link01: stroked(Hg.Link01Icon),
   News: stroked(Hg.NewsIcon),

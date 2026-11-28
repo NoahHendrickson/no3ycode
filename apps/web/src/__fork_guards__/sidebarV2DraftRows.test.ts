@@ -101,8 +101,6 @@ describe("fork guard: sidebar-v2-draft-rows", () => {
     expect(sidebar).toMatch(
       /const hasHoverActions =[^;]*\bshowPinAction\b[^;]*\bshowDiscardDraft;/u,
     );
-    expect(sidebar).toContain("hasHoverActions ||");
-    expect(sidebar).toContain("hasHoverActions &&");
     expect(sidebar).toContain("{hasHoverActions ? (");
   });
 });
