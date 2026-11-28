@@ -16,6 +16,7 @@ import type {
   ThreadPullRequestSnapshot,
 } from "@t3tools/contracts";
 import { isPullRequestWatchTask } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
+import { hasThreadLinks, replaceThreadLinks } from "@t3tools/shared/threadLinks";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import { resolveT3McpToolId } from "@t3tools/shared/t3McpToolPresentation";
 import { compactDynamicToolOutput } from "@t3tools/shared/toolOutput";
@@ -218,33 +219,96 @@ export function threadRowLiveState(
 
 type LaunchRow = Extract<MessagesTimelineRow, { kind: "fork-thread-launch" }>;
 
-/** Each work report in the entries, with the thread it names and whether that thread was
-    launched here (a launch comes before its reports). */
+/** Each work report in the entries, with the thread it names and the launched thread id when that
+    thread was launched here (a launch comes before its reports). */
 function* threadReports(entries: ReadonlyArray<TimelineEntry>) {
-  const launched = new Set<string>();
+  const launched = new Set<ThreadId>();
   for (const entry of entries) {
     if (entry.kind === "fork-thread-launch" && entry.launch.threadId !== null) {
       launched.add(entry.launch.threadId);
     }
+    if (entry.kind !== "work") continue;
     const report = forkWorkReportOfEntry(entry);
     if (report === null) continue;
     const threadId = report.threadId ?? forkWorkReportThreadId(report.key, launched);
-    yield { entry, report, threadId, launched: threadId !== null && launched.has(threadId) };
+    const launchedThreadId = threadId !== null && launched.has(threadId) ? threadId : null;
+    yield { entry, report, threadId, launchedThreadId };
   }
 }
 
-/** A thread's row shows once, under the reply that launched it, and reads its status live there,
+type MessageText = { readonly text: string };
+const linkedThreadIdsByMessage = new WeakMap<MessageText, ReadonlySet<ThreadId>>();
+
+/** The thread ids a reply's chips name, parsed once per message object. Uses `replaceThreadLinks`
+    as a visitor to read `ThreadLink`s without an environment, collecting both written and
+    percent-decoded ids as `threadLinkCandidates` does (matched by thread id across environments). */
+function linkedThreadIds(message: MessageText): ReadonlySet<ThreadId> {
+  let ids = linkedThreadIdsByMessage.get(message);
+  if (ids === undefined) {
+    const found = new Set<ThreadId>();
+    if (hasThreadLinks(message.text)) {
+      replaceThreadLinks(message.text, (link) => {
+        found.add(link.threadId);
+        try {
+          const decoded = decodeURIComponent(link.threadId);
+          if (decoded !== link.threadId && decoded !== "") found.add(decoded as ThreadId);
+        } catch {
+          // Malformed escapes keep only the written id.
+        }
+        return undefined;
+      });
+    }
+    ids = found;
+    linkedThreadIdsByMessage.set(message, ids);
+  }
+  return ids;
+}
+
+export interface ForkLaunchedThreads {
+  /** Reports that draw no row, since their thread's launch row already shows it. */
+  readonly hiddenReportIds: ReadonlySet<string>;
+  /** Each hidden-report wake run's launched threads, which can pull their launch row down. */
+  readonly reportThreadsByRun: ReadonlyMap<RunId, ReadonlySet<ThreadId>>;
+  /** Runs where a kept request report already draws a thread inline, so that run never pulls its
+      launch row too (even if the wake's reply links its chip). */
+  readonly inlineThreadsByRun: ReadonlyMap<RunId, ReadonlySet<ThreadId>>;
+}
+
+function addRunThread(
+  map: Map<RunId, Set<ThreadId>>,
+  runId: RunId | null | undefined,
+  threadId: ThreadId,
+) {
+  if (runId == null) return;
+  let threads = map.get(runId);
+  if (threads === undefined) {
+    threads = new Set();
+    map.set(runId, threads);
+  }
+  threads.add(threadId);
+}
+
+/** A thread's row shows once, under the latest reply about it, and reads its status live there,
     so a later report of that thread draws no row; a question or approval keeps its card where the
     conversation answers inline. The entries stay: a report notice starts its wake's turn. */
-export function launchedThreadReportIds(
+export function forkLaunchedThreads(
   entries: ReadonlyArray<TimelineEntry>,
   keepRequestReports: boolean,
-): ReadonlySet<string> {
-  const hidden = new Set<string>();
-  for (const { entry, report, launched } of threadReports(entries)) {
-    if (launched && !(keepRequestReports && report.requestKind !== null)) hidden.add(entry.id);
+): ForkLaunchedThreads {
+  const hiddenReportIds = new Set<string>();
+  const reportThreadsByRun = new Map<RunId, Set<ThreadId>>();
+  const inlineThreadsByRun = new Map<RunId, Set<ThreadId>>();
+  for (const { entry, report, launchedThreadId } of threadReports(entries)) {
+    if (launchedThreadId === null) continue;
+    // A question or approval answered inline draws the thread in its own wake already.
+    if (keepRequestReports && report.requestKind !== null) {
+      addRunThread(inlineThreadsByRun, entry.entry.runId, launchedThreadId);
+      continue;
+    }
+    hiddenReportIds.add(entry.id);
+    addRunThread(reportThreadsByRun, entry.entry.runId, launchedThreadId);
   }
-  return hidden;
+  return { hiddenReportIds, reportThreadsByRun, inlineThreadsByRun };
 }
 
 /** The finished report that stays when a quiet wake hides it: each thread's latest, as its one
@@ -252,37 +316,90 @@ export function launchedThreadReportIds(
     the key, so each of its reports stays. */
 export function lastThreadReportIds(entries: ReadonlyArray<TimelineEntry>): ReadonlySet<string> {
   const lastByThread = new Map<string, string>();
-  for (const { entry, report, threadId, launched } of threadReports(entries)) {
-    if (!launched && report.requestKind === null)
+  for (const { entry, report, threadId, launchedThreadId } of threadReports(entries)) {
+    if (launchedThreadId === null && report.requestKind === null)
       lastByThread.set(threadId ?? report.key, entry.id);
   }
   return new Set(lastByThread.values());
 }
 
-/** A turn's launched threads drawn by the turn's last reply, as one group, between its text and
-    its actions, so the reply that says it started them sits above them and the three hover as one.
-    A turn with no reply shown keeps them as rows where the calls were, one run's consecutive
-    calls stacked in one. Rows come one per call; this is the only place they group. */
+/** Before grouping, every launch row carries the single `t3_thread_launch` call it came from. */
+function launchThreadId(row: LaunchRow): ThreadId | null {
+  return row.launches[0]!.launch.threadId;
+}
+
+/** Moves each launch onto its turn's last reply, or onto a later settled turn's reply that links
+    the thread or woke from its hidden work report. Stays where the call happened (one run's
+    consecutive calls in one row) only when neither its launch turn nor any later referring turn
+    shows a reply. Rows come one per call; this is the only place they group. */
 export function placeLaunchesUnderReplies(
   rows: ReadonlyArray<MessagesTimelineRow>,
+  launched: ForkLaunchedThreads,
 ): MessagesTimelineRow[] {
-  const replyByRun = new Map<RunId, number>();
+  const launchedThreadIds = new Set<ThreadId>();
+  const replyByRun = new Map<
+    RunId,
+    { readonly index: number; readonly message: MessageText; readonly settled: boolean }
+  >();
   rows.forEach((row, index) => {
-    if (row.kind === "message" && row.message.role === "assistant" && row.message.runId != null)
-      replyByRun.set(row.message.runId, index);
+    if (row.kind === "fork-thread-launch") {
+      const threadId = launchThreadId(row);
+      if (threadId !== null) launchedThreadIds.add(threadId);
+    } else if (
+      row.kind === "message" &&
+      row.message.role === "assistant" &&
+      row.message.runId != null
+    ) {
+      // Delete first so iteration stays in ascending reply-index order across runs.
+      replyByRun.delete(row.message.runId);
+      replyByRun.set(row.message.runId, {
+        index,
+        message: row.message,
+        settled: !row.assistantCopyStreaming,
+      });
+    }
   });
-  const groups = new Map<RunId, LaunchRow[]>();
-  for (const row of rows) {
-    if (row.kind !== "fork-thread-launch" || row.runId === null || !replyByRun.has(row.runId))
-      continue;
-    groups.set(row.runId, [...(groups.get(row.runId) ?? []), row]);
+  const latestAbout = new Map<ThreadId, { readonly runId: RunId; readonly index: number }>();
+  if (launchedThreadIds.size > 0) {
+    for (const [runId, { index, message, settled }] of replyByRun) {
+      // Wait until a later turn settles so mid-turn narration cannot pull a row back and forth.
+      if (!settled) continue;
+      const inline = launched.inlineThreadsByRun.get(runId);
+      for (const threadId of [
+        ...(launched.reportThreadsByRun.get(runId) ?? []),
+        ...linkedThreadIds(message),
+      ]) {
+        if (launchedThreadIds.has(threadId) && !inline?.has(threadId)) {
+          latestAbout.set(threadId, { runId, index });
+        }
+      }
+    }
   }
+  const anchorByRowId = new Map<string, RunId>();
+  const groups = new Map<RunId, LaunchRow[]>();
+  rows.forEach((row, rowIndex) => {
+    if (row.kind !== "fork-thread-launch") return;
+    const threadId = launchThreadId(row);
+    const later = threadId === null ? undefined : latestAbout.get(threadId);
+    const ownReply = row.runId === null ? undefined : replyByRun.get(row.runId);
+    const runId =
+      later !== undefined &&
+      later.index >= rowIndex &&
+      (ownReply === undefined || later.index >= ownReply.index)
+        ? later.runId
+        : ownReply !== undefined
+          ? row.runId
+          : null;
+    if (runId === null) return;
+    anchorByRowId.set(row.id, runId);
+    groups.set(runId, [...(groups.get(runId) ?? []), row]);
+  });
   const runAtReply = new Map<number, RunId>();
-  for (const [runId, index] of replyByRun) if (groups.has(runId)) runAtReply.set(index, runId);
+  for (const [runId, { index }] of replyByRun) if (groups.has(runId)) runAtReply.set(index, runId);
   const out: MessagesTimelineRow[] = [];
   rows.forEach((row, index) => {
     if (row.kind === "fork-thread-launch") {
-      if (row.runId !== null && groups.has(row.runId)) return;
+      if (anchorByRowId.has(row.id)) return;
       const previous = out.at(-1);
       if (previous?.kind === "fork-thread-launch" && sameLaunchGroup(previous, row)) {
         out[out.length - 1] = { ...previous, launches: [...previous.launches, ...row.launches] };

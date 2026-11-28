@@ -5896,7 +5896,10 @@
     2026-11-27, after Claude Projects' coordinator video): the threads a reply started hang under
     it, one hooked row each, and a reply that a thread's work report started opens with that
     thread's row unless the thread already shows under the reply that launched it: each thread
-    shows once. Any thread, sprint or Petal shows them.
+    shows once. A launched thread's row follows the conversation about it: it hangs under the
+    latest reply that links its thread chip or that its work report started, and stays under its
+    launch reply when none does (maintainer's request, 2026-11-27). Any thread, sprint or Petal
+    shows them.
 
     Launches: session-logic lifts each `t3_thread_launch` call out of the work stream into a
     "fork-thread-launch" entry (custom/threadLaunchCards/threadLaunch.logic: the wire keeps only
@@ -5905,8 +5908,16 @@
     MessagesTimeline draws it. Not being a work entry, the turn's "Worked for" fold never swallows
     it. placeLaunchesUnderReplies, the only place launches group, then moves a turn's launches, as
     one group, onto the turn's last reply shown (forkLaunches), which draws them between its text
-    and its hover-only actions (TimelineAssistantRows), so the three hover as one; a turn with no
-    reply shown keeps them where the calls happened, one run's consecutive calls in one row.
+    and its hover-only actions (TimelineAssistantRows), so the three hover as one; a launch stays
+    where the call happened (one run's consecutive calls in one row) only when neither its launch
+    turn nor any later referring turn shows a reply.
+    A launch whose thread a later settled turn refers to moves instead to the latest such turn's
+    last reply shown: forkLaunchedThreads reads shared threadReports in one pass for hidden
+    work-report wakes (reportThreadsByRun) and kept inline question/approval wakes
+    (inlineThreadsByRun, excluded so a wake that renders the inline request card never pulls the
+    launch row too), while placeLaunchesUnderReplies sweeps settled visible anchor replies once to
+    record the latest reply about each launched thread (matching chip links via replaceThreadLinks
+    as a visitor, cached per message object, so folded or in-progress narration never pulls a row).
 
     Reports: a work report's notification (fork-bot-work-reports) carries the reporting thread
     in its item id (`turn-item:message:` + the URI-encoded report message id); thread ids can
@@ -5917,7 +5928,7 @@
     title and status mark only (the mark says what it needs), falling back to the plain notice when the thread is unknown.
     A report of a thread the conversation launched adds nothing its launch row, which reads the
     thread live, does not already show, so deriveMessagesTimelineRows draws no row for it
-    (launchedThreadReportIds in threadLaunch.logic, added to fork-quiet-live-turn's
+    (forkLaunchedThreads' hiddenReportIds in threadLaunch.logic, added to fork-quiet-live-turn's
     forkUnshownEntryIds; maintainer's bug report, 2026-11-27: the row drew twice), except a
     question or approval where the host answers inline. The entry stays: a report notice is its
     wake's turn boundary, which the folds and the working row read.
@@ -5954,12 +5965,14 @@
     A PR watch is not background work there: a sprint child keeps one on its PR, which on a ready
     PR only waits on the owner's merge (isPullRequestWatchTask; a parked "waiting" runtime with
     only watches left counts as idle).
-    Then a launch row hands that PR to one slim line under it (ForkThreadReadyToMerge, owner's
-    request 2026-11-27: light, made of existing controls, no card chrome): the composer's PR chip,
-    "Ready to merge", a Merge PR chip, which merges on the host after a confirm (the owner's click
-    is the approval; held while auto-merge is armed, as the composer pill is, and left to the PR
-    page for a stacked PR or a host without merge, as the PR list's Merge is), and a quiet Go to
-    thread. threadRowLiveState alone decides readiness and hands the line its link (the chip is
+    Then a launch row hands that PR to a card below it sharing the answered-request card surface
+    (FORK_THREAD_CARD_SURFACE in ForkThreadRequestCard, with the row's connector arm turned down
+    into the card, inset ps-3 as RequestFrame does), containing ForkThreadReadyToMerge's composer
+    controls: the PR chip, a Merge PR chip, which merges on the host after a confirm (the owner's
+    click is the approval; held while auto-merge is armed, as the composer pill is, and left to the
+    PR page for a stacked PR or a host without merge, as the PR list's Merge is), and an outlined
+    Go to thread chip (same composer status-chip pill geometry with transparent fill).
+    threadRowLiveState alone decides readiness and hands the line its link (the chip is
     ComposerPullRequestChip ThreadPullRequestChip, shared with the composer). A launched thread
     shows once, so the line does too.
     The row opens

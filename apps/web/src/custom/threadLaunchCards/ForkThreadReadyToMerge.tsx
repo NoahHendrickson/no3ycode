@@ -1,7 +1,7 @@
 /**
  * A launched thread's PR, ready to merge, acted on from the conversation that started it — see
  * `.fork/customizations.yaml#fork-thread-launch-cards`. One slim line under the thread's row, made
- * of the composer's own controls: its PR chip, a merge chip, and a quiet Go to thread.
+ * of the composer's own controls: its PR chip, a merge chip, and an outlined Go to thread chip.
  */
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
@@ -27,7 +27,6 @@ import { useUiStateStore } from "~/uiStateStore";
 import { ThreadPullRequestChip } from "../ComposerPullRequestChip";
 import { GitMergeIcon } from "../icons/lucide-hugeicons";
 import { useThreadAutoMerge } from "../threadAutoMerge";
-import { THREAD_PULL_REQUEST_STAGE_LABELS } from "./threadLaunch.logic";
 
 /** `link`, the thread's current PR, already read ready (threadRowLiveState). The owner's click on
     Merge, once confirmed, is the approval: it merges on the host as the PR list's Merge does, and
@@ -90,7 +89,7 @@ export function ForkThreadReadyToMerge(props: {
   };
   return (
     <div
-      className="flex min-w-0 max-w-full flex-wrap items-center gap-1 ps-4"
+      className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5"
       data-fork-thread-ready-to-merge=""
     >
       <ThreadPullRequestChip
@@ -99,9 +98,6 @@ export function ForkThreadReadyToMerge(props: {
         onOpenList={props.onOpenThread}
         onOpenPullRequest={(event, targetUrl) => openPrLink(event, targetUrl ?? link.url)}
       />
-      <span className="shrink-0 px-1 text-xs text-muted-foreground">
-        {THREAD_PULL_REQUEST_STAGE_LABELS.ready}
-      </span>
       {offersMerge ? (
         <ComposerControl
           size="xs"
@@ -114,7 +110,11 @@ export function ForkThreadReadyToMerge(props: {
           Merge PR
         </ComposerControl>
       ) : null}
-      <ComposerControl size="xs" onClick={props.onOpenThread}>
+      <ComposerControl
+        size="xs"
+        data-fork-composer-status-chip="outline"
+        onClick={props.onOpenThread}
+      >
         {/* oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog) */}
         Go to thread
       </ComposerControl>

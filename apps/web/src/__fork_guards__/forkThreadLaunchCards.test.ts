@@ -44,14 +44,26 @@ describe("fork guard: fork-thread-launch-cards", () => {
 
   it("drops a launched thread's turn reports, so its row shows once", () => {
     const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
-    expect(logic).toContain("launchedThreadReportIds(timelineEntries, forkKeepRequestReports)");
+    expect(logic).toContain("forkLaunchedThreads(timelineEntries, forkKeepRequestReports)");
     expect(logic).toContain("if (forkUnshownEntryIds.has(timelineEntry.id)) continue;");
   });
 
-  it("hangs a turn's launches under its last reply", () => {
-    expect(readSibling("../components/chat/MessagesTimeline.logic.ts")).toContain(
-      "const result = placeLaunchesUnderReplies(",
+  it("hangs a turn's launches under its last reply, or the latest reply about the thread", () => {
+    const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
+    expect(logic).toContain("const result = placeLaunchesUnderReplies(");
+    expect(logic).toContain("forkLaunched,");
+    expect(readSibling("../components/chat/TimelineAssistantRows.tsx")).toContain(
+      "<ForkThreadLaunchList launches={row.forkLaunches}",
     );
+    // Launch rows (including moved ones) keep kind="launch" so ForkThreadReadyToMerge moves with them.
+    const cards = readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx");
+    expect(cards).toContain('const ready = props.kind === "launch" ? live.ready : null;');
+    expect(cards).toContain('arm={hasCard ? "down" : props.arm}');
+    expect(cards).toContain("FORK_THREAD_CARD_SURFACE");
+    expect(cards).toContain("<ForkThreadReadyToMerge");
+    const readyCard = readSibling("../custom/threadLaunchCards/ForkThreadReadyToMerge.tsx");
+    expect(readyCard).toContain('data-fork-composer-status-chip="outline"');
+    expect(readyCard).not.toContain("THREAD_PULL_REQUEST_STAGE_LABELS");
   });
 
   it("answers a thread's open question or approval inline, and only inline in a sprint", () => {

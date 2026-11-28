@@ -45,6 +45,10 @@
   );
 }
 
+:root[data-fork="noahhendrickson-t3code"] [data-fork-composer-status-chip="outline"] {
+  background: transparent;
+}
+
 /* The new-thread Coordinator pill (fork-coordinator-threads), a CheckboxPill that wears the composer
    card's own surface, a tab of the card: the vessel's fill here and its ring below; the sheets that
    blur, frost or natively draw the card list the pill beside it (palettes, glass, inlet-black). */
