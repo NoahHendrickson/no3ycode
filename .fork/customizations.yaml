@@ -5953,6 +5953,9 @@
     background work as the composer's banner titles it (threadRowLiveState, through
     presentPendingBackgroundWork). Ready to merge waits until the thread is idle with nothing in
     the background (maintainer's report, 2026-11-27: a child still running a review read ready).
+    A PR watch is not background work there: a sprint child keeps one on its PR, which on a ready
+    PR only waits on the owner's merge (isPullRequestWatchTask; a parked "waiting" runtime with
+    only watches left counts as idle).
     Then a launch row hands that PR to one slim line under it (ForkThreadReadyToMerge, owner's
     request 2026-11-27: light, made of existing controls, no card chrome): the composer's PR chip,
     "Ready to merge", the Merge PR pill's look, which merges on the host after a confirm (the

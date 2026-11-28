@@ -15,6 +15,7 @@ import type {
   ThreadPullRequestLink,
   ThreadPullRequestSnapshot,
 } from "@t3tools/contracts";
+import { isPullRequestWatchTask } from "@t3tools/shared/orchestrationV2PendingBackgroundWork";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 import { resolveT3McpToolId } from "@t3tools/shared/t3McpToolPresentation";
 import { compactDynamicToolOutput } from "@t3tools/shared/toolOutput";
@@ -171,10 +172,9 @@ export function threadLaunchPullRequests(thread: {
   return out;
 }
 
-/** A row's live read of its thread: its background work while any runs (a review, a monitor, a
-    subagent), and its pull requests, which read "Ready to merge" only once the thread is idle with
-    nothing in the background, since work still running can change the PR. `readyUrl` is the
-    thread's current PR when it reads so, which a launch row offers to merge. */
+/** A row's live read of its thread: its background work, and PRs that read "Ready to merge" only
+    once nothing runs, since running work can change the PR. A PR watch is not work: on a ready PR
+    it waits on the owner's merge. `readyUrl` is the current PR when it reads ready. */
 export function threadRowLiveState(
   thread: Parameters<typeof threadLaunchPullRequests>[0] & {
     readonly pendingBackgroundTasks: ReadonlyArray<OrchestrationV2PendingBackgroundTask>;
@@ -185,8 +185,10 @@ export function threadRowLiveState(
   readonly pullRequests: ReadonlyArray<ThreadLaunchPullRequest>;
   readonly readyUrl: string | null;
 } {
-  const activity = presentPendingBackgroundWork(thread.pendingBackgroundTasks)?.title ?? null;
-  const idle = status === "ready" && activity === null;
+  const work = thread.pendingBackgroundTasks.filter((task) => !isPullRequestWatchTask(task));
+  const activity = presentPendingBackgroundWork(work)?.title ?? null;
+  // "waiting" is a parked runtime: with only PR watches left, it waits on the PR, so on the owner.
+  const idle = (status === "ready" || status === "waiting") && activity === null;
   const pullRequests = threadLaunchPullRequests(thread);
   const current = idle ? resolveThreadCurrentPullRequestLink(thread.pullRequests) : null;
   return {

@@ -362,6 +362,14 @@ describe("threadRowLiveState", () => {
       stages: [null, "checks-failing"],
       readyUrl: null,
     });
+    // A watch on its PR waits on the owner's merge, so it neither shows nor holds ready back.
+    const watch = {
+      taskId: "pull-request-watch:h/o/r#558",
+      kind: "monitor",
+      // oxlint-disable-next-line t3code/no-untranslated-copy -- a fixture, not copy
+      description: "Watching pull request #558",
+    } as const;
+    expect(read("waiting", [watch as never])).toEqual(read("ready"));
     const busy = { activity: null, stages: [null, "checks-failing"], readyUrl: null };
     expect(read("working")).toEqual(busy);
     expect(read(null)).toEqual(busy);
