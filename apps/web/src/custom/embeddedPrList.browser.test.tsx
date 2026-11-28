@@ -72,6 +72,7 @@ const threadsByKey = new Map([
       id: hostRef.threadId,
       environmentId,
       projectId,
+      // oxlint-disable-next-line t3code/no-untranslated-copy -- test fixture data
       title: "Sprint coordinator",
       branch: "sprint-main",
       worktreePath: null,
@@ -87,6 +88,7 @@ const threadsByKey = new Map([
       id: childRef.threadId,
       environmentId,
       projectId,
+      // oxlint-disable-next-line t3code/no-untranslated-copy -- test fixture data
       title: "Embedded child thread",
       branch: "feat-top",
       worktreePath: null,
