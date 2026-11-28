@@ -64,18 +64,8 @@ describe("thread pull request capability negotiation", () => {
       archivedAt: null,
       settledAt: null,
       settledOverride: null,
-      source: {
-        lineage: { parentThreadId: null, relationshipToParent: null, rootThreadId: input.threadId },
-        creationSource: "web",
-      },
+      lineage: { parentThreadId: null, relationshipToParent: null, rootThreadId: input.threadId },
     } as const;
-    const child = (creationSource: "mcp" | "provider") => ({
-      ...active,
-      source: {
-        lineage: { ...active.source.lineage, relationshipToParent: "subagent" as const },
-        creationSource,
-      },
-    });
     expect(canStartThreadPullRequestWatch(active)).toBe(true);
     expect(canStartThreadPullRequestWatch({ ...active, settledOverride: "active" })).toBe(true);
     expect(canStartThreadPullRequestWatch({ ...active, settledOverride: "settled" })).toBe(false);
@@ -85,7 +75,11 @@ describe("thread pull request capability negotiation", () => {
     expect(canStartThreadPullRequestWatch({ ...active, archivedAt: "2026-01-01T00:00:00Z" })).toBe(
       false,
     );
-    expect(canStartThreadPullRequestWatch(child("mcp"))).toBe(true);
-    expect(canStartThreadPullRequestWatch(child("provider"))).toBe(false);
+    expect(
+      canStartThreadPullRequestWatch({
+        ...active,
+        lineage: { ...active.lineage, relationshipToParent: "subagent" },
+      }),
+    ).toBe(false);
   });
 });

@@ -38,7 +38,10 @@ describe("fork-delegated-children-watch-prs", () => {
 
   it("reports a child's PR wake to its parent as a follow-up", () => {
     const orchestrator = read("apps/server/src/orchestration-v2/Orchestrator.ts");
-    expect(orchestrator).toContain("command.notification.source.pullRequest !== undefined");
+    expect(orchestrator).toContain("isBackgroundMonitorNotice(command.notification)");
+    expect(read("packages/provider-core/src/server/subagentProjection.ts")).toContain(
+      "notification.source.pullRequest === undefined",
+    );
     expect(orchestrator).toContain(
       "yield* recordSubagentFollowup(message, events).pipe(mapDispatchError(command));",
     );
@@ -47,9 +50,16 @@ describe("fork-delegated-children-watch-prs", () => {
     );
   });
 
-  it("tells children they watch by the same rule", () => {
+  it("lets only one of a parent and its delegated child watch a PR", () => {
+    expect(read("apps/server/src/pullRequest/PullRequestWatchService.ts")).toContain(
+      "const refusal = yield* relativeWatching(thread, target);",
+    );
+  });
+
+  it("tells children they watch, and to unwatch only before handing back to the user", () => {
     const instructions = read("packages/provider-core/src/server/runtimeInstructions.ts");
     expect(instructions).not.toContain("Delegated children never watch");
-    expect(instructions).toContain("Delegated children watch by the same rule");
+    expect(instructions).toContain("Delegated children watch too.");
+    expect(instructions).toContain("Before handing back to the user, call unwatch_pull_request");
   });
 });

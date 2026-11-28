@@ -186,6 +186,9 @@ export const PullRequestToolError = Schema.Union([
   PullRequestUnlinkFailedError,
   PullRequestListFailedError,
   PullRequestWatchService.PullRequestWatchFailedError,
+  /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+  PullRequestWatchService.PullRequestWatchedByRelativeError,
+  /* fork:end fork-delegated-children-watch-prs */
   PullRequestUnavailableError,
   PullRequestProjectNotFoundError,
   PullRequestGuideFailedError,
@@ -204,10 +207,8 @@ const PullRequestIdentity = {
 };
 
 /** A delegated child's report is how its parent learns the PR, so the link result asks for it. */
-/* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
 export const CHILD_PULL_REQUEST_REPORT_NEXT =
-  "End your reply with: PR <full URL>, head <SHA>, checks and reviews <state>, watched or not.";
-/* fork:end fork-delegated-children-watch-prs */
+  "End your reply with: PR <full URL>, head <SHA>, checks and reviews <state>.";
 
 export const LinkPullRequestResult = Schema.Struct({
   ...PullRequestIdentity,

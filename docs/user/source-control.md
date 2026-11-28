@@ -385,7 +385,7 @@ pull request itself with the host's CLI. A reopened pull request needs a new wat
 failed reads in a row, or when you press Stop on the thread. A rate limit only pauses watching.
 Settling or archiving a thread also ends all its watches. Unsettle the thread before starting a new
 watch. Watching a pull request again does not repeat check or conflict news its last
-watch already reported; unlinking the pull request clears that. <!-- fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs -->A delegated task's thread can watch the pull requests it opens: each wake reaches the thread that delegated it, and cancelling the task ends its watches. A provider's own subagents cannot watch.<!-- fork:end fork-delegated-children-watch-prs --> To start or stop
+watch already reported; unlinking the pull request clears that. <!-- fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs -->A delegated task's thread can watch the pull requests it opens: each wake reaches the thread that delegated it, only one of the two watches a given pull request, and cancelling the task ends its watches. A provider's own subagents cannot watch.<!-- fork:end fork-delegated-children-watch-prs --> To start or stop
 it yourself, use the row menu in the **Linked items** panel. In the thread details card, a
 watched pull request shows an eye; click it to stop watching.
 

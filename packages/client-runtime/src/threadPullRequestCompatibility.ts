@@ -1,9 +1,7 @@
-import {
-  isProviderNativeSubagentThread,
-  type ExecutionEnvironmentCapabilities,
-  type OrchestrationV2ThreadShell,
-  type ThreadId,
-  type ThreadPullRequestKey,
+import type {
+  ExecutionEnvironmentCapabilities,
+  ThreadId,
+  ThreadPullRequestKey,
 } from "@t3tools/contracts";
 import type { EnvironmentThreadShell } from "./state/models.ts";
 import { normalizeThreadPullRequestKey } from "./threadPullRequests.ts";
@@ -15,21 +13,17 @@ export function threadPullRequestLinkMode(
   return capabilities ? ("multiple" as const) : ("unsupported" as const);
 }
 
-/* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
-/** The server refuses new watches on settled, archived, and provider-native subagent threads. */
+/** The server refuses new watches on settled, archived, and subagent threads. */
 export function canStartThreadPullRequestWatch(
-  thread: Pick<EnvironmentThreadShell, "archivedAt" | "settledAt" | "settledOverride"> & {
-    readonly source: Pick<OrchestrationV2ThreadShell, "lineage" | "creationSource">;
-  },
+  thread: Pick<EnvironmentThreadShell, "archivedAt" | "settledAt" | "settledOverride" | "lineage">,
 ): boolean {
   return (
     thread.archivedAt === null &&
     thread.settledAt === null &&
     thread.settledOverride !== "settled" &&
-    !isProviderNativeSubagentThread(thread.source)
+    thread.lineage.relationshipToParent !== "subagent"
   );
 }
-/* fork:end fork-delegated-children-watch-prs */
 
 export function planThreadPullRequestMutation({
   capabilities,

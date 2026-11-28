@@ -46,16 +46,19 @@ describe("buildRuntimeInstructions", () => {
     assert.include(instructions, "Otherwise act now or hand back.");
     assert.include(instructions, "then watch and end your turn");
     assert.notInclude(instructions, "Delegated children never watch");
-    assert.include(instructions, "Delegated children watch by the same rule");
+    assert.include(instructions, "Delegated children watch too.");
     assert.include(
       instructions,
-      "After PR work, a child's last line is: PR <full URL>, head <SHA>, checks and reviews <state>, watched or not.",
+      "After PR work, a child's last line is: PR <full URL>, head <SHA>, checks and reviews <state>.",
     );
     assert.include(
       instructions,
       "For PR waits, no sleep, loops, gh --watch, Monitor or ScheduleWakeup.",
     );
-    assert.include(instructions, "call unwatch_pull_request");
+    assert.include(
+      instructions,
+      "Before handing back to the user, call unwatch_pull_request on any PR you watch.",
+    );
   });
 
   it("lists a multi-folder thread's folders and leaves single-folder text unchanged", () => {

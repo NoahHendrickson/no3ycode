@@ -244,18 +244,27 @@ function withStopNotice(
 
 type MonitorNotice = Pick<OrchestrationV2ConversationMessage, "runId" | "notification">;
 
+/* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+/** A background monitor's notice. A PR watch wake shares the monitor source but is work an agent acts on. */
+export const isBackgroundMonitorNotice = (notification: MonitorNotice["notification"]) =>
+  notification?.source.kind === "monitor" && notification.source.pullRequest === undefined;
+
+export const backgroundMonitorRunIds = (messages: ReadonlyArray<MonitorNotice>) =>
+  new Set(
+    messages
+      .filter((message) => isBackgroundMonitorNotice(message.notification))
+      .map((message) => message.runId),
+  );
+/* fork:end fork-delegated-children-watch-prs */
+
 /** Runs that only acknowledge a monitor update are never a task's work. */
 export function monitorUpdateRunIds(messages: ReadonlyArray<MonitorNotice>) {
   return new Set(
     messages
       .filter(
         (message) =>
-          message.notification?.source.kind === "monitor" &&
-          message.notification.outcome === "updated" &&
-          /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs
-             A PR watch wake is work the agent acts on, not a monitor's progress line. */
-          message.notification.source.pullRequest === undefined,
-        /* fork:end fork-delegated-children-watch-prs */
+          isBackgroundMonitorNotice(message.notification) &&
+          message.notification?.outcome === "updated",
       )
       .map((message) => message.runId),
   );

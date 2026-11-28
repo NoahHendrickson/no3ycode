@@ -96,6 +96,9 @@ import {
   subagentStopNotice,
   delegatedTaskProgress,
   delegatedTaskReportRuns,
+  /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+  backgroundMonitorRunIds,
+  /* fork:end fork-delegated-children-watch-prs */
 } from "@t3tools/provider-core/server/subagentProjection";
 import {
   DispatchModeLimit,
@@ -769,17 +772,9 @@ function latestTerminalResultRun(
   delegatedRun: OrchestrationV2Run | undefined,
   awaitingContinuationRun: OrchestrationV2Run | undefined,
 ): OrchestrationV2Run | undefined {
-  const monitorRunIds = new Set(
-    projection.messages
-      .filter(
-        (message) =>
-          message.notification?.source.kind === "monitor" &&
-          /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
-          message.notification.source.pullRequest === undefined,
-        /* fork:end fork-delegated-children-watch-prs */
-      )
-      .map((message) => message.runId),
-  );
+  /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+  const monitorRunIds = backgroundMonitorRunIds(projection.messages);
+  /* fork:end fork-delegated-children-watch-prs */
   // A restart-cut run, and each cut run before it in the chain, has no outcome while a
   // continuation is pending, live, or ran to a result.
   const runsById = new Map(projection.runs.map((run) => [run.id, run]));
