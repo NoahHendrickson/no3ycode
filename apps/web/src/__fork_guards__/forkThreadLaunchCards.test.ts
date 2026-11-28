@@ -52,6 +52,13 @@ describe("fork guard: fork-thread-launch-cards", () => {
     const logic = readSibling("../components/chat/MessagesTimeline.logic.ts");
     expect(logic).toContain("const result = placeLaunchesUnderReplies(");
     expect(logic).toContain("forkLaunched.referringRuns,");
+    expect(readSibling("../components/chat/TimelineAssistantRows.tsx")).toContain(
+      "<ForkThreadLaunchList launches={row.forkLaunches}",
+    );
+    // Launch rows (including moved ones) keep kind="launch" so ForkThreadReadyToMerge moves with them.
+    const cards = readSibling("../custom/threadLaunchCards/ForkThreadLaunchCards.tsx");
+    expect(cards).toContain('const ready = props.kind === "launch" ? live.ready : null;');
+    expect(cards).toContain("<ForkThreadReadyToMerge");
   });
 
   it("answers a thread's open question or approval inline, and only inline in a sprint", () => {

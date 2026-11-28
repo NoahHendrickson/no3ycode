@@ -1,4 +1,5 @@
 import { MessageId, NodeId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
+import { FORK_BOT_QUIET_REPLY } from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
@@ -305,6 +306,54 @@ describe("launch rows", () => {
       "thread-elsewhere finished",
       "working-indicator-row",
     ]);
+  });
+
+  it("moves the launch row across visible wakes while quiet wakes drop launched reports and keep unlaunched latest", () => {
+    const rows = deriveMessagesTimelineRows({
+      timelineEntries: [
+        launchEntry("a", "run-1"),
+        reply("started", "run-1"),
+        workReportEntry("thread-elsewhere", "run-2"),
+        reply("quiet-1", "run-2", FORK_BOT_QUIET_REPLY),
+        workReportEntry("thread-elsewhere", "run-3"),
+        reply("quiet-2", "run-3", FORK_BOT_QUIET_REPLY),
+        workReportEntry("thread-a", "run-4"),
+        reply("ready", "run-4"),
+        workReportEntry("thread-a", "run-5"),
+        reply("quiet-3", "run-5", FORK_BOT_QUIET_REPLY),
+      ],
+      isWorking: false,
+      turnDiffSummaries: [],
+      supportsConversationRollback: false,
+      forkQuietWakes: "bot",
+      forkKeepRequestReports: true,
+    });
+    // The moved launch stays on the later reply's forkLaunches (where ForkThreadLaunchList draws
+    // kind="launch" and ForkThreadReadyToMerge), never on the launch reply or as a report row.
+    const startedRow = rows.find((row) => row.kind === "message" && row.message.id === "started");
+    const readyRow = rows.find((row) => row.kind === "message" && row.message.id === "ready");
+    expect(startedRow?.kind === "message" ? startedRow.forkLaunches : null).toBeUndefined();
+    expect(readyRow?.kind === "message" ? readyRow.forkLaunches : null).toEqual([
+      {
+        id: "a",
+        launch: {
+          title: "a",
+          threadId: ThreadId.make("thread-a"),
+          environmentId: null,
+          callStatus: "started",
+        },
+      },
+    ]);
+    // Unlaunched thread keeps only its latest quiet-wake report via lastThreadReportIds; launched
+    // thread's reports (visible or quiet) draw no report row.
+    const reportIds = rows.flatMap((row) =>
+      row.kind === "work"
+        ? row.groupedEntries.flatMap((entry) =>
+            entry.itemType === "notification" ? [entry.id] : [],
+          )
+        : [],
+    );
+    expect(reportIds).toEqual([workReportEntry("thread-elsewhere", "run-3").id]);
   });
 });
 
