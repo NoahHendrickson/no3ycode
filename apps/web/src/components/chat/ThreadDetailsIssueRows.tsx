@@ -2,7 +2,10 @@ import { threadIssueKeyOf, type ScopedThreadRef, type ThreadIssueLink } from "@t
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { useGT } from "gt-react";
 import { MessageSquareIcon } from "lucide-react";
-import { useState, type MouseEvent } from "react";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+import { useContext, useState, type MouseEvent } from "react";
+import { RightPanelOwnerContext } from "~/custom/rightPanelOwnerContext";
+/* fork:end fork-embedded-pr-list */
 
 import { cn } from "~/lib/utils";
 import { useRightPanelStore } from "~/rightPanelStore";
@@ -38,6 +41,9 @@ function LinkedIssueRow({
 }) {
   const gt = useGT();
   const configs = useServerConfigs();
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  const panelRef = useContext(RightPanelOwnerContext) ?? threadRef;
+  /* fork:end fork-embedded-pr-list */
   const detail = useLinkedIssueDetail(threadRef.environmentId, link, mountScope);
   const trackerPresentation = issueTrackerPresentation(link.tracker);
   const state = detail === null ? null : issueStatePresentation(detail.state);
@@ -51,9 +57,18 @@ function LinkedIssueRow({
     onClick: (event: MouseEvent<HTMLElement>) => {
       event.stopPropagation();
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      if (configs.get(threadRef.environmentId)?.environment.capabilities.issues !== true) return;
+      /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+      if (
+        configs.get(threadRef.environmentId)?.environment.capabilities.issues !== true ||
+        configs.get(panelRef.environmentId)?.environment.capabilities.issues !== true
+      )
+        return;
       event.preventDefault();
-      useRightPanelStore.getState().openIssue(threadRef, link);
+      useRightPanelStore.getState().openIssue(panelRef, {
+        environmentId: threadRef.environmentId,
+        ...link,
+      });
+      /* fork:end fork-embedded-pr-list */
       onOpen?.();
     },
   };

@@ -52,5 +52,5 @@ export const DEFERRED_LINT_RULES = [
   // +11 for fork-typography-settings: the font presets, their aria label and the two size rows.
   // +3 for the draft project picker: its search and pin labels.
   // +98 for fork-sprints, fork-thread-launch-cards and fork-coordinator-threads: menus, panels, cards.
-  ["t3code/no-untranslated-copy", 981],
+  ["t3code/no-untranslated-copy", 979],
 ];

@@ -23,11 +23,19 @@ import {
   type PersistentThreadTerminalPanelProps,
 } from "../PersistentThreadTerminals";
 import { IssueDetailPanel } from "../issue/IssueDetailPanel";
-import { pullRequestPanelContext } from "../pullRequest/pullRequestDetail.logic";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list
+   pullRequestPanelContext moved into useEmbeddedPullRequestDetailProps. */
+/* fork:end fork-embedded-pr-list */
 import { PullRequestDetailPanel } from "../pullRequest/PullRequestDetailPanel";
 import { PullRequestDetailGhost } from "../pullRequest/PullRequestGhosts";
 import { PullRequestsUnavailableState } from "../pullRequest/PullRequestsUnavailableState";
 import { ThreadPullRequestsPanel } from "../pullRequest/ThreadPullRequestsPanel";
+/* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+import {
+  EmbeddedThreadPullRequestsPanel,
+  useEmbeddedPullRequestDetailProps,
+} from "~/custom/EmbeddedThreadPullRequestsPanel";
+/* fork:end fork-embedded-pr-list */
 
 const PreviewPanel = lazy(() =>
   import("../preview/PreviewPanel").then((module) => ({ default: module.PreviewPanel })),
@@ -89,6 +97,13 @@ export function RightPanelSurfaceContent(props: {
 }) {
   const { surface, threadRef, visible, onCloseSurface } = props;
   const gt = useGT();
+  /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+  const pullRequestDetailProps = useEmbeddedPullRequestDetailProps({
+    surface,
+    hostPanelRef: threadRef,
+    hostPullRequest: props.pullRequest,
+  });
+  /* fork:end fork-embedded-pr-list */
   if (surface === null) return null;
   switch (surface.kind) {
     case "preview":
@@ -153,6 +168,11 @@ export function RightPanelSurfaceContent(props: {
               repository: reference.repository,
               number: reference.number,
               ...(reference.host ? { host: reference.host } : {}),
+              /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+              ...(surface.listThreadRef === undefined
+                ? {}
+                : { listThreadRef: surface.listThreadRef }),
+              /* fork:end fork-embedded-pr-list */
             });
           }}
           threadRef={threadRef}
@@ -170,17 +190,11 @@ export function RightPanelSurfaceContent(props: {
           onTabChange={(tab) => {
             useRightPanelStore.getState().setPullRequestDetailTab(threadRef, surface.id, tab);
           }}
-          context={pullRequestPanelContext(
-            {
-              projectId: pullRequest.projectId,
-              pullRequests: pullRequest.pullRequests,
-              linkedPullRequest: pullRequest.linkedPullRequest,
-              branchPullRequest: pullRequest.branchPullRequest,
-            },
-            surface,
-          )}
+          /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
+          context={pullRequestDetailProps.context}
           composerDraftTarget={props.composerDraftTarget}
-          onBack={pullRequest.onBack}
+          onBack={pullRequestDetailProps.onBack}
+          /* fork:end fork-embedded-pr-list */
         />
       );
     }
@@ -230,8 +244,18 @@ export function RightPanelSurfaceContent(props: {
           }}
         />
       );
+    /* fork:begin fork-embedded-pr-list — see .fork/customizations.yaml#fork-embedded-pr-list */
     case "pull-requests":
-      return <ThreadPullRequestsPanel threadRef={threadRef} />;
+      return surface.threadRef === undefined ? (
+        <ThreadPullRequestsPanel key={surface.id} threadRef={threadRef} />
+      ) : (
+        <EmbeddedThreadPullRequestsPanel
+          key={surface.id}
+          threadRef={surface.threadRef}
+          panelRef={threadRef}
+        />
+      );
+    /* fork:end fork-embedded-pr-list */
     case "thread":
       // Not lazy: revealing a suspended tiptap editor tears down its view and crashes the composer.
       return (
