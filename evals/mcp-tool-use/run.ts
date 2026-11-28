@@ -1882,9 +1882,6 @@ const BRANCH_PULL_REQUEST_TOOLS = new Set([
 const BRANCH_HAS_NO_PR_ERROR =
   "This thread's branch has no known PR. Pass number, or open one with pull_request_create.";
 
-const SUBAGENT_WATCH_ERROR =
-  "This thread is a subagent, so it cannot watch pull requests. Its parent thread owns the pull request: finish your task and report back instead.";
-
 /** Result for a native tool the case does not mock, other than shell, file, and web tools. */
 const nativeResult = (name: string, input: Readonly<Record<string, unknown>>) => {
   const skill = valueText(input.skill);
@@ -2274,10 +2271,6 @@ export const answerToolCall = Effect.fn("evaluateMcpToolUse.answerToolCall")(fun
     );
   }
   if (isT3Name(call.name)) {
-    // T3 refuses a watch from a delegated child.
-    if (name === "watch_pull_request" && testCase.setup.role === "delegated-child") {
-      return failed(SUBAGENT_WATCH_ERROR);
-    }
     if (BRANCH_PULL_REQUEST_TOOLS.has(name) && input.number === undefined) {
       // Until the agent opens it, the PR a create would open does not exist.
       if (branchPullRequest(sample).created) return failed(BRANCH_HAS_NO_PR_ERROR);
