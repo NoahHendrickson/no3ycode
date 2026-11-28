@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { ProviderDriverKind } from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
 import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPresentation";
@@ -116,12 +117,40 @@ export const States: Story = {
   ),
 };
 
-/** The same threads on one line each, as a sprint's and a coordinator's panels list them. */
+const CHIP_STATE = {
+  "Open PR": "open",
+  "Draft PR": "draft",
+  "Merged PR": "merged",
+  "Closed PR": "closed",
+} as const;
+const OPUS = { driver: ProviderDriverKind.make("claudeAgent"), label: "Opus 5.5", effort: "High" };
+const NEON = {
+  driver: ProviderDriverKind.make("antigravity"),
+  label: "Gemini 4 Neon",
+  effort: "High",
+};
+
+/** The same threads on two lines each, as a sprint's and a coordinator's panels list them: the
+    pull request as the composer's chip (its row variant), then the model the thread runs. */
 export const Compact: Story = {
   render: () => (
     <>
       {ROWS.map(([name, row]) => (
-        <BotThreadsCompactRowView key={name} {...row} seed={name} />
+        <BotThreadsCompactRowView
+          key={name}
+          {...row}
+          seed={name}
+          pullRequest={
+            row.pullRequest === null
+              ? null
+              : {
+                  ...row.pullRequest,
+                  chipState: CHIP_STATE[name as keyof typeof CHIP_STATE],
+                  checks: name === "Open PR" ? "pending" : null,
+                }
+          }
+          model={name === "Closed PR" ? NEON : OPUS}
+        />
       ))}
     </>
   ),

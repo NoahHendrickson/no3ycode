@@ -1,16 +1,29 @@
 /**
- * A bot panel's one-line thread row (mark, title, pull request, time) — the sprint panel's
- * (`fork-sprints`) and the coordinator's (`fork-coordinator-threads`); a Petal's panel keeps
- * BotThreadsPanel's two-line row.
+ * A bot panel's thread row on two lines (mark, title and time; then its pull request and model) —
+ * the sprint panel's (`fork-sprints`) and the coordinator's (`fork-coordinator-threads`); a Petal's
+ * panel keeps BotThreadsPanel's row.
  */
-import type { ScopedThreadRef } from "@t3tools/contracts";
+import { useAtomValue } from "@effect/atom-react";
+import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import { formatSubagentEffort } from "@t3tools/client-runtime/state/thread-execution";
+import type {
+  ProviderDriverKind,
+  PullRequestChecksState,
+  ScopedThreadRef,
+} from "@t3tools/contracts";
 import type { ComponentProps } from "react";
 
+import { getTriggerDisplayModelName } from "~/components/chat/providerIconUtils";
+import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { cn } from "~/lib/utils";
+import { serverEnvironment } from "~/state/server";
 
+import { PullRequestChipControl } from "../ComposerPullRequestChip";
+import type { PullRequestChipState } from "../composerPullRequestChip.logic";
+import { formatForkSubagentModel } from "../forkSubagentTree";
+import { ForkProviderMarkOr } from "../icons/ModelPickerProviderGlyph";
 import { ListItem } from "../ListItem";
 import { SidebarV2StatusMark } from "../SidebarV2StatusIndicator";
-import { BotPullRequestMark } from "./BotPullRequestMark";
 import { type BotThreadsRowView, useBotThreadsRow } from "./BotThreadsPanel";
 import type { BotWorkRow } from "./botWork";
 
@@ -20,12 +33,58 @@ export function BotThreadsCompactRow(props: {
   readonly onOpenThread: ((ref: ScopedThreadRef) => void) | undefined;
 }) {
   return (
-    <BotThreadsCompactRowView {...useBotThreadsRow(props.row, props.current, props.onOpenThread)} />
+    <BotThreadsCompactRowView
+      {...useBotThreadsRow(props.row, props.current, props.onOpenThread)}
+      model={useBotThreadModel(props.row.thread)}
+    />
   );
 }
 
-/** One line per thread (mark, title, pull request, time), leaving the checkout to the thread. */
-export function BotThreadsCompactRowView(props: ComponentProps<typeof BotThreadsRowView>) {
+/** The model a thread runs, in the picker's words, with its effort; null before providers load. */
+function useBotThreadModel(thread: EnvironmentThreadShell): BotThreadModel | null {
+  const selection = thread.modelSelection;
+  const instanceId = thread.runtime?.providerInstanceId ?? selection.instanceId;
+  const provider = useAtomValue(serverEnvironment.providersValueAtom(thread.environmentId), (all) =>
+    all?.find((candidate) => candidate.instanceId === instanceId),
+  );
+  const model = provider?.models.find((candidate) => candidate.slug === selection.model);
+  const label = model
+    ? getTriggerDisplayModelName(model, provider?.driver)
+    : formatForkSubagentModel(selection.model);
+  if (label === null) return null;
+  return {
+    driver: provider?.driver ?? null,
+    label,
+    effort: formatSubagentEffort({
+      modelSlug: selection.model,
+      modelSelection: selection,
+      provider,
+    }),
+  };
+}
+
+interface BotThreadModel {
+  readonly driver: ProviderDriverKind | null;
+  readonly label: string;
+  readonly effort: string | null;
+}
+
+/** @public — the row as drawn, from plain props; Storybook renders it on its own. Two lines per
+    thread: mark, title and time, then its pull request as the composer's chip (its row variant)
+    and the model it runs. */
+export function BotThreadsCompactRowView(
+  props: Omit<ComponentProps<typeof BotThreadsRowView>, "pullRequest"> & {
+    readonly pullRequest:
+      | (ComponentProps<typeof BotThreadsRowView>["pullRequest"] & {
+          readonly chipState?: PullRequestChipState | undefined;
+          readonly checks?: PullRequestChecksState | null | undefined;
+        })
+      | null;
+    readonly model: BotThreadModel | null;
+  },
+) {
+  const { pullRequest, model } = props;
+  const Icon = pullRequest?.state?.Icon ?? PullRequestGlyph.pullRequest;
   return (
     <li>
       <ListItem
@@ -33,7 +92,7 @@ export function BotThreadsCompactRowView(props: ComponentProps<typeof BotThreads
         onClick={props.onOpen}
         onContextMenu={props.onContextMenu}
         className={cn(
-          "items-center gap-2.5 px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+          "items-start gap-2 px-2.5 py-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
           props.current && "bg-accent",
         )}
         data-testid="bot-threads-row"
@@ -41,21 +100,54 @@ export function BotThreadsCompactRowView(props: ComponentProps<typeof BotThreads
         <span className="flex h-5 w-3 shrink-0 items-center justify-center">
           <SidebarV2StatusMark status={props.status} seed={props.seed} idle="dot" />
         </span>
-        <span className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-base leading-5 text-foreground">
-            {props.title}
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-base leading-5 text-foreground">
+              {props.title}
+            </span>
+            <span className="shrink-0 text-base leading-5 text-foreground tabular-nums">
+              {props.time}
+            </span>
           </span>
-          {props.pullRequest === null ? null : (
-            <span className="shrink-0 text-xs text-muted-foreground">
-              <BotPullRequestMark
-                number={props.pullRequest.number}
-                state={props.pullRequest.state}
-              />
+          {pullRequest === null && model === null ? null : (
+            <span className="flex min-w-0 items-center gap-4">
+              {pullRequest === null ? null : (
+                <PullRequestChipControl
+                  variant="row"
+                  render={<span />}
+                  checks={pullRequest.checks ?? null}
+                  size="xs"
+                  data-fork-composer-status-chip="pull-request"
+                  data-fork-pr-chip
+                  data-pr-state={pullRequest.chipState}
+                  aria-label={
+                    pullRequest.state === null
+                      ? `Pull request #${pullRequest.number}`
+                      : `${pullRequest.state.label} pull request #${pullRequest.number}`
+                  }
+                >
+                  <span
+                    className={cn(
+                      "contents font-normal text-xs tabular-nums",
+                      pullRequest.state?.toneClassName,
+                    )}
+                  >
+                    <Icon aria-hidden className="size-3 shrink-0" />
+                    <span>{pullRequest.number}</span>
+                  </span>
+                </PullRequestChipControl>
+              )}
+              {model === null ? null : (
+                <span className="flex min-w-0 items-center gap-1 text-sm leading-5">
+                  <ForkProviderMarkOr driver={model.driver} size="0.875rem" fallback={null} />
+                  <span className="truncate text-foreground">{model.label}</span>
+                  {model.effort === null ? null : (
+                    <span className="shrink-0 text-muted-foreground">{model.effort}</span>
+                  )}
+                </span>
+              )}
             </span>
           )}
-          <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
-            {props.time}
-          </span>
         </span>
       </ListItem>
     </li>

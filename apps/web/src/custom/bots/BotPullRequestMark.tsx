@@ -3,7 +3,7 @@
  * `.fork/customizations.yaml#fork-bot-digest`: its thread rows and its digest draw the same mark.
  */
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
-import type { EnvironmentId } from "@t3tools/contracts";
+import type { EnvironmentId, PullRequestChecksState } from "@t3tools/contracts";
 
 import {
   PullRequestGlyph,
@@ -13,6 +13,12 @@ import { resolvePullRequestState } from "~/components/pullRequest/pullRequestPre
 import { cn } from "~/lib/utils";
 import { useSharedPullRequestSummary } from "~/state/pullRequests";
 
+import {
+  type PullRequestChipState,
+  resolvePullRequestChipChecks,
+  resolvePullRequestChipState,
+} from "../composerPullRequestChip.logic";
+
 import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-links";
 
 /** Its state and title: a thread's own link carries them; for a branch's pull request, the
@@ -20,7 +26,13 @@ import type { BotPullRequest } from "@t3tools/client-runtime/fork-bot-digest-lin
 export function useBotPullRequestState(
   pullRequest: BotPullRequest | null,
   environmentId: EnvironmentId,
-): { readonly state: PullRequestStatePresentation | null; readonly title: string | null } {
+): {
+  readonly state: PullRequestStatePresentation | null;
+  readonly title: string | null;
+  /** What the composer's PR chip fills by, and its CI pill. */
+  readonly chipState: PullRequestChipState | undefined;
+  readonly checks: PullRequestChecksState | null;
+} {
   const branch = pullRequest?.branch ?? null;
   const host =
     branch === null ? undefined : sourceControlClients.parseChangeRequestUrl(branch.url)?.link.host;
@@ -36,11 +48,21 @@ export function useBotPullRequestState(
         },
   );
   const snapshot = pullRequest?.snapshot ?? null;
-  if (snapshot !== null) return { state: resolvePullRequestState(snapshot), title: snapshot.title };
-  if (summary === null) return { state: null, title: null };
+  if (snapshot !== null) {
+    return {
+      state: resolvePullRequestState(snapshot),
+      title: snapshot.title,
+      chipState: resolvePullRequestChipState({ badge: null, pr: snapshot, pullRequests: [] }),
+      checks: resolvePullRequestChipChecks({ badge: null, snapshot }),
+    };
+  }
+  if (summary === null) return { state: null, title: null, chipState: undefined, checks: null };
+  const pr = { state: summary.state, isDraft: summary.isDraft ?? false };
   return {
-    state: resolvePullRequestState({ state: summary.state, isDraft: summary.isDraft ?? false }),
+    state: resolvePullRequestState(pr),
     title: summary.title,
+    chipState: resolvePullRequestChipState({ badge: null, pr, pullRequests: [] }),
+    checks: null,
   };
 }
 

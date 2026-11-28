@@ -133,14 +133,18 @@ export function ThreadPullRequestChip(props: {
  * content, so the checks' state joins that label. */
 export function PullRequestChipControl({
   checks,
+  variant = "composer",
   children,
   ...props
 }: ComponentProps<typeof ComposerControl> & {
   readonly checks: PullRequestChecksState | null;
+  /** `row`: the smaller, deeper chip a bot panel's thread row wears (ComposerShell.css). */
+  readonly variant?: "composer" | "row";
 }) {
   return (
     <ComposerControl
       {...props}
+      data-fork-pr-chip-variant={variant === "row" ? "row" : undefined}
       aria-label={
         checks === null
           ? props["aria-label"]

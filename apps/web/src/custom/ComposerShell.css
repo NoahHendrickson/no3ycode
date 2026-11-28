@@ -366,3 +366,39 @@
     --fork-pr-chip-ink: #ffa3a3;
   }
 }
+
+/* The row variant: a bot panel's thread row wears the chip smaller and deeper (Basic UI kit,
+   thread row PR chip): 22px tall, 4px in, 8px corners, the 12px number, a 16px CI pill, and a
+   darker fill under the same edge. */
+:root[data-fork="noahhendrickson-t3code"]
+  [data-fork-composer-status-chip="pull-request"][data-fork-pr-chip-variant="row"] {
+  height: calc(var(--spacing) * 5.5);
+  gap: calc(var(--spacing) * 1);
+  padding-inline: calc(var(--spacing) * 1) calc(var(--spacing) * 0.75);
+  border-radius: calc(var(--spacing) * 2);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+
+  & > [data-fork-pr-chip-ci] {
+    height: calc(var(--spacing) * 4);
+    margin-inline: 0;
+    padding-inline: calc(var(--spacing) * 1);
+    border-radius: var(--spacing);
+  }
+}
+
+:root[data-fork="noahhendrickson-t3code"].dark
+  [data-fork-composer-status-chip="pull-request"][data-fork-pr-chip-variant="row"] {
+  &[data-pr-state="open"] {
+    --fork-pr-chip-fill: #1c3c2b;
+    --fork-pr-chip-fill-hover: #1c3c2b;
+  }
+  &[data-pr-state="merged"] {
+    --fork-pr-chip-fill: #2e2645;
+    --fork-pr-chip-fill-hover: #2e2645;
+  }
+  &[data-pr-state="closed"] {
+    --fork-pr-chip-fill: #3d2325;
+    --fork-pr-chip-fill-hover: #3d2325;
+  }
+}

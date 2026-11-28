@@ -597,9 +597,12 @@ describe("fork guard: fork-composer-shell", () => {
       /\[data-pr-state="open"\],\s*\[data-pr-state="merged"\],\s*\[data-pr-state="closed"\]/u,
     );
     expect(shellCss).toMatch(/\.fork-pr-tone\s*\{\s*color:\s*var\(--fork-pr-chip-ink\)/u);
+    // Light, dark, and the row variant's deeper dark fill (a bot panel's thread row).
     for (const state of ["open", "merged", "closed"]) {
-      expect(shellCss.split(`&[data-pr-state="${state}"]`).length - 1).toBe(2);
+      expect(shellCss.split(`&[data-pr-state="${state}"]`).length - 1).toBe(3);
     }
+    expect(shellCss).toContain('[data-fork-pr-chip-variant="row"]');
+    expect(prChip).toContain('data-fork-pr-chip-variant={variant === "row" ? "row" : undefined}');
     expect(
       ruleBodyFor(rules, [
         MARKER,

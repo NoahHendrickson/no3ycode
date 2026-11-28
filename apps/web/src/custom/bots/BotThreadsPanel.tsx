@@ -388,7 +388,11 @@ export function useBotThreadsRow(
   const navigate = useNavigate();
   const nowMinute = useNowMinute();
   const pullRequest = botThreadPullRequest(thread);
-  const { state: pullRequestState } = useBotPullRequestState(pullRequest, thread.environmentId);
+  const {
+    state: pullRequestState,
+    chipState,
+    checks,
+  } = useBotPullRequestState(pullRequest, thread.environmentId);
   const time = formatRelativeTimeLabel(
     thread.latestUserMessageAt ?? thread.updatedAt,
     Date.parse(`${nowMinute}:00.000Z`),
@@ -400,7 +404,9 @@ export function useBotThreadsRow(
     title: thread.title,
     time,
     pullRequest:
-      pullRequest === null ? null : { number: pullRequest.number, state: pullRequestState },
+      pullRequest === null
+        ? null
+        : { number: pullRequest.number, state: pullRequestState, chipState, checks },
     branch: thread.branch,
     hasWorktree: thread.worktreePath !== null,
     current,

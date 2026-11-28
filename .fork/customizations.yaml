@@ -8935,9 +8935,11 @@
     until Escape. A sprint's panel starts at 380px (SPRINT_PANEL_DEFAULT_WIDTH) so they fit.
     The panel is custom/sprints/SprintPanel (its header, tabs, child view and rows) over the
     Petal panel's frame, list, search and controls (bots/BotThreadsPanel, which stays Petal-only);
-    ChatView picks one or the other once. Its Threads list draws each thread on one line
-    (bots/BotThreadsCompactRow, shared with fork-coordinator-threads: mark, title, PR mark,
-    time), leaving the checkout to the thread.
+    ChatView picks one or the other once. Its Threads list draws each thread on two lines
+    (bots/BotThreadsCompactRow, shared with fork-coordinator-threads: mark, title and time; then
+    the PR as the composer's chip in its row variant, PullRequestChipControl variant="row", and
+    the provider mark, model and effort; owner's Figma design, Basic UI kit 551:2943,
+    2026-11-27), leaving the checkout to the thread.
 
     A thread opened from a sprint opens in its panel, never in the main column or a split: the
     panel's header turns into a back arrow and the thread's title, and its body is the thread's
@@ -10553,7 +10555,7 @@
     instructions do not settle is left to the owner's card in one line, never restated.
     Only a coordinator gets a sub-agent panel (custom/coordinator/CoordinatorPanel: the body it
     shares with the sprint panel, bots/BotThreadsChild BotThreadsChildPanelBody, with no tabs;
-    one-line rows, bots/BotThreadsCompactRow, under interface-size headers); ordinary
+    two-line rows, bots/BotThreadsCompactRow, under interface-size headers); ordinary
     threads keep their inline sub-agent cards. It shows on the coordinator and on each of its
     children (fork-bot-work-threads botThreadsPanelBotId; none for an archived coordinator's
     children), behind the usual Threads toggle, and lists the children by status with the Petal
