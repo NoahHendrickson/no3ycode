@@ -16,7 +16,10 @@ import {
   isCoordinatorDraft,
   setCoordinatorDraft,
 } from "./coordinatorDraft";
-import { coordinatorMessage } from "./coordinatorThreads";
+import {
+  COORDINATOR_START_BEFORE_TASK_MESSAGE,
+  COORDINATOR_START_MESSAGE,
+} from "./coordinatorThreads";
 import { switchCoordinator } from "./useSetCoordinator";
 
 const ownerText = "flaky-test";
@@ -60,7 +63,7 @@ describe("coordinatorFirstSendTurns", () => {
     expect(rules.input.message).toEqual({
       messageId: MessageId.make("rules"),
       role: "user",
-      text: coordinatorMessage(true, true),
+      text: COORDINATOR_START_BEFORE_TASK_MESSAGE,
       attachments: [],
     });
     expect(rules.input.bootstrap).toBe(bootstrap);
@@ -78,8 +81,10 @@ describe("coordinatorFirstSendTurns", () => {
   });
 
   it("asks for a one-word reply when the task follows, and one line otherwise", () => {
-    expect(coordinatorMessage(true, true)).toMatch(/My first task is my next message\.[^\n]*$/);
-    expect(coordinatorMessage(true)).toMatch(/Reply in one line that you're coordinating\.$/);
+    expect(COORDINATOR_START_BEFORE_TASK_MESSAGE).toMatch(
+      /My first task is my next message\.[^\n]*$/,
+    );
+    expect(COORDINATOR_START_MESSAGE).toMatch(/Reply in one line that you're coordinating\.$/);
   });
 });
 

@@ -52,12 +52,8 @@ import { useNewThreadHandler } from "./useHandleNewThread";
 import { useClientSettings } from "./useSettings";
 import { canTurnThreadIntoProject, useThreadActions } from "./useThreadActions";
 /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-import {
-  coordinatorMenuItems,
-  coordinatorMenuTurnsOn,
-  isCoordinatorMenuId,
-} from "../custom/coordinator/coordinatorThreads";
-import { useSetCoordinator } from "../custom/coordinator/useSetCoordinator";
+import { coordinatorMenuItems } from "../custom/coordinator/coordinatorThreads";
+import { useCoordinatorMenuPick } from "../custom/coordinator/useSetCoordinator";
 /* fork:end fork-coordinator-threads */
 
 function failureToast(title: string, error: unknown) {
@@ -105,7 +101,7 @@ export function useThreadActionMenu(input: {
   });
   const handleNewThread = useNewThreadHandler();
   /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-  const setCoordinator = useSetCoordinator();
+  const pickCoordinatorMenuItem = useCoordinatorMenuPick();
   /* fork:end fork-coordinator-threads */
   const confirmThreadDelete = useClientSettings((s) => s.confirmThreadDelete);
   const confirmThreadArchive = useClientSettings((s) => s.confirmThreadArchive);
@@ -177,9 +173,11 @@ export function useThreadActionMenu(input: {
       const clicked = await settlePromise(() => api.contextMenu.show(items, position));
       if (clicked._tag === "Failure" || clicked.value === null) return;
       /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-      if (isCoordinatorMenuId(clicked.value)) {
-        if (readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope))
-          void setCoordinator(thread, coordinatorMenuTurnsOn(clicked.value));
+      if (
+        pickCoordinatorMenuItem(clicked.value, thread, () =>
+          readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+        )
+      ) {
         return;
       }
       /* fork:end fork-coordinator-threads */

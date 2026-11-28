@@ -8,6 +8,8 @@ import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/model
 import type { RuntimeRequestId, ScopedThreadRef } from "@t3tools/contracts";
 import { type ComponentType, createContext, use } from "react";
 
+import type { ForkWorkReport, forkDelegatedQuestionOf } from "../forkWorkReports";
+
 /** One question and what the owner answered; for an approval, what it asked and the decision. */
 export interface ForkRequestAnswer {
   readonly question: string;
@@ -15,9 +17,12 @@ export interface ForkRequestAnswer {
 }
 
 export interface ForkThreadHost {
-  /** Its delegate_task children's question notices are its cards (a coordinator,
-      fork-coordinator-threads); a sprint's stay plain notices. */
-  readonly answersDelegatedQuestions?: boolean;
+  /** A delegate_task child's question notice as the card the host answers it on (a coordinator's
+      forkDelegatedQuestionOf, fork-coordinator-threads); null leaves the plain notice, as a
+      sprint's does. */
+  readonly delegatedQuestionOf: (
+    notice: Parameters<typeof forkDelegatedQuestionOf>[0],
+  ) => ForkWorkReport | null;
   /** Opens a thread named in the conversation in the host's own place; false leaves it to the
       caller, as for the host itself. */
   readonly openThread: (ref: ScopedThreadRef) => boolean;
@@ -32,6 +37,8 @@ export interface ForkThreadHost {
     readonly thread: EnvironmentThreadShell;
     /** The work report's `threadId:requestId`. */
     readonly reportKey: string;
+    /** The request that key names, or null when it names none. */
+    readonly requestId: RuntimeRequestId | null;
     /** The conversation the card sits in. */
     readonly hostRef: ScopedThreadRef | null;
     readonly kind: "question" | "approval";

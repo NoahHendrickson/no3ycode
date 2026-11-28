@@ -5,6 +5,7 @@
  * works on the task already coordinates.
  */
 import type { MessageId, ScopedThreadRef, ThreadId } from "@t3tools/contracts";
+import { FORK_COORDINATOR_TAG } from "@t3tools/shared/forkBotTags";
 import { create } from "zustand";
 
 import type { DraftId } from "~/composerDraftStore";
@@ -13,11 +14,7 @@ import { useQuietThreadShell } from "~/state/entities";
 import { threadEnvironment } from "~/state/threads";
 import { useOrchestrationCommand } from "~/state/use-orchestration-command";
 
-import {
-  canStartCoordinating,
-  coordinatorMessage,
-  FORK_COORDINATOR_TAG,
-} from "./coordinatorThreads";
+import { canStartCoordinating, COORDINATOR_START_BEFORE_TASK_MESSAGE } from "./coordinatorThreads";
 import { useSetCoordinator } from "./useSetCoordinator";
 
 interface CoordinatorDraftState {
@@ -47,6 +44,8 @@ export function coordinatorFirstSendTurns(
   rulesMessageId: MessageId,
 ): { readonly rules: StartTurnCommand; readonly task: StartTurnCommand } {
   const { message, bootstrap, dispatchMode: _dispatchMode, titleSeed, ...rest } = command.input;
+  // Both turns carry the draft's send time, and the server lists messages by createdAt, then by
+  // their (random) ids, so the rules go a millisecond earlier to always show first.
   const rulesCreatedAt =
     rest.createdAt === undefined
       ? {}
@@ -60,7 +59,7 @@ export function coordinatorFirstSendTurns(
         message: {
           messageId: rulesMessageId,
           role: "user",
-          text: coordinatorMessage(true, true),
+          text: COORDINATOR_START_BEFORE_TASK_MESSAGE,
           attachments: [],
         },
         ...(bootstrap === undefined ? {} : { bootstrap }),

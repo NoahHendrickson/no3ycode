@@ -49,7 +49,11 @@ import * as ProviderAdapterRegistry from "./ProviderAdapterRegistry.ts";
 import * as ProviderReplayHarness from "./testkit/ProviderReplayHarness.ts";
 import type * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
 /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-import { FORK_COORDINATOR_TAG } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_COORDINATOR_TAG,
+  FORK_DELEGATED_QUESTION_MESSAGE_PREFIX,
+  FORK_DELEGATED_TASK_THREAD_PREFIX,
+} from "@t3tools/shared/forkBotTags";
 /* fork:end fork-coordinator-threads */
 
 declare module "node:sqlite" {
@@ -1740,6 +1744,12 @@ it.effect.each([false, true])(
         wake.text,
         `Read it with t3_pending_request action read, threadId ${task.childThreadId}, and requestId ${question.payload.id}.`,
       );
+      // The web reads these ids by the shared prefixes (custom/forkWorkReports).
+      assert.equal(
+        wake.id,
+        `${FORK_DELEGATED_QUESTION_MESSAGE_PREFIX}${parentThreadId}:${question.payload.id}`,
+      );
+      assert.isTrue(task.childThreadId!.startsWith(FORK_DELEGATED_TASK_THREAD_PREFIX));
       if (coordinator) {
         assert.include(
           wake.text,

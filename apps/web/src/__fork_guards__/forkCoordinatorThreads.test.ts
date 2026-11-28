@@ -4,19 +4,20 @@
 import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { ThreadId } from "@t3tools/contracts";
-import { FORK_BOT_THREAD_TAG } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_BOT_THREAD_TAG,
+  FORK_COORDINATOR_TAG,
+  isForkCoordinatorThread,
+} from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import {
   canStartCoordinating,
+  COORDINATOR_MENU_ID,
+  COORDINATOR_START_MESSAGE,
   coordinatorChildInputs,
-  isCoordinatorThread,
   coordinatorMenuItems,
-  coordinatorMenuTurnsOn,
-  coordinatorMessage,
-  FORK_COORDINATOR_TAG,
-  isCoordinatorMenuId,
   listSidebarCoordinators,
 } from "../custom/coordinator/coordinatorThreads";
 import { makeThreadFixture } from "../test-fixtures";
@@ -29,12 +30,13 @@ const root = { rootThreadId: ThreadId.make("t"), parentThreadId: null, relations
 
 describe("fork guard: fork-coordinator-threads", () => {
   it("switches a listed thread on and off, and never a Petal or a subagent", () => {
+    // One item; picking it flips the thread (useCoordinatorMenuPick), so only the label differs.
     const [on] = coordinatorMenuItems({ tags: [], lineage: root }, true);
+    expect(on?.id).toBe(COORDINATOR_MENU_ID);
     expect(on?.label).toBe("Make coordinator");
-    expect(on !== undefined && coordinatorMenuTurnsOn(on.id)).toBe(true);
     const [off] = coordinatorMenuItems({ tags: [FORK_COORDINATOR_TAG], lineage: root }, true);
+    expect(off?.id).toBe(COORDINATOR_MENU_ID);
     expect(off?.label).toBe("Stop coordinating");
-    expect(off !== undefined && coordinatorMenuTurnsOn(off.id)).toBe(false);
     expect(coordinatorMenuItems({ tags: [FORK_BOT_THREAD_TAG], lineage: root }, true)).toEqual([]);
     const subagent = {
       ...root,
@@ -42,13 +44,14 @@ describe("fork guard: fork-coordinator-threads", () => {
       relationshipToParent: "subagent" as const,
     };
     expect(coordinatorMenuItems({ tags: [], lineage: subagent }, true)).toEqual([]);
-    expect(isCoordinatorMenuId("pin")).toBe(false);
-    // A delegated child inherits the tag; it is no coordinator, nor is a tagged side chat.
-    expect(isCoordinatorThread({ tags: [FORK_COORDINATOR_TAG], lineage: root })).toBe(true);
-    expect(isCoordinatorThread({ tags: [FORK_COORDINATOR_TAG], lineage: subagent })).toBe(false);
-    expect(
-      isCoordinatorThread({ tags: [FORK_COORDINATOR_TAG], lineage: { ...root, sideChat: true } }),
-    ).toBe(false);
+    // An older delegated child carries the tag; it is no coordinator, nor is a tagged side chat.
+    const tags = [FORK_COORDINATOR_TAG];
+    expect(isForkCoordinatorThread({ tags, lineage: root })).toBe(true);
+    expect(isForkCoordinatorThread({ tags, lineage: subagent })).toBe(false);
+    expect(isForkCoordinatorThread({ tags, lineage: { ...root, sideChat: true } })).toBe(false);
+    expect(isForkCoordinatorThread({ tags: [...tags, FORK_BOT_THREAD_TAG], lineage: root })).toBe(
+      false,
+    );
     // `/coordinate` applies exactly where the menu offers "Make coordinator".
     expect(canStartCoordinating({ tags: [], lineage: root })).toBe(true);
     expect(canStartCoordinating({ tags: [FORK_COORDINATOR_TAG], lineage: root })).toBe(false);
@@ -135,7 +138,13 @@ describe("fork guard: fork-coordinator-threads", () => {
     for (const path of ["../components/Sidebar.tsx", "../hooks/useThreadActionMenu.ts"]) {
       const source = read(path);
       expect(source).toContain("...coordinatorMenuItems(");
-      expect(source).toContain("if (isCoordinatorMenuId(clicked.value)) {");
+      expect(source).toContain("pickCoordinatorMenuItem(clicked.value, thread, ");
+    }
+    expect(read("../custom/coordinator/useSetCoordinator.ts")).toContain(
+      "if (canOperate()) void setCoordinator(thread, !isForkCoordinatorThread(thread.source));",
+    );
+    for (const path of ["../components/Sidebar.tsx", "../hooks/useThreadActionMenu.ts"]) {
+      expect(read(path)).toContain("const pickCoordinatorMenuItem = useCoordinatorMenuPick();");
     }
   });
 
@@ -178,7 +187,7 @@ describe("fork guard: fork-coordinator-threads", () => {
   });
 
   it("keeps the standing rules short, with no model rule", () => {
-    const rules = coordinatorMessage(true);
+    const rules = COORDINATOR_START_MESSAGE;
     expect(rules).toContain("`delegate_task`");
     expect(rules).toContain("never wait on a child");
     // The children show in the subagents card and the panel; a reply's thread links get cut off.
@@ -197,14 +206,18 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(chatView).toContain("forkBotThreadsIsCoordinator ? (");
     expect(chatView).toContain("<CoordinatorPanel");
     expect(chatView).toContain("coordinatorThreadHost(forkCoordinatorRef)");
-    const panel = read("../custom/coordinator/CoordinatorPanel.tsx");
-    expect(panel).toContain("const child = onCoordinatorPage ? openChild : null;");
-    expect(panel).toContain("<BotThreadsChildConversation");
-    expect(panel).toContain("<BotThreadsChildHeading");
-    // The sprint panel's compact list: one-line rows under interface-size group headers.
-    expect(panel).toContain("<BotThreadsCompactRow");
-    expect(panel).toContain('labelSize="interface"');
-    expect(read("../custom/sprints/SprintPanel.tsx")).toContain("<BotThreadsCompactRow");
+    // The body it shares with the sprint panel: one-line rows under interface-size group headers,
+    // and a child opened in place, only on the owner's own page.
+    expect(read("../custom/coordinator/CoordinatorPanel.tsx")).toContain(
+      "<BotThreadsChildPanelBody",
+    );
+    expect(read("../custom/sprints/SprintPanel.tsx")).toContain("<BotThreadsChildPanelBody");
+    const body = read("../custom/bots/BotThreadsChild.tsx");
+    expect(body).toContain("const child = onOwnerPage ? openChild : null;");
+    expect(body).toContain("<BotThreadsChildConversation");
+    expect(body).toContain("<BotThreadsChildHeading");
+    expect(body).toContain("<BotThreadsCompactRow");
+    expect(body).toContain('labelSize="interface"');
     expect(read("../custom/coordinator/coordinatorThreadHost.tsx")).toContain(
       "openThread: (ref) => openBotThreadsChild(coordinatorRef, ref),",
     );
@@ -213,7 +226,7 @@ describe("fork guard: fork-coordinator-threads", () => {
   it("answers a delegated child's question on its card where the host answers inline", () => {
     // A settled card keeps the question and its answer, read off the child.
     const host = read("../custom/coordinator/coordinatorThreadHost.tsx");
-    expect(host).toContain("useChildQuestionAnswers(props.thread, props.reportKey, props.kind)");
+    expect(host).toContain("useChildQuestionAnswers(props.thread, props.requestId, props.kind)");
     expect(host).toContain("<ForkAnsweredRequestCard");
     // The server words a coordinator's wake for the card, not for asking the owner itself, and
     // its quiet reply hides the wake's turn, keeping the card (custom/bots/quietBotWakes).
@@ -221,14 +234,16 @@ describe("fork guard: fork-coordinator-threads", () => {
     expect(reactor).toContain("isForkCoordinatorThread(");
     expect(reactor).toContain('otherwise reply exactly "${FORK_BOT_QUIET_REPLY}"');
     const timeline = read("../components/chat/MessagesTimeline.tsx");
-    expect(timeline).toContain("forkQuietRequestWakesOnly: forkIsCoordinator && !forkIsBotThread,");
-    const row = read("../components/chat/TimelineWorkEntryRow.tsx");
-    // A coordinator host only: a sprint's delegated notices stay plain (answersDelegatedQuestions).
-    expect(row).toContain(
-      'item?.type === "notification" ? forkHostDelegatedQuestion(forkHost, item) : null;',
+    expect(timeline).toMatch(/forkIsCoordinator\s*\?\s*"coordinator"/u);
+    expect(read("../custom/bots/quietBotWakes.ts")).toContain(
+      "coordinator: { reportedRunsOnly: true, noticeStartsRun: true, keepsDelegatedQuestions: true },",
     );
-    expect(read("../custom/coordinator/coordinatorThreadHost.tsx")).toContain(
-      "answersDelegatedQuestions: true,",
+    const row = read("../components/chat/TimelineWorkEntryRow.tsx");
+    // A coordinator host only: a sprint's delegated notices stay plain notices.
+    expect(row).toContain("forkHost?.delegatedQuestionOf(item) ?? null");
+    expect(host).toContain("delegatedQuestionOf: forkDelegatedQuestionOf,");
+    expect(read("../custom/sprints/sprintThreadHost.tsx")).toContain(
+      "delegatedQuestionOf: () => null,",
     );
   });
 });

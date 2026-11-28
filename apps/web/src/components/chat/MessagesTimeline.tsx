@@ -820,17 +820,15 @@ const ConversationTimeline = memo(function ConversationTimeline({
     revealedMessageId,
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
        Find searches every run, so quiet wakes show while it is open. */
-    hideQuietBotWakes:
-      (forkIsBotThread ||
-        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-        forkIsCoordinator) &&
-      /* fork:end fork-coordinator-threads */
-      !findActive,
+    forkQuietWakes: findActive
+      ? null
+      : forkIsBotThread
+        ? "bot"
+        : /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+          forkIsCoordinator
+          ? "coordinator"
+          : /* fork:end fork-coordinator-threads */ null,
     /* fork:end fork-bots */
-    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
-       A coordinator ends a child's question at its card: the quiet reply to its wake hides. */
-    forkQuietRequestWakesOnly: forkIsCoordinator && !forkIsBotThread,
-    /* fork:end fork-coordinator-threads */
     /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards
        A host that answers its threads inline keeps their question cards in a quiet wake. */
     forkKeepRequestReports: forkThreadHost !== null,

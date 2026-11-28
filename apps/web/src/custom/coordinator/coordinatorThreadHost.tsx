@@ -8,6 +8,7 @@ import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environ
 import type { ScopedThreadRef } from "@t3tools/contracts";
 
 import { openBotThreadsChild } from "../bots/botThreadsPanelStore";
+import { forkDelegatedQuestionOf } from "../forkWorkReports";
 import { ForkThreadHookRow } from "../threadLaunchCards/ForkThreadLaunchCards";
 import { ForkAnsweredRequestCard } from "../threadLaunchCards/ForkThreadRequestCard";
 import type { ForkThreadHost } from "../threadLaunchCards/forkThreadHost";
@@ -16,7 +17,7 @@ import { useChildQuestionAnswers } from "./coordinatorAnswers";
 /** A settled card: the question and what the owner answered, read off the child (a question it
     still records), else the child's row. */
 const AnsweredRequest: ForkThreadHost["AnsweredRequest"] = (props) => {
-  const answers = useChildQuestionAnswers(props.thread, props.reportKey, props.kind);
+  const answers = useChildQuestionAnswers(props.thread, props.requestId, props.kind);
   return answers !== null ? (
     <ForkAnsweredRequestCard
       thread={props.thread}
@@ -43,7 +44,7 @@ export function coordinatorThreadHost(coordinatorRef: ScopedThreadRef): ForkThre
   const known = hosts.get(key);
   if (known !== undefined) return known;
   const host: ForkThreadHost = {
-    answersDelegatedQuestions: true,
+    delegatedQuestionOf: forkDelegatedQuestionOf,
     openThread: (ref) => openBotThreadsChild(coordinatorRef, ref),
     // The answer reaches the child; the coordinator keeps no record of it.
     onAnswered: () => {},

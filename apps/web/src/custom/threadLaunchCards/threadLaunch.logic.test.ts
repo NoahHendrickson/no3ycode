@@ -13,7 +13,6 @@ import {
 } from "./threadLaunch.logic";
 import {
   forkDelegatedQuestionOf,
-  forkHostDelegatedQuestion,
   forkWorkReportRequestId,
   forkWorkReportKey,
   forkWorkReportOf,
@@ -314,15 +313,6 @@ describe("work report notifications", () => {
       requestKind: "question",
     });
     expect(forkWorkReportRequestId(report!.key, "mcp:child")).toBe("request:9");
-    // Only a coordinator answers its children's questions inline; a sprint keeps the notice.
-    expect(
-      forkHostDelegatedQuestion(
-        { answersDelegatedQuestions: true },
-        { id, threadId: "mcp:p1", source },
-      ),
-    ).toEqual(report);
-    expect(forkHostDelegatedQuestion({}, { id, threadId: "mcp:p1", source })).toBeNull();
-    expect(forkHostDelegatedQuestion(null, { id, threadId: "mcp:p1", source })).toBeNull();
     expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p", source })).toBeNull();
     expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p1", source: unnamed })).toBeNull();
     expect(

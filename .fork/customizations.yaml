@@ -10488,7 +10488,8 @@
     two turns: the standing rules create the thread with the draft's bootstrap, the thread is
     tagged, and the owner's own message queues right behind as its own visible message, so the
     first turn that works on it already coordinates. The rules then ask for a one-word reply
-    (coordinatorMessage's taskFollows) and carry no title seed, so the thread keeps the title
+    (COORDINATOR_START_BEFORE_TASK_MESSAGE), sit a millisecond earlier so they always list first
+    (the server orders messages by createdAt, then id), and carry no title seed, so the thread keeps the title
     seeded from the owner's message (no generated title on that first send). The other ways in
     are `/coordinate` in the composer (a built-in slash command: on a draft it turns the toggle
     on, on a thread the menu would offer "Make coordinator" it switches coordinating on; hidden
@@ -10511,7 +10512,8 @@
     setting or model rule, so children inherit the coordinator's model unless the owner names
     one in chat. The switch is the `coordinator` tag (thread.tag.set). The standing rules reach
     the thread as a queued owner message when it is switched on (custom/coordinator/
-    coordinatorThreads coordinatorMessage, sent through fork-bot-crew's useTellBot), which works
+    coordinatorThreads COORDINATOR_START_MESSAGE, and COORDINATOR_STOP_MESSAGE to switch off, sent
+    through fork-bot-crew's useTellBot), which works
     on every provider and marks when the mode began. They stay short: delegate real work with
     delegate_task so the panel shows it, never listing or linking the children (a reply's
     thread links get cut off; the subagents card and the panel show them); short turns that
@@ -10519,8 +10521,9 @@
     parallel only when their scopes do not overlap, one after another on the same section of a
     file, with targeted edits and git only for their own files; a child's question the owner's
     instructions do not settle is left to the owner's card in one line, never restated.
-    Only a coordinator gets a sub-agent panel (custom/coordinator/CoordinatorPanel, one-line rows
-    as the sprint panel lists them: bots/BotThreadsCompactRow, interface-size headers); ordinary
+    Only a coordinator gets a sub-agent panel (custom/coordinator/CoordinatorPanel: the body it
+    shares with the sprint panel, bots/BotThreadsChild BotThreadsChildPanelBody, with no tabs;
+    one-line rows, bots/BotThreadsCompactRow, under interface-size headers); ordinary
     threads keep their inline sub-agent cards. It shows on the coordinator and on each of its
     children (fork-bot-work-threads botThreadsPanelBotId; none for an archived coordinator's
     children), behind the usual Threads toggle, and lists the children by status with the Petal
@@ -10540,13 +10543,17 @@
     tells a parent to ask the user when the task does not settle it; for a coordinator parent
     it says instead that the owner answers on the card and never to ask or restate it, then to
     reply exactly the quiet reply (FORK_BOT_QUIET_REPLY) unless it answered it; the timeline hides
-    that quiet run as a bot's quiet wake (custom/bots/quietBotWakes requestReportsOnly: only a
-    run a child's question report started), keeping the notice that draws the card
+    that quiet run as a bot's quiet wake (MessagesTimeline forkQuietWakes "coordinator", whose
+    policy is in custom/bots/quietBotWakes: only a run a child's question or completion notice, or
+    a request report, started hides, from that notice on), keeping the notice that draws the card
     (DelegatedTaskQuestionReactor, fenced; the tag is @t3tools/shared/forkBotTags
     FORK_COORDINATOR_TAG, one spelling for server and web; live test 2026-11-27: a Codex
     coordinator re-asked a Claude child's AskUserQuestion as its own question). Only a
     coordinator's host draws delegated questions as cards and keeps them in quiet wakes
-    (forkThreadHost answersDelegatedQuestions); a sprint's delegated notices behave as on custom.
+    (forkThreadHost delegatedQuestionOf); a sprint's delegated notices behave as on custom. The
+    notice and delegated child id prefixes are @t3tools/shared/forkBotTags
+    FORK_DELEGATED_QUESTION_MESSAGE_PREFIX and FORK_DELEGATED_TASK_THREAD_PREFIX, which a server
+    test pins to the ids the server makes.
     A quiet question wake drops from its notice on, so its reads ("Worked for") go too, and so
     does a child's "finished" wake when the coordinator replies the quiet reply (the rules ask for
     it when the child only did what the card answered, and the server's completion wake says so
@@ -10556,9 +10563,13 @@
     request settles. A coordinator's timeline end drops the "Subagent needs input" line for its
     own delegate_task child whose open request is a question (coordinatorChildInputs in
     useThreadLifecycle, forkWorkReports isForkDelegatedTaskChildOf); side chats, nested
-    delegates, native subagents and approvals keep it. A thread is a coordinator only when tagged
-    and listed (isForkCoordinatorThread takes the lineage): its delegated children inherit the
-    tag without becoming one. On the first send a failed tag stops before the task, which stays in
+    delegates, native subagents and approvals keep it. A coordinator has one definition,
+    @t3tools/shared/forkBotTags isForkCoordinatorThread, which the server and web both read:
+    tagged, listed, and no Petal, sprint or bot's work (the sidebar adds unarchived). Subagents and
+    delegated children no longer inherit the tag (forkSubagentTags drops it, as a bot's identity);
+    the lineage check stays for side chats, which copy their parent's tags, and for children made
+    before. The thread menus offer one switch item (COORDINATOR_MENU_ID) that flips the thread,
+    through one pick handler (useSetCoordinator useCoordinatorMenuPick). On the first send a failed tag stops before the task, which stays in
     the draft; switching from the menu puts the tag back when the rules could not be sent. With
     no host, an ordinary
     thread draws the notice as before. Approvals do not wake the parent, so they wait in the
@@ -10614,6 +10625,12 @@
     - apps/web/src/components/ChatView.tsx
     - apps/web/src/components/chat/TimelineWorkEntryRow.tsx
     - apps/web/src/hooks/useThreadActionMenu.ts
+    - apps/web/src/hooks/useThreadActionMenu.test.ts
+    - apps/web/src/custom/bots/BotThreadsChild.tsx
+    - apps/web/src/custom/bots/botWork.ts
+    - apps/web/src/custom/sprints/SprintPanel.tsx
+    - apps/web/src/custom/sprints/sprintThreadHost.tsx
+    - packages/shared/src/forkBotTags.test.ts
     - apps/web/src/hooks/useThreadActionMenu.test.ts
     - apps/web/src/custom/bots/botWork.ts
     - apps/web/src/custom/bots/botCrew.ts

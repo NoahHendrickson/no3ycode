@@ -62,7 +62,6 @@ import { ForkWorkReportRow } from "~/custom/threadLaunchCards/ForkThreadLaunchCa
 import { forkWorkReportOf } from "~/custom/forkWorkReports";
 /* fork:end fork-thread-launch-cards */
 /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-import { forkHostDelegatedQuestion } from "~/custom/forkWorkReports";
 import { useForkThreadHost } from "~/custom/threadLaunchCards/forkThreadHost";
 /* fork:end fork-coordinator-threads */
 import {
@@ -247,7 +246,7 @@ export const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: WorkEn
      A delegated child's question is its card where the host answers inline (a coordinator). */
   const forkHost = useForkThreadHost();
   const forkQuestion =
-    item?.type === "notification" ? forkHostDelegatedQuestion(forkHost, item) : null;
+    item?.type === "notification" ? (forkHost?.delegatedQuestionOf(item) ?? null) : null;
   /* fork:end fork-coordinator-threads */
   /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
   const forkReport =

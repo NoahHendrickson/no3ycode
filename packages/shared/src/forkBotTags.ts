@@ -33,26 +33,40 @@ export function isForkBotThread(tags: ReadonlyArray<string> | undefined): boolea
     Here, beside the bot tags, so the server words its notices to one by the same spelling. */
 export const FORK_COORDINATOR_TAG = "coordinator";
 
-/** A coordinator: tagged, and a listed top-level thread. Subagents and side chats inherit their
-    parent's tags, so a coordinator's delegated child carries the tag without being one. */
+/** The one definition of a coordinator: tagged, a listed top-level thread, and no bot or bot's
+    work, which keep their own rules. Side chats, and subagents made before forkSubagentTags
+    dropped the tag, still carry it, hence the lineage. */
 export function isForkCoordinatorThread(thread: {
   readonly tags?: ReadonlyArray<string> | undefined;
   readonly lineage: OrchestrationV2AppThreadLineage;
 }): boolean {
   return (
-    thread.tags?.includes(FORK_COORDINATOR_TAG) === true && isListedThreadLineage(thread.lineage)
+    thread.tags?.includes(FORK_COORDINATOR_TAG) === true &&
+    !isForkBotThread(thread.tags) &&
+    forkBotWorkOwner(thread.tags) === null &&
+    isListedThreadLineage(thread.lineage)
   );
 }
 
-/** The tags a subagent inherits from its parent: every one but a bot's identity, so a bot's
-    subagent is never another bot. */
+/** The tags a subagent inherits from its parent: every one but a bot's identity and the
+    coordinator switch, so a bot's subagent is never another bot, nor a coordinator's another
+    coordinator. */
 export function forkSubagentTags(
   tags: ReadonlyArray<string> | undefined,
 ): ReadonlyArray<string> | undefined {
   return tags?.filter(
-    (tag) => tag !== FORK_BOT_THREAD_TAG && !tag.startsWith(FORK_BOT_MASCOT_TAG_PREFIX),
+    (tag) =>
+      tag !== FORK_BOT_THREAD_TAG &&
+      tag !== FORK_COORDINATOR_TAG &&
+      !tag.startsWith(FORK_BOT_MASCOT_TAG_PREFIX),
   );
 }
+
+/** The message id prefix of the server's notice of a delegated child's question
+    (DelegatedTaskQuestionReactor): then the parent's thread id, a colon, the child's request id. */
+export const FORK_DELEGATED_QUESTION_MESSAGE_PREFIX = "message:delegated-task-question:";
+/** The thread id prefix of a delegate_task child (provider-core IdAllocator delegatedTaskThread). */
+export const FORK_DELEGATED_TASK_THREAD_PREFIX = "thread:delegated-task:";
 
 /** What a bot replies when a wake found nothing. */
 export const FORK_BOT_QUIET_REPLY = "Nothing to report.";

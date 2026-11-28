@@ -1,11 +1,11 @@
 /**
- * A thread opened inside a Threads panel, with a way back to the list — see
+ * The body of a panel that opens its threads in place, and the thread opened there — see
  * `.fork/customizations.yaml#fork-sprints` and `#fork-coordinator-threads`. The thread's own chat,
- * composer included, embedded as a side chat is, so the panel's owner keeps the main column; its
- * panel actions reach the owner's panel, which hosts it.
+ * embedded as a side chat is, so the owner keeps the main column; its panel actions reach the owner's.
  */
+import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import type { ScopedThreadRef } from "@t3tools/contracts";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import ChatView from "~/components/ChatView";
 import { BackgroundThreadContext } from "~/components/chat/backgroundThread";
@@ -16,10 +16,20 @@ import { hostRightPanel } from "~/rightPanelStore";
 import { useQuietThreadShell } from "~/state/entities";
 
 import { ChevronLeftIcon } from "../icons/lucide-hugeicons";
-import { closeBotThreadsChild } from "./botThreadsPanelStore";
+import { BotThreadsCompactRow } from "./BotThreadsCompactRow";
+import {
+  BotThreadsCloseButton,
+  BotThreadsHeader,
+  BotThreadsList,
+  BotThreadsListBody,
+  BotThreadsListControls,
+  BotThreadsSearchInput,
+  useBotThreadsListing,
+} from "./BotThreadsPanel";
+import { closeBotThreadsChild, useBotThreadsOpenChild } from "./botThreadsPanelStore";
 
 /** The header's back arrow and the open thread's title, in place of the panel's own title. */
-export function BotThreadsChildHeading(props: {
+function BotThreadsChildHeading(props: {
   readonly botKey: string;
   readonly childRef: ScopedThreadRef;
   readonly backLabel: string;
@@ -44,7 +54,7 @@ export function BotThreadsChildHeading(props: {
   );
 }
 
-export function BotThreadsChildConversation(props: {
+function BotThreadsChildConversation(props: {
   readonly botRef: ScopedThreadRef;
   readonly childRef: ScopedThreadRef;
   readonly parentPanel: SideChatParentPanel;
@@ -70,5 +80,93 @@ export function BotThreadsChildConversation(props: {
         </ComposerHandleContext>
       </BackgroundThreadContext>
     </div>
+  );
+}
+
+/** A panel that opens its threads in place (a sprint's, a coordinator's): the header (the opened
+    thread's heading, search, or `title`), then the compact list, `content` in its place, or on the
+    owner's own page the opened thread. On a thread's page that thread holds the main column, so it
+    never opens here. */
+export function BotThreadsChildPanelBody(props: {
+  readonly ownerRef: ScopedThreadRef;
+  readonly currentThreadRef: ScopedThreadRef;
+  readonly rightmost: boolean;
+  readonly parentPanel: SideChatParentPanel;
+  /** The header's gap and side insets, with a thread opened or not. */
+  readonly headerClassName: (childOpen: boolean) => string;
+  readonly backLabel: string;
+  /** The header's title, unless the list is searched. */
+  readonly title: ReactNode;
+  /** Ahead of the list's own controls, which show with the list. */
+  readonly controls?: ReactNode;
+  /** Shown in place of the list (a sprint's other tabs); null or absent shows the list. */
+  readonly content?: ReactNode;
+  /** Why the list is empty when the owner has started nothing. */
+  readonly none: string;
+  /** Opens a row's thread here, on the owner's page. */
+  readonly openThread: (ref: ScopedThreadRef) => void;
+}) {
+  const listing = useBotThreadsListing(props.ownerRef);
+  const { botKey, view } = listing;
+  const listShown = props.content == null;
+  const onOwnerPage = scopedThreadKey(props.currentThreadRef) === botKey;
+  const openChild = useBotThreadsOpenChild(botKey);
+  const child = onOwnerPage ? openChild : null;
+  return (
+    <>
+      <BotThreadsHeader
+        botKey={botKey}
+        currentThreadRef={props.currentThreadRef}
+        rightmost={props.rightmost}
+        className={props.headerClassName(child !== null)}
+      >
+        {child !== null ? (
+          <BotThreadsChildHeading botKey={botKey} childRef={child} backLabel={props.backLabel} />
+        ) : listShown && view.query !== null ? (
+          <BotThreadsSearchInput botKey={botKey} view={view} />
+        ) : (
+          props.title
+        )}
+        <span className="flex shrink-0 items-center [-webkit-app-region:no-drag]">
+          {listShown && child === null ? (
+            <>
+              {props.controls}
+              <BotThreadsListControls listing={listing} />
+            </>
+          ) : null}
+          <BotThreadsCloseButton botRef={props.ownerRef} />
+        </span>
+      </BotThreadsHeader>
+      {child !== null ? (
+        <BotThreadsChildConversation
+          botRef={props.ownerRef}
+          childRef={child}
+          parentPanel={props.parentPanel}
+        />
+      ) : listShown ? (
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <BotThreadsListBody listing={listing} none={props.none}>
+            <BotThreadsList
+              listing={listing}
+              currentThreadRef={props.currentThreadRef}
+              // Compact: interface-size headers over one-line rows.
+              labelClassName="px-2.5"
+              labelSize="interface"
+              renderRow={(row, current) => (
+                <BotThreadsCompactRow
+                  key={row.thread.id}
+                  row={row}
+                  current={current}
+                  // On the owner's page a thread opens here; on one of its threads, in its place.
+                  onOpenThread={onOwnerPage ? props.openThread : undefined}
+                />
+              )}
+            />
+          </BotThreadsListBody>
+        </div>
+      ) : (
+        props.content
+      )}
+    </>
   );
 }

@@ -28,6 +28,9 @@ describe("isForkCoordinatorThread", () => {
     };
     expect(isForkCoordinatorThread({ tags, lineage: child })).toBe(false);
     expect(isForkCoordinatorThread({ tags, lineage: { ...root, sideChat: true } })).toBe(false);
+    // A Petal or sprint, or a bot's work, keeps its own rules even if tagged.
+    expect(isForkCoordinatorThread({ tags: [...tags, "bot"], lineage: root })).toBe(false);
+    expect(isForkCoordinatorThread({ tags: [...tags, "bot-work:b1"], lineage: root })).toBe(false);
   });
 });
 
@@ -41,8 +44,9 @@ describe("bot-work tags", () => {
 });
 
 describe("forkSubagentTags", () => {
-  it("drops a bot's identity and keeps every other tag", () => {
+  it("drops a bot's identity and the coordinator switch, and keeps every other tag", () => {
     expect(forkSubagentTags(["bot", "mascot:Oak"])).toEqual([]);
+    expect(forkSubagentTags([FORK_COORDINATOR_TAG, "triage"])).toEqual(["triage"]);
     expect(forkSubagentTags(["bot-work:bot-thread", "triage"])).toEqual([
       "bot-work:bot-thread",
       "triage",

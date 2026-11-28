@@ -11,6 +11,10 @@ import {
   type ScopedThreadRef,
   type ThreadId,
 } from "@t3tools/contracts";
+import {
+  FORK_DELEGATED_QUESTION_MESSAGE_PREFIX,
+  FORK_DELEGATED_TASK_THREAD_PREFIX,
+} from "@t3tools/shared/forkBotTags";
 
 import type { TimelineEntry } from "~/session-logic";
 
@@ -113,12 +117,6 @@ export function forkWorkReportOf(notice: {
   return { key, threadId: null, requestKind: forkWorkReportRequestKind(notice.summary) };
 }
 
-// orchestration-v2/DelegatedTaskQuestionReactor's message id: the prefix, the parent's thread id,
-// then the child's request id.
-const DELEGATED_QUESTION_PREFIX = "message:delegated-task-question:";
-// provider-core IdAllocator's delegated task thread id (isDelegatedTaskThread, server-only).
-const DELEGATED_TASK_THREAD_PREFIX = "thread:delegated-task:";
-
 /** A thread `parentId` started with T3's delegate_task, as its direct child: no provider's native
     subagent, nested delegate or side chat. */
 export function isForkDelegatedTaskChildOf(
@@ -133,7 +131,7 @@ export function isForkDelegatedTaskChildOf(
   parentId: string,
 ): boolean {
   return (
-    child.id.startsWith(DELEGATED_TASK_THREAD_PREFIX) &&
+    child.id.startsWith(FORK_DELEGATED_TASK_THREAD_PREFIX) &&
     child.lineage.parentThreadId === parentId &&
     child.lineage.relationshipToParent === "subagent" &&
     child.lineage.sideChat !== true
@@ -151,21 +149,12 @@ export function forkDelegatedQuestionOf(notice: {
     return null;
   }
   const messageId = notificationMessageId(notice.id);
-  const prefix = `${DELEGATED_QUESTION_PREFIX}${notice.threadId}:`;
+  const prefix = `${FORK_DELEGATED_QUESTION_MESSAGE_PREFIX}${notice.threadId}:`;
   if (messageId === null || !messageId.startsWith(prefix)) return null;
   const requestId = messageId.slice(prefix.length);
   if (requestId === "") return null;
   const { childThreadId } = notice.source;
   return { key: `${childThreadId}:${requestId}`, threadId: childThreadId, requestKind: "question" };
-}
-
-/** A delegated child's question notice, as the card it is where the host answers those (a
-    coordinator); null under any other host, a sprint's included, and for every other notice. */
-export function forkHostDelegatedQuestion(
-  host: { readonly answersDelegatedQuestions?: boolean } | null,
-  notice: Parameters<typeof forkDelegatedQuestionOf>[0],
-): ForkWorkReport | null {
-  return host?.answersDelegatedQuestions === true ? forkDelegatedQuestionOf(notice) : null;
 }
 
 /** A delegated child's "finished" notice entry, which wakes a coordinator once the child is done. */

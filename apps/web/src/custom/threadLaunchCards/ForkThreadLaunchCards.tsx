@@ -223,6 +223,7 @@ export function ForkWorkReportRow(props: {
       <host.AnsweredRequest
         thread={thread}
         reportKey={key}
+        requestId={requestId}
         hostRef={ctx.threadRef}
         kind={request}
       />

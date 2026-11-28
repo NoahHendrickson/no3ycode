@@ -85,17 +85,15 @@ const NO_ANSWERS = Atom.make<ForkRequestAnswer[] | null>(null).pipe(
   Atom.withLabel("coordinator-child-answers:none"),
 );
 
-/** The answers of the child's question in a settled card's report key (`threadId:requestId`);
-    an approval card reads nothing, so it never subscribes to its child. */
+/** The answers of the child's question `requestId` for a settled card; an approval card reads
+    nothing, so it never subscribes to its child. */
 export function useChildQuestionAnswers(
   thread: Pick<EnvironmentThreadShell, "environmentId" | "id">,
-  reportKey: string,
+  requestId: string | null,
   kind: "question" | "approval",
 ): ForkRequestAnswer[] | null {
-  const prefix = `${thread.id}:`;
-  const requestId = reportKey.startsWith(prefix) ? reportKey.slice(prefix.length) : "";
   return useAtomValue(
-    kind !== "question" || requestId === ""
+    kind !== "question" || requestId === null
       ? NO_ANSWERS
       : answersAtomFamily(JSON.stringify([thread.environmentId, thread.id, requestId])),
   );

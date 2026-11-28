@@ -4,6 +4,7 @@
  * grouped for its Threads panel, and what of it needs the owner, for its sidebar card.
  */
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import { isForkCoordinatorThread } from "@t3tools/shared/forkBotTags";
 
 import { resolveSidebarThreadStatus, type SidebarThreadStatus } from "~/components/Sidebar.logic";
 
@@ -18,7 +19,6 @@ import {
   type SidebarV2StatusBucket,
 } from "../sidebarV2StatusGrouping";
 
-import { isCoordinatorThread } from "../coordinator/coordinatorThreads";
 import { isBotThread, isListedBot } from "./botThreads";
 import { botWorkOwnerId, threadParentOf } from "./botWorkRoster";
 
@@ -28,10 +28,10 @@ export function botThreadsPanelBotId(
   thread: Pick<EnvironmentThreadShell, "id" | "source" | "lineage">,
   parent: Pick<EnvironmentThreadShell, "id" | "source" | "archivedAt"> | null,
 ) {
-  if (isBotThread(thread.source) || isCoordinatorThread(thread.source)) return thread.id;
+  if (isBotThread(thread.source) || isForkCoordinatorThread(thread.source)) return thread.id;
   return parent !== null &&
     parent.id === threadParentOf(thread)?.threadId &&
-    (isListedBot(parent) || (isCoordinatorThread(parent.source) && parent.archivedAt === null))
+    (isListedBot(parent) || (isForkCoordinatorThread(parent.source) && parent.archivedAt === null))
     ? parent.id
     : null;
 }

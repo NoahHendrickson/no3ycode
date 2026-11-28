@@ -414,12 +414,10 @@ import { useSetBotWork } from "~/custom/bots/useSetBotWork";
 /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
 import {
   coordinatorMenuItems,
-  coordinatorMenuTurnsOn,
-  isCoordinatorMenuId,
   listSidebarCoordinators,
 } from "~/custom/coordinator/coordinatorThreads";
 import { SidebarV2CoordinatorsRow } from "~/custom/coordinator/SidebarV2CoordinatorsSection";
-import { useSetCoordinator } from "~/custom/coordinator/useSetCoordinator";
+import { useCoordinatorMenuPick } from "~/custom/coordinator/useSetCoordinator";
 /* fork:end fork-coordinator-threads */
 /* fork:begin fork-bot-rules-refresh — see .fork/customizations.yaml#fork-bot-rules-refresh */
 import { useRefreshBotRules } from "~/custom/bots/useRefreshBotRules";
@@ -2504,7 +2502,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:end fork-bot-crew */
   /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
      Coordinators list in their own section, the open mode's only, and never among the threads. */
-  const setCoordinator = useSetCoordinator();
+  const pickCoordinatorMenuItem = useCoordinatorMenuPick();
   const coordinatorThreads = listSidebarCoordinators(threads).filter((thread) =>
     modePolicy.listsThread(thread),
   );
@@ -4675,9 +4673,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         }
         /* fork:end fork-bot-crew */
         /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-        if (isCoordinatorMenuId(clicked.value)) {
-          if (checkThreadOperations([thread]))
-            void setCoordinator(thread, coordinatorMenuTurnsOn(clicked.value));
+        if (pickCoordinatorMenuItem(clicked.value, thread, () => checkThreadOperations([thread]))) {
           return;
         }
         /* fork:end fork-coordinator-threads */

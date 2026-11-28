@@ -79,6 +79,7 @@ export function sprintThreadHost(sprintRef: ScopedThreadRef): ForkThreadHost {
   const known = hosts.get(key);
   if (known !== undefined) return known;
   const host: ForkThreadHost = {
+    delegatedQuestionOf: () => null,
     openThread: (ref) => openInSprintPanel(sprintRef, ref),
     onAnswered: (thread, requestId, answers) => {
       const folder = sprintFolderOf(readThreadShell(sprintRef));

@@ -122,7 +122,11 @@ export const DESIGN_LINT_ALLOWLIST = [
     ],
     "sprints/SprintPanelTabs.tsx": ["SprintPanelTabStrip", "SprintPanelTabContent"],
     "sprints/SprintFileEditor.tsx": ["SprintFileEditor", "SprintFileFooter", "NoSprintFileAccess"],
-    "bots/BotThreadsChild.tsx": ["BotThreadsChildHeading", "BotThreadsChildConversation"],
+    "bots/BotThreadsChild.tsx": [
+      "BotThreadsChildHeading",
+      "BotThreadsChildConversation",
+      "BotThreadsChildPanelBody",
+    ],
     "sprints/SprintPullRequests.tsx": ["SprintPullRequests"],
     "sprints/SprintEmptyConversation.tsx": ["SprintEmptyConversation"],
     "bots/BotDigest.tsx": ["BotDigestAsks"],

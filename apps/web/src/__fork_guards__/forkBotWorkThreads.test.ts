@@ -9,7 +9,11 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { type EnvironmentId, ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
-import { FORK_BOT_THREAD_TAG, FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_BOT_THREAD_TAG,
+  FORK_BOT_WORK_TAG_PREFIX,
+  FORK_COORDINATOR_TAG,
+} from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
@@ -24,7 +28,6 @@ import {
 } from "../custom/bots/botWork";
 import { botSeedFiles } from "../custom/bots/botSeedFiles";
 import { botWorkRowThreadId } from "../custom/bots/botWorkRoster";
-import { FORK_COORDINATOR_TAG } from "../custom/coordinator/coordinatorThreads";
 import {
   toggleBotThreadsPanel,
   useBotThreadsPanelStore,

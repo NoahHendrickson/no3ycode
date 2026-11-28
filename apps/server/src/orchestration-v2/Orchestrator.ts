@@ -975,7 +975,7 @@ function delegatedCompletionWakeDetail(
   taskIds: ReadonlyArray<string>,
   tasks: ReadonlyArray<OrchestrationV2Subagent>,
   /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-  parent?: Parameters<typeof isForkCoordinatorThread>[0],
+  parent: Parameters<typeof isForkCoordinatorThread>[0],
   /* fork:end fork-coordinator-threads */
 ): string {
   let remainingBytes = DELEGATED_RESULT_INLINE_BYTES;
@@ -997,7 +997,7 @@ function delegatedCompletionWakeDetail(
     })
     .join("\n\n");
   /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
-  if (parent !== undefined && isForkCoordinatorThread(parent)) {
+  if (isForkCoordinatorThread(parent)) {
     return `${detail}\n\n${COORDINATOR_COMPLETION_REPLY}`;
   }
   /* fork:end fork-coordinator-threads */
