@@ -251,7 +251,11 @@ export function monitorUpdateRunIds(messages: ReadonlyArray<MonitorNotice>) {
       .filter(
         (message) =>
           message.notification?.source.kind === "monitor" &&
-          message.notification.outcome === "updated",
+          message.notification.outcome === "updated" &&
+          /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs
+             A PR watch wake is work the agent acts on, not a monitor's progress line. */
+          message.notification.source.pullRequest === undefined,
+        /* fork:end fork-delegated-children-watch-prs */
       )
       .map((message) => message.runId),
   );

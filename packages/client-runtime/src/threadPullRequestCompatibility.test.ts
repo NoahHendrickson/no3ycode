@@ -64,7 +64,6 @@ describe("thread pull request capability negotiation", () => {
       archivedAt: null,
       settledAt: null,
       settledOverride: null,
-      lineage: { parentThreadId: null, relationshipToParent: null, rootThreadId: input.threadId },
     } as const;
     expect(canStartThreadPullRequestWatch(active)).toBe(true);
     expect(canStartThreadPullRequestWatch({ ...active, settledOverride: "active" })).toBe(true);
@@ -75,11 +74,5 @@ describe("thread pull request capability negotiation", () => {
     expect(canStartThreadPullRequestWatch({ ...active, archivedAt: "2026-01-01T00:00:00Z" })).toBe(
       false,
     );
-    expect(
-      canStartThreadPullRequestWatch({
-        ...active,
-        lineage: { ...active.lineage, relationshipToParent: "subagent" },
-      }),
-    ).toBe(false);
   });
 });

@@ -13,17 +13,17 @@ export function threadPullRequestLinkMode(
   return capabilities ? ("multiple" as const) : ("unsupported" as const);
 }
 
-/** The server refuses new watches on settled, archived, and subagent threads. */
+/* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs
+   Delegated children watch too; native subagents, which the server refuses, link no PRs of their own. */
+/** The server refuses new watches on settled and archived threads. */
 export function canStartThreadPullRequestWatch(
-  thread: Pick<EnvironmentThreadShell, "archivedAt" | "settledAt" | "settledOverride" | "lineage">,
+  thread: Pick<EnvironmentThreadShell, "archivedAt" | "settledAt" | "settledOverride">,
 ): boolean {
   return (
-    thread.archivedAt === null &&
-    thread.settledAt === null &&
-    thread.settledOverride !== "settled" &&
-    thread.lineage.relationshipToParent !== "subagent"
+    thread.archivedAt === null && thread.settledAt === null && thread.settledOverride !== "settled"
   );
 }
+/* fork:end fork-delegated-children-watch-prs */
 
 export function planThreadPullRequestMutation({
   capabilities,

@@ -17054,7 +17054,13 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
               .toSorted((a, b) => b.ordinal - a.ordinal)[0];
             const monitorRunIds = new Set(
               child.messages
-                .filter((message) => message.notification?.source.kind === "monitor")
+                .filter(
+                  (message) =>
+                    message.notification?.source.kind === "monitor" &&
+                    /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+                    message.notification.source.pullRequest === undefined,
+                  /* fork:end fork-delegated-children-watch-prs */
+                )
                 .map((message) => message.runId),
             );
             const activeRun = child.runs

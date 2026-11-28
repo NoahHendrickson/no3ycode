@@ -771,7 +771,13 @@ function latestTerminalResultRun(
 ): OrchestrationV2Run | undefined {
   const monitorRunIds = new Set(
     projection.messages
-      .filter((message) => message.notification?.source.kind === "monitor")
+      .filter(
+        (message) =>
+          message.notification?.source.kind === "monitor" &&
+          /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
+          message.notification.source.pullRequest === undefined,
+        /* fork:end fork-delegated-children-watch-prs */
+      )
       .map((message) => message.runId),
   );
   // A restart-cut run, and each cut run before it in the chain, has no outcome while a
