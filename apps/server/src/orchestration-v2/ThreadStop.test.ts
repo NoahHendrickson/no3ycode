@@ -534,6 +534,91 @@ it.effect("Stop still stops the thread when a delegated child cannot be read", (
   }).pipe(Effect.provide(layerTest)),
 );
 
+it.effect(
+  "a delegated child's PR wake reaches its parent as a follow-up, and cancel ends the watch",
+  () =>
+    Effect.gen(function* () {
+      const orchestrator = yield* Orchestrator.OrchestratorV2;
+      const projections = yield* ProjectionStore.ProjectionStoreV2;
+      const parentThreadId = ThreadId.make("thread:watching-child-parent");
+      yield* createWatchingThread(parentThreadId, 1);
+      yield* send(parentThreadId, "parent", "start_immediately");
+      const childThreadId = yield* delegate(parentThreadId, "open and babysit the PR");
+      yield* watch(childThreadId, 7);
+      assert.deepEqual((yield* threadState(childThreadId)).watched, [7]);
+
+      // The child reports and its task finishes; the watch stays on.
+      const now = yield* DateTime.now;
+      const original = (yield* orchestrator.getThreadProjection(parentThreadId)).subagents[0]!;
+      const childRun = (yield* orchestrator.getThreadProjection(childThreadId)).runs[0]!;
+      yield* projections.apply({
+        id: EventId.make("event:watching-child:run-completed"),
+        type: "run.updated",
+        threadId: childThreadId,
+        runId: childRun.id,
+        occurredAt: now,
+        payload: { ...childRun, status: "completed", completedAt: now },
+      });
+      yield* projections.apply({
+        id: EventId.make("event:watching-child:task-completed"),
+        type: "subagent.updated",
+        threadId: parentThreadId,
+        occurredAt: now,
+        payload: {
+          ...original,
+          status: "completed",
+          result: "PR #7 open, watched",
+          completedAt: now,
+          completionDelivery: { state: "acknowledged", observedByRunId: null },
+        },
+      });
+
+      // A comment-only wake is an "updated" monitor outcome, which a background monitor's
+      // progress line also uses; a PR wake must still start a follow-up.
+      const child = yield* orchestrator.getThreadShell(childThreadId);
+      const startedAt = child!.pullRequests!.find((link) => link.number === 7)!.watch!.startedAt;
+      yield* orchestrator.dispatch({
+        type: "thread.pull-request-watch.sync",
+        commandId: CommandId.make("watching-child:wake"),
+        threadId: childThreadId,
+        ...pullRequest(7),
+        startedAt,
+        watch: child!.pullRequests!.find((link) => link.number === 7)!.watch!,
+        wake: {
+          messageId: MessageId.make("message:watching-child:wake"),
+          text: "Update on pull request #7: a reviewer commented.",
+          notification: { source: { kind: "monitor" }, outcome: "updated", summary: "#7: comment" },
+        },
+      });
+      const wakeRun = (yield* orchestrator.getThreadProjection(childThreadId)).runs.find(
+        (run) => run.userMessageId === MessageId.make("message:watching-child:wake"),
+      );
+      assert.isDefined(wakeRun?.delegatedTaskId);
+      const followup = (yield* orchestrator.getThreadProjection(parentThreadId)).subagents.find(
+        (task) => task.id === wakeRun?.delegatedTaskId,
+      );
+      assert.deepInclude(followup, {
+        childThreadId,
+        completionWake: "always",
+        result: null,
+      });
+
+      yield* orchestrator.cancelDelegatedTask({
+        parentThreadId,
+        taskId: original.id,
+        command: {
+          type: "thread.stop",
+          commandId: CommandId.make("watching-child:cancel"),
+          threadId: childThreadId,
+          stopDelegatedTasks: false,
+        },
+        stopDescendants: () => Effect.void,
+      });
+      assert.deepEqual((yield* threadState(childThreadId)).watched, []);
+      assert.deepEqual((yield* threadState(parentThreadId)).watched, [1]);
+    }).pipe(Effect.provide(layerTest)),
+);
+
 it.effect.each(["run.interrupt", "thread.stop"] as const)(
   "%s Stop ends watches, holds queues, and stops the delegated tasks under the thread",
   (type) =>
@@ -546,7 +631,7 @@ it.effect.each(["run.interrupt", "thread.stop"] as const)(
       yield* createWatchingThread(parentThreadId, 1);
       yield* send(parentThreadId, "first", "start_immediately");
       const childThreadId = yield* delegate(parentThreadId, "child task");
-      assert.isTrue(Exit.isFailure(yield* Effect.exit(watch(childThreadId, 2))));
+      yield* watch(childThreadId, 2);
       const grandchildThreadId = yield* delegate(childThreadId, "grandchild task");
       yield* send(childThreadId, "child follow-up", "queue_after_active");
 

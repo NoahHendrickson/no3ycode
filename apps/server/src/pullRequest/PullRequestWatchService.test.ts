@@ -299,7 +299,7 @@ describe("PullRequestWatchService", () => {
     }),
   );
 
-  it.effect("refuses a watch from a subagent thread, whose parent owns the pull request", () =>
+  it.effect("watches for a delegated child thread, whose wakes reach its parent", () =>
     Effect.gen(function* () {
       const harness = yield* makeHarness({
         thread: {
@@ -311,11 +311,10 @@ describe("PullRequestWatchService", () => {
           },
         },
       });
-      const error = yield* harness
-        .setWatching(true, { repository: "t3tools/t3code", number: 1 })
-        .pipe(Effect.flip);
-      expect(error).toMatchObject({ _tag: "PullRequestWatchFromSubagentError" });
-      expect(yield* Ref.get(harness.commands)).toEqual([]);
+      yield* harness.setWatching(true, { repository: "t3tools/t3code", number: 1 });
+      expect(yield* Ref.get(harness.commands)).toMatchObject([
+        { type: "thread.pull-request.watch", number: 1, watching: true },
+      ]);
     }),
   );
 });

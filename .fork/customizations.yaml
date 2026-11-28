@@ -10756,3 +10756,37 @@
   verify:
     - apps/web/src/__fork_guards__/forkEmbeddedPrList.test.ts
     - apps/web/src/custom/embeddedPrList.browser.test.tsx
+
+- id: fork-delegated-children-watch-prs
+  intent: >
+    A delegate_task child can watch the PRs it opens with watch_pull_request, as a top-level
+    thread can (maintainer's request, 2026-11-27). Upstream hid watch_pull_request and
+    unwatch_pull_request from delegated children, refused their watches in
+    PullRequestWatchService and the orchestrator's watch command, ended any watch on a subagent
+    thread in the watch reactor, and told children "Delegated children never watch". The fork
+    drops all four. The child's task still completes and reports to its parent when its turn
+    ends: a watch is not work that holds completion. A later PR wake on the child starts a
+    follow-up task on the parent (completionWake "always"), so its result reaches the parent;
+    every PR wake counts, including an "updated" one, unlike a background monitor's progress
+    line, and its intake takes the parent's lock as a message's does. task_cancel stops the
+    child, and Stop ends its watches; a parent's Stop does the same through its delegated tasks.
+    A provider's native subagents still cannot watch (the orchestrator refuses them). A child's
+    report line after PR work says whether it watches.
+  tier: 4
+  files: []
+  shadows: []
+  watch:
+    - apps/server/src/orchestration-v2/Orchestrator.ts
+    - apps/server/src/orchestration-v2/PullRequestWatchReactor.ts
+    - apps/server/src/pullRequest/PullRequestWatchService.ts
+    - apps/server/src/mcp/toolkits/pullRequests/tools.ts
+    - packages/provider-core/src/server/runtimeInstructions.ts
+    - apps/server/src/provider/agentContextBudget.json
+    - evals/mcp-tool-use/run.ts
+    - evals/mcp-tool-use/cases/pull-requests.ndjson
+    - docs/user/source-control.md
+  verify:
+    - apps/web/src/__fork_guards__/forkDelegatedChildrenWatchPrs.test.ts
+    - apps/server/src/orchestration-v2/ThreadStop.test.ts
+    - apps/server/src/pullRequest/PullRequestWatchService.test.ts
+    - apps/server/src/mcp/McpHttpServer.test.ts

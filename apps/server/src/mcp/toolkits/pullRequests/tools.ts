@@ -187,7 +187,6 @@ export const PullRequestToolError = Schema.Union([
   PullRequestListFailedError,
   PullRequestWatchService.PullRequestWatchFailedError,
   PullRequestUnavailableError,
-  PullRequestWatchService.PullRequestWatchFromSubagentError,
   PullRequestProjectNotFoundError,
   PullRequestGuideFailedError,
   PullRequestForgeError,
@@ -205,8 +204,10 @@ const PullRequestIdentity = {
 };
 
 /** A delegated child's report is how its parent learns the PR, so the link result asks for it. */
+/* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs */
 export const CHILD_PULL_REQUEST_REPORT_NEXT =
-  "End your reply with: PR <full URL>, head <SHA>, checks and reviews <state>.";
+  "End your reply with: PR <full URL>, head <SHA>, checks and reviews <state>, watched or not.";
+/* fork:end fork-delegated-children-watch-prs */
 
 export const LinkPullRequestResult = Schema.Struct({
   ...PullRequestIdentity,
@@ -413,8 +414,7 @@ const WatchPullRequestTool = Tool.make("watch_pull_request", {
   .annotate(Tool.Readonly, false)
   .annotate(Tool.Destructive, false)
   .annotate(Tool.Idempotent, true)
-  .annotate(Tool.OpenWorld, false)
-  .annotate(McpSchema.EnabledWhen, McpInvocationContext.hiddenFromSubagents);
+  .annotate(Tool.OpenWorld, false);
 
 const UnwatchPullRequestTool = Tool.make("unwatch_pull_request", {
   description: "Stop watching a PR for this thread. It stays linked.",
@@ -427,8 +427,7 @@ const UnwatchPullRequestTool = Tool.make("unwatch_pull_request", {
   .annotate(Tool.Readonly, false)
   .annotate(Tool.Destructive, false)
   .annotate(Tool.Idempotent, true)
-  .annotate(Tool.OpenWorld, false)
-  .annotate(McpSchema.EnabledWhen, McpInvocationContext.hiddenFromSubagents);
+  .annotate(Tool.OpenWorld, false);
 
 const GuideTarget = Schema.Struct({
   url: PullRequestTargetInput.fields.url,

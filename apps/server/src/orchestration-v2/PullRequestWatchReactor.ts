@@ -127,14 +127,7 @@ interface HeldWake {
 
 const watchKey = ({ thread, watch }: WatchTarget) => `${thread.id} ${watch.startedAt}`;
 
-type WatchEndReason =
-  | "merged"
-  | "closed"
-  | "unreadable"
-  | "comment-limit"
-  | "settled"
-  | "subagent"
-  | "stopped";
+type WatchEndReason = "merged" | "closed" | "unreadable" | "comment-limit" | "settled" | "stopped";
 
 interface WatchLife {
   readonly threadId: string;
@@ -578,12 +571,11 @@ export const make = Effect.gen(function* () {
   };
 
   // A merged snapshot still gets one read, so the wake can name the merge commit.
+  /* fork:begin fork-delegated-children-watch-prs — see .fork/customizations.yaml#fork-delegated-children-watch-prs
+     A delegated child keeps its watch; a native subagent can never start one. */
   const endsWithoutRead = ({ thread }: WatchTarget): WatchEndReason | undefined =>
-    thread.settledOverride === "settled" || thread.settledAt !== null
-      ? "settled"
-      : thread.lineage.relationshipToParent === "subagent"
-        ? "subagent"
-        : undefined;
+    thread.settledOverride === "settled" || thread.settledAt !== null ? "settled" : undefined;
+  /* fork:end fork-delegated-children-watch-prs */
 
   const eachTarget = <E>(
     group: WatchGroup,
