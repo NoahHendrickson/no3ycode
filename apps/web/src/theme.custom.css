@@ -2725,26 +2725,6 @@
     font-size: var(--fork-chat-text-sm);
   }
 
-  /* A picked answer shows as a blue control; the row itself stays plain, with the hover wash. */
-  & [data-fork-pending-user-input] {
-    --fork-question-accent: #3b8bff;
-  }
-
-  & [data-fork-question-option][aria-checked="true"] {
-    border-color: transparent;
-    background: transparent;
-  }
-
-  & [data-fork-question-option][aria-checked="true"]:hover {
-    background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  }
-
-  & [data-fork-question-option][aria-checked="true"] [data-fork-question-control] {
-    border-color: transparent;
-    background: var(--fork-question-accent);
-    color: var(--fork-white);
-  }
-
   /* The queue card follows the iOS one, and the stash is its twin: a 40px header and 40px rows
      that run edge to edge, split by full-width hairlines. */
   & :is([data-fork-queued-runs-banner], [data-composer-stash-drawer]) {
@@ -2779,6 +2759,27 @@
     & [data-has-overflow-y] li[data-composer-banner-row] {
       padding-inline-end: calc(var(--spacing) * 4);
     }
+  }
+}
+
+/* A picked answer shows as a blue control; the row itself stays plain, with the hover wash.
+   Every Questions card wears it, docked over the composer or inline in a sprint's chat. */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-pending-user-input] {
+  --fork-question-accent: #3b8bff;
+
+  & [data-fork-question-option][aria-checked="true"] {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  & [data-fork-question-option][aria-checked="true"]:hover {
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  }
+
+  & [data-fork-question-option][aria-checked="true"] [data-fork-question-control] {
+    border-color: transparent;
+    background: var(--fork-question-accent);
+    color: var(--fork-white);
   }
 }
 
