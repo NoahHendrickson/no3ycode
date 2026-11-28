@@ -43,10 +43,11 @@ describe("fork guard: fork-pending-user-input", () => {
     expect(override).toContain("questionIndex + 1");
     expect(override).toContain("prompt.questions.length > 1");
     expect(override).toContain("useComposerPendingUserInputCard");
-    // Theme-adaptive selection — not white-alpha that disappears in Light.
+    // A picked answer is a blue control on a plain row, drawn by the option itself so every
+    // Questions card matches; nothing white-alpha that disappears in Light.
     expect(override).toContain("<ForkQuestionOption");
-    expect(option).toContain("border-foreground/24");
-    expect(option).toContain("bg-foreground/8");
+    expect(option).toContain("bg-(--fork-question-accent)");
+    expect(option).not.toContain("border-foreground/24");
     expect(`${override}${option}`).not.toContain("border-white/");
     expect(`${override}${option}`).not.toContain("bg-white/");
     // Card interaction lives in custom/; the override must not re-own it.
