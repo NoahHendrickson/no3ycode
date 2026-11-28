@@ -411,6 +411,14 @@ import { botCrewMenuItems, botFromCrewMenuId, isBotCrewMenuId } from "~/custom/b
 import { readListedBots } from "~/custom/bots/readListedBots";
 import { useSetBotWork } from "~/custom/bots/useSetBotWork";
 /* fork:end fork-bot-crew */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import {
+  coordinatorMenuItems,
+  listSidebarCoordinators,
+} from "~/custom/coordinator/coordinatorThreads";
+import { SidebarV2CoordinatorsRow } from "~/custom/coordinator/SidebarV2CoordinatorsSection";
+import { useCoordinatorMenuPick } from "~/custom/coordinator/useSetCoordinator";
+/* fork:end fork-coordinator-threads */
 /* fork:begin fork-bot-rules-refresh — see .fork/customizations.yaml#fork-bot-rules-refresh */
 import { useRefreshBotRules } from "~/custom/bots/useRefreshBotRules";
 /* fork:end fork-bot-rules-refresh */
@@ -2492,6 +2500,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   /* fork:begin fork-bot-crew — see .fork/customizations.yaml#fork-bot-crew */
   const setBotWork = useSetBotWork();
   /* fork:end fork-bot-crew */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+     Coordinators list in their own section, the open mode's only, and never among the threads. */
+  const pickCoordinatorMenuItem = useCoordinatorMenuPick();
+  const coordinatorThreads = listSidebarCoordinators(threads).filter((thread) =>
+    modePolicy.listsThread(thread),
+  );
+  const coordinatorsSectionCollapsed = isListSectionCollapsed("coordinators");
+  /* fork:end fork-coordinator-threads */
   const router = useRouter();
   const { isMobile, setOpenMobile } = useSidebar();
   /* fork:begin fork-collapsed-thread-tabs — see .fork/customizations.yaml#fork-collapsed-thread-tabs */
@@ -4623,6 +4639,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
               ),
               /* fork:end fork-bot-crew */
+              /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+              ...coordinatorMenuItems(
+                thread.source,
+                readEnvironmentScope(threadRef.environmentId, AuthOrchestrationOperateScope),
+              ),
+              /* fork:end fork-coordinator-threads */
               /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
               chatThreadMenuItem(
                 thread,
@@ -4650,6 +4672,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           return;
         }
         /* fork:end fork-bot-crew */
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+        if (pickCoordinatorMenuItem(clicked.value, thread, () => checkThreadOperations([thread]))) {
+          return;
+        }
+        /* fork:end fork-coordinator-threads */
         /* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode */
         if (isChatModeMoveMenuId(clicked.value)) {
           if (checkThreadOperations([thread])) moveThreadToMode(thread, clicked.value);
@@ -5397,6 +5424,25 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     />
   );
   /* fork:end fork-sidebar-chrome */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+     Hidden while there are none; a folded section keeps the open coordinator's card. */
+  const coordinatorsSection =
+    coordinatorThreads.length === 0 ? null : (
+      <SidebarV2CoordinatorsRow
+        collapsed={coordinatorsSectionCollapsed}
+        onToggleCollapsed={() => toggleListSectionCollapsed("coordinators")}
+      >
+        {coordinatorThreads
+          .filter(
+            (thread) =>
+              !coordinatorsSectionCollapsed ||
+              routeRowThreadKey ===
+                scopedThreadKey(scopeThreadRef(thread.environmentId, thread.id)),
+          )
+          .map((thread) => renderOneThreadRow(thread, "active"))}
+      </SidebarV2CoordinatorsRow>
+    );
+  /* fork:end fork-coordinator-threads */
   return (
     <SidebarFolderDrop>
       <SidebarChromeHeader
@@ -5413,7 +5459,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         {/* fork:begin fork-chat-mode — see .fork/customizations.yaml#fork-chat-mode
             Chat's only row is New chat: no search, projects, scope or grouping. */}
         {modePolicy.chat ? (
-          <SidebarV2ChatActionRows />
+          <>
+            <SidebarV2ChatActionRows />
+            {/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */}
+            {coordinatorsSection}
+            {/* fork:end fork-coordinator-threads */}
+          </>
         ) : (
           <>
             {/* fork:end fork-chat-mode */}
@@ -5492,6 +5543,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                 )}
             </SidebarV2BotsRow>
             {/* fork:end fork-bots */}
+            {/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */}
+            {coordinatorsSection}
+            {/* fork:end fork-coordinator-threads */}
             {!hasGroupingHeaders ? (
               <SidebarV2ProjectScopeRow
                 /* fork:begin sidebar-v2-threads-fold — see .fork/customizations.yaml#sidebar-v2-threads-fold */

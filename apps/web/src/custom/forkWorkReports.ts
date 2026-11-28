@@ -4,12 +4,17 @@
  * summaries (orchestration-v2/forkBotWorkReports) lives here, so a change there has one place to
  * follow.
  */
-import type {
-  ForkWorkRequestKind,
-  OrchestrationV2NotificationSource,
-  ScopedThreadRef,
-  ThreadId,
+import {
+  type ForkWorkRequestKind,
+  type OrchestrationV2NotificationSource,
+  RuntimeRequestId,
+  type ScopedThreadRef,
+  type ThreadId,
 } from "@t3tools/contracts";
+import {
+  FORK_DELEGATED_QUESTION_MESSAGE_PREFIX,
+  FORK_DELEGATED_TASK_THREAD_PREFIX,
+} from "@t3tools/shared/forkBotTags";
 
 import type { TimelineEntry } from "~/session-logic";
 
@@ -19,15 +24,19 @@ import type { TimelineEntry } from "~/session-logic";
 const NOTIFICATION_ITEM_PREFIX = "turn-item:message:";
 const WORK_REPORT_PREFIXES = ["message:fork-bot-work-report:", "message:fork-bot-work-seen:"];
 
-/** What follows a work report's prefix in its notification's item id, or null for another item. */
-export function forkWorkReportKey(itemId: string): string | null {
+function notificationMessageId(itemId: string): string | null {
   if (!itemId.startsWith(NOTIFICATION_ITEM_PREFIX)) return null;
-  let messageId: string;
   try {
-    messageId = decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
+    return decodeURIComponent(itemId.slice(NOTIFICATION_ITEM_PREFIX.length));
   } catch {
     return null;
   }
+}
+
+/** What follows a work report's prefix in its notification's item id, or null for another item. */
+export function forkWorkReportKey(itemId: string): string | null {
+  const messageId = notificationMessageId(itemId);
+  if (messageId === null) return null;
   const prefix = WORK_REPORT_PREFIXES.find((candidate) => messageId.startsWith(candidate));
   return prefix === undefined ? null : messageId.slice(prefix.length);
 }
@@ -68,13 +77,12 @@ export function forkWorkReportRequestKind(summary: string): "question" | "approv
   return null;
 }
 
-/** The request a report key names is the one the thread still waits on. */
-export function forkWorkReportIsPending(
-  key: string,
-  threadId: string,
-  pendingRequestId: string | null | undefined,
-): boolean {
-  return pendingRequestId != null && key === `${threadId}:${pendingRequestId}`;
+/** The request a report key (`threadId:requestId`) names, or null when it names none. */
+export function forkWorkReportRequestId(key: string, threadId: string): RuntimeRequestId | null {
+  const prefix = `${threadId}:`;
+  return key.startsWith(prefix) && key.length > prefix.length
+    ? RuntimeRequestId.make(key.slice(prefix.length))
+    : null;
 }
 
 export interface ForkWorkReport {
@@ -107,6 +115,65 @@ export function forkWorkReportOf(notice: {
   const key = forkWorkReportKey(notice.id);
   if (key === null) return null;
   return { key, threadId: null, requestKind: forkWorkReportRequestKind(notice.summary) };
+}
+
+/** A thread `parentId` started with T3's delegate_task, as its direct child: no provider's native
+    subagent, nested delegate or side chat. */
+export function isForkDelegatedTaskChildOf(
+  child: {
+    readonly id: string;
+    readonly lineage: {
+      readonly parentThreadId: string | null;
+      readonly relationshipToParent: string | null;
+      readonly sideChat?: boolean | undefined;
+    };
+  },
+  parentId: string,
+): boolean {
+  return (
+    child.id.startsWith(FORK_DELEGATED_TASK_THREAD_PREFIX) &&
+    child.lineage.parentThreadId === parentId &&
+    child.lineage.relationshipToParent === "subagent" &&
+    child.lineage.sideChat !== true
+  );
+}
+
+/** A delegated child's question notice, which wakes its parent, read as the child's question
+    report (fork-coordinator-threads); null for every other notice. */
+export function forkDelegatedQuestionOf(notice: {
+  readonly id: string;
+  readonly threadId: string;
+  readonly source: OrchestrationV2NotificationSource;
+}): ForkWorkReport | null {
+  if (notice.source.kind !== "delegated_task" || notice.source.childThreadId === undefined) {
+    return null;
+  }
+  const messageId = notificationMessageId(notice.id);
+  const prefix = `${FORK_DELEGATED_QUESTION_MESSAGE_PREFIX}${notice.threadId}:`;
+  if (messageId === null || !messageId.startsWith(prefix)) return null;
+  const requestId = messageId.slice(prefix.length);
+  if (requestId === "") return null;
+  const { childThreadId } = notice.source;
+  return { key: `${childThreadId}:${requestId}`, threadId: childThreadId, requestKind: "question" };
+}
+
+/** A delegated child's "finished" notice entry, which wakes a coordinator once the child is done. */
+export function isForkDelegatedCompletionReport(entry: TimelineEntry): boolean {
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+  const item = entry.entry.projectedItem?.item;
+  return (
+    item?.type === "notification" &&
+    item.source.kind === "delegated_task" &&
+    item.outcome === "completed" &&
+    forkDelegatedQuestionOf(item) === null
+  );
+}
+
+/** A delegated child's question notice entry, which carries a coordinator's question card. */
+export function isForkDelegatedQuestionReport(entry: TimelineEntry): boolean {
+  if (entry.kind !== "work" || entry.entry.itemType !== "notification") return false;
+  const item = entry.entry.projectedItem?.item;
+  return item?.type === "notification" && forkDelegatedQuestionOf(item) !== null;
 }
 
 /** A work report of a thread's question or approval, which carries the card the owner answers on. */

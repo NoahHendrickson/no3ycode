@@ -483,6 +483,11 @@ import { SprintPanel } from "~/custom/sprints/SprintPanel";
 import { sprintThreadHost } from "~/custom/sprints/sprintThreadHost";
 import { useIsSprintThread } from "~/custom/sprints/useIsSprintThread";
 /* fork:end fork-sprints */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { CoordinatorPanel } from "~/custom/coordinator/CoordinatorPanel";
+import { coordinatorThreadHost } from "~/custom/coordinator/coordinatorThreadHost";
+import { useIsCoordinatorThread } from "~/custom/coordinator/useIsCoordinatorThread";
+/* fork:end fork-coordinator-threads */
 /* fork:begin fork-stage-header — see .fork/customizations.yaml#fork-stage-header */
 import { useStageHeaderParent } from "~/custom/stageColumns/stageHeaderParent";
 /* fork:end fork-stage-header */
@@ -1182,6 +1187,11 @@ export default function ChatView(props: ChatViewProps) {
      panel, Float, Dock or Split agent (Unsplit stays in a split); its timeline hosts its threads. */
   const forkSprintRef = useIsSprintThread(activeThreadRef) ? activeThreadRef : null;
   /* fork:end fork-sprints */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+     A coordinator's timeline hosts its children: they open in its panel, their questions inline. */
+  const forkCoordinatorRef =
+    useIsCoordinatorThread(activeThreadRef) && !embedded ? activeThreadRef : null;
+  /* fork:end fork-coordinator-threads */
   const activeThreadKey = activeThreadRef ? scopedThreadKey(activeThreadRef) : null;
   const activeEnvironmentServerBrowser = useEnvironmentSupportsServerBrowser(
     activeThreadRef?.environmentId ?? null,
@@ -1301,6 +1311,9 @@ export default function ChatView(props: ChatViewProps) {
   /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
   const forkBotThreadsIsSprint = useIsSprintThread(forkBotThreadsBot);
   /* fork:end fork-sprints */
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  const forkBotThreadsIsCoordinator = useIsCoordinatorThread(forkBotThreadsBot);
+  /* fork:end fork-coordinator-threads */
   const forkBotThreadsHeld =
     rightPanelMaximized || splitPane.floating || (prefersPlanSidebarSheet && rightPanelOpen);
   const forkBotThreadsInline =
@@ -4206,7 +4219,15 @@ export default function ChatView(props: ChatViewProps) {
               <WorkspaceMutationIdContext value={workspaceMutationId}>
                 <ThreadTimeline
                   /* fork:begin fork-sprints — see .fork/customizations.yaml#fork-sprints */
-                  forkThreadHost={forkSprintRef === null ? null : sprintThreadHost(forkSprintRef)}
+                  forkThreadHost={
+                    forkSprintRef !== null
+                      ? sprintThreadHost(forkSprintRef)
+                      : /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+                        forkCoordinatorRef !== null
+                        ? coordinatorThreadHost(forkCoordinatorRef)
+                        : /* fork:end fork-coordinator-threads */
+                          null
+                  }
                   /* fork:end fork-sprints */
                   pendingApprovals={pendingApprovals}
                   heldApprovalRequestIds={heldApprovalRequestIds}
@@ -4847,8 +4868,23 @@ export default function ChatView(props: ChatViewProps) {
             animationDurationMs={panelAnimationDurationMs}
             parentPanel={sideChatParentPanel}
           />
+        ) : /* fork:end fork-sprints */
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+           A coordinator and each of its children show the coordinator's panel. */
+        forkBotThreadsIsCoordinator ? (
+          <CoordinatorPanel
+            botRef={forkBotThreadsBot}
+            threadRef={activeThreadRef}
+            workspaceLayoutElement={workspaceLayoutElement}
+            sheet={prefersPlanSidebarSheet}
+            held={forkBotThreadsHeld}
+            rightPanelInline={inlineRightPanelOwnsTitleBar}
+            animationsActive={panelAnimationsActive}
+            animationDurationMs={panelAnimationDurationMs}
+            parentPanel={sideChatParentPanel}
+          />
         ) : (
-          /* fork:end fork-sprints */
+          /* fork:end fork-coordinator-threads */
           <BotThreadsPanel
             botRef={forkBotThreadsBot}
             threadRef={activeThreadRef}

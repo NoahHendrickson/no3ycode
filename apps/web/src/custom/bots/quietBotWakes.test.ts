@@ -73,7 +73,7 @@ function rowsFor(timelineEntries: ReadonlyArray<TimelineEntry>, extra = {}) {
     turnDiffSummaries: [checkpoint("a", 1), checkpoint("wake-1", 2), checkpoint("b", 3)],
     supportsConversationRollback: true,
     threadStartCheckpointAvailable: true,
-    hideQuietBotWakes: true,
+    forkQuietWakes: "bot" as const,
     ...extra,
   });
 }
@@ -98,7 +98,7 @@ describe("quiet bot wakes", () => {
     );
     expect(rewindB?.kind === "message" ? rewindB.revertTurnCount : null).toBe(2);
     // Off (not a bot, or find open): every run shows.
-    expect(messageTexts(rowsFor(entries, { hideQuietBotWakes: false }))).toHaveLength(6);
+    expect(messageTexts(rowsFor(entries, { forkQuietWakes: null }))).toHaveLength(6);
   });
 
   it("keeps a wake that is still running, failed, or that the owner typed into", () => {
@@ -136,7 +136,7 @@ describe("quiet bot wakes", () => {
     const quietWake = [wake("wake-1", 3), reply("wake-1", 6, "Nothing to report.")];
     for (const type of ["user_input_request", "approval_request"]) {
       const entries = [...quietWake, item("wake-1", 4, { type, status: "completed" })];
-      expect(quietBotWakeRunIds(entries, none).size).toBe(0);
+      expect(quietBotWakeRunIds(entries, "bot", none).size).toBe(0);
     }
     const errored = [
       ...quietWake,
@@ -147,7 +147,7 @@ describe("quiet bot wakes", () => {
       }),
     ];
     expect(messageTexts(rowsFor(errored))).toEqual(
-      messageTexts(rowsFor(errored, { hideQuietBotWakes: false })),
+      messageTexts(rowsFor(errored, { forkQuietWakes: null })),
     );
     expect(messageTexts(rowsFor(errored))).toContain("Nothing to report.");
   });
@@ -172,7 +172,7 @@ describe("quiet bot wakes", () => {
         report(summary),
         reply("wake-1", 4, "Nothing to report."),
       ];
-      return withoutRuns(entries, quietBotWakeRunIds(entries, none), inline).map(
+      return withoutRuns(entries, quietBotWakeRunIds(entries, "bot", none), "bot", inline).map(
         (entry) => entry.kind,
       );
     };
@@ -183,6 +183,89 @@ describe("quiet bot wakes", () => {
     expect(kept("Rate limiting has a question", false)).toEqual([]);
   });
 
+  it("drops a coordinator's quiet reply to its child's question, keeping the question card", () => {
+    // The server's notice of a delegated child's question, which renders the card inline.
+    const parent = "coordinator-1";
+    const notice: TimelineEntry = {
+      id: `turn-item:message:${encodeURIComponent(`message:delegated-task-question:${parent}:request-1`)}`,
+      kind: "work",
+      createdAt: at(3),
+      entry: {
+        id: "notice",
+        createdAt: at(3),
+        runId: "wake-1" as RunId,
+        label: "question",
+        tone: "info",
+        itemType: "notification",
+        projectedItem: {
+          item: {
+            type: "notification",
+            id: `turn-item:message:${encodeURIComponent(`message:delegated-task-question:${parent}:request-1`)}`,
+            threadId: parent,
+            source: { kind: "delegated_task", taskIds: ["task-1"], childThreadId: "child-1" },
+          },
+        } as never,
+      },
+    };
+    // As the server writes it: the notice (no message entry of its own), the coordinator's read
+    // of the question, then its reply.
+    const { projectedItem: _notice, ...noticeEntry } = notice.entry;
+    const read: TimelineEntry = {
+      ...notice,
+      id: "read",
+      entry: { ...noticeEntry, id: "read", itemType: "dynamic_tool" },
+    };
+    const run = (text: string) => [notice, read, reply("wake-1", 4, text)];
+    const quiet = run("Nothing to report.");
+    expect(
+      withoutRuns(quiet, quietBotWakeRunIds(quiet, "coordinator", none), "coordinator", true),
+    ).toEqual([notice]);
+    // A sprint keeps only its own request reports: a delegated notice after its wake's prompt
+    // goes with the quiet wake, as before.
+    const sprintWake = [wake("wake-1", 1), notice, read, reply("wake-1", 4, "Nothing to report.")];
+    expect(
+      withoutRuns(sprintWake, quietBotWakeRunIds(sprintWake, "bot", none), "bot", true),
+    ).toEqual([]);
+    // A reply that says something real stays, card and all.
+    const answered = run("Red");
+    expect(quietBotWakeRunIds(answered, "coordinator", none).size).toBe(0);
+    // A coordinator's quiet run that no child's question started is not a wake to hide.
+    const other = [wake("wake-2", 5), reply("wake-2", 6, "Nothing to report.")];
+    expect(quietBotWakeRunIds(other, "coordinator", none).size).toBe(0);
+
+    // The child's "finished" notice wakes it again; when that only repeats the card's answer the
+    // whole run goes, notice included. A real reply keeps the run and its notice.
+    const finished: TimelineEntry = {
+      ...notice,
+      id: "turn-item:message:finished",
+      entry: {
+        ...notice.entry,
+        id: "finished",
+        runId: "wake-3" as RunId,
+        projectedItem: {
+          item: {
+            type: "notification",
+            id: "turn-item:message:finished",
+            threadId: parent,
+            outcome: "completed",
+            source: { kind: "delegated_task", taskIds: ["task-1"], childThreadId: "child-1" },
+          },
+        } as never,
+      },
+    };
+    const completion = (text: string) => [finished, reply("wake-3", 8, text)];
+    const quietCompletion = completion("Nothing to report.");
+    const coordinatorShown = (entries: ReadonlyArray<TimelineEntry>) =>
+      withoutRuns(entries, quietBotWakeRunIds(entries, "coordinator", none), "coordinator", true);
+    expect(coordinatorShown(quietCompletion)).toEqual([]);
+    const news = completion("Failed");
+    expect(coordinatorShown(news)).toEqual(news);
+    // Not for a sprint: its quiet completion wake ends where its reply starts, as before.
+    expect(
+      withoutRuns(quietCompletion, quietBotWakeRunIds(quietCompletion, "bot", none), "bot", true),
+    ).toEqual([finished]);
+  });
+
   it("drops a quiet wake from its prompt on, keeping a resumed subagent card in the earlier turn", () => {
     const card = item("wake-1", 2, { type: "subagent", status: "completed" });
     const entries = [
@@ -191,8 +274,8 @@ describe("quiet bot wakes", () => {
       wake("wake-1", 3),
       reply("wake-1", 4, "Nothing to report."),
     ];
-    const quiet = quietBotWakeRunIds(entries, none);
+    const quiet = quietBotWakeRunIds(entries, "bot", none);
     expect([...quiet]).toEqual(["wake-1"]);
-    expect(withoutRuns(entries, quiet)).toEqual([entries[0], card]);
+    expect(withoutRuns(entries, quiet, "bot")).toEqual([entries[0], card]);
   });
 });

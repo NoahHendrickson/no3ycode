@@ -50,6 +50,9 @@ import {
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { type BotShell, isBotThread } from "../custom/bots/botThreads";
 /* fork:end fork-bots */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { isListedCoordinator } from "../custom/coordinator/coordinatorThreads";
+/* fork:end fork-coordinator-threads */
 /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads */
 import { isBotWorkOffSidebar, listedBotKeys } from "../custom/bots/botWorkRoster";
 /* fork:end fork-bot-work-threads */
@@ -660,6 +663,10 @@ export function filterSidebarV2VisibleThreads<
          Bots list in the sidebar's Bots section, never among the threads. */
       !isBotThread(thread.source) &&
       /* fork:end fork-bots */
+      /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+         Coordinators list in the sidebar's Coordinators section, never among the threads. */
+      !isListedCoordinator(thread) &&
+      /* fork:end fork-coordinator-threads */
       /* fork:begin fork-bot-work-threads — see .fork/customizations.yaml#fork-bot-work-threads
          While its bot lists, a bot's work lists in the bot's Threads panel unless pinned. */
       !isBotWorkOffSidebar(thread, listedBots) &&

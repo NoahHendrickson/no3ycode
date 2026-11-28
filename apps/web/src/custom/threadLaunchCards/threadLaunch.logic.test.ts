@@ -1,4 +1,4 @@
-import { MessageId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
+import { MessageId, NodeId, RunId, RuntimeRequestId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import { deriveMessagesTimelineRows } from "~/components/chat/MessagesTimeline.logic";
@@ -12,12 +12,14 @@ import {
   threadPullRequestStage,
 } from "./threadLaunch.logic";
 import {
-  forkWorkReportIsPending,
+  forkDelegatedQuestionOf,
+  forkWorkReportRequestId,
   forkWorkReportKey,
   forkWorkReportOf,
   forkWorkReportRequestKind,
   forkWorkReportThreadId,
 } from "../forkWorkReports";
+import { pendingRequestFor } from "../childRequestControls";
 
 describe("forkThreadLaunchFromToolItem", () => {
   const input = { title: "Optimize images", message: "Swap the hero to next/image" };
@@ -270,7 +272,7 @@ describe("work report notifications", () => {
       },
     });
     expect(named).toEqual({ key: "mcp:t1:request-1", threadId: "mcp:t1", requestKind: "approval" });
-    expect(forkWorkReportIsPending(named!.key, "mcp:t1", "request-1")).toBe(true);
+    expect(forkWorkReportRequestId(named!.key, "mcp:t1")).toBe("request-1");
     expect(
       forkWorkReportOf({ id, summary: "Rate limiting has a question", source: { kind: "system" } }),
     ).toEqual({ key: "mcp:t1:request-1", threadId: null, requestKind: "question" });
@@ -299,6 +301,28 @@ describe("work report notifications", () => {
     expect(forkWorkReportKey("turn-item:provider:x")).toBeNull();
     expect(forkWorkReportThreadId("t1:run:x", ["t2"])).toBeNull();
   });
+
+  it("reads a delegated child's question as the child's report, in its parent only", () => {
+    const unnamed = { kind: "delegated_task" as const, taskIds: [NodeId.make("task-1")] };
+    const source = { ...unnamed, childThreadId: ThreadId.make("mcp:child") };
+    const id = itemId("message:delegated-task-question:mcp:p1:request:9");
+    const report = forkDelegatedQuestionOf({ id, threadId: "mcp:p1", source });
+    expect(report).toEqual({
+      key: "mcp:child:request:9",
+      threadId: "mcp:child",
+      requestKind: "question",
+    });
+    expect(forkWorkReportRequestId(report!.key, "mcp:child")).toBe("request:9");
+    expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p", source })).toBeNull();
+    expect(forkDelegatedQuestionOf({ id, threadId: "mcp:p1", source: unnamed })).toBeNull();
+    expect(
+      forkDelegatedQuestionOf({
+        id: itemId("message:delegated-task-result:mcp:p1:task-1"),
+        threadId: "mcp:p1",
+        source,
+      }),
+    ).toBeNull();
+  });
 });
 
 describe("thread requests from reports", () => {
@@ -308,9 +332,20 @@ describe("thread requests from reports", () => {
     expect(forkWorkReportRequestKind("Rate limiting finished")).toBeNull();
   });
 
-  it("knows the report's request is the one the thread still waits on", () => {
-    expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-1")).toBe(true);
-    expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", "request-2")).toBe(false);
-    expect(forkWorkReportIsPending("mcp:t1:request-1", "mcp:t1", null)).toBe(false);
+  it("reads the request a report names, so its card answers that one", () => {
+    expect(forkWorkReportRequestId("mcp:t1:request-1", "mcp:t1")).toBe("request-1");
+    expect(forkWorkReportRequestId("mcp:t1", "mcp:t1")).toBeNull();
+    expect(forkWorkReportRequestId("mcp:t2:request-1", "mcp:t1")).toBeNull();
+  });
+});
+
+describe("pendingRequestFor", () => {
+  it("binds a card to its report's request, not the thread's first open one", () => {
+    const older = { requestId: RuntimeRequestId.make("request-1") };
+    const newer = { requestId: RuntimeRequestId.make("request-2") };
+    expect(pendingRequestFor([older, newer], newer.requestId)).toBe(newer);
+    expect(pendingRequestFor([older, newer], RuntimeRequestId.make("request-3"))).toBeUndefined();
+    // A caller naming none (a Petal digest) keeps the first.
+    expect(pendingRequestFor([older, newer], undefined)).toBe(older);
   });
 });

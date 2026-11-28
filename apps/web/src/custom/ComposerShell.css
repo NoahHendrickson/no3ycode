@@ -45,6 +45,22 @@
   );
 }
 
+/* The new-thread Coordinator pill (fork-coordinator-threads), a CheckboxPill that wears the composer
+   card's own surface, a tab of the card: the vessel's fill here and its ring below; the sheets that
+   blur, frost or natively draw the card list the pill beside it (palettes, glass, inlet-black). */
+:root[data-fork="noahhendrickson-t3code"] [data-fork-coordinator-toggle] {
+  background: var(--fork-composer-vessel-bg);
+}
+
+/* Flat Glass and Basic ring the new agent screen's vessel (theme.custom.palettes.css). */
+:root[data-fork="noahhendrickson-t3code"]:is(
+    [data-fork-glass-3d="off"].dark[data-fork-theme="cool-darker"],
+    [data-fork-theme="basic"]
+  )
+  [data-fork-coordinator-toggle] {
+  box-shadow: inset 0 0 0 1px var(--fork-draft-vessel-ring, var(--fork-composer-border));
+}
+
 /* Two ComposerControls in one pill: the halves take the pill's height, ink and type. A learned
    next step (fork-composer-next-step) splits the same way: its label, then the × that forgets it.
    Armed auto-merge too: its label, then the ban button that turns it off. */

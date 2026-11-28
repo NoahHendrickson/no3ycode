@@ -101,7 +101,12 @@
     --fork-context-chip-bg: var(--fork-inlet-black-frost);
     --fork-context-chip-bg-hover: rgb(198 194 171 / 70%);
 
-    & :is([data-fork-composer-vessel], [data-fork-composer-status-chip="stash"]) {
+    &
+      :is(
+        [data-fork-composer-vessel],
+        [data-fork-composer-status-chip="stash"],
+        [data-fork-coordinator-toggle]
+      ) {
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px);
     }

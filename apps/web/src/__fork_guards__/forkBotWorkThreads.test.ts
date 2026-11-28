@@ -9,7 +9,11 @@ import * as NodeFS from "node:fs";
 import * as NodeURL from "node:url";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { type EnvironmentId, ProviderInstanceId, RunId, ThreadId } from "@t3tools/contracts";
-import { FORK_BOT_THREAD_TAG, FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_BOT_THREAD_TAG,
+  FORK_BOT_WORK_TAG_PREFIX,
+  FORK_COORDINATOR_TAG,
+} from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
@@ -460,6 +464,13 @@ describe("fork guard: fork-bot-work-threads", () => {
     expect(
       botThreadsPanelBotId(makeThreadFixture({ id: "mine" as Thread["id"] }), null),
     ).toBeNull();
+    // A coordinator (fork-coordinator-threads) shows its own panel, on itself and its children.
+    const lead = withTags(makeThreadFixture({ id: "lead" as Thread["id"] }), [
+      FORK_COORDINATOR_TAG,
+    ]);
+    expect(botThreadsPanelBotId(lead, null)).toBe("lead");
+    expect(botThreadsPanelBotId(subagentOf("lead"), lead)).toBe("lead");
+    expect(botThreadsPanelBotId(subagentOf("lead"), { ...lead, archivedAt: AT })).toBeNull();
   });
 
   it("restores a maximized right panel so the Threads toggle always shows the panel", () => {

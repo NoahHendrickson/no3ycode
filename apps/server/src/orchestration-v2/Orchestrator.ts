@@ -226,6 +226,9 @@ import * as ServerSettings from "../serverSettings.ts";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
 import { isForkBotThread } from "@t3tools/shared/forkBotTags";
 /* fork:end fork-bots */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { FORK_BOT_QUIET_REPLY, isForkCoordinatorThread } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-coordinator-threads */
 
 const isMessageQuestionAnswer = Schema.is(
   Schema.Union([TrimmedNonEmptyString, Schema.NonEmptyArray(TrimmedNonEmptyString)]),
@@ -962,12 +965,21 @@ function legacyPullRequestLink(
 
 const DELEGATED_RESULT_INLINE_BYTES = 16_000;
 
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+   A coordinator's owner answers its children on their cards, so a result that only repeats the
+   card's answer ends the exchange there, on the quiet reply its timeline hides. */
+const COORDINATOR_COMPLETION_REPLY = `If a child only did what the owner answered on its card (nothing failed, nothing new), reply exactly "${FORK_BOT_QUIET_REPLY}"; otherwise report its result in a line.`;
+/* fork:end fork-coordinator-threads */
+
 function delegatedCompletionWakeDetail(
   taskIds: ReadonlyArray<string>,
   tasks: ReadonlyArray<OrchestrationV2Subagent>,
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  parent: Parameters<typeof isForkCoordinatorThread>[0],
+  /* fork:end fork-coordinator-threads */
 ): string {
   let remainingBytes = DELEGATED_RESULT_INLINE_BYTES;
-  return taskIds
+  const detail = taskIds
     .map((taskId) => {
       const task = tasks.find((candidate) => candidate.id === taskId);
       // A follow-up gets a fresh task id; the child thread links it to the task delegate_task returned.
@@ -984,6 +996,12 @@ function delegatedCompletionWakeDetail(
       return `${label}. Use task_status with taskId ${taskId} to read the result.`;
     })
     .join("\n\n");
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  if (isForkCoordinatorThread(parent)) {
+    return `${detail}\n\n${COORDINATOR_COMPLETION_REPLY}`;
+  }
+  /* fork:end fork-coordinator-threads */
+  return detail;
 }
 
 // Startup recovery settles whatever is still missed after this window.
@@ -3795,10 +3813,11 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       return;
     }
 
-    const { messages } = yield* loadProjectionForCommand(command, ["messages"], {
-      messageRoles: ["user"],
-      messageIds: [delivery.messageId],
-    });
+    const { messages, thread: deliveryParent } = yield* loadProjectionForCommand(
+      command,
+      ["messages"],
+      { messageRoles: ["user"], messageIds: [delivery.messageId] },
+    );
     const deliveryRunId = completionDeliveryMessage({ messages }, delivery)?.runId ?? null;
     const { runs } = yield* loadProjectionForCommand(command, ["runs"], {
       runIds: deliveryRunId === null ? [] : [deliveryRunId],
@@ -3868,7 +3887,11 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
           occurredAt: now,
           payload: {
             ...message,
-            text: delegatedCompletionWakeDetail(remainingTaskIds, remainingTasks),
+            text: delegatedCompletionWakeDetail(
+              remainingTaskIds,
+              remainingTasks,
+              /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */ deliveryParent /* fork:end fork-coordinator-threads */,
+            ),
             delegatedCompletion: {
               parentRunId: parentRun.id,
               generation: delivery.generation,
@@ -7785,7 +7808,11 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
         ? ""
         : delegatedCompletion === undefined
           ? command.text
-          : delegatedCompletionWakeDetail(delegatedCompletion.taskIds, projection.subagents);
+          : delegatedCompletionWakeDetail(
+              delegatedCompletion.taskIds,
+              projection.subagents,
+              /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */ projection.thread /* fork:end fork-coordinator-threads */,
+            );
     const sourcePlanProjection =
       command.sourcePlanRef === undefined
         ? null
@@ -14858,6 +14885,8 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
                     input.parentProjection.subagents.map((task) =>
                       task.id === input.updatedTask.id ? input.updatedTask : task,
                     ),
+                    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */ input
+                      .parentProjection.thread /* fork:end fork-coordinator-threads */,
                   ),
                   delegatedCompletion: {
                     parentRunId: input.parentRun.id,

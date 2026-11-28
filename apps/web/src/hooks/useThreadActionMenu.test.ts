@@ -118,6 +118,13 @@ vi.mock("./useSettings", () => ({
       timestampFormat: "12-hour",
     }),
 }));
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+// The fixture thread has no source; the coordinator switch has its own guard test.
+vi.mock("../custom/coordinator/coordinatorThreads", () => ({ coordinatorMenuItems: () => [] }));
+vi.mock("../custom/coordinator/useSetCoordinator", () => ({
+  useCoordinatorMenuPick: () => () => false,
+}));
+/* fork:end fork-coordinator-threads */
 vi.mock("./useThreadActions", () => ({
   canTurnThreadIntoProject: () => false,
   useThreadActions: () =>

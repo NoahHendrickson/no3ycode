@@ -86,7 +86,7 @@ import {
 } from "@t3tools/shared/toolActivityCopy";
 import { isHostPath } from "@t3tools/shared/path";
 /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-import { quietBotWakeRunIds, withoutRuns } from "~/custom/bots/quietBotWakes";
+import { type QuietWakeMode, quietBotWakeRunIds, withoutRuns } from "~/custom/bots/quietBotWakes";
 /* fork:end fork-bots */
 /* fork:begin fork-thread-launch-cards — see .fork/customizations.yaml#fork-thread-launch-cards */
 import {
@@ -1615,7 +1615,7 @@ function timelineRowEntries(
     | "runningRunId"
     | "pendingApprovalRequestIds"
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-    | "hideQuietBotWakes"
+    | "forkQuietWakes"
     | "forkKeepRequestReports"
     /* fork:end fork-bots */
     /* fork:begin fork-quiet-live-turn — see .fork/customizations.yaml#fork-quiet-live-turn */
@@ -1663,14 +1663,15 @@ function timelineRowEntries(
   }
   /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots
      Decided from every entry, so the visibility filters above never change which runs hide. */
-  if (input.hideQuietBotWakes === true) {
+  if (input.forkQuietWakes != null) {
     shown = withoutRuns(
       shown,
-      quietBotWakeRunIds(entries, {
+      quietBotWakeRunIds(entries, input.forkQuietWakes, {
         unsettledRunId: deriveUnsettledRunId(input.latestRun ?? null, input.runningRunId ?? null),
         failedRunIds: failedTimelineRunIds(entries, input.latestRun ?? null),
         revealedMessageId: input.revealedMessageId,
       }),
+      input.forkQuietWakes,
       input.forkKeepRequestReports === true,
     );
   }
@@ -1766,8 +1767,9 @@ export function deriveMessagesTimelineRows(
     toolCallVisibility?: ToolCallVisibility;
     revealedMessageId?: MessageId | null;
     /* fork:begin fork-bots — see .fork/customizations.yaml#fork-bots */
-    /** A bot's quiet wakes stay out of the shown rows; see custom/bots/quietBotWakes. */
-    hideQuietBotWakes?: boolean;
+    /** Whose quiet wakes stay out of the shown rows, a bot's or a coordinator's (null: none);
+        each mode's policy is in custom/bots/quietBotWakes. */
+    forkQuietWakes?: QuietWakeMode | null;
     /** Except a question or approval report, where the conversation answers its threads inline. */
     forkKeepRequestReports?: boolean;
     /* fork:end fork-bots */

@@ -4,6 +4,7 @@
  * grouped for its Threads panel, and what of it needs the owner, for its sidebar card.
  */
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/models";
+import { isForkCoordinatorThread } from "@t3tools/shared/forkBotTags";
 
 import { resolveSidebarThreadStatus, type SidebarThreadStatus } from "~/components/Sidebar.logic";
 
@@ -21,14 +22,16 @@ import {
 import { isBotThread, isListedBot } from "./botThreads";
 import { botWorkOwnerId, threadParentOf } from "./botWorkRoster";
 
-/** Whose Threads panel a thread shows: a bot its own, a bot's work (a launched thread, or a
-    subagent) its bot's, and nothing for any other thread. */
+/** Whose Threads panel a thread shows: a bot or a coordinator (fork-coordinator-threads) its
+    own, their work (a launched thread, or a subagent) theirs, and nothing for any other thread. */
 export function botThreadsPanelBotId(
   thread: Pick<EnvironmentThreadShell, "id" | "source" | "lineage">,
   parent: Pick<EnvironmentThreadShell, "id" | "source" | "archivedAt"> | null,
 ) {
-  if (isBotThread(thread.source)) return thread.id;
-  return parent !== null && parent.id === threadParentOf(thread)?.threadId && isListedBot(parent)
+  if (isBotThread(thread.source) || isForkCoordinatorThread(thread.source)) return thread.id;
+  return parent !== null &&
+    parent.id === threadParentOf(thread)?.threadId &&
+    (isListedBot(parent) || (isForkCoordinatorThread(parent.source) && parent.archivedAt === null))
     ? parent.id
     : null;
 }

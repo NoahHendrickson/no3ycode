@@ -48,6 +48,13 @@ import * as ProjectionStore from "./ProjectionStore.ts";
 import * as ProviderAdapterRegistry from "./ProviderAdapterRegistry.ts";
 import * as ProviderReplayHarness from "./testkit/ProviderReplayHarness.ts";
 import type * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import {
+  FORK_COORDINATOR_TAG,
+  FORK_DELEGATED_QUESTION_MESSAGE_PREFIX,
+  FORK_DELEGATED_TASK_THREAD_PREFIX,
+} from "@t3tools/shared/forkBotTags";
+/* fork:end fork-coordinator-threads */
 
 declare module "node:sqlite" {
   interface StatementSync {
@@ -1646,6 +1653,126 @@ it.effect("wakes the parent once when its delegated task asks a question", () =>
     });
   }).pipe(Effect.provide(DelegatedTaskQuestionReactor.layer.pipe(Layer.provideMerge(layerTest)))),
 );
+
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+it.effect.each([false, true])(
+  "words a delegated question wake for the parent it wakes (coordinator: %s)",
+  (coordinator) =>
+    Effect.gen(function* () {
+      const orchestrator = yield* Orchestrator.OrchestratorV2;
+      const projections = yield* ProjectionStore.ProjectionStoreV2;
+      const reactor = yield* DelegatedTaskQuestionReactor.DelegatedTaskQuestionReactor;
+      const eventSink = yield* EventSink.EventSinkV2;
+      const parentThreadId = ThreadId.make(`thread:question-wording-parent:${coordinator}`);
+      yield* orchestrator.dispatch({
+        type: "thread.create",
+        commandId: CommandId.make(`create:${parentThreadId}`),
+        threadId: parentThreadId,
+        projectId: ProjectId.make("project:question-wording"),
+        title: "Parent",
+        modelSelection,
+        runtimeMode: "full-access",
+        interactionMode: "default",
+        branch: null,
+        worktreePath: null,
+        createdBy: "user",
+        creationSource: "web",
+      });
+      if (coordinator) {
+        yield* orchestrator.dispatch({
+          type: "thread.tag.set",
+          commandId: CommandId.make(`tag:${parentThreadId}`),
+          threadId: parentThreadId,
+          tag: FORK_COORDINATOR_TAG,
+          tagged: true,
+        });
+      }
+      yield* orchestrator.dispatch({
+        type: "message.dispatch",
+        commandId: CommandId.make(`start:${parentThreadId}`),
+        threadId: parentThreadId,
+        messageId: MessageId.make(`message:${parentThreadId}`),
+        text: "Delegate the choice",
+        attachments: [],
+        dispatchMode: { type: "start_immediately" },
+        createdBy: "user",
+        creationSource: "web",
+      });
+      const parentRun = (yield* projections.getThreadProjection(parentThreadId)).runs[0]!;
+      yield* orchestrator.dispatch({
+        type: "delegated_task.request",
+        commandId: CommandId.make(`delegate:${parentThreadId}`),
+        parentThreadId,
+        parentRunId: parentRun.id,
+        parentNodeId: parentRun.rootNodeId!,
+        task: "Ask which color to use",
+        completionWake: "settled_only",
+        modelSelection,
+        runtimeMode: "full-access",
+        interactionMode: "default",
+        createdBy: "agent",
+        creationSource: "mcp",
+      });
+      const task = (yield* projections.getThreadProjection(parentThreadId)).subagents[0]!;
+      const childRun = (yield* projections.getThreadRecords(task.childThreadId!, ["runs"]))
+        .runs[0]!;
+      const now = yield* DateTime.now;
+      const question = {
+        id: EventId.make(`event:question-wording:${coordinator}`),
+        type: "runtime-request.updated",
+        threadId: task.childThreadId!,
+        runId: childRun.id,
+        occurredAt: now,
+        payload: {
+          id: RuntimeRequestId.make(`request:question-wording:${coordinator}`),
+          nodeId: childRun.rootNodeId!,
+          providerTurnId: null,
+          nativeRequestRef: null,
+          kind: "user_input",
+          status: "pending",
+          responseCapability: { type: "message" },
+          createdAt: now,
+          resolvedAt: null,
+        },
+      } satisfies OrchestrationV2DomainEvent;
+      yield* eventSink.write({ events: [question] });
+      yield* reactor.handle(question);
+      const wake = (yield* projections.getThreadRecords(parentThreadId, [
+        "messages",
+      ])).messages.find((message) => message.notification !== undefined)!;
+      assert.include(
+        wake.text,
+        `Read it with t3_pending_request action read, threadId ${task.childThreadId}, and requestId ${question.payload.id}.`,
+      );
+      // The web reads these ids by the shared prefixes (custom/forkWorkReports).
+      assert.equal(
+        wake.id,
+        `${FORK_DELEGATED_QUESTION_MESSAGE_PREFIX}${parentThreadId}:${question.payload.id}`,
+      );
+      assert.isTrue(task.childThreadId!.startsWith(FORK_DELEGATED_TASK_THREAD_PREFIX));
+      if (coordinator) {
+        assert.include(
+          wake.text,
+          "The owner answers it on its card in your conversation: answer it with action respond only when the owner's instructions settle it, and never ask the owner it yourself or restate it.",
+        );
+        assert.notInclude(wake.text, "ask the user");
+        assert.isTrue(
+          wake.text.endsWith(
+            'If you answered it, say so in one line; otherwise reply exactly "Nothing to report."',
+          ),
+        );
+      } else {
+        assert.include(
+          wake.text,
+          "Answer it with action respond when the answer follows from the task or the user's instructions; otherwise ask the user, then answer it. If it is no longer pending, it was answered or dismissed.",
+        );
+        assert.isTrue(
+          wake.text.endsWith("If it is no longer pending, it was answered or dismissed."),
+        );
+      }
+    }).pipe(Effect.provide(DelegatedTaskQuestionReactor.layer.pipe(Layer.provideMerge(layerTest)))),
+);
+/* fork:end fork-coordinator-threads */
 
 it.effect.each([false, true])(
   "drops a stale question wake (missed terminal event: %s)",

@@ -12,12 +12,17 @@ import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
-import { FORK_BOT_THREAD_TAG, FORK_BOT_WORK_TAG_PREFIX } from "@t3tools/shared/forkBotTags";
+import {
+  FORK_BOT_THREAD_TAG,
+  FORK_BOT_WORK_TAG_PREFIX,
+  FORK_COORDINATOR_TAG,
+} from "@t3tools/shared/forkBotTags";
 import { describe, expect, it } from "vite-plus/test";
 
 import { filterSidebarV2VisibleThreads } from "../components/Sidebar.logic";
 import { isPetalThread, listSidebarBots } from "../custom/bots/botThreads";
 import { botThreadsPanelBotId } from "../custom/bots/botWork";
+import { listSidebarCoordinators } from "../custom/coordinator/coordinatorThreads";
 import { sidebarV2CardKind } from "../custom/bots/SidebarV2BotCardBody";
 import { SPRINT_CONTEXT_DIRECTORY } from "../custom/sprints/sprintContextFiles";
 import { SPRINT_PANEL_TABS } from "../custom/sprints/sprintPanelState";
@@ -111,8 +116,13 @@ describe("fork guard: fork-sprints", () => {
 
   it("keeps a sprint and its work off the thread list, in its Threads panel", () => {
     const mine = makeThreadFixture({ id: "mine" as Thread["id"] });
-    const visible = filterSidebarV2VisibleThreads([mine, sprint, sprintWork], null, new Set());
+    // A coordinator has its own section too, and is never a sprint.
+    const coordinator = tagged("coordinator", [FORK_COORDINATOR_TAG]);
+    const threads = [mine, sprint, sprintWork, coordinator];
+    const visible = filterSidebarV2VisibleThreads(threads, null, new Set());
     expect(visible.map((thread) => thread.id)).toEqual(["mine"]);
+    expect(listSidebarSprints(threads).map((thread) => thread.id)).toEqual(["sprint"]);
+    expect(listSidebarCoordinators(threads).map((thread) => thread.id)).toEqual(["coordinator"]);
     expect(botThreadsPanelBotId(sprintWork, sprint)).toBe("sprint");
     expect(botThreadsPanelBotId(sprint, null)).toBe("sprint");
   });
@@ -233,7 +243,10 @@ describe("fork guard: fork-sprints", () => {
 
   it("opens a sprint's threads in its own panel, keeping the sprint on screen", () => {
     const panel = readSibling("../custom/sprints/SprintPanel.tsx");
-    expect(panel).toContain("<SprintChildConversation");
+    expect(panel).toContain("<BotThreadsChildPanelBody");
+    expect(readSibling("../custom/bots/BotThreadsChild.tsx")).toContain(
+      "<BotThreadsChildConversation",
+    );
     expect(panel).toContain("openInSprintPanel(props.sprintRef, ref)");
     // Transcript rows and thread links reach the panel through the host the sprint's timeline gets.
     expect(readSibling("../custom/sprints/sprintThreadHost.tsx")).toContain(
@@ -247,9 +260,7 @@ describe("fork guard: fork-sprints", () => {
     );
     const chatView = readSibling("../components/ChatView.tsx");
     expect(chatView).toContain("parentPanel={sideChatParentPanel}");
-    expect(chatView).toContain(
-      "forkThreadHost={forkSprintRef === null ? null : sprintThreadHost(forkSprintRef)}",
-    );
+    expect(chatView).toContain("? sprintThreadHost(forkSprintRef)");
   });
 
   it("keeps sprint code out of the Petal panel, the thread cards and thread links", () => {

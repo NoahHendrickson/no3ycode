@@ -15,6 +15,9 @@ import * as Stream from "effect/Stream";
 
 import { reportLabel } from "@t3tools/provider-core/server/notification";
 import * as KeyedLock from "@t3tools/shared/KeyedLock";
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { FORK_BOT_QUIET_REPLY, isForkCoordinatorThread } from "@t3tools/shared/forkBotTags";
+/* fork:end fork-coordinator-threads */
 
 import { forkParked } from "../serverActivation.ts";
 import * as Orchestrator from "./Orchestrator.ts";
@@ -43,12 +46,26 @@ const make = Effect.gen(function* () {
       request.responseCapability.type === "message"
         ? `Delegated task ${task.id} asked a question and is still working.`
         : `Delegated task ${task.id} is blocked on a question and cannot continue until it is answered.`;
+    const read = `Read it with t3_pending_request action read, threadId ${task.childThreadId}, and requestId ${request.id}.`;
+    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+       A coordinator's owner answers its children's questions on their cards in its conversation. */
+    const coordinator = isForkCoordinatorThread(yield* projections.getThread(task.threadId));
+    const answer = coordinator
+      ? "The owner answers it on its card in your conversation: answer it with action respond only when the owner's instructions settle it, and never ask the owner it yourself or restate it."
+      : /* fork:end fork-coordinator-threads */
+        "Answer it with action respond when the answer follows from the task or the user's instructions; otherwise ask the user, then answer it.";
+    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+       The card is the exchange: the quiet reply hides the wake's turn, as a bot's quiet wake. */
+    const reply = coordinator
+      ? ` If you answered it, say so in one line; otherwise reply exactly "${FORK_BOT_QUIET_REPLY}"`
+      : "";
+    /* fork:end fork-coordinator-threads */
     yield* engine.dispatch({
       type: "message.dispatch",
       commandId: CommandId.make(`server:delegated-task-question:${key}`),
       threadId: task.threadId,
       messageId: MessageId.make(`message:delegated-task-question:${key}`),
-      text: `${situation} Read it with t3_pending_request action read, threadId ${task.childThreadId}, and requestId ${request.id}. Answer it with action respond when the answer follows from the task or the user's instructions; otherwise ask the user, then answer it. If it is no longer pending, it was answered or dismissed.`,
+      text: `${situation} ${read} ${answer} If it is no longer pending, it was answered or dismissed.${reply}`,
       notification: {
         source: { kind: "delegated_task", taskIds: [task.id], childThreadId: task.childThreadId },
         outcome: "updated",

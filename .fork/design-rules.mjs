@@ -95,6 +95,7 @@ export const DESIGN_LINT_ALLOWLIST = [
       "BotThreadsList",
     ],
     "sprints/SprintPanel.tsx": ["SprintPanel"],
+    "coordinator/CoordinatorPanel.tsx": ["CoordinatorPanel"],
     "designMode/panel/ForkDesignPanel.tsx": ["ForkDesignPanel"],
     "designMode/ForkLayersTree.tsx": ["ForkLayersTree"],
   }),
@@ -105,6 +106,8 @@ export const DESIGN_LINT_ALLOWLIST = [
     "bots/SidebarV2BotsSection.tsx": ["SidebarV2BotsRow"],
     "bots/BotMascotDetailsSection.tsx": ["BotMascotDetailsSection"],
     "sprints/SidebarV2SprintsSection.tsx": ["SidebarV2SprintsRow"],
+    "coordinator/SidebarV2CoordinatorsSection.tsx": ["SidebarV2CoordinatorsRow"],
+    "SidebarV2ListSection.tsx": ["SidebarV2ListSection"],
     "sprints/SprintGoal.tsx": ["SprintGoal"],
     "sprints/SprintThreadModel.tsx": ["SprintThreadModel"],
     "sprints/SprintContext.tsx": ["SprintContext"],
@@ -119,7 +122,11 @@ export const DESIGN_LINT_ALLOWLIST = [
     ],
     "sprints/SprintPanelTabs.tsx": ["SprintPanelTabStrip", "SprintPanelTabContent"],
     "sprints/SprintFileEditor.tsx": ["SprintFileEditor", "SprintFileFooter", "NoSprintFileAccess"],
-    "sprints/SprintChildConversation.tsx": ["SprintChildConversation"],
+    "bots/BotThreadsChild.tsx": [
+      "BotThreadsChildHeading",
+      "BotThreadsChildConversation",
+      "BotThreadsChildPanelBody",
+    ],
     "sprints/SprintPullRequests.tsx": ["SprintPullRequests"],
     "sprints/SprintEmptyConversation.tsx": ["SprintEmptyConversation"],
     "bots/BotDigest.tsx": ["BotDigestAsks"],
@@ -152,6 +159,8 @@ export const DESIGN_LINT_ALLOWLIST = [
     "SegmentedTabs.tsx": ["SegmentedTabs", "SegmentedTab", "SegmentedMenuTabs", "SegmentedMenuTab"],
   }),
   ...b5Exempt("wrapper: reads live thread state, then draws a storied view", {
+    // BotThreadsCompactRowView, Fork/Petal work row › Compact.
+    "bots/BotThreadsCompactRow.tsx": ["BotThreadsCompactRow"],
     // ForkSubagentStartLineView, Fork/Subagent line.
     "ForkSubagentGroup.tsx": ["ForkSubagentGroup", "ForkSubagentNotice"],
     // SubagentLinkMark in a ContextChip, Fork/Subagent link.
@@ -181,6 +190,9 @@ export const DESIGN_LINT_ALLOWLIST = [
   }),
   ...b5Exempt("wrapper: the sidebar chrome's look on a primitive (Fork/Sidebar controls)", {
     "SidebarChromeButton.tsx": ["SidebarChromeGroup", "SidebarChromeRadioItem"],
+  }),
+  ...b5Exempt("wrapper around CheckboxPill (Fork/Checkbox pill)", {
+    "coordinator/CoordinatorDraftToggle.tsx": ["CoordinatorDraftToggle"],
   }),
   ...b5Exempt("wrapper around ComposerModelPicker", {
     "scheduled/ScheduledTaskModelPicker.tsx": ["ScheduledTaskModelPicker"],

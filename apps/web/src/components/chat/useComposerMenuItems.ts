@@ -75,6 +75,9 @@ export function useComposerMenuItems({
   sideChatAvailable,
   sideChatDisabledReason,
   freshSessionAvailable,
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  coordinateAvailable,
+  /* fork:end fork-coordinator-threads */
   compactSlashCommandAvailable,
   selectedProvider,
   selectedProviderSkills,
@@ -95,6 +98,9 @@ export function useComposerMenuItems({
   readonly sideChatAvailable: boolean;
   readonly sideChatDisabledReason: string | null;
   readonly freshSessionAvailable: boolean;
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  readonly coordinateAvailable: boolean;
+  /* fork:end fork-coordinator-threads */
   readonly compactSlashCommandAvailable: boolean;
   readonly selectedProvider: ProviderDriverKind;
   readonly selectedProviderSkills: ServerProvider["skills"];
@@ -291,6 +297,20 @@ export function useComposerMenuItems({
               },
             ] as const)
           : []),
+        /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+        ...(coordinateAvailable
+          ? ([
+              {
+                id: "slash:coordinate",
+                type: "slash-command",
+                command: "coordinate",
+                label: "/coordinate",
+                // oxlint-disable-next-line t3code/no-untranslated-copy -- fork copy stays English (fork-i18n-catalog)
+                description: "Start or switch this thread to coordinating",
+              },
+            ] as const)
+          : []),
+        /* fork:end fork-coordinator-threads */
       ] satisfies ReadonlyArray<Extract<ComposerCommandItem, { type: "slash-command" }>>;
       const slashMenuSkills = getProviderSkillsForSlashMenu(
         selectedProviderSkills,

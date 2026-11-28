@@ -24,7 +24,7 @@ import { useSplitPane } from "../splitThreads/splitPaneContext";
 import { useSplitThreadStore } from "../splitThreads/splitThreadStore";
 import {
   type ForkWorkReport,
-  forkWorkReportIsPending,
+  forkWorkReportRequestId,
   forkWorkReportThreadId,
   forkWorkReportThreadIds,
 } from "../forkWorkReports";
@@ -217,6 +217,17 @@ export function ForkWorkReportRow(props: {
   );
   if (thread === null) return props.fallback;
   const request = props.report.requestKind;
+  const requestId = forkWorkReportRequestId(key, thread.id);
+  const answered =
+    request === null || host === null ? null : (
+      <host.AnsweredRequest
+        thread={thread}
+        reportKey={key}
+        requestId={requestId}
+        hostRef={ctx.threadRef}
+        kind={request}
+      />
+    );
   // A question or approval still open is answered right here; once settled the host draws it.
   // Only a host that answers inline does: a Petal asks above its composer, so its report is the
   // thread's row alone. Inset as a reply's text is, so its hook lines up with the launch rows.
@@ -229,15 +240,17 @@ export function ForkWorkReportRow(props: {
           fallbackTitle={null}
           hostRef={ctx.threadRef}
         />
-      ) : forkWorkReportIsPending(key, thread.id, thread.source.pendingRuntimeRequest?.id) ? (
-        <ForkThreadRequestCard thread={thread} hostRef={ctx.threadRef} kind={request} />
-      ) : (
-        <host.AnsweredRequest
+      ) : requestId !== null && thread.source.pendingRuntimeRequest != null ? (
+        // The thread waits on something; the card checks that it is this report's request.
+        <ForkThreadRequestCard
           thread={thread}
-          reportKey={key}
           hostRef={ctx.threadRef}
           kind={request}
+          requestId={requestId}
+          settled={answered}
         />
+      ) : (
+        answered
       )}
     </div>
   );

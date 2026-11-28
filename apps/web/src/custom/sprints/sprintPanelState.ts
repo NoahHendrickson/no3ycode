@@ -9,7 +9,7 @@ import { create } from "zustand";
 
 import { readThreadShell } from "~/state/entities";
 
-import { openBotThreadsPanel } from "../bots/botThreadsPanelStore";
+import { openBotThreadsChild } from "../bots/botThreadsPanelStore";
 import { isSprintThread, SPRINT_MEMORY_FILE } from "./sprintThreads";
 
 export const SPRINT_PANEL_TABS = [
@@ -51,21 +51,6 @@ export function useSprintPanelTab(sprintKey: string): SprintPanelTab {
   return useSprintPanelTabStore((state) => state.bySprintKey[sprintKey]) ?? "threads";
 }
 
-/** The thread a sprint's panel shows in place of its tabs, until the owner goes back. */
-const useSprintChildStore = create<{
-  readonly bySprintKey: Readonly<Record<string, ScopedThreadRef | null>>;
-}>(() => ({ bySprintKey: {} }));
-
-export function useSprintOpenChild(sprintKey: string): ScopedThreadRef | null {
-  return useSprintChildStore((state) => state.bySprintKey[sprintKey]) ?? null;
-}
-
-export function closeSprintChild(sprintKey: string): void {
-  useSprintChildStore.setState((state) => ({
-    bySprintKey: { ...state.bySprintKey, [sprintKey]: null },
-  }));
-}
-
 /** Opens `target` in the panel of `hostRef` when that conversation is a sprint, so the sprint
     stays on screen; false when it is not one, and the caller opens the thread its own way. */
 export function openInSprintPanel(
@@ -75,11 +60,7 @@ export function openInSprintPanel(
   if (hostRef == null || scopedThreadKey(hostRef) === scopedThreadKey(target)) return false;
   const host = readThreadShell(hostRef);
   if (host === null || !isSprintThread(host.source)) return false;
-  const sprintKey = scopedThreadKey(hostRef);
-  useSprintChildStore.setState((state) => ({
-    bySprintKey: { ...state.bySprintKey, [sprintKey]: target },
-  }));
-  setSprintPanelTab(sprintKey, "threads");
-  openBotThreadsPanel(hostRef);
+  if (!openBotThreadsChild(hostRef, target)) return false;
+  setSprintPanelTab(scopedThreadKey(hostRef), "threads");
   return true;
 }

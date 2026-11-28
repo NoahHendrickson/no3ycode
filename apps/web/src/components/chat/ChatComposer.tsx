@@ -188,6 +188,10 @@ import { ForkReturnGlyph } from "~/custom/ForkReturnGlyph";
 /* fork:begin fork-bot-digest — see .fork/customizations.yaml#fork-bot-digest */
 import { BotDigestAsks } from "~/custom/bots/BotDigest";
 /* fork:end fork-bot-digest */
+/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+import { useCoordinatorComposer } from "~/custom/coordinator/coordinatorDraft";
+import { CoordinatorDraftToggle } from "~/custom/coordinator/CoordinatorDraftToggle";
+/* fork:end fork-coordinator-threads */
 import {
   formatComposerContextReference,
   threadContextRecord,
@@ -1296,6 +1300,16 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     composerPreviewAnnotations.length === 0 &&
     composerReviewComments.length === 0;
   const linkedEnvironments = useLinkedEnvironments(environmentId);
+  /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+  const forkCoordinator = useCoordinatorComposer({
+    draft:
+      routeKind === "draft" && draftId !== null
+        ? { draftId, threadId: routeThreadRef.threadId }
+        : null,
+    threadRef: routeKind === "server" ? routeThreadRef : null,
+    canOperate: canOperateThread,
+  });
+  /* fork:end fork-coordinator-threads */
   const {
     items: composerMenuItems,
     isLoading: isComposerMenuLoading,
@@ -1312,6 +1326,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
     sideChatAvailable: props.sideChatAvailable === true,
     sideChatDisabledReason: props.sideChatDisabledReason ?? null,
     freshSessionAvailable: props.onFreshSession !== undefined,
+    /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+    coordinateAvailable: forkCoordinator.commandAvailable,
+    /* fork:end fork-coordinator-threads */
     compactSlashCommandAvailable,
     selectedProvider,
     selectedProviderSkills,
@@ -2214,6 +2231,18 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         }
         return;
       }
+      /* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads */
+      if (item.command === "coordinate") {
+        const applied = applyPromptReplacement(trigger.rangeStart, trigger.rangeEnd, "", {
+          expectedText: snapshot.value.slice(trigger.rangeStart, trigger.rangeEnd),
+        });
+        if (applied) {
+          setComposerHighlightedItemId(null);
+          forkCoordinator.runCommand();
+        }
+        return;
+      }
+      /* fork:end fork-coordinator-threads */
       if (item.command === "side" || item.command === "btw") {
         if (props.sideChatDisabledReason) return;
         const applied = applyPromptReplacement(
@@ -4062,13 +4091,27 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         statusChips={props.statusChips}
         /* The queue pill's twin, here so the new agent screen gets it too. */
         persistentChips={
-          isStashMenuOpen ? null : (
-            <ComposerStashChip
-              count={stashQueue.length}
-              pulseKey={stashPulseKey}
-              onOpen={toggleStashMenuStable}
-            />
-          )
+          <>
+            {isStashMenuOpen ? null : (
+              <ComposerStashChip
+                count={stashQueue.length}
+                pulseKey={stashPulseKey}
+                onOpen={toggleStashMenuStable}
+              />
+            )}
+            {/* fork:begin fork-coordinator-threads — see .fork/customizations.yaml#fork-coordinator-threads
+                A new-thread draft's Coordinator toggle, at the card's top-right; not over the
+                collapsed phone pill, where the status chips hide too. */}
+            {forkCoordinator.toggle !== null && !isComposerCollapsedMobile ? (
+              <CoordinatorDraftToggle
+                on={forkCoordinator.toggle.on}
+                onChange={forkCoordinator.toggle.setOn}
+                // A local flag: a draft with no project yet has no operate scope to wait for.
+                disabled={isSendBusy}
+              />
+            ) : null}
+            {/* fork:end fork-coordinator-threads */}
+          </>
         }
         mobilePendingActionsVisible={showMobilePendingAnswerActions}
         modeControls={composerModeControls}
